@@ -1,0 +1,41 @@
+.progress-card {
+    background: #1f1f1f;
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 18px;
+    transition: .2s;
+}
+
+    .progress-card:hover {
+        transform: translateY(-2px);
+    }
+
+.progress-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-card-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.card-menu-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+    .card-menu-button:hover {
+        background: #323232;
+        color: white;
+    }
+

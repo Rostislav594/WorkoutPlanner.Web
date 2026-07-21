@@ -1,0 +1,135 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-window {
+    width: 350px;
+    padding: 20px;
+    background: #1c1c1c;
+    border-radius: 15px;
+    border: 1px solid #333;
+}
+.today-card {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-window {
+    width: 320px;
+    background: #1c1c1c;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,.5);
+}
+.exercise-card {
+    max-width: 500px;
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 12px;
+    background: #161616;
+    border: 1px solid #2d2d2d;
+}
+.sets-block {
+    display: flex;
+    gap: 18px;
+    margin-top: 14px;
+}
+    .sets-block input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+.today-header {
+    position: relative;
+    min-height: 120px;
+}
+.workout-chip {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-radius: 18px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.08);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+    .workout-chip .material-symbols-rounded {
+        color: #ff7a1a;
+        font-size: 34px;
+    }
+.today-title {
+    margin: 0;
+    margin-left: 70px;
+    font-size: 56px;
+    font-weight: 700;
+}
+
+.today-date {
+    margin-left: 70px;
+    margin-top: 8px;
+    color: #9a9a9a;
+    font-size: 20px;
+}
+.no-workout-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px;
+    animation: fadeIn .4s ease;
+}
+
+.no-workout-text {
+    font-size: 34px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.no-workout-character {
+    width: 420px;
+    max-width: 90%;
+    user-select: none;
+    pointer-events: none;
+}
+
+@keyframes fadeIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

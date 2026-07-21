@@ -1,0 +1,24 @@
+.workout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.workout-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 16px;
+    padding: 30px;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+    .workout-card:hover {
+        transform: translateY(-3px);
+        border-color: #ff6600;
+        box-shadow: 0 0 15px rgba(255,102,0,.3);
+    }

@@ -1,0 +1,39 @@
+﻿<div class="progress-card">
+
+    <div class="progress-card-header">
+
+        <div class="progress-card-title"
+             @onclick="OnClick">
+            @Title
+        </div>
+
+        @if (OnMenuClick.HasDelegate)
+        {
+            <button class="card-menu-button"
+                    @onclick="MenuClick">
+                ⋮
+            </button>
+        }
+
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    [Parameter]
+    public EventCallback OnMenuClick { get; set; }
+
+    async Task MenuClick()
+    {
+        if (OnMenuClick.HasDelegate)
+            await OnMenuClick.InvokeAsync();
+    }
+
+}

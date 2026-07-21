@@ -1,0 +1,211 @@
+.home-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    padding: 16px 18px;
+    overflow-x: hidden;
+}
+
+.desktop-panel {
+    width: min(1400px, 100%);
+    min-height: calc(100vh - 32px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.desktop-layout {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(112px, 160px) minmax(0, 1fr) minmax(112px, 160px);
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    width: min(100%, 980px);
+    max-height: 94vh;
+    justify-self: center;
+    object-fit: contain;
+}
+
+.shortcut-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+}
+
+.shortcut-column-left {
+    align-items: flex-end;
+}
+
+.shortcut-column-right {
+    align-items: flex-start;
+}
+
+.shortcut-tile,
+.shortcut-tile:visited,
+.shortcut-tile:link {
+    width: 100%;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 10px;
+    color: white;
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    box-shadow: none;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+    .shortcut-tile:hover .shortcut-icon {
+        color: #ff7a1a;
+        transform: scale(1.08);
+    }
+
+.shortcut-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 52px;
+    color: #ffffff;
+    transition: color .2s ease, transform .2s ease;
+    min-height: 92px;
+    gap: 8px;
+    padding: 12px 10px;
+}
+.shortcut-icon-wrapper {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+}
+
+.shortcut-title {
+    max-width: 100%;
+    color: #f5f5f5;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+    .home-container {
+        align-items: flex-start;
+        padding: 56px 10px 18px;
+    }
+
+    .desktop-panel {
+        min-height: calc(100vh - 74px);
+        align-items: flex-start;
+    }
+
+    .desktop-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .logo {
+        order: 1;
+        width: min(98vw, 620px);
+        max-height: 67vh;
+    }
+
+    .shortcut-column {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .shortcut-column-left,
+    .shortcut-column-right {
+        align-items: stretch;
+    }
+
+    .shortcut-column-left {
+        order: 2;
+    }
+
+    .shortcut-column-right {
+        order: 3;
+    }
+
+    .shortcut-tile,
+    .shortcut-tile:visited,
+    .shortcut-tile:link {
+        min-height: 72px;
+        padding: 8px;
+    }
+
+        .shortcut-tile:hover,
+        .shortcut-tile:focus {
+            transform: none;
+        }
+
+    .shortcut-icon {
+        font-size: 28px;
+    }
+
+    .shortcut-title {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 380px) {
+    .home-container {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .logo {
+        max-height: 62vh;
+    }
+
+    .shortcut-column {
+        gap: 7px;
+    }
+
+    .shortcut-tile,
+    .shortcut-tile:visited,
+    .shortcut-tile:link {
+        min-height: 66px;
+    }
+
+    .shortcut-icon {
+        font-size: 26px;
+    }
+
+    .shortcut-title {
+        font-size: 13px;
+    }
+}
+.fade-in {
+    opacity: 0;
+    animation: fadeUp .45s ease forwards;
+}
+
+@keyframes fadeUp {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}

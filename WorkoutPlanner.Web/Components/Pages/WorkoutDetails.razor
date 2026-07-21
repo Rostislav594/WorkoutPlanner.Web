@@ -1,0 +1,435 @@
+﻿@page "/workout/{Id:int}"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+@inject TrainingPlanService TrainingPlanService
+@inject ExerciseService ExerciseService
+@inject NavigationManager Navigation
+@inject ExerciseDefinitionService ExerciseDefinitionService
+@inject ExerciseIndexService ExerciseIndexService
+@inject SecondaryMuscleCoefficientService SecondaryMuscleCoefficientService
+
+
+<div class="workout-header">
+
+    <button class="back-button"
+            @onclick="GoBack">
+         К тренировкам
+    </button>
+
+    <div class="workout-title-card">
+
+        <h1>
+            @CurrentPlan?.WorkoutName
+        </h1>
+
+        <div class="title-line"></div>
+
+    </div>
+
+</div>
+
+<button class="finish-button"
+        @onclick="OpenAddWindow">
+     Добавить упражнение
+</button>
+
+@if (Exercises.Count == 0)
+{
+    <div class="empty-workout">
+
+        <div class="workout-header">
+
+            <div class="workout-icon">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+
+        </div>
+
+        <div class="empty-title">
+            Упражнений пока нет
+        </div>
+
+        <div class="empty-text">
+            Нажмите "Добавить упражнение"
+        </div>
+
+    </div>
+}
+else
+{
+    @foreach (var exercise in Exercises)
+    {
+        <div class="exercise-card"
+         @onclick="() => SelectExercise(exercise)">
+            <b>@exercise.Name</b><br />
+            Вес: @exercise.CurrentWeight кг<br />
+            Шаг: +@exercise.WeightStep кг<br />
+            Повторы:
+            @string.Join(", ",
+                exercise.Sets
+                    .OrderBy(x => x.SetNumber)
+                    .Select(x => x.Repetitions))
+            <p>
+                Exercise: @exercise.ExerciseDefinition?.ExerciseCoefficient
+            </p>
+
+            <p>
+                Secondary:
+                @SecondaryMuscleCoefficientService.GetCoefficient(exercise.ExerciseDefinition!.Id)
+            </p>
+
+            <p>
+                Index:
+                @ExerciseIndexService.Calculate(exercise)
+            </p>
+
+        </div>
+    }
+}
+
+@if (SelectedExercise != null)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h3>@SelectedExercise.Name</h3>
+
+            <button @onclick="EditExercise">
+                 Изменить
+            </button>
+
+            <button @onclick="DeleteExercise">
+                 Удалить
+            </button>
+
+            <button @onclick="CloseMenu">
+                 Закрыть
+            </button>
+
+        </div>
+
+    </div>
+}
+@if (IsEditing)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h3>Редактирование упражнения</h3>
+
+            <label>Название</label>
+            <input @bind="EditName" />
+
+            <label>Вес</label>
+            <input type="number"
+                   step="0.5"
+                   @bind="EditWeight" />
+
+            <label>Шаг веса</label>
+            <input type="number"
+                   step="0.5"
+                   @bind="EditStep" />
+
+            @foreach (var set in SelectedExercise!.Sets.OrderBy(x => x.SetNumber))
+            {
+                <label>
+                    Подход @set.SetNumber
+                </label>
+
+                <input type="number"
+                       @bind="set.Repetitions" />
+            }
+
+            @if (!string.IsNullOrWhiteSpace(EditRepsError))
+            {
+                <div class="edit-error">
+                    @EditRepsError
+                </div>
+            }
+
+            <button @onclick="SaveExercise">
+                 Сохранить
+            </button>
+
+            <button @onclick="() => IsEditing = false">
+                 Отмена
+            </button>
+
+        </div>
+
+    </div>
+}
+@if (IsAdding)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h3>
+                 Новое упражнение
+            </h3>
+
+            <label>
+                 Упражнение из библиотеки
+            </label>
+
+            <select class="form-select"
+                    @bind="SelectedExerciseDefinitionId">
+
+                <option value="">-- Не выбрано --</option>
+
+                @foreach (var exercise in ExerciseLibrary)
+                {
+                    <option value="@exercise.Id">
+                        @exercise.Name
+                    </option>
+                }
+
+            </select>
+
+            <label>
+                Название
+            </label>
+
+            <input @bind="NewExerciseName" />
+
+            <label>
+                Рабочий вес
+            </label>
+
+            <input type="number"
+                   step="0.5"
+                   @bind="NewExerciseWeight" />
+
+            <label>
+                Шаг увеличения
+            </label>
+
+            <input type="number"
+                   step="0.5"
+                   @bind="NewExerciseStep" />
+
+            <label>
+                Количество подходов
+            </label>
+
+            <input type="number"
+                   min="1"
+                   max="10"
+                   @bind="NewSetsCount" />
+
+            <button class="finish-button"
+                    @onclick="CreateExercise">
+                 Добавить
+            </button>
+
+            <button class="secondary-button"
+                    @onclick="CloseAddWindow">
+                 Отмена
+            </button>
+
+        </div>
+
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    TrainingPlan? CurrentPlan;
+    List<Exercise> Exercises = new();
+    Exercise? SelectedExercise;
+    List<ExerciseDefinition> ExerciseLibrary = new();
+
+    private int? _selectedExerciseDefinitionId;
+
+    int? SelectedExerciseDefinitionId
+    {
+        get => _selectedExerciseDefinitionId;
+        set
+        {
+            _selectedExerciseDefinitionId = value;
+
+            if (value == null)
+                return;
+
+            var definition = ExerciseLibrary
+                .FirstOrDefault(x => x.Id == value);
+
+            if (definition != null)
+            {
+                NewExerciseName = definition.Name;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentPlan =
+             await TrainingPlanService
+             .GetByIdAsync(Id);
+
+        if (CurrentPlan != null)
+        {
+            Exercises =
+                await ExerciseService
+                    .GetExercisesAsync(
+                        CurrentPlan.WorkoutName);
+        }
+
+        ExerciseLibrary =
+        await ExerciseDefinitionService.GetAllAsync();
+    }
+    
+    async Task CreateExercise()
+    {
+        if (CurrentPlan == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(
+            NewExerciseName))
+            return;
+
+        var exercise = new Exercise
+        {
+            WorkoutName =
+         CurrentPlan.WorkoutName,
+
+            TrainingPlanId =
+         CurrentPlan.Id,
+
+            Name =
+         NewExerciseName,
+
+            ExerciseDefinitionId =
+         SelectedExerciseDefinitionId,
+
+            CurrentWeight =
+         NewExerciseWeight,
+
+            WeightStep =
+         NewExerciseStep,
+
+            SetsCount =
+         NewSetsCount,
+
+            CurrentLevel = 0
+        };
+
+        var defaultReps = new[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+
+        for (int i = 0; i < exercise.SetsCount; i++)
+        {
+            exercise.Sets.Add(new ExerciseTemplateSet
+            {
+                SetNumber = i + 1,
+                Repetitions = defaultReps[i],
+                Completed = false
+            });
+        }
+
+        await ExerciseService
+            .AddExerciseAsync(exercise);
+
+        Exercises =
+            await ExerciseService
+                .GetExercisesAsync(
+                    CurrentPlan.WorkoutName);
+
+        IsAdding = false;
+    }
+
+    void SelectExercise(Exercise exercise)
+    {
+        SelectedExercise = exercise;
+    }
+
+    async Task DeleteExercise()
+    {
+        if (SelectedExercise == null)
+            return;
+
+        await ExerciseService
+            .DeleteExerciseAsync(
+                SelectedExercise);
+
+        Exercises =
+            await ExerciseService
+                .GetExercisesAsync(
+                    CurrentPlan!.WorkoutName);
+
+        SelectedExercise = null;
+    }
+
+    bool IsEditing = false;
+
+    string EditName = "";
+    double EditWeight;
+    double EditStep;
+    int EditSetsCount;
+    string EditRepsError = "";
+    bool IsAdding = false;
+    string NewExerciseName = "";
+    double NewExerciseWeight = 50;
+    double NewExerciseStep = 2.5;
+    int NewSetsCount = 3;
+
+    void EditExercise()
+    {
+        if (SelectedExercise == null)
+            return;
+
+        EditName = SelectedExercise.Name;
+        EditWeight = SelectedExercise.CurrentWeight;
+        EditStep = SelectedExercise.WeightStep;
+        EditRepsError = "";
+        EditSetsCount = SelectedExercise.SetsCount;
+      
+
+        IsEditing = true;
+    }
+    void CloseMenu()
+    {
+        SelectedExercise = null;
+    }
+    async Task SaveExercise()
+    {
+        if (SelectedExercise == null)
+            return;
+
+        SelectedExercise.Name = EditName;
+        SelectedExercise.CurrentWeight = EditWeight;
+        SelectedExercise.WeightStep = EditStep;
+        SelectedExercise.SetsCount = EditSetsCount;
+       
+        await ExerciseService
+            .SaveChangesAsync();
+
+        IsEditing = false;
+        EditRepsError = "";
+        SelectedExercise = null;
+    }
+    void OpenAddWindow()
+    {
+        NewExerciseName = "";
+        NewExerciseWeight = 50;
+        NewExerciseStep = 2.5;
+        NewSetsCount = 3;
+
+        IsAdding = true;
+    }
+    void CloseAddWindow()
+    {
+        IsAdding = false;
+    }
+    void GoBack()
+    {
+        Navigation.NavigateTo("/workouts");
+    }
+    
+}

@@ -1,0 +1,57 @@
+﻿@page "/workouts"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager Navigation
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+@inject TrainingPlanService TrainingPlanService
+
+    <h1 style="text-align:center;">
+     Шаблоны тренировок 
+    </h1>
+
+<div class="workout-grid">
+    @foreach (var workout in TrainingPlans)
+    {
+        <div class="workout-card"
+             @onclick="() => OpenWorkout(workout.Id)">
+
+            <div class="workout-name">
+                @workout.WorkoutName
+            </div>
+
+            <div class="workout-description">
+                @GetWorkoutDescription(workout.WorkoutName)
+            </div>
+
+        </div>
+    }
+</div>
+
+@code {
+
+    private List<TrainingPlan> TrainingPlans = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TrainingPlans =
+            await TrainingPlanService
+                .GetTrainingPlansAsync();
+    }
+
+    void OpenWorkout(int id)
+    {
+        Navigation.NavigateTo($"/workout/{id}");
+    }
+    string GetWorkoutDescription(string workoutName)
+    {
+        return workoutName switch
+        {
+            "Верх 1" => "Грудь • Спина • Плечи • Бицепс • Трицепс",
+            "Низ 1" => "Ноги • Ягодицы • Икры",
+            "Верх 2" => "Грудь • Спина • Плечи • Бицепс • Трицепс",
+            "Низ 2" => "Ноги • Ягодицы • Икры",
+            _ => ""
+        };
+    }
+}

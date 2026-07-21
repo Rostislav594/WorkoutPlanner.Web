@@ -1,0 +1,35 @@
+@rendermode InteractiveServer
+<div class="menu-button" @onclick="ToggleMenu">
+    ☰
+</div>
+
+@if (isOpen)
+{
+    <div class="overlay" @onclick="CloseMenu"></div>
+}
+
+<div class="side-menu @(isOpen ? "open" : "")">
+
+    <div class="menu-header">
+        <div class="logo-icon"></div>
+        <div class="app-title">
+            Workout Planner
+        </div>
+    </div>
+
+</div>
+
+@code
+{
+    bool isOpen;
+
+    void ToggleMenu()
+    {
+        isOpen = !isOpen;
+    }
+
+    void CloseMenu()
+    {
+        isOpen = false;
+    }
+}

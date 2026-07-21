@@ -1,0 +1,162 @@
+﻿@using ApexCharts
+@using WorkoutPlanner.Web.Models
+
+<div class="modal-overlay"
+     @onclick="OnClose">
+
+    <div class="modal-window progress-modal"
+         @onclick:stopPropagation="true">
+
+        <h2>
+            @ExerciseName
+        </h2>
+
+        <p class="chart-subtitle">
+            @ChartSubtitle
+        </p>
+
+        @if (ChartData.Any())
+        {
+            <ApexChart @key="ChartRenderKey"
+                       TItem="ProgressChartPoint"
+                       Height="350"
+                       Options="ChartOptions">
+
+                <ApexPointSeries TItem="ProgressChartPoint"
+                             Items="ChartData"
+                                 Name="@ChartSeriesName"
+                                 SeriesType="SeriesType.Line"
+                                 ShowDataLabels="true"
+                                 XValue="e => e.Label"
+                                 YValue="e => e.Percent" />
+
+            </ApexChart>
+
+        @if (ChartData.Count == 1)
+            {
+                <div class="chart-scale-note">
+                    @SinglePointNote
+                </div>
+            }
+
+            <div class="progress-summary">
+
+                <div class="summary-card">
+
+                    <div class="card-icon growth-icon @GrowthColorClass">
+                        📈
+                    </div>
+
+                    <div class="card-content">
+
+                        <div class="card-title">
+                            Рост
+                        </div>
+
+                        <div class="card-value @GrowthColorClass">
+                            @(LastTrend > 0 ? "+" : "")@LastTrend%
+                        </div>
+
+                        <div class="card-subtitle">
+                            Относительно последней тренировки
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="summary-card">
+
+                    <div class="card-icon best-icon">
+                        🎯
+                    </div>
+
+                    <div class="card-content">
+
+                        <div class="card-title">
+                            Лучший результат
+                        </div>
+
+                        <div class="card-value purple">
+                            @ExerciseGrowth%
+                        </div>
+
+                        <div class="card-subtitle">
+                            Максимальный рост
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="summary-card">
+
+                    <div class="card-icon workout-icon">
+                        📅
+                    </div>
+
+                    <div class="card-content">
+
+                        <div class="card-title">
+                            Тренировок
+                        </div>
+
+                        <div class="card-value blue">
+                            @ExerciseCount
+                        </div>
+
+                        <div class="card-subtitle">
+                            Всего в истории
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <p>
+                @NoDataText
+            </p>
+        }
+
+        <button class="secondary-button"
+                @onclick="OnClose">
+            @CloseButtonText
+        </button>
+    </div>
+
+</div>
+
+@code
+{
+    [Parameter] public string? ExerciseName { get; set; }
+
+    [Parameter] public List<ProgressChartPoint> ChartData { get; set; } = new();
+
+    [Parameter] public ApexChartOptions<ProgressChartPoint> ChartOptions { get; set; } = default!;
+
+    [Parameter] public int ChartRenderKey { get; set; }
+
+    [Parameter] public decimal ExerciseGrowth { get; set; }
+
+    [Parameter] public int ExerciseCount { get; set; }
+
+    [Parameter] public decimal LastTrend { get; set; }
+
+    [Parameter] public string GrowthColorClass { get; set; } = "";
+
+    [Parameter] public string ChartSubtitle { get; set; } = "";
+
+    [Parameter] public string ChartSeriesName { get; set; } = "";
+
+    [Parameter] public string SinglePointNote { get; set; } = "";
+
+    [Parameter] public string NoDataText { get; set; } = "";
+
+    [Parameter] public string CloseButtonText { get; set; } = "";
+
+    [Parameter] public EventCallback OnClose { get; set; }
+}

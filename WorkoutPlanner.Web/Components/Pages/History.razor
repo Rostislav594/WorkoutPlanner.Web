@@ -1,0 +1,192 @@
+@page "/history"
+@rendermode InteractiveServer
+
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+
+@inject HistoryService HistoryService
+
+<div class="page-content">
+    <h1 style="text-align:center;">
+    История  
+ </h1>
+
+@if (HistoryItems.Count == 0)
+{
+    <p>История пока пуста.</p>
+}
+else
+{
+    @foreach (var item in HistoryItems)
+    {
+        <div class="history-card"
+             @onclick="() => OpenHistory(item)">
+
+            <div class="history-title">
+                @item.WorkoutName
+            </div>
+
+            <div class="history-date">
+                @item.Date.ToString("dd.MM.yyyy HH:mm")
+            </div>
+
+        </div>
+    }
+}
+
+@if (SelectedHistory != null)
+{
+    <div class="modal-overlay"
+         @onclick="CloseWindow">
+
+        <div class="modal-window"
+             @onclick:stopPropagation="true">
+
+            <div class="history-modal-header">
+
+                <h2>
+                    @SelectedHistory.WorkoutName
+                </h2>
+
+                <div class="history-popup-date">
+                    @SelectedHistory.Date.ToString("dd.MM.yyyy HH:mm")
+                </div>
+
+            </div>
+
+            <div class="history-details">
+
+                @foreach (var line in SelectedHistory.Details.Split('\n'))
+                {
+                    var parts = line.Split('|');
+
+                    if (parts.Length < 3)
+                    {
+                        continue;
+                    }
+
+                    <div class="history-exercise">
+
+                        <div class="history-exercise-name">
+                            @parts[0]
+                        </div>
+
+                        <div class="history-exercise-weight">
+                            @parts[1]
+                        </div>
+
+                        <div class="history-exercise-status">
+                            @parts[2]
+                        </div>
+
+                        @if (parts.Length > 3)
+                        {
+                            <div class="history-sets">
+
+                                @foreach (var set in ParseSets(parts))
+                                {
+                                    <label>
+                                        <input type="checkbox"
+                                               checked="@set.Completed"
+                                               disabled />
+                                        @set.Repetitions
+                                    </label>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+            <div class="history-buttons">
+
+                <button class="danger-button"
+                        @onclick="DeleteHistory">
+                    🗑️ Удалить
+                </button>
+
+                <button class="secondary-button"
+                        @onclick="CloseWindow">
+                    Закрыть
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+    }
+</div>
+
+@code
+{
+    List<WorkoutHistory> HistoryItems = new();
+
+    WorkoutHistory? SelectedHistory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHistory();
+    }
+
+    async Task LoadHistory()
+    {
+        HistoryItems =
+            await HistoryService
+                .GetHistoryAsync();
+    }
+
+    void OpenHistory(
+        WorkoutHistory history)
+    {
+        SelectedHistory = history;
+    }
+
+    void CloseWindow()
+    {
+        SelectedHistory = null;
+    }
+
+    async Task DeleteHistory()
+    {
+        if (SelectedHistory == null)
+            return;
+
+        await HistoryService
+            .DeleteHistoryAsync(
+                SelectedHistory.Id);
+
+        SelectedHistory = null;
+
+        await LoadHistory();
+    }
+
+    IEnumerable<(string Repetitions, bool Completed)> ParseSets(string[] parts)
+    {
+        // Current format: repetition:completed for each dynamic set.
+        if (parts.Skip(3).All(x => x.Contains(':')))
+        {
+            foreach (var part in parts.Skip(3))
+            {
+                var setParts = part.Split(':', 2);
+                if (bool.TryParse(setParts[1], out var completed))
+                {
+                    yield return (setParts[0], completed);
+                }
+            }
+
+            yield break;
+        }
+
+        // Legacy format: three repetitions followed by three flags.
+        if (parts.Length >= 9)
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                _ = bool.TryParse(parts[i + 6], out var completed);
+                yield return (parts[i + 3], completed);
+            }
+        }
+    }}

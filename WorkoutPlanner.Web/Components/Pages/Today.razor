@@ -1,0 +1,411 @@
+@page "/today"
+@rendermode InteractiveServer
+
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+@using Microsoft.JSInterop
+
+@inject HistoryService HistoryService
+@inject TodayWorkoutService TodayWorkoutService
+@inject ExerciseService ExerciseService
+@inject WorkoutDayService WorkoutDayService
+@inject IJSRuntime JS
+@inject ProgressService ProgressService
+
+<div class="page-content">
+
+    <div class="today-header">
+
+        <h1 class="today-title">
+            Сегодня
+        </h1>
+
+        <div class="today-date">
+            @DateTime.Now.ToString("dd MMMM, dddd")
+        </div>
+
+        @if (TodayWorkout != null)
+        {
+            <div class="workout-chip">
+
+                <span class="material-symbols-rounded">
+                    fitness_center
+                </span>
+
+                <span>@TodayWorkout.WorkoutName</span>
+
+            </div>
+        }
+
+    </div>
+
+    @if (TodayWorkout == null)
+    {
+        <div class="no-workout-container">
+
+            <div class="no-workout-text">
+                На сегодня тренировка не назначена.
+            </div>
+
+            <img src="images/character-shrug.png"
+                 class="no-workout-character"
+                 alt="Нет тренировки" />
+
+        </div>
+    }
+    else
+    {
+        <div class="progress-section">
+
+            <div class="progress-text">
+                Выполнено @CompletedExercises из @Exercises.Count
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill"
+                     style="width:@ProgressPercent%">
+                </div>
+            </div>
+
+        </div>
+
+        @foreach (var exercise in Exercises)
+        {
+            <div class="exercise-card @(exercise.IsCompleted ? "exercise-completed" : "")">
+
+                <div class="exercise-header">
+                    <h3>@exercise.Name</h3>
+                </div>
+
+                <div class="exercise-info">
+                    <span>
+                        @exercise.CurrentWeight кг
+
+                        @if (exercise.IsLastLevel)
+                        {
+                            <text> → @exercise.NextWeight кг</text>
+                        }
+                    </span>
+                </div>
+
+                <div class="sets-block">
+
+                    @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                    {
+                        <label>
+
+                            <input type="checkbox"
+                                   checked="@set.Completed"
+                                   @onchange="async e => await SetCompleted(set, (bool)e.Value!)" />
+
+                            @set.Repetitions
+
+                        </label>
+                    }
+
+                </div>
+
+                <div class="exercise-footer">
+
+                    <span class="status-badge"
+                          style="color:@exercise.StatusColor">
+                        @(exercise.Status switch
+                        {
+                            ExerciseStatus.Easy => "😊 Легко",
+                            ExerciseStatus.Medium => "😐 Средне",
+                            ExerciseStatus.Hard => "🥵 Тяжело",
+                            ExerciseStatus.Max => "🤯 Предел",
+                            _ => "Не оценено"
+                        })
+                    </span>
+
+                    <button class="status-button"
+                            @onclick="() => OpenStatusWindow(exercise)">
+                        ⚡
+                    </button>
+
+                </div>
+
+            </div>
+        }
+
+        <button class="finish-button"
+                @onclick="FinishWorkout">
+            Завершить тренировку
+        </button>
+    }
+   
+    @if (StatusExercise != null)
+    {
+        <div class="modal-overlay"
+             @onclick="CloseStatusWindow">
+
+            <div class="modal-window"
+                 @onclick:stopPropagation="true">
+
+                <h3>Оцените выполнение</h3>
+
+                    <div class="status-option"
+                         style="cursor:pointer"
+                         @onclick="() => SetStatus(ExerciseStatus.Easy)">
+
+                        <div class="status-title">
+                            😊 Легко
+                        </div>
+
+                        <div class="status-description">
+                            Большой запас сил
+                        </div>
+
+                    </div>
+
+                    <div class="status-option"
+                         style="cursor:pointer"
+                         @onclick="() => SetStatus(ExerciseStatus.Medium)">
+                        <div class="status-title">
+                            😐 Средне
+                        </div>
+                        <div class="status-description">
+                            Ещё были силы
+                        </div>
+                    </div>
+
+                    <div class="status-option"
+                         style="cursor:pointer"
+                         @onclick="() => SetStatus(ExerciseStatus.Hard)">
+                        <div class="status-title">
+                            🥵 Тяжело
+                        </div>
+                        <div class="status-description">
+                            Последние повторы дались тяжело
+                        </div>
+                    </div>
+
+                    <div class="status-option"
+                         style="cursor:pointer"
+                         @onclick="() => SetStatus(ExerciseStatus.Max)">
+                        <div class="status-title">
+                            🤯 Предел
+                        </div>
+                        <div class="status-description">
+                            Почти отказ
+                        </div>
+                    </div>
+                    <button class="secondary-button"
+                            @onclick="CloseStatusWindow">
+                        ❌ Отмена
+                    </button>
+
+            </div>
+
+        </div>
+    
+}
+</div>
+@if (ShowStatusWarning)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h2>⚠️ Не все упражнения оценены</h2>
+
+            <p>
+                Пожалуйста, оцените все упражнения
+                перед завершением тренировки.
+            </p>
+
+            <button class="secondary-button"
+                    @onclick="CloseWarning">
+                Понятно
+            </button>
+
+        </div>
+
+    </div>
+}
+@if (ShowWorkoutCompleted)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window workout-completed-window">
+
+            <div class="completed-icon">
+                🏆
+            </div>
+
+            <h2>
+                Тренировка завершена!
+            </h2>
+
+            <div class="completed-workout-name">
+                @TodayWorkout?.WorkoutName
+            </div>
+
+            <div class="completed-stats">
+
+                <div class="completed-stat">
+                    ✅ Упражнений:
+                    <b>@Exercises.Count</b>
+                </div>
+
+                <div class="completed-stat">
+                    📈 Прогресс сохранён
+                </div>
+
+                <div class="completed-stat">
+                    📚 История обновлена
+                </div>
+
+            </div>
+
+            <div class="completed-message">
+                Отличная работа 💪
+            </div>
+
+            <button class="secondary-button"
+                    @onclick="CloseCompletedWindow">
+                Закрыть
+            </button>
+
+        </div>
+
+    </div>
+}
+
+@code
+{
+    Exercise? StatusExercise;
+    bool ShowWorkoutCompleted = false;
+    bool ShowStatusWarning = false;
+    TrainingPlan? TodayWorkout;
+    List<Exercise> Exercises = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TodayWorkout =
+            await TodayWorkoutService
+                .GetTodayWorkoutAsync();
+
+        if (TodayWorkout != null)
+        {
+            Exercises =
+                await ExerciseService
+                    .GetExercisesAsync(
+                        TodayWorkout.WorkoutName);
+        }
+    }
+
+    void OpenStatusWindow(Exercise exercise)
+    {
+        StatusExercise = exercise;
+    }
+
+    void CloseStatusWindow()
+    {
+        StatusExercise = null;
+    }
+
+    async Task SetStatus(ExerciseStatus status)
+    {
+        if (StatusExercise == null)
+            return;
+
+        StatusExercise.Status = status;
+
+        await ExerciseService
+            .SaveChangesAsync();
+
+        StatusExercise = null;
+    }
+
+    async Task FinishWorkout()
+    {
+        if (TodayWorkout == null)
+            return;
+        if (Exercises.Any(x =>
+        x.Status == ExerciseStatus.NotCompleted))
+        {
+            ShowStatusWarning = true;
+            return;
+        }
+        if (Exercises.Any(x =>
+        x.Status == ExerciseStatus.NotCompleted))
+        {
+            await JS.InvokeVoidAsync(
+                "alert",
+                "Оцените все упражнения перед завершением тренировки");
+
+            return;
+        }
+        var details = string.Join("\n",
+            Exercises.Select(x =>
+            {
+                var sets = string.Join("|",
+                    x.Sets
+                        .OrderBy(set => set.SetNumber)
+                        .Select(set => $"{set.Repetitions}:{set.Completed}"));
+
+                return $"{x.Name}|{x.CurrentWeight} кг|{x.StatusText}|{sets}";
+            }));
+
+        await HistoryService.AddHistoryAsync(
+            new WorkoutHistory
+            {
+                WorkoutName =
+                    TodayWorkout.WorkoutName,
+
+                Date = DateTime.Now,
+
+                Summary = "",
+
+                Details = details
+            });
+            await ProgressService.SaveProgressAsync(
+            TodayWorkout.WorkoutName );
+            
+
+        foreach (var exercise in Exercises)
+        {
+            WorkoutProgressionService
+                .ProgressExercise(exercise);
+        }
+        await ExerciseService.SaveChangesAsync();
+
+        await WorkoutDayService
+            .CompleteTodayWorkoutAsync();
+
+        ShowWorkoutCompleted = true;
+    }
+    void CloseCompletedWindow()
+    {
+        ShowWorkoutCompleted = false;
+
+        TodayWorkout = null;
+
+        Exercises.Clear();
+    }
+
+    async Task SetCompleted(
+    ExerciseTemplateSet set,
+    bool value)
+    {
+        set.Completed = value;
+
+        await ExerciseService.SaveChangesAsync();
+    }
+
+    void CloseWarning()
+    {
+        ShowStatusWarning = false;
+    }
+
+    int CompletedExercises =>
+    Exercises.Count(x => x.IsCompleted);
+
+    double ProgressPercent =>
+        Exercises.Count == 0
+            ? 0
+            : CompletedExercises * 100.0 / Exercises.Count;
+}
+

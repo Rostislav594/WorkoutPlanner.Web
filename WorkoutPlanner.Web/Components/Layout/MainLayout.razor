@@ -1,0 +1,44 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+
+<NavMenu />
+
+@if (ShowHomeButton)
+{
+    <a class="home-nav-button"
+       href="">
+        На главную
+    </a>
+}
+
+<div class="page-transition" @key="CurrentPageKey">
+    @Body
+</div>
+
+@code {
+    bool ShowHomeButton =>
+        !string.IsNullOrWhiteSpace(
+            Navigation.ToBaseRelativePath(Navigation.Uri));
+
+    string CurrentPageKey =>
+    Navigation.ToBaseRelativePath(Navigation.Uri);
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    void OnLocationChanged(
+        object? sender,
+        LocationChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+    
+}

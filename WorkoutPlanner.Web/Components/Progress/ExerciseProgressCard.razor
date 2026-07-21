@@ -1,0 +1,18 @@
+﻿<div class="progress-card"
+     @onclick="OnClick">
+
+    <div class="progress-card-title">
+        @Title
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+}

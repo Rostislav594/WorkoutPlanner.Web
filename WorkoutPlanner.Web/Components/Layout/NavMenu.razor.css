@@ -1,0 +1,95 @@
+.menu-button {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 2000;
+    font-size: 36px;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s ease;
+}
+
+    .menu-button:hover {
+        transform: scale(1.1);
+    }
+
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -260px;
+    width: 240px;
+    height: 100vh;
+    background: linear-gradient( 180deg, #050505 0%, #14002b 100% );
+    border-right: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(15px);
+    transition: left 0.35s ease, box-shadow 0.35s ease;
+    z-index: 1500;
+    padding-top: 20px;
+    box-shadow: none;
+}
+
+    .side-menu.open {
+        left: 0;
+        box-shadow: 0 0 30px rgba(255,102,0,0.25);
+    }
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.55);
+    z-index: 1400;
+}
+
+.menu-header {
+    text-align: center;
+    padding-top: 80px;
+    margin-bottom: 30px;
+}
+
+.logo-icon {
+    font-size: 38px;
+}
+
+.app-title {
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 10px;
+    line-height: 1.2;
+}
+
+.nav-item {
+    margin: 8px 10px;
+}
+
+    .nav-item ::deep a,
+    .nav-item ::deep a:visited,
+    .nav-item ::deep a:link {
+        display: flex;
+        align-items: center;
+        color: white !important;
+        text-decoration: none !important;
+        padding: 14px 18px;
+        border-radius: 12px;
+        font-size: 18px;
+        transition: all 0.25s ease;
+    }
+
+        .nav-item ::deep a:hover,
+        .nav-item ::deep a:focus {
+            color: white !important;
+            text-decoration: none !important;
+            background: rgba(255,255,255,0.08);
+            transform: translateX(5px);
+        }
+
+        .nav-item ::deep a.active {
+            background: linear-gradient( 90deg, #ff6600, #ff8c00 );
+            color: white !important;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(255,140,0,0.25);
+        }

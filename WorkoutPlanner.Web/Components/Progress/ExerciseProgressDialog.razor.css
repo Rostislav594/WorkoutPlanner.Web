@@ -1,0 +1,109 @@
+.progress-modal {
+    width: 95vw;
+    max-width: 1400px;
+}
+
+.chart-subtitle {
+    color: #888;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.chart-scale-note {
+    color: #9ca3af;
+    font-size: 14px;
+    text-align: center;
+    margin-top: -8px;
+    margin-bottom: 14px;
+}
+
+.progress-summary {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.summary-card {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+}
+
+    .summary-card:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 20%;
+        height: 60%;
+        width: 1px;
+        background: #343434;
+    }
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: white;
+}
+
+.card-value {
+    font-size: 28px;
+    font-weight: 600;
+}
+
+.card-subtitle {
+    margin-top: 4px;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+.growth-icon {
+    background: rgba(63,185,80,.15);
+}
+
+.best-icon {
+    background: rgba(168,85,247,.15);
+}
+
+.workout-icon {
+    background: rgba(59,130,246,.15);
+}
+
+.green {
+    color: #3fb950;
+}
+
+.red {
+    color: #f85149;
+}
+
+.neutral {
+    color: #9ca3af;
+}
+
+.purple {
+    color: #a855f7;
+}
+
+.blue {
+    color: #60a5fa;
+}
+
+.growth-icon.green {
+    background: rgba(63,185,80,.15);
+}
+
+.growth-icon.red {
+    background: rgba(248,81,73,.15);
+}
+
+.growth-icon.neutral {
+    background: rgba(158,158,158,.15);
+}

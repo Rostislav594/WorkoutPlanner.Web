@@ -1,0 +1,302 @@
+﻿@page "/calendar"
+@rendermode InteractiveServer
+
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+
+@inject TrainingPlanService TrainingPlanService
+@inject WorkoutDayService WorkoutDayService
+
+<div class="page-content calendar-page">
+    <h1 style="text-align:center;">
+       Календарь
+    </h1>
+
+    <div class="calendar-date-block">
+
+        <label>
+            Выберите дату
+        </label>
+
+        <input type="date"
+               @bind="SelectedDate" />
+
+    </div>
+    @if (SelectedCalendarDay != null)
+{
+    <div class="modal-overlay"
+         @onclick="CloseCalendarWindow">
+
+        <div class="modal-window"
+             @onclick:stopPropagation="true">
+
+                <div class="calendar-modal-header">
+
+                    <h2>
+                        📅 @SelectedCalendarDay.Value.ToString("dd.MM.yyyy")
+                    </h2>
+
+                    @if (SelectedWorkoutDay != null)
+                    {
+                        <button class="danger-button small-delete-button"
+                                @onclick="DeleteWorkoutDay">
+                            🗑️
+                        </button>
+                    }
+
+                </div>
+
+                @if (SelectedWorkoutDay != null)
+                {
+                    var plan =
+                        TrainingPlans.FirstOrDefault(
+                            p => p.Id ==
+                            SelectedWorkoutDay.TrainingPlanId);
+
+                    <p>
+                        Тренировка:
+                    </p>
+
+                    <h3>
+                        @plan?.WorkoutName
+                    </h3>
+                }
+                else
+                {
+                    <p>
+                        Тренировка не назначена
+                    </p>
+                }
+            <button class="secondary-button"
+                    @onclick="CloseCalendarWindow">
+                Закрыть
+            </button>
+
+        </div>
+
+    </div>
+}
+
+    <h3>Назначить тренировку</h3>
+
+    <div class="workout-buttons">
+
+        <button class="workout-select-button"
+                @onclick="() => AssignWorkout(1)">
+            💪 Верх 1
+        </button>
+
+        <button class="workout-select-button"
+                @onclick="() => AssignWorkout(2)">
+            🦵 Низ 1
+        </button>
+
+        <button class="workout-select-button"
+                @onclick="() => AssignWorkout(3)">
+            💪 Верх 2
+        </button>
+
+        <button class="workout-select-button"
+                @onclick="() => AssignWorkout(4)">
+            🦵 Низ 2
+        </button>
+
+    </div>
+
+    <hr />
+
+    <div class="month-header">
+
+        <button class="month-button"
+                @onclick="PreviousMonth">
+            ◀
+        </button>
+
+        <h2 class="month-title">
+            @CurrentMonth.ToString("MMMM yyyy")
+        </h2>
+
+        <button class="month-button"
+                @onclick="NextMonth">
+            ▶
+        </button>
+
+    </div>
+
+        <div class="weekdays">
+            <div>Пн</div>
+            <div>Вт</div>
+            <div>Ср</div>
+            <div>Чт</div>
+            <div>Пт</div>
+            <div>Сб</div>
+            <div>Вс</div>
+        </div>
+        <h3>Этот месяц</h3>
+    @{
+        var firstDay =
+            new DateTime(
+                CurrentMonth.Year,
+                CurrentMonth.Month,
+                1);
+
+        int startOffset =
+            ((int)firstDay.DayOfWeek + 6) % 7;
+    }
+
+        <div class="calendar-grid">
+        @for (int i = 0; i < startOffset; i++)
+        {
+            <div class="calendar-empty"></div>
+        }
+
+        @for (int i = 1; i <= DateTime.DaysInMonth(
+                CurrentMonth.Year,
+                CurrentMonth.Month); i++)
+        {
+            var currentDate =
+                new DateTime(
+                    CurrentMonth.Year,
+                    CurrentMonth.Month,
+                    i);
+
+            var workout =
+                WorkoutDays.FirstOrDefault(x =>
+                    x.Date.Date == currentDate.Date);
+
+
+            <div class="calendar-day
+                @(workout != null ? "has-workout" : "")
+                @(currentDate.Date == DateTime.Today ? "today-day" : "")
+                @(SelectedCalendarDay == currentDate ? "selected-day" : "")"
+                 @onclick="() => OpenDay(currentDate)">
+
+                <div>
+                    @i
+                </div>
+
+                @if (workout != null)
+                {
+                    var plan =
+                        TrainingPlans.FirstOrDefault(
+                            p => p.Id == workout.TrainingPlanId);
+
+                    var markerClass =
+                        plan?.WorkoutName switch
+                        {
+                            "Верх 1" => "marker-upper1",
+                            "Низ 1" => "marker-lower1",
+                            "Верх 2" => "marker-upper2",
+                            "Низ 2" => "marker-lower2",
+                            _ => ""
+                        };
+
+                    <div class="calendar-marker @markerClass">
+
+                        @if (workout.IsCompleted)
+                        {
+                            <span>✅ </span>
+                        }
+
+                        <span class="calendar-marker-full">
+                            @plan?.WorkoutName
+                        </span>
+
+                        <span class="calendar-marker-short">
+                            @GetWorkoutShortName(plan?.WorkoutName)
+                        </span>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+        </div>
+    
+</div>
+
+@code
+{
+        DateTime SelectedDate = DateTime.Today;
+        DateTime CurrentMonth = DateTime.Today;
+
+    List<TrainingPlan> TrainingPlans = new();
+    List<WorkoutDay> WorkoutDays = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        TrainingPlans =
+            await TrainingPlanService
+                .GetTrainingPlansAsync();
+
+        WorkoutDays =
+            await WorkoutDayService
+                .GetDaysAsync();
+    }
+
+    async Task AssignWorkout(int planId)
+    {
+        await WorkoutDayService.SaveDayAsync(
+            SelectedDate,
+            planId);
+
+        WorkoutDays =
+            await WorkoutDayService
+                .GetDaysAsync();
+    }
+    DateTime? SelectedCalendarDay;
+    WorkoutDay? SelectedWorkoutDay;
+
+    void OpenDay(DateTime date)
+    {
+        SelectedDate = date;
+
+        SelectedCalendarDay = date;
+
+        SelectedWorkoutDay =
+            WorkoutDays.FirstOrDefault(x =>
+                x.Date.Date == date.Date);
+    }
+    void CloseCalendarWindow()
+    {
+        SelectedCalendarDay = null;
+        SelectedWorkoutDay = null;
+    }
+    async Task DeleteWorkoutDay()
+    {
+        if (SelectedWorkoutDay == null)
+            return;
+
+        await WorkoutDayService.DeleteDayAsync(
+            SelectedWorkoutDay.Id);
+
+        WorkoutDays =
+            await WorkoutDayService.GetDaysAsync();
+
+        CloseCalendarWindow();
+    }
+    void PreviousMonth()
+    {
+        CurrentMonth =
+            CurrentMonth.AddMonths(-1);
+    }
+
+    void NextMonth()
+    {
+        CurrentMonth =
+            CurrentMonth.AddMonths(1);
+    }
+
+    string GetWorkoutShortName(string? workoutName)
+    {
+        return workoutName switch
+        {
+            "Верх 1" => "В1",
+            "Низ 1" => "Н1",
+            "Верх 2" => "В2",
+            "Низ 2" => "Н2",
+            _ => workoutName ?? ""
+        };
+    }
+}
