@@ -1,0 +1,96 @@
+﻿.progress-workouts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.progress-card {
+    background: #1f1f1f;
+    border: 1px solid #333;
+    border-radius: 14px;
+    padding: 18px;
+    transition: .2s;
+}
+
+    .progress-card:hover {
+        transform: translateY(-2px);
+    }
+
+.progress-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.progress-card-title {
+    flex: 1;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.card-menu-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+    .card-menu-button:hover {
+        background: #323232;
+        color: white;
+    }
+
+.dialog-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+    .dialog-buttons button {
+        flex: 1;
+    }
+
+.toast-success {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translate(-50%, 20px);
+    background: #28a745;
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 8px 25px rgba(0,0,0,.35);
+    z-index: 11000;
+    opacity: 0;
+    animation: toastShow 2.5s ease forwards;
+}
+
+@keyframes toastShow {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    85% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+}

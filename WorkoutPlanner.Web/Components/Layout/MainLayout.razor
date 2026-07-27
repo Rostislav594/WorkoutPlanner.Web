@@ -7,8 +7,8 @@
 @if (ShowHomeButton)
 {
     <a class="home-nav-button"
-       href="">
-        На главную
+       href="@NavigationButtonHref">
+        @NavigationButtonText
     </a>
 }
 
@@ -17,12 +17,27 @@
 </div>
 
 @code {
-    bool ShowHomeButton =>
-        !string.IsNullOrWhiteSpace(
-            Navigation.ToBaseRelativePath(Navigation.Uri));
+    string CurrentPagePath =>
+        Navigation.ToBaseRelativePath(Navigation.Uri);
 
-    string CurrentPageKey =>
-    Navigation.ToBaseRelativePath(Navigation.Uri);
+    bool ShowHomeButton =>
+        !string.IsNullOrWhiteSpace(CurrentPagePath);
+
+    bool IsProgressDetailsPage =>
+        CurrentPagePath.Equals("progress/workouts", StringComparison.OrdinalIgnoreCase) ||
+        CurrentPagePath.Equals("progress/exercises", StringComparison.OrdinalIgnoreCase);
+
+    string NavigationButtonHref =>
+        IsProgressDetailsPage
+            ? "progress"
+            : "";
+
+    string NavigationButtonText =>
+        IsProgressDetailsPage
+            ? "Назад"
+            : "На главную";
+
+    string CurrentPageKey => CurrentPagePath;
 
     protected override void OnInitialized()
     {
@@ -40,5 +55,4 @@
     {
         Navigation.LocationChanged -= OnLocationChanged;
     }
-    
 }

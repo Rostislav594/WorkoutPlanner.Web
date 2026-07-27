@@ -1,0 +1,52 @@
+.workout-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.workout-picker-card {
+    background: #252525;
+    border: 1px solid #3a3a3a;
+    border-radius: 12px;
+    padding: 10px 14px;
+    min-height: 70px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: .2s;
+}
+
+    .workout-picker-card:hover {
+        border-color: #4CAF50;
+        transform: translateY(-2px);
+    }
+
+.workout-picker-name {
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.cancel-picker-button {
+    margin-top: 18px;
+}
+
+.workout-picker-title {
+    margin-bottom: 22px;
+}
+
+.workout-picker-footer {
+    margin-top: 24px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+    .modal-actions button {
+        flex: 1;
+    }

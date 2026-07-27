@@ -1,0 +1,443 @@
+﻿@page "/progress/exercises"
+@rendermode InteractiveServer
+
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+
+@inject ProgressService ProgressService
+
+<div class="page-content">
+
+    <h1 style="text-align:center;">
+        Прогресс упражнений
+    </h1>
+
+    <div class="progress-workouts">
+
+        @foreach (var workout in WorkoutCards)
+        {
+            <WorkoutProgressCard Title="@workout.Name"
+                                 OnClick="@(() => OpenExerciseList(workout.Name))" />
+        }
+
+    </div>
+
+    @if (SelectedExerciseWorkout != null)
+    {
+        <div class="modal-overlay"
+             @onclick="CloseExerciseList">
+
+            <div class="modal-window"
+                 @onclick:stopPropagation="true">
+
+                <h2>
+                    @SelectedExerciseWorkout
+                </h2>
+
+                @if (!WorkoutExercises.Any())
+                {
+                    <p>@NoDataText</p>
+                }
+                else
+                {
+                    @foreach (var exercise in WorkoutExercises)
+                    {
+                        <div class="progress-card">
+
+                            <div class="progress-card-header">
+
+                                <div class="progress-card-title"
+                                     @onclick="() => OpenExerciseProgress(exercise)">
+                                    📈 @exercise
+                                </div>
+
+                                <button class="card-menu-button"
+                                        @onclick:stopPropagation="true"
+                                        @onclick="() => ShowExerciseReset(exercise)">
+                                    ⋮
+                                </button>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+
+            </div>
+
+        </div>
+    }
+
+    @if (SelectedExercise != null)
+    {
+        <ExerciseProgressDialog ExerciseName="@SelectedExercise"
+                                ChartData="@CurrentChartData"
+                                ChartOptions="@ChartOptions"
+                                ChartRenderKey="@ChartRenderKey"
+                                ExerciseGrowth="@ExerciseGrowth"
+                                ExerciseCount="@ExerciseCount"
+                                LastTrend="@LastTrend"
+                                GrowthColorClass="@GrowthColorClass"
+                                ChartSubtitle="@ChartSubtitle"
+                                ChartSeriesName="@ChartSeriesName"
+                                SinglePointNote="@SinglePointNote"
+                                NoDataText="@NoDataText"
+                                CloseButtonText="@CloseButtonText"
+                                OnClose="CloseExerciseProgress" />
+    }
+
+    @if (ShowExerciseResetDialog)
+    {
+        <div class="modal-overlay"
+             @onclick="CloseExerciseReset">
+
+            <div class="modal-window"
+                 @onclick:stopPropagation="true">
+
+                <h2>
+                    Очистить историю упражнения?
+                </h2>
+
+                <p>
+                    Будет удалена история упражнения
+                    <strong>@SelectedExerciseForReset</strong>
+                    в тренировке
+                    <strong>@SelectedExerciseWorkout</strong>.
+                </p>
+
+                <p style="margin-top:10px;color:#999;">
+                    Это действие нельзя отменить.
+                </p>
+
+                <div class="dialog-buttons">
+
+                    <button class="secondary-button"
+                            @onclick="CloseExerciseReset">
+                        @CancelButtonText
+                    </button>
+
+                    <button class="danger-button"
+                            @onclick="ResetExerciseProgress">
+                        @DeleteButtonText
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    @if (ShowToast)
+    {
+        <div class="toast-success">
+            ✅ @ToastMessage
+        </div>
+    }
+
+</div>
+
+@code
+{
+    string? SelectedExercise;
+    string? SelectedExerciseWorkout;
+    string? SelectedExerciseForReset;
+    string ToastMessage = "";
+
+    int ChartRenderKey;
+
+    bool ShowExerciseResetDialog;
+    bool ShowToast;
+
+    decimal ChartAxisMin = 0;
+    decimal ChartAxisMax = 5;
+
+    decimal ExerciseGrowth =>
+        CurrentChartData.Any()
+            ? CurrentChartData.Max(x => x.Percent)
+            : 0;
+
+    int ExerciseCount => CurrentChartData.Count;
+
+    string GrowthColorClass =>
+        LastTrend > 0
+            ? "green"
+            : LastTrend < 0
+                ? "red"
+                : "neutral";
+
+    decimal LastTrend
+    {
+        get
+        {
+            if (CurrentChartData.Count < 2)
+            {
+                return 0;
+            }
+
+            return Math.Round(
+                CurrentChartData[^1].Percent - CurrentChartData[^2].Percent,
+                2);
+        }
+    }
+
+    List<string> WorkoutExercises = new();
+    List<ProgressChartPoint> CurrentChartData = new();
+
+    List<WorkoutCardItem> WorkoutCards =
+    [
+        new() { Name = "Верх 1" },
+        new() { Name = "Низ 1" },
+        new() { Name = "Верх 2" },
+        new() { Name = "Низ 2" }
+    ];
+
+    ApexChartOptions<ProgressChartPoint> ChartOptions =
+        BuildChartOptions(0, 5);
+
+    const string ChartSeriesName = "Прогресс, %";
+    const string SinglePointNote = "Пока есть только одна точка. Кривая появится после второй сохраненной тренировки.";
+    const string NoDataText = "Данных пока нет";
+    const string CloseButtonText = "Закрыть";
+    const string ChartSubtitle = "Динамика роста упражнения";
+    const string DeleteButtonText = "Удалить";
+    const string CancelButtonText = "Отмена";
+
+    async Task OpenExerciseList(string workoutName)
+    {
+        SelectedExerciseWorkout = workoutName;
+        WorkoutExercises = await ProgressService.GetWorkoutExercisesAsync(workoutName);
+    }
+
+    async Task OpenExerciseProgress(string exerciseName)
+    {
+        if (string.IsNullOrWhiteSpace(SelectedExerciseWorkout))
+        {
+            return;
+        }
+
+        SelectedExercise = exerciseName;
+
+        CurrentChartData =
+            await ProgressService.GetExerciseChartAsync(
+                SelectedExerciseWorkout,
+                exerciseName);
+
+        UpdateChartScale();
+    }
+
+    async Task ResetExerciseProgress()
+    {
+        ShowExerciseResetDialog = false;
+
+        if (SelectedExerciseWorkout != null &&
+            SelectedExerciseForReset != null)
+        {
+            await ProgressService.ClearExerciseProgressAsync(
+                SelectedExerciseWorkout,
+                SelectedExerciseForReset);
+
+            WorkoutExercises =
+                await ProgressService.GetWorkoutExercisesAsync(
+                    SelectedExerciseWorkout);
+
+            if (SelectedExercise == SelectedExerciseForReset)
+            {
+                CloseExerciseProgress();
+            }
+
+            await ShowSuccessToast("История упражнения успешно удалена.");
+        }
+
+        SelectedExerciseForReset = null;
+    }
+
+    void CloseExerciseList()
+    {
+        SelectedExerciseWorkout = null;
+        WorkoutExercises.Clear();
+    }
+
+    void CloseExerciseProgress()
+    {
+        SelectedExercise = null;
+        CurrentChartData.Clear();
+        ResetChartScale();
+    }
+
+    void ShowExerciseReset(string exerciseName)
+    {
+        SelectedExerciseForReset = exerciseName;
+        ShowExerciseResetDialog = true;
+    }
+
+    void CloseExerciseReset()
+    {
+        ShowExerciseResetDialog = false;
+        SelectedExerciseForReset = null;
+    }
+
+    async Task ShowSuccessToast(string message)
+    {
+        ToastMessage = message;
+        ShowToast = true;
+
+        StateHasChanged();
+
+        await Task.Delay(2500);
+
+        ShowToast = false;
+
+        StateHasChanged();
+    }
+
+    void UpdateChartScale()
+    {
+        if (!CurrentChartData.Any())
+        {
+            ResetChartScale();
+            return;
+        }
+
+        var minPercent = CurrentChartData.Min(x => x.Percent);
+        var maxPercent = CurrentChartData.Max(x => x.Percent);
+
+        ChartAxisMin =
+            minPercent < 0
+                ? -GetNiceAxisLimit(Math.Abs(minPercent) * 1.25m)
+                : 0;
+
+        ChartAxisMax =
+            maxPercent > 0
+                ? GetNiceAxisLimit(maxPercent * 1.25m)
+                : 5;
+
+        if (ChartAxisMax < 3 && maxPercent > 0)
+        {
+            ChartAxisMax = 3;
+        }
+
+        ChartOptions = BuildChartOptions(ChartAxisMin, ChartAxisMax);
+        ChartRenderKey++;
+    }
+
+    void ResetChartScale()
+    {
+        ChartAxisMin = 0;
+        ChartAxisMax = 5;
+        ChartOptions = BuildChartOptions(0, 5);
+        ChartRenderKey++;
+    }
+
+    static ApexChartOptions<ProgressChartPoint> BuildChartOptions(
+        decimal min,
+        decimal max)
+    {
+        return new()
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Line,
+                Toolbar = new Toolbar { Show = false },
+                Zoom = new Zoom { Enabled = false }
+            },
+            Colors = new List<string> { "#3fb950" },
+            DataLabels = new DataLabels
+            {
+                Enabled = true,
+                OffsetY = -14,
+                Formatter = @"function(value) {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+
+                    const rounded = Math.round(value * 100) / 100;
+                    const text = Number.isInteger(rounded)
+                        ? rounded.toFixed(0)
+                        : rounded.toString();
+
+                    return text + '%';
+                }",
+                Background = new DataLabelsBackground { Enabled = false },
+                Style = new DataLabelsStyle
+                {
+                    FontSize = "14px",
+                    FontWeight = "700",
+                    Colors = new List<string> { "#5cff6d" }
+                }
+            },
+            Stroke = new Stroke
+            {
+                Show = true,
+                Curve = Curve.Straight,
+                Width = 4
+            },
+            Fill = new Fill
+            {
+                Type = FillType.Solid,
+                Opacity = 1
+            },
+            Markers = new Markers
+            {
+                Size = 6,
+                StrokeWidth = 2,
+                StrokeColors = new List<string> { "#ffffff" }
+            },
+            Yaxis =
+            [
+                new()
+                {
+                    Min = (double)min,
+                    Max = (double)max,
+                    Labels = new YAxisLabels
+                    {
+                        Formatter = @"function(value) {
+                            return value + '%';
+                        }",
+                        Style = new AxisLabelStyle
+                        {
+                            Colors = new List<string> { "#d0d0d0" }
+                        }
+                    }
+                }
+            ],
+            Tooltip = new Tooltip { Enabled = false },
+            Xaxis = new XAxis
+            {
+                Labels = new XAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = new List<string> { "#d0d0d0" }
+                    }
+                }
+            },
+            Grid = new Grid { BorderColor = "#202020" }
+        };
+    }
+
+    static decimal GetNiceAxisLimit(decimal value)
+    {
+        if (value <= 0)
+        {
+            return 1;
+        }
+
+        var magnitude =
+            (decimal)Math.Pow(
+                10,
+                Math.Floor(
+                    Math.Log10((double)value)));
+
+        var normalized = value / magnitude;
+
+        var niceNormalized =
+            normalized <= 1 ? 1 :
+            normalized <= 2 ? 2 :
+            normalized <= 3 ? 3 :
+            normalized <= 5 ? 5 :
+            10;
+
+        return niceNormalized * magnitude;
+    }
+}

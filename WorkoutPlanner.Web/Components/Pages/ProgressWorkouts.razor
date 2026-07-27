@@ -1,0 +1,427 @@
+﻿@page "/progress/workouts"
+@rendermode InteractiveServer
+
+@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Services
+
+@inject ProgressService ProgressService
+
+<div class="page-content">
+
+    <h1 style="text-align:center;">
+        Прогресс тренировок
+    </h1>
+
+    @if (SelectedWorkoutMenu != null)
+    {
+        <div class="context-menu-overlay"
+             @onclick="CloseWorkoutMenu"></div>
+    }
+
+    <div class="progress-workouts">
+
+        @foreach (var workout in WorkoutCards)
+        {
+            <div class="progress-card-wrapper">
+
+                <WorkoutProgressCard Title="@workout.Name"
+                                     OnClick="@(() => OpenProgress(workout.Name))"
+                                     OnMenuClick="@(() => OpenWorkoutMenu(workout.Name))" />
+
+                @if (SelectedWorkoutMenu == workout.Name)
+                {
+                    <div class="context-menu">
+
+                        <button class="context-item"
+                                @onclick="OpenWorkoutClearDialog">
+                            🗑 Очистить историю
+                        </button>
+
+                    </div>
+                }
+
+            </div>
+        }
+
+    </div>
+
+    @if (SelectedWorkout != null)
+    {
+        <WorkoutProgressDialog WorkoutName="@SelectedWorkout"
+                               WorkoutHistory="@WorkoutHistory"
+                               ChartData="@CurrentChartData"
+                               ChartOptions="@ChartOptions"
+                               ChartRenderKey="@ChartRenderKey"
+                               BestGrowth="@BestGrowth"
+                               LastTrend="@LastTrend"
+                               GrowthColorClass="@GrowthColorClass"
+                               ChartSubtitle="@ChartSubtitle"
+                               ChartSeriesName="@ChartSeriesName"
+                               SinglePointNote="@SinglePointNote"
+                               NoDataText="@NoDataText"
+                               CloseButtonText="@CloseButtonText"
+                               OnClose="CloseProgress" />
+    }
+
+    @if (ShowClearProgressDialog)
+    {
+        <div class="modal-overlay"
+             @onclick="CloseClearDialog">
+
+            <div class="modal-window"
+                 @onclick:stopPropagation="true">
+
+                <h2>
+                    Очистить историю тренировки?
+                </h2>
+
+                <p>
+                    Будет удалена вся история тренировки
+                    <strong>@WorkoutToClear</strong>.
+                </p>
+
+                <p style="margin-top:10px;color:#999;">
+                    Это действие нельзя отменить.
+                </p>
+
+                <div class="dialog-buttons">
+
+                    <button class="secondary-button"
+                            @onclick="CloseClearDialog">
+                        @CancelButtonText
+                    </button>
+
+                    <button class="danger-button"
+                            @onclick="ClearProgress">
+                        @DeleteButtonText
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+
+    @if (ShowToast)
+    {
+        <div class="toast-success">
+            ✅ @ToastMessage
+        </div>
+    }
+
+</div>
+
+@code
+{
+    string? SelectedWorkout;
+    string? SelectedWorkoutMenu;
+    string? WorkoutToClear;
+    string ToastMessage = "";
+
+    int ChartRenderKey;
+
+    bool ShowClearProgressDialog;
+    bool ShowToast;
+
+    decimal ChartAxisMin = 0;
+    decimal ChartAxisMax = 5;
+
+    decimal BestGrowth =>
+        CurrentChartData.Any()
+            ? CurrentChartData.Max(x => x.Percent)
+            : 0;
+
+    string GrowthColorClass =>
+        LastTrend > 0
+            ? "green"
+            : LastTrend < 0
+                ? "red"
+                : "neutral";
+
+    decimal LastTrend
+    {
+        get
+        {
+            if (CurrentChartData.Count < 2)
+            {
+                return 0;
+            }
+
+            return Math.Round(
+                CurrentChartData[^1].Percent - CurrentChartData[^2].Percent,
+                2);
+        }
+    }
+
+    List<ProgressSnapshot> WorkoutHistory = new();
+    List<ProgressChartPoint> CurrentChartData = new();
+
+    List<WorkoutCardItem> WorkoutCards =
+    [
+        new() { Name = "Верх 1" },
+        new() { Name = "Низ 1" },
+        new() { Name = "Верх 2" },
+        new() { Name = "Низ 2" }
+    ];
+
+    ApexChartOptions<ProgressChartPoint> ChartOptions =
+        BuildChartOptions(0, 5);
+
+    const string ChartSeriesName = "Прогресс, %";
+    const string SinglePointNote = "Пока есть только одна точка. Кривая появится после второй сохраненной тренировки.";
+    const string NoDataText = "Данных пока нет";
+    const string CloseButtonText = "Закрыть";
+    const string ChartSubtitle = "Динамика роста тренировочного индекса";
+    const string DeleteButtonText = "Удалить";
+    const string CancelButtonText = "Отмена";
+
+    async Task OpenProgress(string workoutName)
+    {
+        SelectedWorkoutMenu = null;
+        SelectedWorkout = workoutName;
+
+        WorkoutHistory =
+            await ProgressService.GetWorkoutProgressAsync(workoutName);
+
+        CurrentChartData.Clear();
+
+        if (!WorkoutHistory.Any())
+        {
+            ResetChartScale();
+            return;
+        }
+
+        var baseScore = WorkoutHistory.First().Score;
+
+        foreach (var item in WorkoutHistory)
+        {
+            var percent =
+                baseScore <= 0
+                    ? 0
+                    : ((item.Score - baseScore) / baseScore) * 100;
+
+            CurrentChartData.Add(
+                new ProgressChartPoint
+                {
+                    Label = item.Date.ToString("dd.MM"),
+                    Percent = Math.Round((decimal)percent, 2)
+                });
+        }
+
+        UpdateChartScale();
+    }
+
+    async Task ClearProgress()
+    {
+        if (!string.IsNullOrEmpty(WorkoutToClear))
+        {
+            await ProgressService.ClearWorkoutProgressAsync(WorkoutToClear);
+
+            if (SelectedWorkout == WorkoutToClear)
+            {
+                CloseProgress();
+            }
+        }
+
+        CloseClearDialog();
+        await ShowSuccessToast("История успешно удалена.");
+    }
+
+    async Task ShowSuccessToast(string message)
+    {
+        ToastMessage = message;
+        ShowToast = true;
+
+        StateHasChanged();
+
+        await Task.Delay(2500);
+
+        ShowToast = false;
+
+        StateHasChanged();
+    }
+
+    void OpenWorkoutMenu(string workoutName)
+    {
+        WorkoutToClear = workoutName;
+        SelectedWorkoutMenu = workoutName;
+    }
+
+    void CloseWorkoutMenu()
+    {
+        SelectedWorkoutMenu = null;
+    }
+
+    void OpenWorkoutClearDialog()
+    {
+        SelectedWorkoutMenu = null;
+        ShowClearProgressDialog = true;
+    }
+
+    void CloseClearDialog()
+    {
+        ShowClearProgressDialog = false;
+        WorkoutToClear = null;
+    }
+
+    void CloseProgress()
+    {
+        SelectedWorkout = null;
+        WorkoutHistory.Clear();
+        CurrentChartData.Clear();
+        ResetChartScale();
+    }
+
+    void UpdateChartScale()
+    {
+        if (!CurrentChartData.Any())
+        {
+            ResetChartScale();
+            return;
+        }
+
+        var minPercent = CurrentChartData.Min(x => x.Percent);
+        var maxPercent = CurrentChartData.Max(x => x.Percent);
+
+        ChartAxisMin =
+            minPercent < 0
+                ? -GetNiceAxisLimit(Math.Abs(minPercent) * 1.25m)
+                : 0;
+
+        ChartAxisMax =
+            maxPercent > 0
+                ? GetNiceAxisLimit(maxPercent * 1.25m)
+                : 5;
+
+        if (ChartAxisMax < 3 && maxPercent > 0)
+        {
+            ChartAxisMax = 3;
+        }
+
+        ChartOptions = BuildChartOptions(ChartAxisMin, ChartAxisMax);
+        ChartRenderKey++;
+    }
+
+    void ResetChartScale()
+    {
+        ChartAxisMin = 0;
+        ChartAxisMax = 5;
+        ChartOptions = BuildChartOptions(0, 5);
+        ChartRenderKey++;
+    }
+
+    static ApexChartOptions<ProgressChartPoint> BuildChartOptions(
+        decimal min,
+        decimal max)
+    {
+        return new()
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Line,
+                Toolbar = new Toolbar { Show = false },
+                Zoom = new Zoom { Enabled = false }
+            },
+            Colors = new List<string> { "#3fb950" },
+            DataLabels = new DataLabels
+            {
+                Enabled = true,
+                OffsetY = -14,
+                Formatter = @"function(value) {
+                    if (value === null || value === undefined) {
+                        return '';
+                    }
+
+                    const rounded = Math.round(value * 100) / 100;
+                    const text = Number.isInteger(rounded)
+                        ? rounded.toFixed(0)
+                        : rounded.toString();
+
+                    return text + '%';
+                }",
+                Background = new DataLabelsBackground { Enabled = false },
+                Style = new DataLabelsStyle
+                {
+                    FontSize = "14px",
+                    FontWeight = "700",
+                    Colors = new List<string> { "#5cff6d" }
+                }
+            },
+            Stroke = new Stroke
+            {
+                Show = true,
+                Curve = Curve.Straight,
+                Width = 4
+            },
+            Fill = new Fill
+            {
+                Type = FillType.Solid,
+                Opacity = 1
+            },
+            Markers = new Markers
+            {
+                Size = 6,
+                StrokeWidth = 2,
+                StrokeColors = new List<string> { "#ffffff" }
+            },
+            Yaxis =
+            [
+                new()
+                {
+                    Min = (double)min,
+                    Max = (double)max,
+                    Labels = new YAxisLabels
+                    {
+                        Formatter = @"function(value) {
+                            return value + '%';
+                        }",
+                        Style = new AxisLabelStyle
+                        {
+                            Colors = new List<string> { "#d0d0d0" }
+                        }
+                    }
+                }
+            ],
+            Tooltip = new Tooltip { Enabled = false },
+            Xaxis = new XAxis
+            {
+                Labels = new XAxisLabels
+                {
+                    Style = new AxisLabelStyle
+                    {
+                        Colors = new List<string> { "#d0d0d0" }
+                    }
+                }
+            },
+            Grid = new Grid { BorderColor = "#202020" }
+        };
+    }
+
+    static decimal GetNiceAxisLimit(decimal value)
+    {
+        if (value <= 0)
+        {
+            return 1;
+        }
+
+        var magnitude =
+            (decimal)Math.Pow(
+                10,
+                Math.Floor(
+                    Math.Log10((double)value)));
+
+        var normalized = value / magnitude;
+
+        var niceNormalized =
+            normalized <= 1 ? 1 :
+            normalized <= 2 ? 2 :
+            normalized <= 3 ? 3 :
+            normalized <= 5 ? 5 :
+            10;
+
+        return niceNormalized * magnitude;
+    }
+}
+
+

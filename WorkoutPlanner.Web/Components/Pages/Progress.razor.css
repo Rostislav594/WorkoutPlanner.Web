@@ -1,120 +1,36 @@
-.progress-card-wrapper {
-    position: relative;
-}
-
-.context-menu {
-    position: absolute;
-    top: 55px;
-    right: 15px;
-    width: 220px;
-    background: #252525;
-    border: 1px solid #3a3a3a;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 12px 35px rgba(0,0,0,.45);
-    z-index: 100;
-}
-
-.context-item {
-    width: 100%;
-    padding: 16px;
-    background: transparent;
-    border: none;
-    color: white;
-    text-align: left;
-    cursor: pointer;
-    transition: .15s;
-}
-.progress-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    overflow: visible;
-}
-
-.progress-card {
-    position: relative;
-}
-
-    .context-item:hover {
-        background: #353535;
-    }
-
-.dialog-buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
-}
-
-    .dialog-buttons button {
-        flex: 1;
-    }
-.toast-success {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translate(-50%, 20px);
-    background: #28a745;
-    color: white;
-    padding: 14px 28px;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 8px 25px rgba(0,0,0,.35);
-    z-index: 11000;
-    opacity: 0;
-    animation: toastShow 2.5s ease forwards;
-}
-.progress-workouts {
+.progress-menu {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 24px;
+    margin-top: 40px;
 }
 
-.progress-card {
-    background: #1f1f1f;
-    border: 1px solid #333;
-    border-radius: 14px;
-    padding: 18px;
+.progress-menu-card {
+    background: #252525;
+    border: 1px solid #3a3a3a;
+    border-radius: 16px;
+    padding: 32px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: .2s;
 }
 
-    .progress-card:hover {
+    .progress-menu-card:hover {
+        border-color: #4CAF50;
         transform: translateY(-2px);
     }
 
-.progress-card-title {
-    font-size: 18px;
-    font-weight: 600;
-}
-.progress-tabs {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+.progress-menu-icon {
+    font-size: 42px;
+    margin-bottom: 16px;
 }
 
-@keyframes toastShow {
-
-    0% {
-        opacity: 0;
-        transform: translate(-50%, 20px);
-    }
-
-    15% {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-
-    85% {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translate(-50%, 20px);
-    }
+.progress-menu-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
 }
 
+.progress-menu-description {
+    color: #bfbfbf;
+    font-size: 16px;
+}

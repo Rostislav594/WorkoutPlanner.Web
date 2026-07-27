@@ -12,16 +12,6 @@
        Календарь
     </h1>
 
-    <div class="calendar-date-block">
-
-        <label>
-            Выберите дату
-        </label>
-
-        <input type="date"
-               @bind="SelectedDate" />
-
-    </div>
     @if (SelectedCalendarDay != null)
 {
     <div class="modal-overlay"
@@ -40,7 +30,7 @@
                     {
                         <button class="danger-button small-delete-button"
                                 @onclick="DeleteWorkoutDay">
-                            🗑️
+                            🗑
                         </button>
                     }
 
@@ -63,46 +53,107 @@
                 }
                 else
                 {
-                    <p>
-                        Тренировка не назначена
-                    </p>
-                }
-            <button class="secondary-button"
-                    @onclick="CloseCalendarWindow">
-                Закрыть
-            </button>
+                    @if (CanAssignWorkout)
+                    {
+                        <p>
+                            Тренировка не назначена
+                        </p>
+                    }
+                    else
+                    {
+                        <p>
+                            Этот день уже прошёл.
+                            Назначить тренировку невозможно.
+                        </p>
+                    }
 
+                    <div class="modal-actions">
+
+                        @if (CanAssignWorkout)
+                        {
+                            <button class="secondary-button"
+                                    @onclick="OpenWorkoutPicker">
+                                Назначить тренировку
+                            </button>
+                        }
+
+                        <button class="secondary-button"
+                                @onclick="CloseCalendarWindow">
+                            Закрыть
+                        </button>
+
+                    </div>
+
+                    @if (ShowWorkoutSelector)
+                    {
+                        <div class="mt-3">
+
+                            <select class="form-select"
+                                    @bind="SelectedPlanId">
+
+                                <option value="0">
+                                    Выберите тренировку
+                                </option>
+
+                                @foreach (var plan in TrainingPlans)
+                                {
+                                    <option value="@plan.Id">
+                                        @plan.WorkoutName
+                                    </option>
+                                }
+
+                            </select>
+
+                            <button class="workout-select-button mt-3"
+                                    disabled="@(SelectedPlanId == 0)"
+                                    @onclick="AssignSelectedWorkout">
+                                ✅ Назначить
+                            </button>
+
+                        </div>
+                    }
+
+                    @if (ShowWorkoutPicker)
+                    {
+                        <div class="modal-overlay"
+                             @onclick="CloseWorkoutPicker">
+
+                            <div class="modal-window"
+                                 @onclick:stopPropagation="true">
+
+                                <div class="workout-picker-grid">
+
+                                    @foreach (var plan in TrainingPlans)
+                                    {
+                                        <div class="workout-picker-card"
+                                             @onclick="() => AssignWorkoutFromPicker(plan.Id)">
+
+                                            <div class="workout-picker-name">
+                                                @plan.WorkoutName
+                                            </div>
+
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <div class="workout-picker-footer">
+                                    <button class="secondary-button"
+                                            @onclick="CloseWorkoutPicker">
+                                        Отмена
+                                    </button>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+                }
+            
         </div>
 
     </div>
 }
-
-    <h3>Назначить тренировку</h3>
-
-    <div class="workout-buttons">
-
-        <button class="workout-select-button"
-                @onclick="() => AssignWorkout(1)">
-            💪 Верх 1
-        </button>
-
-        <button class="workout-select-button"
-                @onclick="() => AssignWorkout(2)">
-            🦵 Низ 1
-        </button>
-
-        <button class="workout-select-button"
-                @onclick="() => AssignWorkout(3)">
-            💪 Верх 2
-        </button>
-
-        <button class="workout-select-button"
-                @onclick="() => AssignWorkout(4)">
-            🦵 Низ 2
-        </button>
-
-    </div>
-
     <hr />
 
     <div class="month-header">
@@ -132,7 +183,7 @@
             <div>Сб</div>
             <div>Вс</div>
         </div>
-        <h3>Этот месяц</h3>
+        
     @{
         var firstDay =
             new DateTime(
@@ -245,6 +296,71 @@
             await WorkoutDayService
                 .GetDaysAsync();
     }
+
+    async Task AssignWorkoutFromDialog(int planId)
+    {
+        if (SelectedCalendarDay == null)
+            return;
+
+        await WorkoutDayService.SaveDayAsync(
+            SelectedCalendarDay.Value,
+            planId);
+
+        WorkoutDays =
+            await WorkoutDayService.GetDaysAsync();
+
+        SelectedWorkoutDay =
+            WorkoutDays.FirstOrDefault(x =>
+                x.Date.Date == SelectedCalendarDay.Value.Date);
+
+        ShowWorkoutSelector = false;
+    }
+
+    async Task AssignWorkoutFromPicker(int planId)
+    {
+        if (SelectedCalendarDay == null)
+            return;
+
+        if (!CanAssignWorkout)
+            return;
+
+        await WorkoutDayService.SaveDayAsync(
+            SelectedCalendarDay.Value,
+            planId);
+
+        WorkoutDays =
+            await WorkoutDayService.GetDaysAsync();
+
+        CloseWorkoutPicker();
+        CloseCalendarWindow();
+    }
+
+    async Task AssignSelectedWorkout()
+    {
+        if (SelectedPlanId == 0 ||
+            SelectedCalendarDay == null)
+            return;
+
+        if (!CanAssignWorkout)
+            return;
+
+        await WorkoutDayService.SaveDayAsync(
+            SelectedCalendarDay.Value,
+            SelectedPlanId);
+
+        WorkoutDays =
+            await WorkoutDayService.GetDaysAsync();
+
+        SelectedWorkoutDay =
+            WorkoutDays.FirstOrDefault(x =>
+                x.Date.Date == SelectedCalendarDay.Value.Date);
+
+        ShowWorkoutSelector = false;
+        SelectedPlanId = 0;
+
+        CloseCalendarWindow();
+    }
+
     DateTime? SelectedCalendarDay;
     WorkoutDay? SelectedWorkoutDay;
 
@@ -262,6 +378,8 @@
     {
         SelectedCalendarDay = null;
         SelectedWorkoutDay = null;
+
+        ShowWorkoutPicker = false;
     }
     async Task DeleteWorkoutDay()
     {
@@ -299,4 +417,21 @@
             _ => workoutName ?? ""
         };
     }
+
+    void OpenWorkoutPicker()
+    {
+        ShowWorkoutPicker = true;
+    }
+
+    void CloseWorkoutPicker()
+    {
+        ShowWorkoutPicker = false;
+    }
+
+    bool ShowWorkoutSelector = false;
+    bool ShowWorkoutPicker = false;
+    private bool CanAssignWorkout =>
+    SelectedCalendarDay != null &&
+    SelectedCalendarDay.Value.Date >= DateTime.Today;
+    int SelectedPlanId = 0;
 }
