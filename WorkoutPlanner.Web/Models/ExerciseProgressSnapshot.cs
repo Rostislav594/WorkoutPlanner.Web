@@ -1,8 +1,10 @@
-﻿namespace WorkoutPlanner.Web.Models;
+namespace WorkoutPlanner.Web.Models;
 
 public class ExerciseProgressSnapshot
 {
     public int Id { get; set; }
+
+    public string? UserId { get; set; }
 
     public string WorkoutName { get; set; } = string.Empty;
 

@@ -1,0 +1,44 @@
+@using Microsoft.AspNetCore.Components.Routing
+
+@if (_loading)
+{
+    <SplashHost />
+}
+else
+{
+    <Router AppAssembly="typeof(Program).Assembly"
+            NotFoundPage="typeof(Pages.NotFound)">
+
+        <Found Context="routeData">
+
+            <AuthorizeRouteView RouteData="routeData"
+                                DefaultLayout="typeof(Layout.MainLayout)">
+
+                <NotAuthorized>
+                    <WorkoutPlanner.Web.Components.Account.RedirectToLogin />
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+
+            <FocusOnNavigate RouteData="routeData"
+                             Selector="h1" />
+
+        </Found>
+
+    </Router>
+}
+
+@code {
+
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Пока просто показываем Splash.
+        // Позже здесь будет настоящая инициализация.
+        await Task.Delay(1800);
+
+        _loading = false;
+    }
+
+}

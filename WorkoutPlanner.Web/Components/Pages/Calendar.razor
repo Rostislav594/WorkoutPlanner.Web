@@ -1,4 +1,4 @@
-﻿@page "/calendar"
+@page "/calendar"
 @rendermode InteractiveServer
 
 @using WorkoutPlanner.Web.Models
@@ -232,15 +232,7 @@
                         TrainingPlans.FirstOrDefault(
                             p => p.Id == workout.TrainingPlanId);
 
-                    var markerClass =
-                        plan?.WorkoutName switch
-                        {
-                            "Верх 1" => "marker-upper1",
-                            "Низ 1" => "marker-lower1",
-                            "Верх 2" => "marker-upper2",
-                            "Низ 2" => "marker-lower2",
-                            _ => ""
-                        };
+                    var markerClass = GetWorkoutMarkerClass(plan);
 
                     <div class="calendar-marker @markerClass">
 
@@ -408,14 +400,29 @@
 
     string GetWorkoutShortName(string? workoutName)
     {
-        return workoutName switch
-        {
-            "Верх 1" => "В1",
-            "Низ 1" => "Н1",
-            "Верх 2" => "В2",
-            "Низ 2" => "Н2",
-            _ => workoutName ?? ""
-        };
+        if (string.IsNullOrWhiteSpace(workoutName))
+            return "";
+
+        var words = workoutName
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (words.Length == 1)
+            return words[0].Length <= 3
+                ? words[0]
+                : words[0][..3];
+
+        return string.Concat(
+            words
+                .Take(2)
+                .Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    static string GetWorkoutMarkerClass(TrainingPlan? plan)
+    {
+        if (plan == null)
+            return "marker-custom-0";
+
+        return $"marker-custom-{Math.Abs(plan.Id) % 6}";
     }
 
     void OpenWorkoutPicker()

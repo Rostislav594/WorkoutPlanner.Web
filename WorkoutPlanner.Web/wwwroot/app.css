@@ -723,20 +723,27 @@ h1:focus {
     border-radius: 10px;
 }
 .back-button {
-    background: transparent;
-    border: none;
-    color: #bdbdbd;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    color: white;
+    text-decoration: none;
+    background: #242424;
+    border: 1px solid #444;
+    border-radius: 8px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(0,0,0,.28);
     cursor: pointer;
-    margin-bottom: 15px;
-    padding: 0;
-    transition: .2s;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
 }
 
     .back-button:hover {
+        background: #2f2f2f;
+        border-color: #555;
         color: white;
-        transform: translateX(-3px);
     }
 .workout-grid {
     display: grid;
@@ -1168,17 +1175,17 @@ h1:focus {
     padding: 20px;
 }
 .card-menu-button {
-    position: absolute;
-    top: 50%;
-    right: 16px;
-    transform: translateY(-50%);
     width: 45px;
     height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: none;
     border-radius: 8px;
     background: transparent;
     color: #9ca3af;
     cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
 }
 .card-menu-button:hover {
         background: #2f2f2f;
@@ -1186,13 +1193,15 @@ h1:focus {
 }
 .context-item {
     width: 100%;
-    padding: 16px;
+    padding: 12px;
     background: none;
     border: none;
     color: white;
     text-align: left;
     cursor: pointer;
     transition: .15s;
+    font-size: 16px;
+    font-weight: 500;
 }
 .context-item:hover {
         background: #353535;
@@ -1204,17 +1213,296 @@ h1:focus {
     position: fixed;
     inset: 0;
     background: transparent;
-    z-index: 999;
+    z-index: 4;
 }
 .context-menu {
     position: absolute;
-    top: 230px;
-    right: 35px;
-    width: 220px;
+    width: 180px;
     background: #252525;
     border: 1px solid #3a3a3a;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 12px 35px rgba(0,0,0,.45);
+    z-index: 5;
 }
 
+
+.auth-page {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+    background: #f5f7fb;
+}
+
+.auth-panel {
+    width: min(100%, 420px);
+    padding: 28px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 18px 50px rgba(30, 41, 59, 0.12);
+}
+
+.auth-panel h1 {
+    margin: 0 0 22px;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.auth-panel label {
+    display: block;
+    margin: 14px 0 6px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.auth-check {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    margin: 16px 0 !important;
+}
+
+.auth-primary {
+    width: 100%;
+    min-height: 44px;
+    border: 0;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.auth-link {
+    display: inline-block;
+    margin-top: 16px;
+    color: #2563eb;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-error {
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+}
+
+.menu-account {
+    margin-top: 24px;
+    padding: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.menu-account-email {
+    overflow-wrap: anywhere;
+    font-size: 14px;
+    opacity: 0.82;
+}
+
+.menu-auth-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.marker-custom-0 { background: #2f80ed; }
+.marker-custom-1 { background: #27ae60; }
+.marker-custom-2 { background: #f2994a; }
+.marker-custom-3 { background: #9b51e0; }
+.marker-custom-4 { background: #eb5757; }
+.marker-custom-5 { background: #00a8a8; }
+/* Shared button hover motion */
+.back-button,
+.finish-button,
+.secondary-button,
+.danger-button,
+.workout-select-button,
+.month-button,
+.auth-primary,
+.context-item {
+    transition: background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.back-button:hover,
+.back-button:focus,
+.finish-button:hover,
+.finish-button:focus,
+.secondary-button:hover,
+.secondary-button:focus,
+.danger-button:hover,
+.danger-button:focus,
+.workout-select-button:hover,
+.workout-select-button:focus,
+.month-button:hover,
+.month-button:focus,
+.auth-primary:hover,
+.auth-primary:focus,
+.context-item:hover,
+.context-item:focus {
+    transform: translateY(-1px);
+}
+
+.danger-button:hover,
+.danger-button:focus {
+    background: #a52828;
+}
+
+.auth-page {
+    min-height: 100vh;
+    background: #121212;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+}
+
+.auth-card {
+    width: 520px;
+    background: #242424;
+    border: 1px solid #353535;
+    border-radius: 20px;
+    padding: 45px;
+    box-shadow: 0 20px 45px rgba(0,0,0,.45);
+}
+
+    .auth-card h1 {
+        margin: 0;
+        text-align: center;
+        color: white;
+        font-size: 42px;
+    }
+
+    .auth-card .title-line {
+        width: 70px;
+        height: 4px;
+        background: #2fb344;
+        margin: 18px auto 40px;
+        border-radius: 99px;
+    }
+
+.field {
+    margin-bottom: 22px;
+}
+
+    .field label {
+        display: block;
+        margin-bottom: 8px;
+        color: white;
+        font-weight: 600;
+    }
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ddd;
+    margin: 24px 0;
+}
+
+.auth-button {
+    width: 100%;
+}
+
+.auth-footer {
+    margin-top: 28px;
+    text-align: center;
+    color: #bdbdbd;
+}
+
+    .auth-footer a {
+        display: block;
+        margin-top: 10px;
+        color: #2fb344;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+.auth-error {
+    margin-bottom: 20px;
+    background: rgba(180,40,40,.2);
+    border: 1px solid rgba(255,80,80,.35);
+    border-radius: 10px;
+    color: #ffb2b2;
+    padding: 12px;
+}
+
+.validation-summary {
+    color: #ffb2b2;
+    margin-bottom: 20px;
+}
+
+.auth-input {
+    width: 100%;
+    height: 52px;
+    padding: 0 16px;
+    background: #1b1b1b;
+    color: white;
+    border: 1px solid #444;
+    border-radius: 12px;
+    font-size: 17px;
+    box-sizing: border-box;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+    .auth-input:focus {
+        outline: none;
+        border-color: #2fb344;
+        box-shadow: 0 0 0 3px rgba(47,179,68,.18);
+    }
+
+    .auth-input:-webkit-autofill,
+    .auth-input:-webkit-autofill:hover,
+    .auth-input:-webkit-autofill:focus {
+        -webkit-text-fill-color: white;
+        -webkit-box-shadow: 0 0 0 1000px #1b1b1b inset;
+    }
+
+@media (max-width: 600px) {
+    .back-button:hover,
+    .back-button:focus,
+    .finish-button:hover,
+    .finish-button:focus,
+    .secondary-button:hover,
+    .secondary-button:focus,
+    .danger-button:hover,
+    .danger-button:focus,
+    .workout-select-button:hover,
+    .workout-select-button:focus,
+    .month-button:hover,
+    .month-button:focus,
+    .auth-primary:hover,
+    .auth-primary:focus,
+    .context-item:hover,
+    .context-item:focus {
+        transform: none;
+    }
+}
+
+.auth-errors {
+    margin-bottom: 20px;
+}
+
+.auth-error {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.validation-message {
+    display: block;
+    margin-top: 6px;
+    color: #ff6b6b;
+    font-size: 13px;
+}

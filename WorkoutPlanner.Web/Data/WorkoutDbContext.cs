@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Models;
 
 namespace WorkoutPlanner.Web.Data;
 
-public class WorkoutDbContext : DbContext
+public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 {
     public WorkoutDbContext(
         DbContextOptions<WorkoutDbContext> options)

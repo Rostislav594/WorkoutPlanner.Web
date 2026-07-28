@@ -1,10 +1,11 @@
-﻿@page "/progress/exercises"
+@page "/progress/exercises"
 @rendermode InteractiveServer
 
 @using WorkoutPlanner.Web.Models
 @using WorkoutPlanner.Web.Services
 
 @inject ProgressService ProgressService
+@inject TrainingPlanService TrainingPlanService
 
 <div class="page-content">
 
@@ -184,13 +185,7 @@
     List<string> WorkoutExercises = new();
     List<ProgressChartPoint> CurrentChartData = new();
 
-    List<WorkoutCardItem> WorkoutCards =
-    [
-        new() { Name = "Верх 1" },
-        new() { Name = "Низ 1" },
-        new() { Name = "Верх 2" },
-        new() { Name = "Низ 2" }
-    ];
+    List<WorkoutCardItem> WorkoutCards = new();
 
     ApexChartOptions<ProgressChartPoint> ChartOptions =
         BuildChartOptions(0, 5);
@@ -202,6 +197,15 @@
     const string ChartSubtitle = "Динамика роста упражнения";
     const string DeleteButtonText = "Удалить";
     const string CancelButtonText = "Отмена";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var plans = await TrainingPlanService.GetTrainingPlansAsync();
+
+        WorkoutCards = plans
+            .Select(x => new WorkoutCardItem { Name = x.WorkoutName })
+            .ToList();
+    }
 
     async Task OpenExerciseList(string workoutName)
     {

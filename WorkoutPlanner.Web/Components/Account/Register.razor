@@ -1,0 +1,173 @@
+@page "/account/register"
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
+
+<div class="auth-page">
+
+    <div class="auth-card">
+
+        <h1>Регистрация</h1>
+
+        <div class="title-line"></div>
+
+        <EditForm Model="InputModel"
+                  FormName="register"
+                  OnValidSubmit="RegisterUser">
+
+            <DataAnnotationsValidator />
+
+            @if (Errors.Any())
+            {
+                <div class="validation-summary">
+
+                    @foreach (var error in Errors)
+                    {
+                        <div>@error</div>
+                    }
+
+                </div>
+            }
+
+            <div class="field">
+
+                <label>Email</label>
+
+                <InputText class="auth-input"
+                           @bind-Value="InputModel.Email"
+                           autocomplete="username" />
+
+                <ValidationMessage For="@(() => InputModel.Email)" />
+
+            </div>
+
+            <div class="field">
+
+                <label>Пароль</label>
+
+                <InputText class="auth-input"
+                           type="password"
+                           @bind-Value="InputModel.Password"
+                           autocomplete="new-password" />
+
+                <ValidationMessage For="@(() => InputModel.Password)" />
+
+            </div>
+
+            <div class="field">
+
+                <label>Подтверждение пароля</label>
+
+                <InputText class="auth-input"
+                           type="password"
+                           @bind-Value="InputModel.ConfirmPassword"
+                           autocomplete="new-password" />
+
+                <ValidationMessage For="@(() => InputModel.ConfirmPassword)" />
+
+            </div>
+
+            <button class="finish-button auth-button"
+                    type="submit">
+
+                Создать аккаунт
+
+            </button>
+
+        </EditForm>
+
+        <div class="auth-footer">
+
+            Уже есть аккаунт?
+
+            <a href="/account/login">
+                Войти
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    [SupplyParameterFromForm(Name = "InputModel")]
+    private RegisterInput? Input { get; set; }
+
+    private List<string> Errors { get; } = new();
+
+    private RegisterInput InputModel => Input ??= new();
+
+    private async Task RegisterUser()
+    {
+        Errors.Clear();
+
+        var user = new IdentityUser
+        {
+            UserName = InputModel.Email,
+            Email = InputModel.Email
+        };
+
+        var result = await UserManager.CreateAsync(user, InputModel.Password);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                var message = TranslateIdentityError(error);
+
+                if (!Errors.Contains(message))
+                {
+                    Errors.Add(message);
+                }
+            }
+
+            return;
+        }
+
+        await SignInManager.SignInAsync(user, isPersistent: false);
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private sealed class RegisterInput
+    {
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите пароль.")]
+        [MinLength(6, ErrorMessage = "Пароль должен быть не короче 6 символов.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Compare(nameof(Password), ErrorMessage = "Пароли не совпадают.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private static string TranslateIdentityError(IdentityError error)
+    {
+        return error.Code switch
+        {
+            "DuplicateEmail" or "DuplicateUserName"
+                => "Пользователь с таким Email уже зарегистрирован.",
+
+            "PasswordRequiresDigit"
+                => "Пароль должен содержать хотя бы одну цифру.",
+
+            "PasswordRequiresLower"
+                => "Пароль должен содержать хотя бы одну строчную латинскую букву.",
+
+            "PasswordRequiresUpper"
+                => "Пароль должен содержать хотя бы одну заглавную латинскую букву.",
+
+            "PasswordRequiresNonAlphanumeric"
+                => "Пароль должен содержать хотя бы один специальный символ.",
+
+            "PasswordTooShort"
+                => "Пароль слишком короткий.",
+
+            _ => error.Description
+        };
+    }
+}

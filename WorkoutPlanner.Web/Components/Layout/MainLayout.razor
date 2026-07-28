@@ -2,7 +2,7 @@
 @implements IDisposable
 @inject NavigationManager Navigation
 
-<NavMenu />
+<NavMenu Visible="@IsHomePage" />
 
 @if (ShowHomeButton)
 {
@@ -20,8 +20,15 @@
     string CurrentPagePath =>
         Navigation.ToBaseRelativePath(Navigation.Uri);
 
+    bool IsHomePage =>
+        string.IsNullOrWhiteSpace(CurrentPagePath);
+
+    bool IsAccountPage =>
+        CurrentPagePath.StartsWith("account/", StringComparison.OrdinalIgnoreCase);
+
     bool ShowHomeButton =>
-        !string.IsNullOrWhiteSpace(CurrentPagePath);
+        !string.IsNullOrWhiteSpace(CurrentPagePath) &&
+        !IsAccountPage;
 
     bool IsProgressDetailsPage =>
         CurrentPagePath.Equals("progress/workouts", StringComparison.OrdinalIgnoreCase) ||

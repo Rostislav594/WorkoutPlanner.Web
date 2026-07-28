@@ -29,33 +29,46 @@
 
 </div>
 
-<button class="finish-button"
+<button class="finish-button add-exercise-button"
         @onclick="OpenAddWindow">
      Добавить упражнение
 </button>
 
-@if (Exercises.Count == 0)
+@if (Exercises.Count > 0)
 {
-    <div class="empty-workout">
+    @foreach (var exercise in Exercises)
+    {
+        <div class="exercise-card"
+             @onclick="() => SelectExercise(exercise)">
 
-        <div class="workout-header">
+            <b>@exercise.Name</b><br />
+            Вес: @exercise.CurrentWeight кг<br />
+            Шаг: +@exercise.WeightStep кг<br />
+            Повторы:
+            @string.Join(", ",
+                exercise.Sets
+                    .OrderBy(x => x.SetNumber)
+                    .Select(x => x.Repetitions))
 
-            <div class="workout-icon">
-                <i class="fa-solid fa-dumbbell"></i>
-            </div>
+            <p>
+                Exercise:
+                @exercise.ExerciseDefinition?.ExerciseCoefficient
+            </p>
+
+            <p>
+                Secondary:
+                @SecondaryMuscleCoefficientService.GetCoefficient(exercise.ExerciseDefinition!.Id)
+            </p>
+
+            <p>
+                Index:
+                @ExerciseIndexService.Calculate(exercise)
+            </p>
 
         </div>
-
-        <div class="empty-title">
-            Упражнений пока нет
-        </div>
-
-        <div class="empty-text">
-            Нажмите "Добавить упражнение"
-        </div>
-
-    </div>
+    }
 }
+
 else
 {
     @foreach (var exercise in Exercises)

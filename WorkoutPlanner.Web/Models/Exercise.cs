@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using WorkoutPlanner.Web.Services;
 
 namespace WorkoutPlanner.Web.Models;
@@ -6,6 +6,8 @@ namespace WorkoutPlanner.Web.Models;
 public class Exercise
 {
     public int Id { get; set; }
+
+    public string? UserId { get; set; }
     public string Name { get; set; } = "";
 
     public string WorkoutName { get; set; } = "";

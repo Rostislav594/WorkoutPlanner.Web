@@ -1,4 +1,9 @@
 @rendermode InteractiveServer
+
+@if (!Visible)
+{
+    return;
+}
 <div class="menu-button" @onclick="ToggleMenu">
     ☰
 </div>
@@ -13,14 +18,31 @@
     <div class="menu-header">
         <div class="logo-icon"></div>
         <div class="app-title">
-            Workout Planner
+            GPlanner
         </div>
     </div>
+
+    <AuthorizeView>
+        <Authorized>
+            <div class="menu-account">
+                <div class="menu-account-email">
+                    @context.User.Identity?.Name
+                </div>
+
+                <a class="menu-auth-link" href="/account/logout">
+                    Выйти
+                </a>
+            </div>
+        </Authorized>
+    </AuthorizeView>
 
 </div>
 
 @code
 {
+    [Parameter]
+    public bool Visible { get; set; } = true;
+
     bool isOpen;
 
     void ToggleMenu()

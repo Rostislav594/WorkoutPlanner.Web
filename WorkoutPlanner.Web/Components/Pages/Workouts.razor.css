@@ -1,15 +1,30 @@
+.workouts-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 20px 0;
+}
+
+    .workouts-header h1 {
+        margin: 0;
+        text-align: center;
+    }
+
 .workout-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     padding: 20px;
+    padding-bottom: 40px;
 }
 
 .workout-card {
+    position: relative;
     background: #1a1a1a;
     border: 1px solid #333;
-    border-radius: 16px;
+    border-radius: 8px;
     padding: 30px;
+    min-height: 150px;
     color: white;
     font-size: 24px;
     font-weight: 600;
@@ -17,8 +32,75 @@
     transition: 0.2s;
 }
 
-    .workout-card:hover {
-        transform: translateY(-3px);
-        border-color: #ff6600;
-        box-shadow: 0 0 15px rgba(255,102,0,.3);
-    }
+.workout-card:hover {
+    transform: translateY(-3px);
+    border-color: #ff6600;
+    box-shadow: 0 0 15px rgba(255,102,0,.3);
+}
+
+.workout-name {
+    padding-right: 34px;
+    overflow-wrap: anywhere;
+}
+
+.workout-description {
+    margin-top: 14px;
+    color: #b8b8b8;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.workout-card-menu {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 4;
+}
+
+.workout-template-menu {
+    top: 46px;
+    right: 12px;
+    left: auto;
+    z-index: 5;
+}
+
+.danger-context-item {
+    color: #ff9f9f;
+}
+
+.workout-form-error {
+    width: min(520px, calc(100% - 40px));
+    margin: 18px auto 0;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(220, 53, 69, 0.16);
+    color: #ffb4b4;
+    font-weight: 700;
+}
+
+.workouts-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 20px 30px;
+}
+
+.add-template-button {
+    width: 320px;
+    max-width: 100%;
+    margin: 0;
+}
+
+.template-dialog-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.dialog-button {
+    width: 260px;
+    margin: 0;
+}

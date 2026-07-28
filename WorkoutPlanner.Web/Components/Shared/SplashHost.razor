@@ -1,0 +1,50 @@
+@rendermode InteractiveServer
+
+@if (_visible)
+{
+    <div class="app-splash @(_isLeaving ? "app-splash-leaving" : null)"
+         role="status"
+         aria-live="polite"
+         aria-label="Загрузка приложения">
+
+        <div class="app-splash-content">
+            <div class="app-splash-title">
+                GPlanner
+            </div>
+
+            <div class="app-splash-subtitle">
+                Загрузка
+            </div>
+
+            <div class="app-splash-loader"
+                 aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+    </div>
+}
+
+@code
+{
+    private bool _visible = true;
+    private bool _isLeaving;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        await Task.Delay(1200);
+
+        _isLeaving = true;
+        StateHasChanged();
+
+        await Task.Delay(520);
+
+        _visible = false;
+        StateHasChanged();
+    }
+}

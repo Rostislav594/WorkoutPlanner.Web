@@ -68,16 +68,46 @@
     margin-bottom: 8px;
 }
 
+.add-exercise-button {
+    width: 320px;
+    max-width: 100%;
+    display: block;
+    margin: 24px auto 36px;
+}
+
+
 .back-button {
     right: 170px;
+    width: 122px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 @media (max-width: 600px) {
     .back-button {
-        top: -58px;
         right: 124px;
-        padding: 10px 12px;
-        font-size: 14px;
-        border-radius: 8px;
+        width: 106px;
+        min-height: 42px;
+        padding: 0 8px;
+        font-size: 12px;
+    }
+}
+.back-button:hover,
+.back-button:focus {
+    color: white;
+    text-decoration: none;
+    background: #303030;
+    border-color: #ff7a1a;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .back-button:hover,
+    .back-button:focus {
+        transform: none;
     }
 }

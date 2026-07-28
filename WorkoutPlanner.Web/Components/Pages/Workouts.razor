@@ -1,4 +1,4 @@
-﻿@page "/workouts"
+@page "/workouts"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components
 @inject NavigationManager Navigation
@@ -6,52 +6,274 @@
 @using WorkoutPlanner.Web.Services
 @inject TrainingPlanService TrainingPlanService
 
-    <h1 style="text-align:center;">
-     Шаблоны тренировок 
-    </h1>
+<div class="workouts-header">
+    <h1>Шаблоны тренировок</h1>
+</div>
 
-<div class="workout-grid">
-    @foreach (var workout in TrainingPlans)
-    {
-        <div class="workout-card"
-             @onclick="() => OpenWorkout(workout.Id)">
+@if (!string.IsNullOrWhiteSpace(FormError))
+{
+    <div class="workout-form-error">
+        @FormError
+    </div>
+}
 
-            <div class="workout-name">
-                @workout.WorkoutName
+@if (TrainingPlans.Count == 0)
+{
+    <div class="empty-workout">
+        <div class="empty-title">
+            Шаблонов пока нет
+        </div>
+
+        <div class="empty-text">
+            Добавьте первую тренировку, а затем наполните её упражнениями.
+        </div>
+    </div>
+}
+else
+{
+    <div class="workout-grid">
+        @foreach (var workout in TrainingPlans)
+        {
+            <div class="workout-card"
+                 @onclick="() => OpenWorkout(workout.Id)">
+
+                <button class="card-menu-button workout-card-menu"
+                        title="Настройки"
+                        @onclick:stopPropagation="true"
+                        @onclick="() => ToggleTemplateMenu(workout.Id)">
+                    ⋮
+                </button>
+
+                <div class="workout-name">
+                    @workout.WorkoutName
+                </div>
+
+                <div class="workout-description">
+                    @GetWorkoutDescription(workout)
+                </div>
+
+                @if (SelectedTemplateMenuId == workout.Id)
+                {
+                    <div class="context-menu workout-template-menu"
+                         @onclick:stopPropagation="true">
+
+                        <button class="context-item"
+                                @onclick="() => OpenRenameDialog(workout)">
+                            Изменить название
+                        </button>
+
+                        <button class="context-item danger-context-item"
+                                @onclick="() => OpenDeleteDialog(workout)">
+                            Удалить шаблон
+                        </button>
+
+                    </div>
+                }
             </div>
+        }
+    </div>
+}
 
-            <div class="workout-description">
-                @GetWorkoutDescription(workout.WorkoutName)
+<div class="workouts-footer">
+    <button class="finish-button add-template-button"
+            @onclick="OpenCreateDialog">
+        + Добавить шаблон
+    </button>
+</div>
+
+@if (SelectedTemplateMenuId != null)
+{
+    <div class="context-menu-overlay"
+         @onclick="CloseTemplateMenu"></div>
+}
+
+@if (ShowTemplateDialog)
+{
+    <div class="modal-overlay"
+         @onclick="CloseTemplateDialog">
+
+        <div class="modal-window"
+             @onclick:stopPropagation="true">
+
+            <h3>@TemplateDialogTitle</h3>
+
+            <label>Название</label>
+            <input class="form-control"
+                   @bind="TemplateName"
+                   @bind:event="oninput"
+                   maxlength="80" />
+
+            @if (!string.IsNullOrWhiteSpace(FormError))
+            {
+                <div class="edit-error">
+                    @FormError
+                </div>
+            }
+
+            <div class="template-dialog-buttons">
+                <button class="finish-button dialog-button"
+                        @onclick="SaveTemplate">
+                    Сохранить
+                </button>
+
+                <button class="secondary-button dialog-button"
+                        @onclick="CloseTemplateDialog">
+                    Отмена
+                </button>
             </div>
 
         </div>
-    }
-</div>
+
+    </div>
+}
+
+@if (TemplateToDelete != null)
+{
+    <div class="modal-overlay"
+         @onclick="CloseDeleteDialog">
+
+        <div class="modal-window"
+             @onclick:stopPropagation="true">
+
+            <h3>Удалить шаблон?</h3>
+
+            <p>
+                Будет удалён шаблон
+                <strong>@TemplateToDelete.WorkoutName</strong>,
+                его упражнения, назначения в календаре и прогресс.
+            </p>
+
+            <div class="template-dialog-buttons">
+                <button class="secondary-button dialog-button"
+                        @onclick="CloseDeleteDialog">
+                    Отмена
+                </button>
+
+                <button class="danger-button dialog-button"
+                        @onclick="DeleteTemplate">
+                    Удалить
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+}
 
 @code {
-
     private List<TrainingPlan> TrainingPlans = new();
+    private int? SelectedTemplateMenuId;
+    private int? EditingTemplateId;
+    private TrainingPlan? TemplateToDelete;
+    private bool ShowTemplateDialog;
+    private string TemplateName = string.Empty;
+    private string? FormError;
+
+    private string TemplateDialogTitle =>
+        EditingTemplateId == null
+            ? "Новый шаблон"
+            : "Название шаблона";
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplates();
+    }
+
+    private async Task LoadTemplates()
     {
         TrainingPlans =
             await TrainingPlanService
                 .GetTrainingPlansAsync();
     }
 
-    void OpenWorkout(int id)
+    private void OpenWorkout(int id)
     {
         Navigation.NavigateTo($"/workout/{id}");
     }
-    string GetWorkoutDescription(string workoutName)
+
+    private void OpenCreateDialog()
     {
-        return workoutName switch
+        EditingTemplateId = null;
+        TemplateName = string.Empty;
+        FormError = null;
+        ShowTemplateDialog = true;
+    }
+
+    private void OpenRenameDialog(TrainingPlan template)
+    {
+        EditingTemplateId = template.Id;
+        TemplateName = template.WorkoutName;
+        FormError = null;
+        SelectedTemplateMenuId = null;
+        ShowTemplateDialog = true;
+    }
+
+    private async Task SaveTemplate()
+    {
+        var result = EditingTemplateId == null
+            ? await TrainingPlanService.CreateAsync(TemplateName)
+            : await TrainingPlanService.RenameAsync(
+                EditingTemplateId.Value,
+                TemplateName);
+
+        if (!result.Succeeded)
         {
-            "Верх 1" => "Грудь • Спина • Плечи • Бицепс • Трицепс",
-            "Низ 1" => "Ноги • Ягодицы • Икры",
-            "Верх 2" => "Грудь • Спина • Плечи • Бицепс • Трицепс",
-            "Низ 2" => "Ноги • Ягодицы • Икры",
-            _ => ""
-        };
+            FormError = result.Error;
+            return;
+        }
+
+        CloseTemplateDialog();
+        await LoadTemplates();
+    }
+
+    private void OpenDeleteDialog(TrainingPlan template)
+    {
+        TemplateToDelete = template;
+        SelectedTemplateMenuId = null;
+    }
+
+    private async Task DeleteTemplate()
+    {
+        if (TemplateToDelete == null)
+            return;
+
+        await TrainingPlanService.DeleteAsync(TemplateToDelete.Id);
+        CloseDeleteDialog();
+        await LoadTemplates();
+    }
+
+    private void ToggleTemplateMenu(int id)
+    {
+        SelectedTemplateMenuId =
+            SelectedTemplateMenuId == id
+                ? null
+                : id;
+    }
+
+    private void CloseTemplateMenu()
+    {
+        SelectedTemplateMenuId = null;
+    }
+
+    private void CloseTemplateDialog()
+    {
+        ShowTemplateDialog = false;
+        EditingTemplateId = null;
+        TemplateName = string.Empty;
+        FormError = null;
+    }
+
+    private void CloseDeleteDialog()
+    {
+        TemplateToDelete = null;
+    }
+
+    private static string GetWorkoutDescription(TrainingPlan workout)
+    {
+        var exerciseCount = workout.Exercises?.Count ?? 0;
+
+        return exerciseCount == 0
+            ? "Добавьте упражнения внутри шаблона"
+            : $"Упражнений: {exerciseCount}";
     }
 }

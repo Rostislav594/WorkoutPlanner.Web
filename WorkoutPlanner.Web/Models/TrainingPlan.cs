@@ -1,10 +1,12 @@
-﻿namespace WorkoutPlanner.Web.Models;
+namespace WorkoutPlanner.Web.Models;
 
 using System.ComponentModel.DataAnnotations.Schema;
 
 public class TrainingPlan
 {
     public int Id { get; set; }
+
+    public string? UserId { get; set; }
 
     public string WorkoutName { get; set; } = string.Empty;
 

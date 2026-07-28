@@ -1,8 +1,10 @@
-﻿namespace WorkoutPlanner.Web.Models;
+namespace WorkoutPlanner.Web.Models;
 
 public class WorkoutDay
 {
     public int Id { get; set; }
+
+    public string? UserId { get; set; }
 
     public DateTime Date { get; set; }
 

@@ -1,0 +1,124 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
+
+<div class="auth-page">
+
+    <div class="auth-card">
+
+        <h1>GPlanner</h1>
+
+        <div class="title-line"></div>
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="auth-error">
+                @ErrorMessage
+            </div>
+        }
+
+        <EditForm Model="InputModel"
+                  FormName="login"
+                  OnValidSubmit="LoginUser">
+
+            <DataAnnotationsValidator />
+
+            <ValidationSummary class="validation-summary" />
+
+            <div class="field">
+
+                <label>Email</label>
+
+                <InputText class="auth-input"
+                           @bind-Value="InputModel.Email"
+                           autocomplete="username" />
+
+            </div>
+
+            <div class="field">
+
+                <label>Пароль</label>
+
+                <InputText class="auth-input"
+                           type="password"
+                           @bind-Value="InputModel.Password"
+                           autocomplete="current-password" />
+
+            </div>
+
+            <button class="finish-button auth-button"
+                    type="submit">
+
+                Войти
+
+            </button>
+
+        </EditForm>
+
+        <div class="auth-footer">
+
+            <a href="/account/register">
+                Создать аккаунт
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    [SupplyParameterFromForm(Name = "InputModel")]
+    private LoginInput? Input { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    private LoginInput InputModel => Input ??= new();
+
+    private async Task LoginUser()
+    {
+        var result = await SignInManager.PasswordSignInAsync(
+            InputModel.Email,
+            InputModel.Password,
+            InputModel.RememberMe,
+            lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo(GetReturnUrl(), forceLoad: true);
+            return;
+        }
+
+        ErrorMessage = "Неверный email или пароль.";
+    }
+
+    private string GetReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl))
+            return "/";
+
+        if (ReturnUrl.StartsWith("//") || ReturnUrl.Contains('\\'))
+            return "/";
+
+        return ReturnUrl.StartsWith('/')
+            ? ReturnUrl
+            : $"/{ReturnUrl}";
+    }
+
+    private sealed class LoginInput
+    {
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите пароль.")]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}
