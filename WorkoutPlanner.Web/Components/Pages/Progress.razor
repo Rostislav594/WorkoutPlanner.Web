@@ -5,7 +5,7 @@
 
 <div class="page-content">
 
-    <h1 style="text-align:center;">
+    <h1 class="progress-title">
         Прогресс
     </h1>
 
@@ -14,16 +14,12 @@
         <div class="progress-menu-card"
              @onclick='() => Navigation.NavigateTo("/progress/exercises")'>
 
-            <div class="progress-menu-icon">
-                💪
-            </div>
+            <img src="images/progress-exercises.png"
+                 class="progress-menu-image"
+                 alt="Упражнения" />
 
             <div class="progress-menu-title">
                 Упражнения
-            </div>
-
-            <div class="progress-menu-description">
-                Просмотр прогресса по каждому упражнению
             </div>
 
         </div>
@@ -31,18 +27,13 @@
         <div class="progress-menu-card"
              @onclick='() => Navigation.NavigateTo("/progress/workouts")'>
 
-            <div class="progress-menu-icon">
-                📈
-            </div>
+            <img src="images/progress-workouts.png"
+                 class="progress-menu-image"
+                 alt="Тренировки" />
 
             <div class="progress-menu-title">
                 Тренировки
             </div>
-
-            <div class="progress-menu-description">
-                Общий прогресс тренировок
-            </div>
-
         </div>
 
     </div>

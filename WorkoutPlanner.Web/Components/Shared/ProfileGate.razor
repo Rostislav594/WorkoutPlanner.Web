@@ -1,0 +1,70 @@
+@rendermode InteractiveServer
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject WorkoutPlanner.Web.Services.Auth.UserProfileService UserProfileService
+@implements IDisposable
+
+@code {
+    private bool _checking;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Navigation.LocationChanged += OnLocationChanged;
+        }
+
+        await CheckProfileAsync();
+    }
+
+    private async Task CheckProfileAsync()
+    {
+        if (_checking)
+            return;
+
+        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+
+        if (path.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
+        if (authenticationState.User.Identity?.IsAuthenticated != true)
+            return;
+
+        _checking = true;
+
+        try
+        {
+            var hasProfile = await UserProfileService.CurrentUserHasProfileAsync();
+            var isSetupPage = path.Equals("profile/setup", StringComparison.OrdinalIgnoreCase);
+
+            if (!hasProfile && !isSetupPage)
+            {
+                Navigation.NavigateTo("/profile/setup");
+                return;
+            }
+
+            if (hasProfile && isSetupPage)
+            {
+                Navigation.NavigateTo("/profile");
+            }
+        }
+        finally
+        {
+            _checking = false;
+        }
+    }
+
+    private void OnLocationChanged(
+        object? sender,
+        LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(CheckProfileAsync);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

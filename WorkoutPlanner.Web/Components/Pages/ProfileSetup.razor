@@ -1,0 +1,125 @@
+@page "/profile/setup"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using WorkoutPlanner.Web.Data
+@using WorkoutPlanner.Web.Models
+@inject WorkoutDbContext Db
+@inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
+@inject NavigationManager Navigation
+
+<div class="profile-page">
+    <section class="profile-panel profile-setup-panel">
+        <div class="profile-heading">
+            <p class="profile-kicker">Профиль пользователя</p>
+            <h1>Настройка профиля</h1>
+            <p>Заполните основные данные, чтобы продолжить работу с GPlanner.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Message))
+        {
+            <div class="auth-error">@Message</div>
+        }
+
+        <EditForm Model="InputModel" OnValidSubmit="SaveProfileAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+
+            <div class="profile-form-grid">
+                <div class="field">
+                    <label>Имя</label>
+                    <InputText class="auth-input" @bind-Value="InputModel.FirstName" />
+                    <ValidationMessage For="@(() => InputModel.FirstName)" />
+                </div>
+
+                <div class="field">
+                    <label>Фамилия</label>
+                    <InputText class="auth-input" @bind-Value="InputModel.LastName" />
+                    <ValidationMessage For="@(() => InputModel.LastName)" />
+                </div>
+
+                <div class="field">
+                    <label>Дата рождения</label>
+                    <InputDate class="auth-input" @bind-Value="InputModel.BirthDate" />
+                    <ValidationMessage For="@(() => InputModel.BirthDate)" />
+                </div>
+
+                <div class="field">
+                    <label>Пол</label>
+                    <InputSelect class="auth-input" @bind-Value="InputModel.Gender">
+                        <option value="">Выберите</option>
+                        <option value="Мужской">Мужской</option>
+                        <option value="Женский">Женский</option>
+                        <option value="Не указывать">Не указывать</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => InputModel.Gender)" />
+                </div>
+            </div>
+
+            <button class="finish-button auth-button profile-primary-action" type="submit">
+                Сохранить профиль
+            </button>
+        </EditForm>
+    </section>
+</div>
+
+@code {
+    private ProfileInput InputModel { get; } = new();
+
+    private string? Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var userId = await CurrentUserService.GetRequiredUserIdAsync();
+        var hasProfile = await Db.UserProfiles.AnyAsync(x => x.UserId == userId);
+
+        if (hasProfile)
+        {
+            Navigation.NavigateTo("/profile");
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        var userId = await CurrentUserService.GetRequiredUserIdAsync();
+        var existingProfile = await Db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId);
+
+        if (existingProfile is not null)
+        {
+            Navigation.NavigateTo("/profile");
+            return;
+        }
+
+        var profile = new UserProfile
+        {
+            UserId = userId,
+            FirstName = InputModel.FirstName.Trim(),
+            LastName = InputModel.LastName.Trim(),
+            BirthDate = InputModel.BirthDate,
+            Gender = InputModel.Gender,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        Db.UserProfiles.Add(profile);
+        await Db.SaveChangesAsync();
+
+        Navigation.NavigateTo("/firstlaunch", true);
+    }
+
+    private sealed class ProfileInput
+    {
+        [Required(ErrorMessage = "Введите имя.")]
+        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите фамилию.")]
+        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Укажите дату рождения.")]
+        public DateTime? BirthDate { get; set; }
+
+        [Required(ErrorMessage = "Выберите пол.")]
+        public string Gender { get; set; } = string.Empty;
+    }
+}

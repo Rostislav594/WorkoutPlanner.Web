@@ -11,10 +11,16 @@
     История  
  </h1>
 
-@if (HistoryItems.Count == 0)
-{
-    <p>История пока пуста.</p>
-}
+    @if (HistoryItems.Count == 0)
+    {
+        <div class="history-empty">
+
+            <img src="images/history-empty.png"
+                 class="history-empty-image"
+                 alt="История пуста" />
+
+        </div>
+    }
 else
 {
     @foreach (var item in HistoryItems)

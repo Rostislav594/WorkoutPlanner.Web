@@ -41,6 +41,7 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<UserProfileService>();
 builder.Services.AddScoped<HistoryService>();
 builder.Services.AddScoped<ExerciseService>();
 builder.Services.AddScoped<TrainingPlanService>();

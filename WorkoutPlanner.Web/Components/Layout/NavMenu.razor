@@ -15,24 +15,25 @@
 
 <div class="side-menu @(isOpen ? "open" : "")">
 
-    <div class="menu-header">
-        <div class="logo-icon"></div>
-        <div class="app-title">
+    <div class="nav-brand">
+
+        <img src="images/Emblem.png"
+             class="nav-logo"
+             alt="GPlanner" />
+
+        <span class="nav-brand-title">
             GPlanner
-        </div>
+        </span>
+
     </div>
 
     <AuthorizeView>
         <Authorized>
-            <div class="menu-account">
-                <div class="menu-account-email">
-                    @context.User.Identity?.Name
-                </div>
-
-                <a class="menu-auth-link" href="/account/logout">
-                    Выйти
+            <nav class="side-menu-links" aria-label="Главное меню">
+                <a class="menu-auth-link" href="/profile" @onclick="CloseMenu">
+                    Профиль
                 </a>
-            </div>
+            </nav>
         </Authorized>
     </AuthorizeView>
 

@@ -1,0 +1,30 @@
+.history-empty {
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+}
+
+.history-empty-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 12px;
+}
+
+.history-empty-text {
+    font-size: 1.3rem;
+    color: #9ca3af;
+    margin-bottom: 35px;
+}
+
+.history-empty-image {
+    width: 500px;
+    max-width: 90%;
+    height: auto;
+    user-select: none;
+    pointer-events: none;
+}

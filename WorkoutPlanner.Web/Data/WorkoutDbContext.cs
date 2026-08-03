@@ -25,6 +25,9 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<AppSettings> Settings =>
         Set<AppSettings>();
 
+    public DbSet<UserProfile> UserProfiles =>
+        Set<UserProfile>();
+
     public DbSet<WorkoutDay> WorkoutDays =>
         Set<WorkoutDay>();
 
@@ -54,6 +57,28 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<UserProfile>()
+            .HasIndex(x => x.UserId)
+            .IsUnique();
+
+        modelBuilder.Entity<UserProfile>()
+            .HasOne<IdentityUser>()
+            .WithOne()
+            .HasForeignKey<UserProfile>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserProfile>()
+            .Property(x => x.FirstName)
+            .HasMaxLength(80);
+
+        modelBuilder.Entity<UserProfile>()
+            .Property(x => x.LastName)
+            .HasMaxLength(80);
+
+        modelBuilder.Entity<UserProfile>()
+            .Property(x => x.Gender)
+            .HasMaxLength(30);
 
         modelBuilder.Entity<Exercise>()
             .HasOne(x => x.ExerciseDefinition)

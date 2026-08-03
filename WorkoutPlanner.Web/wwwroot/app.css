@@ -1367,7 +1367,7 @@ h1:focus {
     background: #242424;
     border: 1px solid #353535;
     border-radius: 20px;
-    padding: 45px;
+    padding: 14px 40px 28px;
     box-shadow: 0 20px 45px rgba(0,0,0,.45);
 }
 
@@ -1375,14 +1375,14 @@ h1:focus {
         margin: 0;
         text-align: center;
         color: white;
-        font-size: 42px;
+        font-size: 40px;
     }
 
     .auth-card .title-line {
-        width: 70px;
+        width: 80px;
         height: 4px;
         background: #2fb344;
-        margin: 18px auto 40px;
+        margin: 8px auto 28px;
         border-radius: 99px;
     }
 
@@ -1469,6 +1469,20 @@ h1:focus {
         -webkit-box-shadow: 0 0 0 1000px #1b1b1b inset;
     }
 
+.login-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.login-logo {
+    width: 340px;
+    height: 340px;
+    object-fit: contain;
+    margin-bottom: 0px;
+}
+
 @media (max-width: 600px) {
     .back-button:hover,
     .back-button:focus,
@@ -1505,4 +1519,156 @@ h1:focus {
     margin-top: 6px;
     color: #ff6b6b;
     font-size: 13px;
+}
+.profile-page {
+    min-height: 100vh;
+    background: #121212;
+    color: #ffffff;
+    padding: 48px clamp(18px, 4vw, 56px);
+}
+
+.profile-panel {
+    max-width: 980px;
+    margin: 0 auto 24px;
+    background: #242424;
+    border: 1px solid #353535;
+    border-radius: 16px;
+    padding: clamp(22px, 4vw, 36px);
+    box-shadow: 0 20px 45px rgba(0,0,0,.35);
+}
+
+.profile-setup-panel {
+    max-width: 760px;
+}
+
+.profile-heading {
+    margin-bottom: 24px;
+}
+
+.profile-heading-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.profile-kicker {
+    margin: 0 0 6px;
+    color: #3fb950;
+    font-weight: 700;
+}
+
+.profile-heading h1,
+.profile-heading h2 {
+    margin: 0;
+    color: #ffffff;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.profile-heading h1 {
+    font-size: clamp(34px, 5vw, 56px);
+}
+
+.profile-heading h2 {
+    font-size: 28px;
+}
+
+.profile-heading p:last-child {
+    margin: 8px 0 0;
+    color: #c9d1d9;
+}
+
+.profile-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.profile-primary-action {
+    margin-top: 10px;
+}
+
+.profile-secondary-action,
+.profile-danger-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.profile-secondary-action {
+    border: 1px solid #3a3a3a;
+    background: #303030;
+    color: #ffffff;
+}
+
+.profile-secondary-action:hover,
+.profile-secondary-action:focus {
+    color: #ffffff;
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    transform: translateY(-2px);
+}
+
+.profile-danger-action {
+    border: 1px solid #7f1d1d;
+    background: #b42318;
+    color: #ffffff;
+}
+
+.profile-danger-action:hover:not(:disabled),
+.profile-danger-action:focus:not(:disabled) {
+    background: #d92d20;
+    box-shadow: 0 10px 22px rgba(217,45,32,.22);
+    transform: translateY(-2px);
+}
+
+.profile-danger-action:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+.profile-success {
+    margin-bottom: 18px;
+    border: 1px solid rgba(63,185,80,.45);
+    background: rgba(63,185,80,.12);
+    color: #adf0bd;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.profile-account-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid #353535;
+}
+
+.profile-danger-confirm {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #d0d7de;
+}
+
+@media (max-width: 720px) {
+    .profile-heading-row,
+    .profile-account-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-form-grid {
+        grid-template-columns: 1fr;
+    }
 }

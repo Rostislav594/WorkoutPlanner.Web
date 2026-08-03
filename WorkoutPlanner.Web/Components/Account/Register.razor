@@ -9,9 +9,17 @@
 
     <div class="auth-card">
 
-        <h1>Регистрация</h1>
+        <div class="login-logo-container">
 
-        <div class="title-line"></div>
+            <img src="images/Emblem.png"
+                 alt="GPlanner"
+                 class="login-logo" />
+
+            <h1>Регистрация</h1>
+
+            <div class="title-line"></div>
+
+        </div>
 
         <EditForm Model="InputModel"
                   FormName="register"
@@ -128,7 +136,7 @@
         }
 
         await SignInManager.SignInAsync(user, isPersistent: false);
-        Navigation.NavigateTo("/", forceLoad: true);
+        Navigation.NavigateTo("/profile/setup", forceLoad: true);
     }
 
     private sealed class RegisterInput

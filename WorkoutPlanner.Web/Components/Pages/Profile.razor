@@ -1,0 +1,322 @@
+@page "/profile"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using WorkoutPlanner.Web.Data
+@using WorkoutPlanner.Web.Models
+@inject WorkoutDbContext Db
+@inject UserManager<IdentityUser> UserManager
+@inject SignInManager<IdentityUser> SignInManager
+@inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
+@inject NavigationManager Navigation
+
+<div class="profile-page">
+    <section class="profile-panel">
+        <div class="profile-heading profile-heading-row">
+            <div>
+                <p class="profile-kicker">Профиль пользователя</p>
+                <h1>@FullName</h1>
+                <p>@Email</p>
+            </div>
+
+            <a class="profile-secondary-action" href="/workouts">
+                Настройка тренировки
+            </a>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ProfileMessage))
+        {
+            <div class="profile-success">@ProfileMessage</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(ProfileError))
+        {
+            <div class="auth-error">@ProfileError</div>
+        }
+
+        <EditForm Model="ProfileInputModel" OnValidSubmit="SaveProfileAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+
+            <div class="profile-form-grid">
+                <div class="field">
+                    <label>Email</label>
+                    <input class="auth-input" value="@Email" readonly />
+                </div>
+
+                <div class="field">
+                    <label>Имя</label>
+                    <InputText class="auth-input" @bind-Value="ProfileInputModel.FirstName" />
+                    <ValidationMessage For="@(() => ProfileInputModel.FirstName)" />
+                </div>
+
+                <div class="field">
+                    <label>Фамилия</label>
+                    <InputText class="auth-input" @bind-Value="ProfileInputModel.LastName" />
+                    <ValidationMessage For="@(() => ProfileInputModel.LastName)" />
+                </div>
+
+                <div class="field">
+                    <label>Дата рождения</label>
+                    <InputDate class="auth-input" @bind-Value="ProfileInputModel.BirthDate" />
+                    <ValidationMessage For="@(() => ProfileInputModel.BirthDate)" />
+                </div>
+
+                <div class="field">
+                    <label>Пол</label>
+                    <InputSelect class="auth-input" @bind-Value="ProfileInputModel.Gender">
+                        <option value="">Выберите</option>
+                        <option value="Мужской">Мужской</option>
+                        <option value="Женский">Женский</option>
+                        <option value="Не указывать">Не указывать</option>
+                    </InputSelect>
+                    <ValidationMessage For="@(() => ProfileInputModel.Gender)" />
+                </div>
+            </div>
+
+            <button class="finish-button auth-button profile-primary-action" type="submit">
+                Сохранить изменения
+            </button>
+        </EditForm>
+    </section>
+
+    <section class="profile-panel profile-actions-panel">
+        <div class="profile-heading">
+            <h2>Безопасность и аккаунт</h2>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(PasswordMessage))
+        {
+            <div class="profile-success">@PasswordMessage</div>
+        }
+
+        @if (PasswordErrors.Any())
+        {
+            <div class="validation-summary">
+                @foreach (var error in PasswordErrors)
+                {
+                    <div>@error</div>
+                }
+            </div>
+        }
+
+        <EditForm Model="PasswordInputModel" OnValidSubmit="ChangePasswordAsync">
+            <DataAnnotationsValidator />
+
+            <div class="profile-form-grid">
+                <div class="field">
+                    <label>Текущий пароль</label>
+                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.CurrentPassword" />
+                    <ValidationMessage For="@(() => PasswordInputModel.CurrentPassword)" />
+                </div>
+
+                <div class="field">
+                    <label>Новый пароль</label>
+                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.NewPassword" />
+                    <ValidationMessage For="@(() => PasswordInputModel.NewPassword)" />
+                </div>
+
+                <div class="field">
+                    <label>Подтверждение нового пароля</label>
+                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.ConfirmPassword" />
+                    <ValidationMessage For="@(() => PasswordInputModel.ConfirmPassword)" />
+                </div>
+            </div>
+
+            <button class="profile-secondary-action" type="submit">
+                Изменить пароль
+            </button>
+        </EditForm>
+
+        <div class="profile-account-actions">
+            <button class="profile-secondary-action" type="button" @onclick="LogoutAsync">
+                Выйти из аккаунта
+            </button>
+
+            <label class="profile-danger-confirm">
+                <InputCheckbox @bind-Value="DeleteConfirmed" />
+                <span>Я понимаю, что аккаунт будет удален</span>
+            </label>
+
+            <button class="profile-danger-action" type="button" disabled="@(!DeleteConfirmed)" @onclick="DeleteAccountAsync">
+                Удалить аккаунт
+            </button>
+        </div>
+    </section>
+</div>
+
+@code {
+    private IdentityUser? CurrentUser { get; set; }
+
+    private UserProfile? CurrentProfile { get; set; }
+
+    private ProfileInput ProfileInputModel { get; } = new();
+
+    private PasswordInput PasswordInputModel { get; } = new();
+
+    private List<string> PasswordErrors { get; } = new();
+
+    private string Email => CurrentUser?.Email ?? string.Empty;
+
+    private string FullName => string.Join(" ", new[]
+    {
+        ProfileInputModel.FirstName,
+        ProfileInputModel.LastName
+    }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private string? ProfileMessage { get; set; }
+
+    private string? ProfileError { get; set; }
+
+    private string? PasswordMessage { get; set; }
+
+    private bool DeleteConfirmed { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        var userId = await CurrentUserService.GetRequiredUserIdAsync();
+
+        CurrentUser = await UserManager.FindByIdAsync(userId);
+        CurrentProfile = await Db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId);
+
+        if (CurrentUser is null)
+        {
+            Navigation.NavigateTo("/account/login", forceLoad: true);
+            return;
+        }
+
+        if (CurrentProfile is null)
+        {
+            Navigation.NavigateTo("/profile/setup");
+            return;
+        }
+
+        ProfileInputModel.FirstName = CurrentProfile.FirstName;
+        ProfileInputModel.LastName = CurrentProfile.LastName;
+        ProfileInputModel.BirthDate = CurrentProfile.BirthDate;
+        ProfileInputModel.Gender = CurrentProfile.Gender;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        ProfileMessage = null;
+        ProfileError = null;
+
+        if (CurrentProfile is null)
+        {
+            ProfileError = "Профиль не найден.";
+            return;
+        }
+
+        CurrentProfile.FirstName = ProfileInputModel.FirstName.Trim();
+        CurrentProfile.LastName = ProfileInputModel.LastName.Trim();
+        CurrentProfile.BirthDate = ProfileInputModel.BirthDate;
+        CurrentProfile.Gender = ProfileInputModel.Gender;
+        CurrentProfile.UpdatedAt = DateTime.UtcNow;
+
+        await Db.SaveChangesAsync();
+
+        ProfileMessage = "Данные профиля сохранены.";
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        PasswordErrors.Clear();
+        PasswordMessage = null;
+
+        if (CurrentUser is null)
+            return;
+
+        var result = await UserManager.ChangePasswordAsync(
+            CurrentUser,
+            PasswordInputModel.CurrentPassword,
+            PasswordInputModel.NewPassword);
+
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                PasswordErrors.Add(TranslateIdentityError(error));
+            }
+
+            return;
+        }
+
+        await SignInManager.RefreshSignInAsync(CurrentUser);
+        PasswordInputModel.CurrentPassword = string.Empty;
+        PasswordInputModel.NewPassword = string.Empty;
+        PasswordInputModel.ConfirmPassword = string.Empty;
+        PasswordMessage = "Пароль изменен.";
+    }
+
+    private async Task LogoutAsync()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/account/login", forceLoad: true);
+    }
+
+    private async Task DeleteAccountAsync()
+    {
+        if (!DeleteConfirmed || CurrentUser is null)
+            return;
+
+        if (CurrentProfile is not null)
+        {
+            Db.UserProfiles.Remove(CurrentProfile);
+            await Db.SaveChangesAsync();
+        }
+
+        await SignInManager.SignOutAsync();
+        await UserManager.DeleteAsync(CurrentUser);
+        Navigation.NavigateTo("/account/register", forceLoad: true);
+    }
+
+    private sealed class ProfileInput
+    {
+        [Required(ErrorMessage = "Введите имя.")]
+        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите фамилию.")]
+        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Укажите дату рождения.")]
+        public DateTime? BirthDate { get; set; }
+
+        [Required(ErrorMessage = "Выберите пол.")]
+        public string Gender { get; set; } = string.Empty;
+    }
+
+    private sealed class PasswordInput
+    {
+        [Required(ErrorMessage = "Введите текущий пароль.")]
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите новый пароль.")]
+        [MinLength(6, ErrorMessage = "Пароль должен быть не короче 6 символов.")]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private static string TranslateIdentityError(IdentityError error)
+    {
+        return error.Code switch
+        {
+            "PasswordMismatch" => "Текущий пароль указан неверно.",
+            "PasswordTooShort" => "Пароль слишком короткий.",
+            "PasswordRequiresDigit" => "Пароль должен содержать хотя бы одну цифру.",
+            "PasswordRequiresLower" => "Пароль должен содержать хотя бы одну строчную латинскую букву.",
+            "PasswordRequiresUpper" => "Пароль должен содержать хотя бы одну заглавную латинскую букву.",
+            "PasswordRequiresNonAlphanumeric" => "Пароль должен содержать хотя бы один специальный символ.",
+            _ => error.Description
+        };
+    }
+}

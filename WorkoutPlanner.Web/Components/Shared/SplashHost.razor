@@ -37,12 +37,14 @@
         if (!firstRender)
             return;
 
-        await Task.Delay(1200);
+        await Task.Delay(2200);
 
+        // Запускаем анимацию исчезновения
         _isLeaving = true;
         StateHasChanged();
 
-        await Task.Delay(520);
+        // Ждем завершения анимации
+        await Task.Delay(800);
 
         _visible = false;
         StateHasChanged();
