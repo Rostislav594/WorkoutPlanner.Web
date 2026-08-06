@@ -27,4 +27,14 @@ public sealed class ExerciseDefinitionService : IExerciseDefinitionService
 
         return definitions.Select(x => x.ToContract()).ToList();
     }
+
+    public async Task<bool> ExistsAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.ExerciseDefinitions
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == id, cancellationToken);
+    }
 }

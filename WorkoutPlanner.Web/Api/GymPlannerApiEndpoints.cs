@@ -82,6 +82,8 @@ public static class GymPlannerApiEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
+        api.MapWorkoutApiEndpoints();
+
         return api;
     }
 

@@ -38,6 +38,23 @@ public sealed class ExerciseService : IExerciseService
         return exercises.Select(x => x.ToContract()).ToList();
     }
 
+    public async Task<Exercise?> GetByIdAsync(
+        int exerciseId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var exercise = await db.Exercises
+            .AsNoTracking()
+            .Include(x => x.ExerciseDefinition)
+            .Include(x => x.Sets)
+            .FirstOrDefaultAsync(
+                x => x.Id == exerciseId && x.UserId == userId,
+                cancellationToken);
+
+        return exercise?.ToContract();
+    }
+
     public async Task AddExerciseAsync(
         Exercise exercise,
         CancellationToken cancellationToken = default)

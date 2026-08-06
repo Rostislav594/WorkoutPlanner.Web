@@ -30,6 +30,8 @@ public sealed class MobileApiTests
         var document = await response.Content.ReadAsStringAsync();
         Assert.Contains("/api/v1/auth/login", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/profile", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/training-plans", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/exercises/{id}", document, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -142,6 +144,192 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task WorkoutApi_PreservesPerSetWeights_AndRejectsCrossUserAccess()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+
+        using var anonymousPlans = await firstUser.GetAsync(
+            "/api/v1/training-plans");
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousPlans.StatusCode);
+
+        using var firstRegistration = await firstUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("workout-a@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, firstRegistration.StatusCode);
+        using var secondRegistration = await secondUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("workout-b@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, secondRegistration.StatusCode);
+
+        SetBearer(
+            firstUser,
+            (await LoginAsync(
+                firstUser,
+                "workout-a@example.test",
+                "password1",
+                "First user phone")).AccessToken);
+        SetBearer(
+            secondUser,
+            (await LoginAsync(
+                secondUser,
+                "workout-b@example.test",
+                "password1",
+                "Second user phone")).AccessToken);
+
+        using var createPlan = await firstUser.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("API strength"));
+        Assert.Equal(HttpStatusCode.Created, createPlan.StatusCode);
+        var plan = await createPlan.Content
+            .ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.NotNull(plan);
+        Assert.Equal(
+            $"/api/v1/training-plans/{plan.Id}",
+            createPlan.Headers.Location?.OriginalString);
+
+        using var duplicatePlan = await firstUser.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("API strength"));
+        Assert.Equal(HttpStatusCode.Conflict, duplicatePlan.StatusCode);
+
+        using var invalidExercise = await firstUser.PostAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises",
+            new SaveExerciseRequest(
+                "Invalid exercise",
+                3,
+                "NotCompleted",
+                null,
+                [new SaveExerciseSetRequest(1, 8, 40, false)]));
+        Assert.Equal(HttpStatusCode.BadRequest, invalidExercise.StatusCode);
+        Assert.Equal(
+            "application/problem+json",
+            invalidExercise.Content.Headers.ContentType?.MediaType);
+
+        var createExerciseRequest = new SaveExerciseRequest(
+            "Bench press",
+            3,
+            "NotCompleted",
+            null,
+            [
+                new SaveExerciseSetRequest(1, 8, 60, false),
+                new SaveExerciseSetRequest(2, 7, 65, false),
+                new SaveExerciseSetRequest(3, 6, 70, false)
+            ]);
+        using var createExercise = await firstUser.PostAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises",
+            createExerciseRequest);
+        Assert.Equal(HttpStatusCode.Created, createExercise.StatusCode);
+        var exercise = await createExercise.Content
+            .ReadFromJsonAsync<ExerciseApiResponse>();
+        Assert.NotNull(exercise);
+        Assert.Equal([60d, 65d, 70d], exercise.Sets.Select(x => x.Weight));
+
+        using var foreignPlan = await secondUser.GetAsync(
+            $"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignPlan.StatusCode);
+        using var foreignPlanRename = await secondUser.PutAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}",
+            new RenameTrainingPlanRequest("Compromised plan"));
+        Assert.Equal(HttpStatusCode.NotFound, foreignPlanRename.StatusCode);
+        using var foreignPlanDelete = await secondUser.DeleteAsync(
+            $"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignPlanDelete.StatusCode);
+        using var foreignPlanExercises = await secondUser.GetAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises");
+        Assert.Equal(HttpStatusCode.NotFound, foreignPlanExercises.StatusCode);
+        using var foreignExercise = await secondUser.GetAsync(
+            $"/api/v1/exercises/{exercise.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignExercise.StatusCode);
+
+        var foreignUpdateRequest = createExerciseRequest with
+        {
+            Name = "Compromised exercise",
+            Sets =
+            [
+                new SaveExerciseSetRequest(1, 1, 1, true),
+                new SaveExerciseSetRequest(2, 1, 1, true),
+                new SaveExerciseSetRequest(3, 1, 1, true)
+            ]
+        };
+        using var foreignUpdate = await secondUser.PutAsJsonAsync(
+            $"/api/v1/exercises/{exercise.Id}",
+            foreignUpdateRequest);
+        Assert.Equal(HttpStatusCode.NotFound, foreignUpdate.StatusCode);
+        using var foreignDelete = await secondUser.DeleteAsync(
+            $"/api/v1/exercises/{exercise.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDelete.StatusCode);
+
+        var ownUpdateRequest = createExerciseRequest with
+        {
+            Sets =
+            [
+                new SaveExerciseSetRequest(1, 10, 62.5, true),
+                new SaveExerciseSetRequest(2, 9, 67.5, false),
+                new SaveExerciseSetRequest(3, 8, 72.5, false)
+            ]
+        };
+        using var ownUpdate = await firstUser.PutAsJsonAsync(
+            $"/api/v1/exercises/{exercise.Id}",
+            ownUpdateRequest);
+        Assert.Equal(HttpStatusCode.OK, ownUpdate.StatusCode);
+        var updated = await ownUpdate.Content
+            .ReadFromJsonAsync<ExerciseApiResponse>();
+        Assert.NotNull(updated);
+        Assert.Equal(
+            [62.5d, 67.5d, 72.5d],
+            updated.Sets.Select(x => x.Weight));
+        Assert.Equal([10, 9, 8], updated.Sets.Select(x => x.Repetitions));
+
+        var secondUserPlans = await secondUser.GetFromJsonAsync<
+            List<TrainingPlanApiResponse>>("/api/v1/training-plans");
+        Assert.NotNull(secondUserPlans);
+        Assert.DoesNotContain(secondUserPlans, x => x.Id == plan.Id);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbFactory = scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var firstUserId = await db.Users
+            .Where(x => x.Email == "workout-a@example.test")
+            .Select(x => x.Id)
+            .SingleAsync();
+        var savedExercise = await db.Exercises
+            .AsNoTracking()
+            .Include(x => x.Sets)
+            .SingleAsync(x => x.Id == exercise.Id);
+        Assert.Equal(firstUserId, savedExercise.UserId);
+        Assert.Equal("Bench press", savedExercise.Name);
+        Assert.Equal(
+            [62.5d, 67.5d, 72.5d],
+            savedExercise.Sets
+                .OrderBy(x => x.SetNumber)
+                .Select(x => x.Weight));
+
+        using var renamePlan = await firstUser.PutAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}",
+            new RenameTrainingPlanRequest("API strength updated"));
+        Assert.Equal(HttpStatusCode.OK, renamePlan.StatusCode);
+        var renamedPlan = await renamePlan.Content
+            .ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.NotNull(renamedPlan);
+        Assert.Equal("API strength updated", renamedPlan.WorkoutName);
+        Assert.All(
+            renamedPlan.Exercises,
+            item => Assert.Equal(plan.Id, item.TrainingPlanId));
+
+        using var deletePlan = await firstUser.DeleteAsync(
+            $"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, deletePlan.StatusCode);
+        using var deletedPlan = await firstUser.GetAsync(
+            $"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, deletedPlan.StatusCode);
+        Assert.False(await db.TrainingPlans.AnyAsync(x => x.Id == plan.Id));
+        Assert.False(await db.Exercises.AnyAsync(x => x.Id == exercise.Id));
     }
 
     [Fact]

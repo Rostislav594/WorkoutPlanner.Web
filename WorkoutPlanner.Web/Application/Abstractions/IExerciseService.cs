@@ -7,6 +7,9 @@ public interface IExerciseService
     Task<List<Exercise>> GetExercisesAsync(
         string workoutName,
         CancellationToken cancellationToken = default);
+    Task<Exercise?> GetByIdAsync(
+        int exerciseId,
+        CancellationToken cancellationToken = default);
     Task AddExerciseAsync(
         Exercise exercise,
         CancellationToken cancellationToken = default);
@@ -21,6 +24,9 @@ public interface IExerciseService
 public interface IExerciseDefinitionService
 {
     Task<List<ExerciseDefinition>> GetAllAsync(
+        CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(
+        int id,
         CancellationToken cancellationToken = default);
 }
 
