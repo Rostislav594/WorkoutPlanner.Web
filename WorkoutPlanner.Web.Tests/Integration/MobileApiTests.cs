@@ -34,6 +34,10 @@ public sealed class MobileApiTests
         Assert.Contains("/api/v1/exercises/{id}", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/calendar", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/history", document, StringComparison.Ordinal);
+        Assert.Contains(
+            "/api/v1/progress/workouts/{trainingPlanId}",
+            document,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -146,6 +150,152 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task ProgressApi_ReturnsOnlyOwnedSnapshots_AndClearsSelectedScope()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+        using var firstRegistration = await firstUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("progress-a@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, firstRegistration.StatusCode);
+        using var secondRegistration = await secondUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("progress-b@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, secondRegistration.StatusCode);
+        SetBearer(
+            firstUser,
+            (await LoginAsync(
+                firstUser,
+                "progress-a@example.test",
+                "password1",
+                "Progress A")).AccessToken);
+        SetBearer(
+            secondUser,
+            (await LoginAsync(
+                secondUser,
+                "progress-b@example.test",
+                "password1",
+                "Progress B")).AccessToken);
+
+        var firstPlans = await firstUser.GetFromJsonAsync<
+            List<TrainingPlanApiResponse>>("/api/v1/training-plans");
+        Assert.NotNull(firstPlans);
+        var firstPlan = firstPlans[0];
+
+        string secondUserId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var firstUserId = await db.Users
+                .Where(x => x.Email == "progress-a@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            secondUserId = await db.Users
+                .Where(x => x.Email == "progress-b@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            db.ProgressSnapshots.AddRange(
+                new WorkoutPlanner.Web.Models.ProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    Date = new DateTime(2026, 1, 1),
+                    Score = 100
+                },
+                new WorkoutPlanner.Web.Models.ProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    Date = new DateTime(2026, 1, 2),
+                    Score = 150
+                },
+                new WorkoutPlanner.Web.Models.ProgressSnapshot
+                {
+                    UserId = secondUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    Date = new DateTime(2026, 1, 1),
+                    Score = 999
+                });
+            db.ExerciseProgressSnapshots.AddRange(
+                new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    ExerciseName = "Bench press",
+                    Date = new DateTime(2026, 1, 1),
+                    Score = 10
+                },
+                new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    ExerciseName = "Bench press",
+                    Date = new DateTime(2026, 1, 2),
+                    Score = 20
+                },
+                new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
+                {
+                    UserId = secondUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    ExerciseName = "Private exercise",
+                    Date = new DateTime(2026, 1, 1),
+                    Score = 999
+                });
+            await db.SaveChangesAsync();
+        }
+
+        var workoutProgress = await firstUser.GetFromJsonAsync<
+            WorkoutProgressApiResponse>(
+                $"/api/v1/progress/workouts/{firstPlan.Id}");
+        Assert.NotNull(workoutProgress);
+        Assert.Equal([100d, 150d], workoutProgress.Snapshots.Select(x => x.Score));
+        Assert.Equal([0m, 50m], workoutProgress.Chart.Select(x => x.Percent));
+
+        var exerciseNames = await firstUser.GetFromJsonAsync<List<string>>(
+            $"/api/v1/progress/workouts/{firstPlan.Id}/exercises");
+        Assert.NotNull(exerciseNames);
+        Assert.Equal(["Bench press"], exerciseNames);
+        var exerciseProgress = await firstUser.GetFromJsonAsync<
+            ExerciseProgressApiResponse>(
+                $"/api/v1/progress/workouts/{firstPlan.Id}/exercises/chart" +
+                "?exerciseName=Bench%20press");
+        Assert.NotNull(exerciseProgress);
+        Assert.Equal([0m, 100m], exerciseProgress.Chart.Select(x => x.Percent));
+
+        using var foreignRead = await secondUser.GetAsync(
+            $"/api/v1/progress/workouts/{firstPlan.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignRead.StatusCode);
+        using var foreignDelete = await secondUser.DeleteAsync(
+            $"/api/v1/progress/workouts/{firstPlan.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDelete.StatusCode);
+
+        using var clearExercise = await firstUser.DeleteAsync(
+            $"/api/v1/progress/workouts/{firstPlan.Id}/exercises" +
+            "?exerciseName=Bench%20press");
+        Assert.Equal(HttpStatusCode.NoContent, clearExercise.StatusCode);
+        using var clearWorkout = await firstUser.DeleteAsync(
+            $"/api/v1/progress/workouts/{firstPlan.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, clearWorkout.StatusCode);
+
+        await using var verificationScope = factory.Services.CreateAsyncScope();
+        var verificationFactory = verificationScope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var verificationDb =
+            await verificationFactory.CreateDbContextAsync();
+        Assert.False(await verificationDb.ProgressSnapshots.AnyAsync(x =>
+            x.UserId != secondUserId));
+        Assert.False(await verificationDb.ExerciseProgressSnapshots.AnyAsync(x =>
+            x.UserId != secondUserId));
+        Assert.True(await verificationDb.ProgressSnapshots.AnyAsync(x =>
+            x.UserId == secondUserId));
+        Assert.True(await verificationDb.ExerciseProgressSnapshots.AnyAsync(x =>
+            x.UserId == secondUserId));
     }
 
     [Fact]

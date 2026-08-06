@@ -84,6 +84,7 @@ public static class GymPlannerApiEndpoints
 
         api.MapWorkoutApiEndpoints();
         api.MapWorkoutLifecycleApiEndpoints();
+        api.MapProgressApiEndpoints();
 
         return api;
     }
