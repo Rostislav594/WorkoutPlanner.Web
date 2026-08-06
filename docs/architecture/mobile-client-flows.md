@@ -19,6 +19,10 @@
 - The monthly calendar loads only the visible date range and schedules,
   replaces, or removes user-owned workout days through the protected lifecycle
   API. Past dates remain read-only and completed days cannot be overwritten.
+- Today's workout starts through the lifecycle API. The client keeps weight,
+  repetitions, completion, and effort status explicit for every set/exercise,
+  saves them through exercise DTOs, and only then asks the server to atomically
+  create the immutable history snapshot and progress records.
 
 ## Boundary
 

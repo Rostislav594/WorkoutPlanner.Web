@@ -16,4 +16,10 @@ public interface IWorkoutLifecycleApiClient
     Task<ApiResult> DeleteCalendarDayAsync(
         int id,
         CancellationToken cancellationToken = default);
+
+    Task<OptionalApiResult<TodayWorkoutApiResponse>> StartTodayWorkoutAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResult<WorkoutHistoryApiResponse>> CompleteTodayWorkoutAsync(
+        CancellationToken cancellationToken = default);
 }

@@ -1,0 +1,35 @@
+.today-page { max-width: 52rem; margin: 0 auto; }
+header p { margin: 0; color: #80d89b; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+header h1 { margin: .3rem 0 1rem; font-size: clamp(2rem, 9vw, 3rem); }
+.state, .empty-state, .workout-heading, .exercise-card { padding: 1rem; border: 1px solid #2b3038; border-radius: 1rem; background: #171a20; }
+.state { color: #aeb7c2; }
+.empty-state { text-align: center; }
+.empty-state h2 { margin-top: 0; }
+.empty-state p { color: #aeb7c2; }
+.empty-state a { display: inline-block; border-radius: .65rem; padding: .7rem 1rem; background: #3fb950; color: #08110b; font-weight: 800; text-decoration: none; }
+.workout-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.workout-heading p, .workout-heading h2 { margin: 0; }
+.workout-heading p, .workout-heading span { color: #aeb7c2; }
+.progress-track { height: .55rem; overflow: hidden; margin: .75rem 0 1rem; border-radius: 999px; background: #262c33; }
+.progress-track span { display: block; height: 100%; background: #4fc46b; transition: width .2s ease; }
+.exercise-list { display: grid; gap: .8rem; }
+.exercise-title { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.exercise-title h3 { margin: 0; }
+.saved-label, .completed-label { color: #80d89b; font-size: .8rem; font-weight: 700; }
+.set-list { display: grid; gap: .6rem; margin-top: .85rem; }
+.set-row { display: grid; grid-template-columns: auto 1fr 1fr; align-items: end; gap: .6rem; border: 1px solid #343b45; border-radius: .8rem; padding: .65rem; }
+.set-row legend { padding: 0 .25rem; color: #80d89b; font-weight: 700; }
+.set-row label, .status-control { display: grid; gap: .35rem; color: #c9d1d9; }
+.set-row .complete-control { align-self: center; grid-template-columns: auto 1fr; align-items: center; }
+.complete-control input { width: 1.2rem; height: 1.2rem; accent-color: #4fc46b; }
+.status-control { margin-top: .8rem; }
+.primary, .secondary, .finish-button { min-height: 2.7rem; border: 1px solid #46505c; border-radius: .65rem; padding: .55rem .9rem; background: #242a32; color: #fff; font: inherit; font-weight: 800; }
+.save-exercise { margin-top: .75rem; }
+.finish-button { width: 100%; margin-top: 1rem; border-color: #3f8f54; background: #3fb950; color: #08110b; }
+.primary { border-color: #3f8f54; background: #3fb950; color: #08110b; }
+.primary:disabled, .secondary:disabled, .finish-button:disabled { opacity: .55; }
+.dialog-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 1rem; background: rgba(0, 0, 0, .78); }
+.completion-dialog { width: min(100%, 30rem); padding: 1.5rem; border: 1px solid #46505c; border-radius: 1.25rem; background: #171a20; text-align: center; }
+.completion-icon { display: grid; place-items: center; width: 4rem; height: 4rem; margin: 0 auto; border-radius: 50%; background: #284d33; color: #80d89b; font-size: 2rem; font-weight: 900; }
+.completion-dialog p { color: #aeb7c2; }
+@media (max-width: 35rem) { .set-row { grid-template-columns: 1fr 1fr; } .set-row .complete-control { grid-column: 1 / -1; } }

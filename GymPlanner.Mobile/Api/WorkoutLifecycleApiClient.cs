@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -88,6 +89,69 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         catch (HttpRequestException)
         {
             return ApiResult.Failure("Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<OptionalApiResult<TodayWorkoutApiResponse>> StartTodayWorkoutAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PostAsync(
+                "api/v1/workouts/today/start",
+                content: null,
+                cancellationToken);
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return OptionalApiResult<TodayWorkoutApiResponse>.Empty();
+            if (!response.IsSuccessStatusCode)
+            {
+                return OptionalApiResult<TodayWorkoutApiResponse>.Failure(
+                    [.. await MobileApiErrorReader.ReadAsync(
+                        response,
+                        cancellationToken)]);
+            }
+
+            var workout = await response.Content.ReadFromJsonAsync<
+                TodayWorkoutApiResponse>(cancellationToken);
+            return workout is null
+                ? OptionalApiResult<TodayWorkoutApiResponse>.Failure(
+                    "Сервер вернул пустую тренировку.")
+                : OptionalApiResult<TodayWorkoutApiResponse>.Success(workout);
+        }
+        catch (HttpRequestException)
+        {
+            return OptionalApiResult<TodayWorkoutApiResponse>.Failure(
+                "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult<WorkoutHistoryApiResponse>> CompleteTodayWorkoutAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PostAsync(
+                "api/v1/workouts/today/complete",
+                content: null,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(
+                    null,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            }
+
+            var history = await response.Content.ReadFromJsonAsync<
+                WorkoutHistoryApiResponse>(cancellationToken);
+            return history is null
+                ? ApiResult<WorkoutHistoryApiResponse>.Failure(
+                    "Сервер вернул пустую запись истории.")
+                : ApiResult<WorkoutHistoryApiResponse>.Success(history);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<WorkoutHistoryApiResponse>.Failure(
+                "Нет соединения с сервером.");
         }
     }
 }
