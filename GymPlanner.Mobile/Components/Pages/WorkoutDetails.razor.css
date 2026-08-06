@@ -1,0 +1,7 @@
+.details-page { max-width: 52rem; margin: 0 auto; }
+.back-link { color: #80d89b; text-decoration: none; }
+h1 { margin: 1rem 0; font-size: clamp(2rem, 9vw, 3rem); }
+.exercise-card, .empty { margin-top: .75rem; padding: 1rem; border: 1px solid #2b3038; border-radius: 1rem; background: #171a20; }
+.exercise-card h2 { margin-top: 0; }
+.sets { display: grid; gap: .45rem; color: #aeb7c2; }
+.sets strong { color: #fff; }

@@ -1,0 +1,29 @@
+@page "/workouts/{Id:int}"
+@attribute [Authorize]
+@inject IWorkoutApiClient WorkoutClient
+
+<section class="details-page">
+    <a class="back-link" href="/workouts">← К планам</a>
+    @if (_loading) { <p role="status">Загружаем тренировку…</p> }
+    else if (_errors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _errors)</div> }
+    else if (_plan is not null)
+    {
+        <h1>@_plan.WorkoutName</h1>
+        @if (_plan.Exercises.Count == 0) { <p class="empty">Упражнений пока нет.</p> }
+        @foreach (var exercise in _plan.Exercises)
+        {
+            <article class="exercise-card"><h2>@exercise.Name</h2><div class="sets">
+                @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                { <span>Подход @set.SetNumber: <strong>@set.Weight кг × @set.Repetitions</strong></span> }
+            </div></article>
+        }
+    }
+</section>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private WorkoutPlanner.Api.Contracts.TrainingPlanApiResponse? _plan;
+    private readonly List<string> _errors = [];
+    private bool _loading = true;
+    protected override async Task OnParametersSetAsync() { _loading = true; _errors.Clear(); var result = await WorkoutClient.GetPlanAsync(Id); if (!result.Succeeded) _errors.AddRange(result.Errors); else _plan = result.Value; _loading = false; }
+}

@@ -1,0 +1,96 @@
+@page "/workouts"
+@attribute [Authorize]
+@using WorkoutPlanner.Api.Contracts
+@inject IWorkoutApiClient WorkoutClient
+
+<section class="workouts-page">
+    <header><p>Шаблоны</p><h1>Тренировки</h1></header>
+
+    @if (_errors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _errors)</div> }
+
+    <div class="create-row">
+        <label for="new-plan-name">Новый план</label>
+        <input id="new-plan-name" class="auth-input" maxlength="120" @bind="_newName" placeholder="Например, Силовая тренировка" />
+        <button type="button" disabled="@_isBusy" @onclick="CreateAsync">Добавить</button>
+    </div>
+
+    @if (_isLoading) { <div class="state">Загружаем планы…</div> }
+    else if (_plans.Count == 0) { <div class="state">Планов пока нет.</div> }
+    else
+    {
+        <div class="plan-list">
+            @foreach (var plan in _plans)
+            {
+                <article class="plan-card">
+                    @if (_editingId == plan.Id)
+                    {
+                        <input class="auth-input" maxlength="120" @bind="_editName" aria-label="Новое название плана" />
+                        <div class="actions"><button @onclick="() => RenameAsync(plan.Id)">Сохранить</button><button @onclick="CancelEdit">Отмена</button></div>
+                    }
+                    else
+                    {
+                        <a href="@($"/workouts/{plan.Id}")"><strong>@plan.WorkoutName</strong><span>@plan.Exercises.Count упражнений</span></a>
+                        <div class="actions"><button @onclick="() => BeginEdit(plan)">Переименовать</button><button class="danger" @onclick="() => ConfirmDelete(plan)">Удалить</button></div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@if (_deleteTarget is not null)
+{
+    <div class="dialog-backdrop"><section class="confirm-dialog" role="dialog" aria-modal="true"><h2>Удалить план?</h2><p>@_deleteTarget.WorkoutName и все упражнения этого плана будут удалены.</p><div class="actions"><button @onclick="() => _deleteTarget = null">Отмена</button><button class="danger" disabled="@_isBusy" @onclick="DeleteAsync">Удалить</button></div></section></div>
+}
+
+@code {
+    private readonly List<TrainingPlanApiResponse> _plans = [];
+    private readonly List<string> _errors = [];
+    private bool _isLoading = true, _isBusy;
+    private string _newName = string.Empty, _editName = string.Empty;
+    private int? _editingId;
+    private TrainingPlanApiResponse? _deleteTarget;
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true; _errors.Clear();
+        var result = await WorkoutClient.GetPlansAsync();
+        if (!result.Succeeded) _errors.AddRange(result.Errors);
+        else { _plans.Clear(); _plans.AddRange(result.Value!); }
+        _isLoading = false;
+    }
+
+    private async Task CreateAsync()
+    {
+        if (_isBusy || string.IsNullOrWhiteSpace(_newName)) return;
+        await RunAsync(() => WorkoutClient.CreatePlanAsync(new(_newName.Trim())), plan => { _plans.Add(plan); _newName = string.Empty; });
+    }
+
+    private async Task RenameAsync(int id)
+    {
+        if (_isBusy || string.IsNullOrWhiteSpace(_editName)) return;
+        await RunAsync(() => WorkoutClient.RenamePlanAsync(id, new(_editName.Trim())), plan => { Replace(plan); CancelEdit(); });
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (_isBusy || _deleteTarget is null) return;
+        _isBusy = true; _errors.Clear();
+        var id = _deleteTarget.Id;
+        try { var result = await WorkoutClient.DeletePlanAsync(id); if (!result.Succeeded) _errors.AddRange(result.Errors); else { _plans.RemoveAll(x => x.Id == id); _deleteTarget = null; } }
+        finally { _isBusy = false; }
+    }
+
+    private async Task RunAsync(Func<Task<ApiResult<TrainingPlanApiResponse>>> call, Action<TrainingPlanApiResponse> success)
+    {
+        _isBusy = true; _errors.Clear();
+        try { var result = await call(); if (!result.Succeeded) _errors.AddRange(result.Errors); else success(result.Value!); }
+        finally { _isBusy = false; }
+    }
+
+    private void Replace(TrainingPlanApiResponse plan) { var index = _plans.FindIndex(x => x.Id == plan.Id); if (index >= 0) _plans[index] = plan; }
+    private void BeginEdit(TrainingPlanApiResponse plan) { _editingId = plan.Id; _editName = plan.WorkoutName; }
+    private void CancelEdit() { _editingId = null; _editName = string.Empty; }
+    private void ConfirmDelete(TrainingPlanApiResponse plan) => _deleteTarget = plan;
+}

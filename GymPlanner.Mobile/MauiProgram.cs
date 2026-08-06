@@ -25,6 +25,7 @@ public static class MauiProgram
 			serviceProvider => serviceProvider.GetRequiredService<Authentication.MobileAuthenticationStateProvider>());
 		builder.Services.AddAuthorizationCore();
 		builder.Services.AddSingleton<Api.IProfileApiClient, Api.ProfileApiClient>();
+		builder.Services.AddSingleton<Api.IWorkoutApiClient, Api.WorkoutApiClient>();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();

@@ -1,0 +1,15 @@
+.workouts-page { max-width: 52rem; margin: 0 auto; }
+header p { margin: 0; color: #80d89b; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+header h1 { margin: .3rem 0 1rem; font-size: clamp(2rem, 9vw, 3rem); }
+.create-row, .plan-card, .state { padding: 1rem; border: 1px solid #2b3038; border-radius: 1rem; background: #171a20; }
+.create-row { display: grid; gap: .65rem; }
+.create-row button, .actions button { min-height: 2.6rem; border: 1px solid #46505c; border-radius: .65rem; padding: .5rem .8rem; background: #263c2e; color: #fff; }
+.plan-list { display: grid; gap: .75rem; margin-top: 1rem; }
+.plan-card a { display: flex; justify-content: space-between; gap: 1rem; color: #fff; text-decoration: none; }
+.plan-card a span { color: #aeb7c2; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+.actions button.danger, .confirm-dialog .danger { border-color: #a44d59; background: #4a252b; color: #ffd9dd; }
+.state { margin-top: 1rem; color: #aeb7c2; }
+.dialog-backdrop { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 1rem; background: rgba(0,0,0,.72); }
+.confirm-dialog { width: min(100%, 28rem); padding: 1.25rem; border: 1px solid #46505c; border-radius: 1rem; background: #171a20; }
+@media (min-width: 40rem) { .create-row { grid-template-columns: 1fr auto; align-items: end; } .create-row label { grid-column: 1 / -1; } }

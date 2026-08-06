@@ -10,6 +10,9 @@
 - Password change, all-device access revocation, logout, and account deletion
   call their server endpoints before local credentials are cleared. Account
   deletion has an explicit second confirmation step.
+- Training-plan list, creation, rename, deletion, and read-only exercise details
+  use the protected training-plan API and public DTOs. Plan deletion has an
+  explicit confirmation and never performs a local cascade.
 
 ## Boundary
 
