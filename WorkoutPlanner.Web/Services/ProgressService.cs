@@ -1,63 +1,52 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Auth;
+using DataExercise = WorkoutPlanner.Web.Models.Exercise;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class ProgressService
+public sealed class ProgressService : IProgressService
 {
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly ExerciseIndexService _exerciseIndexService;
-    private readonly WorkoutDbContext _db;
     private readonly CurrentUserService _currentUser;
 
-    public ProgressService(
-        WorkoutDbContext db,
-        ExerciseIndexService exerciseIndexService,
-        CurrentUserService currentUser)
+    public ProgressService(IDbContextFactory<WorkoutDbContext> dbFactory, ExerciseIndexService exerciseIndexService, CurrentUserService currentUser)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _exerciseIndexService = exerciseIndexService;
         _currentUser = currentUser;
     }
 
-    public async Task<double> CalculateWorkoutScoreAsync(
-        string workoutName)
+    public async Task<double> CalculateWorkoutScoreAsync(string workoutName, CancellationToken cancellationToken = default)
     {
-        var exercises = await GetWorkoutExercisesForProgressAsync(workoutName);
-
-        var score = exercises.Sum(_exerciseIndexService.Calculate);
-
-        return Math.Round(score, 2);
+        var exercises = await GetWorkoutExercisesForProgressAsync(workoutName, cancellationToken);
+        return Math.Round(exercises.Sum(_exerciseIndexService.Calculate), 2);
     }
 
-    public async Task SaveProgressAsync(
-        string workoutName)
+    public async Task SaveProgressAsync(string workoutName, CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var exercises = await LoadWorkoutExercisesAsync(db, userId, workoutName, cancellationToken);
         var now = DateTime.Now;
         var today = DateTime.Today;
-        var exercises = await GetWorkoutExercisesForProgressAsync(workoutName);
-        var score = Math.Round(
-            exercises.Sum(_exerciseIndexService.Calculate),
-            2);
+        var score = Math.Round(exercises.Sum(_exerciseIndexService.Calculate), 2);
+        var workoutSnapshot = await db.ProgressSnapshots.FirstOrDefaultAsync(
+            x => x.WorkoutName == workoutName && x.Date.Date == today && x.UserId == userId,
+            cancellationToken);
 
-        var workoutSnapshot = await _db.ProgressSnapshots
-            .FirstOrDefaultAsync(x =>
-                x.WorkoutName == workoutName &&
-                x.Date.Date == today &&
-                x.UserId == userId);
-
-        if (workoutSnapshot == null)
+        if (workoutSnapshot is null)
         {
-            _db.ProgressSnapshots.Add(
-                new ProgressSnapshot
-                {
-                    UserId = userId,
-                    WorkoutName = workoutName,
-                    Date = now,
-                    Score = score
-                });
+            db.ProgressSnapshots.Add(new Models.ProgressSnapshot
+            {
+                UserId = userId,
+                WorkoutName = workoutName,
+                Date = now,
+                Score = score
+            });
         }
         else
         {
@@ -67,240 +56,121 @@ public class ProgressService
 
         foreach (var exercise in exercises)
         {
-            var exerciseScore = Math.Round(
-                _exerciseIndexService.Calculate(exercise),
-                2);
-
-            var exerciseSnapshot = await _db.ExerciseProgressSnapshots
-                .FirstOrDefaultAsync(x =>
-                    x.WorkoutName == workoutName &&
-                    x.ExerciseName == exercise.Name &&
-                    x.Date.Date == today &&
-                    x.UserId == userId);
-
-            if (exerciseSnapshot == null)
+            var exerciseScore = Math.Round(_exerciseIndexService.Calculate(exercise), 2);
+            var snapshot = await db.ExerciseProgressSnapshots.FirstOrDefaultAsync(
+                x => x.WorkoutName == workoutName && x.ExerciseName == exercise.Name &&
+                     x.Date.Date == today && x.UserId == userId,
+                cancellationToken);
+            if (snapshot is null)
             {
-                _db.ExerciseProgressSnapshots.Add(
-                    new ExerciseProgressSnapshot
-                    {
-                        UserId = userId,
-                        WorkoutName = workoutName,
-                        ExerciseName = exercise.Name,
-                        Date = now,
-                        Score = exerciseScore
-                    });
+                db.ExerciseProgressSnapshots.Add(new Models.ExerciseProgressSnapshot
+                {
+                    UserId = userId,
+                    WorkoutName = workoutName,
+                    ExerciseName = exercise.Name,
+                    Date = now,
+                    Score = exerciseScore
+                });
             }
             else
             {
-                exerciseSnapshot.Date = now;
-                exerciseSnapshot.Score = exerciseScore;
+                snapshot.Date = now;
+                snapshot.Score = exerciseScore;
             }
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<ProgressSnapshot>> GetWorkoutProgressAsync(
-        string workoutName)
+    public async Task<List<ProgressSnapshot>> GetWorkoutProgressAsync(string workoutName, CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var snapshots = await _db.ProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.ProgressSnapshots.AsNoTracking()
+            .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
             .OrderBy(x => x.Date)
-            .ToListAsync();
-
-        return snapshots;
+            .Select(x => new ProgressSnapshot { Id = x.Id, Date = x.Date, WorkoutName = x.WorkoutName, Score = x.Score })
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<ProgressSnapshot?> GetLastProgressAsync(
-        string workoutName)
+    public async Task<List<ProgressChartPoint>> GetWorkoutChartAsync(string workoutName, CancellationToken cancellationToken = default) =>
+        BuildChartPoints(await GetWorkoutProgressAsync(workoutName, cancellationToken));
+
+    public async Task ClearAllProgressAsync(CancellationToken cancellationToken = default)
     {
-        return (await GetWorkoutProgressAsync(workoutName))
-            .OrderByDescending(x => x.Date)
-            .FirstOrDefault();
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        await db.ProgressSnapshots.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
+        await db.ExerciseProgressSnapshots.Where(x => x.UserId == userId).ExecuteDeleteAsync(cancellationToken);
     }
 
-    public async Task<List<ProgressChartPoint>> GetWorkoutChartAsync(
-        string workoutName)
+    public async Task ClearWorkoutProgressAsync(string workoutName, CancellationToken cancellationToken = default)
     {
-        var snapshots = await GetWorkoutProgressAsync(workoutName);
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        await db.ProgressSnapshots.Where(x => x.UserId == userId && x.WorkoutName == workoutName).ExecuteDeleteAsync(cancellationToken);
+        await db.ExerciseProgressSnapshots.Where(x => x.UserId == userId && x.WorkoutName == workoutName).ExecuteDeleteAsync(cancellationToken);
+    }
 
+    public async Task ClearExerciseProgressAsync(string workoutName, string exerciseName, CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        await db.ExerciseProgressSnapshots
+            .Where(x => x.UserId == userId && x.WorkoutName == workoutName && x.ExerciseName == exerciseName)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public async Task<List<ProgressChartPoint>> GetExerciseChartAsync(string workoutName, string exerciseName, CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var snapshots = await db.ExerciseProgressSnapshots.AsNoTracking()
+            .Where(x => x.UserId == userId && x.WorkoutName == workoutName && x.ExerciseName == exerciseName)
+            .OrderBy(x => x.Date)
+            .Select(x => new ScorePoint(x.Date, x.Score))
+            .ToListAsync(cancellationToken);
         return BuildChartPoints(snapshots);
     }
 
-    public async Task ClearAllProgressAsync()
+    public async Task<List<string>> GetWorkoutExercisesAsync(string workoutName, CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var workoutSnapshots = await _db.ProgressSnapshots
-            .Where(x => x.UserId == userId)
-            .ToListAsync();
-
-        var exerciseSnapshots = await _db.ExerciseProgressSnapshots
-            .Where(x => x.UserId == userId)
-            .ToListAsync();
-
-        _db.ProgressSnapshots.RemoveRange(workoutSnapshots);
-        _db.ExerciseProgressSnapshots.RemoveRange(exerciseSnapshots);
-
-        await _db.SaveChangesAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.ExerciseProgressSnapshots.AsNoTracking()
+            .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
+            .Select(x => x.ExerciseName).Distinct().OrderBy(x => x)
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task ClearWorkoutProgressAsync(
-        string workoutName)
+    private async Task<List<DataExercise>> GetWorkoutExercisesForProgressAsync(string workoutName, CancellationToken cancellationToken)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var workoutSnapshots = await _db.ProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
-            .ToListAsync();
-
-        var exerciseSnapshots = await _db.ExerciseProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
-            .ToListAsync();
-
-        if (!workoutSnapshots.Any() && !exerciseSnapshots.Any())
-            return;
-
-        _db.ProgressSnapshots.RemoveRange(workoutSnapshots);
-        _db.ExerciseProgressSnapshots.RemoveRange(exerciseSnapshots);
-
-        await _db.SaveChangesAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        return await LoadWorkoutExercisesAsync(db, userId, workoutName, cancellationToken);
     }
 
-    public async Task ClearExerciseProgressAsync(
-        string workoutName,
-        string exerciseName)
-    {
-        var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var snapshots = await _db.ExerciseProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.ExerciseName == exerciseName &&
-                x.UserId == userId)
-            .ToListAsync();
-
-        _db.ExerciseProgressSnapshots.RemoveRange(snapshots);
-
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task<List<ExerciseProgressSnapshot>> GetExerciseProgressAsync(
-        string workoutName,
-        string exerciseName)
-    {
-        var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var snapshots = await _db.ExerciseProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.ExerciseName == exerciseName &&
-                x.UserId == userId)
-            .OrderBy(x => x.Date)
-            .ToListAsync();
-
-        return snapshots;
-    }
-
-    public async Task<List<ProgressChartPoint>> GetExerciseChartAsync(
-        string workoutName,
-        string exerciseName)
-    {
-        var snapshots = await GetExerciseProgressAsync(
-            workoutName,
-            exerciseName);
-
-        return BuildChartPoints(snapshots);
-    }
-
-    public async Task<List<string>> GetWorkoutExercisesAsync(
-        string workoutName)
-    {
-        var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        return await _db.ExerciseProgressSnapshots
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
-            .Select(x => x.ExerciseName)
-            .Distinct()
-            .OrderBy(x => x)
-            .ToListAsync();
-    }
-
-    private async Task<List<Exercise>> GetWorkoutExercisesForProgressAsync(
-        string workoutName)
-    {
-        var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var exercises = await _db.Exercises
-            .Include(x => x.ExerciseDefinition)
-            .ThenInclude(x => x!.SecondaryMuscles)
-            .ThenInclude(x => x.Muscle)
+    private static Task<List<DataExercise>> LoadWorkoutExercisesAsync(WorkoutDbContext db, string userId, string workoutName, CancellationToken cancellationToken) =>
+        db.Exercises.AsNoTracking()
+            .Include(x => x.ExerciseDefinition).ThenInclude(x => x!.SecondaryMuscles)
             .Include(x => x.Sets)
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
-            .ToListAsync();
+            .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
+            .ToListAsync(cancellationToken);
 
-        return exercises;
-    }
+    private static List<ProgressChartPoint> BuildChartPoints(IReadOnlyList<ProgressSnapshot> snapshots) =>
+        BuildChartPoints(snapshots.Select(x => new ScorePoint(x.Date, x.Score)).ToList());
 
-    private static List<ProgressChartPoint> BuildChartPoints<TSnapshot>(
-        IReadOnlyList<TSnapshot> snapshots)
-        where TSnapshot : class
+    private static List<ProgressChartPoint> BuildChartPoints(IReadOnlyList<ScorePoint> snapshots)
     {
-        if (!snapshots.Any())
-            return new();
-
-        var firstScore = GetScore(snapshots[0]);
-        var result = new List<ProgressChartPoint>();
-
-        foreach (var snapshot in snapshots)
+        if (snapshots.Count == 0)
+            return [];
+        var firstScore = snapshots[0].Score;
+        return snapshots.Select(snapshot => new ProgressChartPoint
         {
-            var score = GetScore(snapshot);
-            var percent = firstScore <= 0
-                ? 0
-                : ((score - firstScore) / firstScore) * 100;
-
-            result.Add(
-                new ProgressChartPoint
-                {
-                    Label = GetDate(snapshot).ToString("dd.MM"),
-                    Percent = Math.Round((decimal)percent, 2)
-                });
-        }
-
-        return result;
+            Label = snapshot.Date.ToString("dd.MM"),
+            Percent = Math.Round((decimal)(firstScore <= 0 ? 0 : ((snapshot.Score - firstScore) / firstScore) * 100), 2)
+        }).ToList();
     }
 
-    private static double GetScore<TSnapshot>(TSnapshot snapshot)
-        where TSnapshot : class
-    {
-        return snapshot switch
-        {
-            ProgressSnapshot workoutSnapshot => workoutSnapshot.Score,
-            ExerciseProgressSnapshot exerciseSnapshot => exerciseSnapshot.Score,
-            _ => 0
-        };
-    }
-
-    private static DateTime GetDate<TSnapshot>(TSnapshot snapshot)
-        where TSnapshot : class
-    {
-        return snapshot switch
-        {
-            ProgressSnapshot workoutSnapshot => workoutSnapshot.Date,
-            ExerciseProgressSnapshot exerciseSnapshot => exerciseSnapshot.Date,
-            _ => DateTime.MinValue
-        };
-    }
+    private sealed record ScorePoint(DateTime Date, double Score);
 }

@@ -1,18 +1,19 @@
 @page "/today"
 @rendermode InteractiveServer
 
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @using Microsoft.JSInterop
 @using System.Text.Json
 
-@inject HistoryService HistoryService
-@inject TodayWorkoutService TodayWorkoutService
-@inject ExerciseService ExerciseService
-@inject WorkoutDayService WorkoutDayService
+@inject IHistoryService HistoryService
+@inject ITodayWorkoutService TodayWorkoutService
+@inject IExerciseService ExerciseService
+@inject IWorkoutDayService WorkoutDayService
 @inject IJSRuntime JS
-@inject ProgressService ProgressService
-@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
+@inject IProgressService ProgressService
+@inject IOnboardingService Guide
 
 <div class="page-content">
 
@@ -317,8 +318,7 @@
 
         StatusExercise.Status = status;
 
-        await ExerciseService
-            .SaveChangesAsync();
+        await ExerciseService.UpdateExerciseAsync(StatusExercise);
 
         StatusExercise = null;
 
@@ -379,7 +379,10 @@
 
 
 
-        await ExerciseService.SaveChangesAsync();
+        foreach (var exercise in Exercises)
+        {
+            await ExerciseService.UpdateExerciseAsync(exercise);
+        }
         await WorkoutDayService
             .CompleteTodayWorkoutAsync();
 
@@ -403,7 +406,8 @@
     {
         set.Completed = value;
 
-        await ExerciseService.SaveChangesAsync();
+        var exercise = Exercises.First(x => x.Sets.Contains(set));
+        await ExerciseService.UpdateExerciseAsync(exercise);
 
         if (value && IsFirstTutorialSet(set))
             await Guide.NotifyActionAsync("practice-set-completed");

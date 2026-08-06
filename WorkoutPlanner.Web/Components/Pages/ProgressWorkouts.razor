@@ -1,11 +1,13 @@
 @page "/progress/workouts"
 @rendermode InteractiveServer
 
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutCardItem = WorkoutPlanner.Web.Models.WorkoutCardItem
 @using WorkoutPlanner.Web.Services
 
-@inject ProgressService ProgressService
-@inject TrainingPlanService TrainingPlanService
+@inject IProgressService ProgressService
+@inject ITrainingPlanService TrainingPlanService
 
 <div class="page-content">
 

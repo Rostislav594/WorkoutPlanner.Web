@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using WorkoutPlanner.Web.Components;
 using WorkoutPlanner.Web.Components.Onboarding;
+using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
@@ -14,12 +15,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Services.AddScoped<ExercisePhotoService>();
-
-builder.Services.AddDbContext<WorkoutDbContext>(
+builder.Services.AddDbContextFactory<WorkoutDbContext>(
     options =>
         options.UseSqlite(
-            "Data Source=workoutplanner.db"));
+            builder.Configuration.GetConnectionString("WorkoutDatabase")
+            ?? "Data Source=workoutplanner.db"));
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(
@@ -46,21 +46,22 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     .AddDefaultTokenProviders();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<AccountDeletionService>();
-builder.Services.AddScoped<UserProfileService>();
-builder.Services.AddScoped<HistoryService>();
-builder.Services.AddScoped<ExerciseService>();
-builder.Services.AddScoped<TrainingPlanService>();
-builder.Services.AddScoped<StarterPlanService>();
-builder.Services.AddScoped<TodayWorkoutService>();
-builder.Services.AddScoped<WorkoutDayService>();
-builder.Services.AddScoped<ProgressService>();
-builder.Services.AddScoped<ExerciseDefinitionService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IProfileService, UserProfileService>();
+builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
+builder.Services.AddScoped<IExercisePhotoService, ExercisePhotoService>();
+builder.Services.AddScoped<ITrainingPlanService, TrainingPlanService>();
+builder.Services.AddScoped<IStarterPlanService, StarterPlanService>();
+builder.Services.AddScoped<ITodayWorkoutService, TodayWorkoutService>();
+builder.Services.AddScoped<IWorkoutDayService, WorkoutDayService>();
+builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IExerciseDefinitionService, ExerciseDefinitionService>();
 builder.Services.AddScoped<ExerciseIndexService>();
-builder.Services.AddScoped<SecondaryMuscleCoefficientService>();
 builder.Services.AddScoped<AppGuideCatalog>();
 builder.Services.AddSingleton<CharacterAssetCatalog>();
 builder.Services.AddScoped<AppGuidePracticeService>();
-builder.Services.AddScoped<AppGuideService>();
+builder.Services.AddScoped<IOnboardingService, AppGuideService>();
 builder.Services.AddScoped<IAppGuideCompletionStore, IdentityAppGuideCompletionStore>();
 
 

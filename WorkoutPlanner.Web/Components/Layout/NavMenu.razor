@@ -1,6 +1,6 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
+@inject WorkoutPlanner.Web.Application.Abstractions.IAccountService AccountService
 @inject NavigationManager Navigation
 
 @if (!Visible)
@@ -67,7 +67,7 @@
 
     async Task LogoutAsync()
     {
-        await SignInManager.SignOutAsync();
+        await AccountService.SignOutAsync();
         isOpen = false;
         Navigation.NavigateTo("/account/login", forceLoad: true);
     }

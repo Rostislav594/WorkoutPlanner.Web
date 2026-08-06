@@ -3,7 +3,7 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
-@inject WorkoutPlanner.Web.Services.StarterPlanService StarterPlanService
+@inject WorkoutPlanner.Web.Application.Abstractions.IStarterPlanService StarterPlanService
 @inject ILoggerFactory LoggerFactory
 @inject NavigationManager Navigation
 

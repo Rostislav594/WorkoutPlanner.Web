@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 
 namespace WorkoutPlanner.Web.Services;
 
-public sealed class StarterPlanService
+public sealed class StarterPlanService : IStarterPlanService
 {
     private static readonly string[] StarterPlanNames =
     [
@@ -14,11 +15,11 @@ public sealed class StarterPlanService
         "Низ 2"
     ];
 
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
 
-    public StarterPlanService(WorkoutDbContext db)
+    public StarterPlanService(IDbContextFactory<WorkoutDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
     public async Task CreateForUserAsync(
@@ -26,8 +27,9 @@ public sealed class StarterPlanService
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var existingNames = await _db.TrainingPlans
+        var existingNames = await db.TrainingPlans
             .Where(x => x.UserId == userId)
             .Select(x => x.WorkoutName)
             .ToListAsync(cancellationToken);
@@ -41,7 +43,7 @@ public sealed class StarterPlanService
 
         var today = DateTime.Today;
 
-        _db.TrainingPlans.AddRange(
+        db.TrainingPlans.AddRange(
             namesToCreate.Select(name => new TrainingPlan
             {
                 UserId = userId,
@@ -49,6 +51,6 @@ public sealed class StarterPlanService
                 Date = today
             }));
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

@@ -2,10 +2,11 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components
 @inject NavigationManager Navigation
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
-@inject TrainingPlanService TrainingPlanService
-@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
+@inject ITrainingPlanService TrainingPlanService
+@inject IOnboardingService Guide
 
 <div class="workouts-header" data-guide="workout-templates">
     <h1>Шаблоны тренировок</h1>

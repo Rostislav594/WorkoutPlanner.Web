@@ -5,6 +5,11 @@ using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Tests.Infrastructure;
+using ContractHistory = WorkoutPlanner.Web.Application.Contracts.WorkoutHistory;
+using ContractHistoryDetails = WorkoutPlanner.Web.Application.Contracts.WorkoutHistoryDetails;
+using ContractHistoryExercise = WorkoutPlanner.Web.Application.Contracts.WorkoutHistoryExercise;
+using ContractHistorySet = WorkoutPlanner.Web.Application.Contracts.WorkoutHistorySet;
+using ContractExerciseStatus = WorkoutPlanner.Web.Application.Contracts.ExerciseStatus;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
 
@@ -19,24 +24,24 @@ public sealed class HistoryServiceTests
         application.AuthenticationStateProvider.SetUser("user-a");
 
         var details = JsonSerializer.Serialize(
-            new WorkoutHistoryDetails
+            new ContractHistoryDetails
             {
                 Exercises =
                 [
-                    new WorkoutHistoryExercise
+                    new ContractHistoryExercise
                     {
                         Name = "Squat",
-                        Status = ExerciseStatus.Hard,
+                        Status = ContractExerciseStatus.Hard,
                         Sets =
                         [
-                            new WorkoutHistorySet
+                            new ContractHistorySet
                             {
                                 SetNumber = 1,
                                 Weight = 80,
                                 Repetitions = 8,
                                 Completed = true
                             },
-                            new WorkoutHistorySet
+                            new ContractHistorySet
                             {
                                 SetNumber = 2,
                                 Weight = 85,
@@ -72,9 +77,8 @@ public sealed class HistoryServiceTests
             var service = scope.ServiceProvider
                 .GetRequiredService<HistoryService>();
             await service.AddHistoryAsync(
-                new WorkoutHistory
+                new ContractHistory
                 {
-                    UserId = "untrusted-client-value",
                     WorkoutName = "User A history",
                     Date = DateTime.UtcNow,
                     Details = details
@@ -83,9 +87,7 @@ public sealed class HistoryServiceTests
             var visibleHistory = await service.GetHistoryAsync();
 
             var savedItem = Assert.Single(visibleHistory);
-            Assert.Equal("user-a", savedItem.UserId);
-
-            var snapshot = JsonSerializer.Deserialize<WorkoutHistoryDetails>(
+            var snapshot = JsonSerializer.Deserialize<ContractHistoryDetails>(
                 savedItem.Details);
             Assert.NotNull(snapshot);
             Assert.Equal(
@@ -98,6 +100,8 @@ public sealed class HistoryServiceTests
             .GetRequiredService<WorkoutDbContext>();
 
         Assert.Equal(3, await verificationDb.WorkoutHistory.CountAsync());
+        Assert.True(await verificationDb.WorkoutHistory.AnyAsync(x =>
+            x.UserId == "user-a" && x.WorkoutName == "User A history"));
         Assert.True(await verificationDb.WorkoutHistory.AnyAsync(x =>
             x.UserId == "user-b"));
         Assert.True(await verificationDb.WorkoutHistory.AnyAsync(x =>

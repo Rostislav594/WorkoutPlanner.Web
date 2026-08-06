@@ -1,87 +1,160 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class ExerciseService
+public sealed class ExerciseService : IExerciseService
 {
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly CurrentUserService _currentUser;
 
     public ExerciseService(
-        WorkoutDbContext db,
+        IDbContextFactory<WorkoutDbContext> dbFactory,
         CurrentUserService currentUser)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
     }
 
     public async Task<List<Exercise>> GetExercisesAsync(
-        string workoutName)
+        string workoutName,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 
-        var exercises = await _db.Exercises
+        var exercises = await db.Exercises
+            .AsNoTracking()
             .Include(x => x.ExerciseDefinition)
-                .ThenInclude(x => x!.SecondaryMuscles)
-                    .ThenInclude(x => x.Muscle)
             .Include(x => x.Sets)
-            .Where(x =>
-                x.WorkoutName == workoutName &&
-                x.UserId == userId)
-            .ToListAsync();
+            .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
+            .OrderBy(x => x.Id)
+            .ToListAsync(cancellationToken);
 
-        return exercises;
+        return exercises.Select(x => x.ToContract()).ToList();
     }
 
     public async Task AddExerciseAsync(
-        Exercise exercise)
+        Exercise exercise,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-        var ownsPlan = await _db.TrainingPlans.AnyAsync(x =>
-            x.Id == exercise.TrainingPlanId &&
-            x.UserId == userId);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var plan = await db.TrainingPlans.FirstOrDefaultAsync(
+            x => x.Id == exercise.TrainingPlanId && x.UserId == userId,
+            cancellationToken);
 
-        if (!ownsPlan)
+        if (plan is null)
         {
             throw new InvalidOperationException(
                 "The selected training plan does not belong to the current user.");
         }
 
-        exercise.UserId = userId;
-
-        var definition = await _db.ExerciseDefinitions
-            .FirstOrDefaultAsync(x => x.Name == exercise.Name);
-
-        if (definition != null)
+        var entity = new Models.Exercise
         {
-            exercise.ExerciseDefinitionId = definition.Id;
-        }
+            UserId = userId,
+            Name = exercise.Name.Trim(),
+            WorkoutName = plan.WorkoutName,
+            SetsCount = exercise.SetsCount,
+            Status = (Models.ExerciseStatus)exercise.Status,
+            TrainingPlanId = plan.Id,
+            ExerciseDefinitionId = exercise.ExerciseDefinitionId,
+            PhotoPath = exercise.PhotoPath,
+            Sets = exercise.Sets
+                .OrderBy(x => x.SetNumber)
+                .Select(x => new Models.ExerciseTemplateSet
+                {
+                    SetNumber = x.SetNumber,
+                    Repetitions = x.Repetitions,
+                    Weight = x.Weight,
+                    Completed = x.Completed
+                })
+                .ToList()
+        };
 
-        _db.Exercises.Add(exercise);
-
-        await _db.SaveChangesAsync();
+        db.Exercises.Add(entity);
+        await db.SaveChangesAsync(cancellationToken);
+        exercise.Id = entity.Id;
+        exercise.Sets = entity.Sets.Select(x => x.ToContract()).ToList();
     }
 
     public async Task DeleteExerciseAsync(
-        Exercise exercise)
+        int exerciseId,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var exercise = await db.Exercises.FirstOrDefaultAsync(
+            x => x.Id == exerciseId && x.UserId == userId,
+            cancellationToken);
 
-        if (exercise.UserId != userId)
+        if (exercise is null)
             return;
 
-        _db.Exercises.Remove(exercise);
-
-        await _db.SaveChangesAsync();
+        db.Exercises.Remove(exercise);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task SaveChangesAsync()
+    public async Task UpdateExerciseAsync(
+        Exercise exercise,
+        CancellationToken cancellationToken = default)
     {
-        await _currentUser.GetRequiredUserIdAsync();
-        await _db.SaveChangesAsync();
-    }
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var entity = await db.Exercises
+            .Include(x => x.Sets)
+            .FirstOrDefaultAsync(
+                x => x.Id == exercise.Id && x.UserId == userId,
+                cancellationToken);
 
+        if (entity is null)
+            throw new InvalidOperationException("Exercise was not found.");
+
+        entity.Name = exercise.Name.Trim();
+        entity.SetsCount = exercise.SetsCount;
+        entity.Status = (Models.ExerciseStatus)exercise.Status;
+        entity.ExerciseDefinitionId = exercise.ExerciseDefinitionId;
+        entity.PhotoPath = exercise.PhotoPath;
+
+        var retainedSetIds = new HashSet<int>();
+
+        foreach (var sourceSet in exercise.Sets.OrderBy(x => x.SetNumber))
+        {
+            var targetSet = sourceSet.Id > 0
+                ? entity.Sets.FirstOrDefault(x => x.Id == sourceSet.Id)
+                : entity.Sets.FirstOrDefault(x =>
+                    x.SetNumber == sourceSet.SetNumber &&
+                    !retainedSetIds.Contains(x.Id));
+
+            if (targetSet is null)
+            {
+                targetSet = new Models.ExerciseTemplateSet();
+                entity.Sets.Add(targetSet);
+            }
+
+            targetSet.SetNumber = sourceSet.SetNumber;
+            targetSet.Repetitions = sourceSet.Repetitions;
+            targetSet.Weight = sourceSet.Weight;
+            targetSet.Completed = sourceSet.Completed;
+
+            if (targetSet.Id > 0)
+                retainedSetIds.Add(targetSet.Id);
+        }
+
+        var removedSets = entity.Sets
+            .Where(x => x.Id > 0 && !retainedSetIds.Contains(x.Id))
+            .ToList();
+        db.ExerciseTemplateSets.RemoveRange(removedSets);
+
+        await db.SaveChangesAsync(cancellationToken);
+        exercise.Sets = entity.Sets
+            .Except(removedSets)
+            .OrderBy(x => x.SetNumber)
+            .Select(x => x.ToContract())
+            .ToList();
+    }
 }

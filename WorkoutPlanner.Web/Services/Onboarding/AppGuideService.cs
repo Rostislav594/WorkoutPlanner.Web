@@ -1,13 +1,14 @@
 using WorkoutPlanner.Web.Components.Onboarding;
+using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services.Onboarding;
 
-public sealed class AppGuideService
+public sealed class AppGuideService : IOnboardingService
 {
     private readonly AppGuideCatalog _catalog;
     private readonly IAppGuideCompletionStore _completionStore;
-    private readonly UserProfileService _userProfileService;
+    private readonly IProfileService _userProfileService;
     private readonly AppGuidePracticeService _practiceService;
     private readonly Stack<string> _backStack = new();
     private AppGuideScenario? _scenario;
@@ -19,7 +20,7 @@ public sealed class AppGuideService
     public AppGuideService(
         AppGuideCatalog catalog,
         IAppGuideCompletionStore completionStore,
-        UserProfileService userProfileService,
+        IProfileService userProfileService,
         AppGuidePracticeService practiceService)
     {
         _catalog = catalog;

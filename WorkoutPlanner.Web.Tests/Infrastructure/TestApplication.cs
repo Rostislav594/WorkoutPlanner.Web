@@ -73,7 +73,7 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddSingleton<AuthenticationStateProvider>(
             authenticationStateProvider);
         services.AddSingleton<IWebHostEnvironment>(environment);
-        services.AddDbContext<WorkoutDbContext>((provider, options) =>
+        services.AddDbContextFactory<WorkoutDbContext>((provider, options) =>
             options.UseSqlite(provider.GetRequiredService<SqliteConnection>()));
         services.AddIdentityCore<IdentityUser>()
             .AddEntityFrameworkStores<WorkoutDbContext>();
@@ -84,7 +84,6 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddScoped<ExerciseService>();
         services.AddScoped<WorkoutDayService>();
         services.AddScoped<HistoryService>();
-        services.AddScoped<SecondaryMuscleCoefficientService>();
         services.AddScoped<ExerciseIndexService>();
         services.AddScoped<ProgressService>();
 

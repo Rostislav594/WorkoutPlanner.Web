@@ -1,6 +1,6 @@
 @using System.Globalization
 @implements IAsyncDisposable
-@inject Services.Onboarding.AppGuideService Guide
+@inject Application.Abstractions.IOnboardingService Guide
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
 @inject ILogger<AppGuide> Logger

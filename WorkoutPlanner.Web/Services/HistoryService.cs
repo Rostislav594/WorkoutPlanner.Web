@@ -1,62 +1,70 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class HistoryService
+public sealed class HistoryService : IHistoryService
 {
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly CurrentUserService _currentUser;
 
     public HistoryService(
-        WorkoutDbContext db,
+        IDbContextFactory<WorkoutDbContext> dbFactory,
         CurrentUserService currentUser)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
     }
 
     public async Task AddHistoryAsync(
-        WorkoutHistory history)
-    {
-        history.UserId = await _currentUser.GetRequiredUserIdAsync();
-
-        _db.WorkoutHistory.Add(history);
-
-        await _db.SaveChangesAsync();
-    }
-
-    public async Task<List<WorkoutHistory>>
-        GetHistoryAsync()
+        WorkoutHistory history,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        db.WorkoutHistory.Add(new Models.WorkoutHistory
+        {
+            UserId = userId,
+            WorkoutName = history.WorkoutName,
+            Date = history.Date,
+            Summary = history.Summary,
+            Details = history.Details
+        });
+        await db.SaveChangesAsync(cancellationToken);
+    }
 
-        var history = await _db.WorkoutHistory
+    public async Task<List<WorkoutHistory>> GetHistoryAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var history = await db.WorkoutHistory
+            .AsNoTracking()
             .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.Date)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        return history;
+        return history.Select(x => x.ToContract()).ToList();
     }
 
-    public async Task DeleteHistoryAsync(int id)
+    public async Task DeleteHistoryAsync(
+        int id,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var item = await db.WorkoutHistory.FirstOrDefaultAsync(
+            x => x.Id == id && x.UserId == userId,
+            cancellationToken);
 
-        var item =
-            await _db.WorkoutHistory
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id &&
-                    x.UserId == userId);
-
-        if (item == null)
+        if (item is null)
             return;
 
-        _db.WorkoutHistory.Remove(item);
-
-        await _db.SaveChangesAsync();
+        db.WorkoutHistory.Remove(item);
+        await db.SaveChangesAsync(cancellationToken);
     }
-
 }

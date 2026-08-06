@@ -1,12 +1,13 @@
 @page "/history"
 @rendermode InteractiveServer
 
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @using System.Text.Json
 
-@inject HistoryService HistoryService
-@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
+@inject IHistoryService HistoryService
+@inject IOnboardingService Guide
 
 <div class="page-content">
     <h1 style="text-align:center;" data-guide="workout-journal">

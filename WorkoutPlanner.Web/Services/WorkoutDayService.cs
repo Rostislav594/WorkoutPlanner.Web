@@ -1,126 +1,128 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class WorkoutDayService
+public sealed class WorkoutDayService : IWorkoutDayService
 {
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly CurrentUserService _currentUser;
 
     public WorkoutDayService(
-        WorkoutDbContext db,
+        IDbContextFactory<WorkoutDbContext> dbFactory,
         CurrentUserService currentUser)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
     }
 
-    public async Task<List<WorkoutDay>> GetDaysAsync()
+    public async Task<List<WorkoutDay>> GetDaysAsync(
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-
-        var days = await _db.WorkoutDays
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var days = await db.WorkoutDays
+            .AsNoTracking()
             .Where(x => x.UserId == userId)
             .OrderBy(x => x.Date)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        return days;
+        return days.Select(x => x.ToContract()).ToList();
     }
 
     public async Task SaveDayAsync(
         DateTime date,
-        int trainingPlanId)
+        int trainingPlanId,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-        var ownsPlan = await _db.TrainingPlans.AnyAsync(x =>
-            x.Id == trainingPlanId &&
-            x.UserId == userId);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var ownsPlan = await db.TrainingPlans.AnyAsync(
+            x => x.Id == trainingPlanId && x.UserId == userId,
+            cancellationToken);
 
         if (!ownsPlan)
-        {
-            throw new InvalidOperationException(
-                "The selected training plan does not belong to the current user.");
-        }
+            throw new InvalidOperationException("The selected training plan does not belong to the current user.");
 
-        var existing =
-            await _db.WorkoutDays
-                .FirstOrDefaultAsync(x =>
-                    x.Date.Date == date.Date &&
-                    x.UserId == userId);
+        var existing = await db.WorkoutDays.FirstOrDefaultAsync(
+            x => x.Date.Date == date.Date && x.UserId == userId,
+            cancellationToken);
 
-        if (existing != null)
+        if (existing is null)
         {
-            existing.TrainingPlanId = trainingPlanId;
+            db.WorkoutDays.Add(new Models.WorkoutDay
+            {
+                UserId = userId,
+                Date = date,
+                TrainingPlanId = trainingPlanId
+            });
         }
         else
         {
-            _db.WorkoutDays.Add(
-                new WorkoutDay
-                {
-                    UserId = userId,
-                    Date = date,
-                    TrainingPlanId = trainingPlanId
-                });
+            existing.TrainingPlanId = trainingPlanId;
         }
 
-        await _db.SaveChangesAsync();
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RemoveTodayWorkoutAsync()
+    public Task RemoveTodayWorkoutAsync(
+        CancellationToken cancellationToken = default) =>
+        DeleteForDateAsync(DateTime.Today, requireIncomplete: false, cancellationToken);
+
+    public async Task DeleteDayAsync(
+        int id,
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays.FirstOrDefaultAsync(
+            x => x.Id == id && x.UserId == userId,
+            cancellationToken);
 
-        var todayRecord =
-            await _db.WorkoutDays
-                .FirstOrDefaultAsync(x =>
-                    x.Date.Date == DateTime.Today &&
-                    x.UserId == userId);
-
-        if (todayRecord == null)
+        if (day is null)
             return;
 
-        _db.WorkoutDays.Remove(todayRecord);
-
-        await _db.SaveChangesAsync();
+        db.WorkoutDays.Remove(day);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task DeleteDayAsync(int id)
+    public async Task CompleteTodayWorkoutAsync(
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var today = await db.WorkoutDays.FirstOrDefaultAsync(
+            x => x.Date.Date == DateTime.Today && x.UserId == userId,
+            cancellationToken);
 
-        var day =
-            await _db.WorkoutDays
-                .FirstOrDefaultAsync(x =>
-                    x.Id == id &&
-                    x.UserId == userId);
-
-        if (day == null)
+        if (today is null)
             return;
 
-        _db.WorkoutDays.Remove(day);
-
-        await _db.SaveChangesAsync();
+        today.IsCompleted = true;
+        await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CompleteTodayWorkoutAsync()
+    private async Task DeleteForDateAsync(
+        DateTime date,
+        bool requireIncomplete,
+        CancellationToken cancellationToken)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays.FirstOrDefaultAsync(
+            x => x.Date.Date == date.Date &&
+                 x.UserId == userId &&
+                 (!requireIncomplete || !x.IsCompleted),
+            cancellationToken);
 
-        var todayWorkout =
-            await _db.WorkoutDays
-                .FirstOrDefaultAsync(x =>
-                    x.Date.Date == DateTime.Today &&
-                    x.UserId == userId);
-
-        if (todayWorkout == null)
+        if (day is null)
             return;
 
-        todayWorkout.IsCompleted = true;
-
-        await _db.SaveChangesAsync();
+        db.WorkoutDays.Remove(day);
+        await db.SaveChangesAsync(cancellationToken);
     }
-
 }

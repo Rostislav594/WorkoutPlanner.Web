@@ -4,14 +4,6 @@ namespace WorkoutPlanner.Web.Services;
 
 public class ExerciseIndexService
 {
-    private readonly SecondaryMuscleCoefficientService _secondaryService;
-
-    public ExerciseIndexService(
-        SecondaryMuscleCoefficientService secondaryService)
-    {
-        _secondaryService = secondaryService;
-    }
-
     public double Calculate(Exercise exercise)
     {
         if (exercise.ExerciseDefinition == null)
@@ -23,9 +15,9 @@ public class ExerciseIndexService
         double exerciseCoefficient =
             exercise.ExerciseDefinition.ExerciseCoefficient;
 
-        double secondaryCoefficient =
-            _secondaryService.GetCoefficient(
-                exercise.ExerciseDefinition.Id);
+        double secondaryCoefficient = 1 +
+            exercise.ExerciseDefinition.SecondaryMuscles
+                .Sum(x => x.Coefficient * 0.5);
 
         return volume
             * exerciseCoefficient

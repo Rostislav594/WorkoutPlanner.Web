@@ -1,11 +1,12 @@
 @page "/calendar"
 @rendermode InteractiveServer
 
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 
-@inject TrainingPlanService TrainingPlanService
-@inject WorkoutDayService WorkoutDayService
+@inject ITrainingPlanService TrainingPlanService
+@inject IWorkoutDayService WorkoutDayService
 
 <div class="page-content calendar-page">
     <h1 style="text-align:center;">

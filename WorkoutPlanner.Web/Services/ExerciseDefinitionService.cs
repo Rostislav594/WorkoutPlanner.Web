@@ -1,22 +1,30 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class ExerciseDefinitionService
+public sealed class ExerciseDefinitionService : IExerciseDefinitionService
 {
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
 
-    public ExerciseDefinitionService(WorkoutDbContext db)
+    public ExerciseDefinitionService(
+        IDbContextFactory<WorkoutDbContext> dbFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
     }
 
-    public async Task<List<ExerciseDefinition>> GetAllAsync()
+    public async Task<List<ExerciseDefinition>> GetAllAsync(
+        CancellationToken cancellationToken = default)
     {
-        return await _db.ExerciseDefinitions
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var definitions = await db.ExerciseDefinitions
+            .AsNoTracking()
             .OrderBy(x => x.Name)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
+
+        return definitions.Select(x => x.ToContract()).ToList();
     }
 }

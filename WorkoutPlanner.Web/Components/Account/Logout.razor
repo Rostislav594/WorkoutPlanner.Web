@@ -1,12 +1,12 @@
 @page "/account/logout"
 @using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
+@inject WorkoutPlanner.Web.Application.Abstractions.IAccountService AccountService
 @inject NavigationManager Navigation
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await SignInManager.SignOutAsync();
+        await AccountService.SignOutAsync();
         Navigation.NavigateTo("/account/login", forceLoad: true);
     }
 }

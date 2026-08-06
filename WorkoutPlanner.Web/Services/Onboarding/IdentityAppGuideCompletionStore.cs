@@ -12,21 +12,22 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
     private const string OutcomeTokenName = "AppGuideOutcomeV2";
     private const string CurrentVersion = "2";
 
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly CurrentUserService _currentUserService;
 
     public IdentityAppGuideCompletionStore(
-        UserManager<IdentityUser> userManager,
+        IServiceScopeFactory scopeFactory,
         CurrentUserService currentUserService)
     {
-        _userManager = userManager;
+        _scopeFactory = scopeFactory;
         _currentUserService = currentUserService;
     }
 
     public async Task<bool> IsCompletedAsync()
     {
-        var user = await GetCurrentUserAsync();
-        var value = await _userManager.GetAuthenticationTokenAsync(
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+        var value = await userManager.GetAuthenticationTokenAsync(
             user,
             LoginProvider,
             CompletionTokenName);
@@ -36,8 +37,9 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
 
     public async Task<AppGuideProgress?> LoadProgressAsync()
     {
-        var user = await GetCurrentUserAsync();
-        var json = await _userManager.GetAuthenticationTokenAsync(
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+        var json = await userManager.GetAuthenticationTokenAsync(
             user,
             LoginProvider,
             ProgressTokenName);
@@ -57,8 +59,9 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
 
     public async Task SaveProgressAsync(AppGuideProgress progress)
     {
-        var user = await GetCurrentUserAsync();
-        var result = await _userManager.SetAuthenticationTokenAsync(
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+        var result = await userManager.SetAuthenticationTokenAsync(
             user,
             LoginProvider,
             ProgressTokenName,
@@ -69,8 +72,9 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
 
     public async Task ClearProgressAsync()
     {
-        var user = await GetCurrentUserAsync();
-        var result = await _userManager.RemoveAuthenticationTokenAsync(
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+        var result = await userManager.RemoveAuthenticationTokenAsync(
             user,
             LoginProvider,
             ProgressTokenName);
@@ -80,12 +84,13 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
 
     public async Task MarkCompletedAsync(string? outcome)
     {
-        var user = await GetCurrentUserAsync();
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
         IdentityResult result;
 
         if (!string.IsNullOrWhiteSpace(outcome))
         {
-            result = await _userManager.SetAuthenticationTokenAsync(
+            result = await userManager.SetAuthenticationTokenAsync(
                 user,
                 LoginProvider,
                 OutcomeTokenName,
@@ -93,13 +98,13 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
             EnsureSucceeded(result);
         }
 
-        result = await _userManager.RemoveAuthenticationTokenAsync(
+        result = await userManager.RemoveAuthenticationTokenAsync(
             user,
             LoginProvider,
             ProgressTokenName);
         EnsureSucceeded(result);
 
-        result = await _userManager.SetAuthenticationTokenAsync(
+        result = await userManager.SetAuthenticationTokenAsync(
             user,
             LoginProvider,
             CompletionTokenName,
@@ -107,12 +112,14 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
         EnsureSucceeded(result);
     }
 
-    private async Task<IdentityUser> GetCurrentUserAsync()
+    private async Task<(UserManager<IdentityUser> Manager, IdentityUser User)> GetCurrentUserAsync(
+        AsyncServiceScope scope)
     {
         var userId = await _currentUserService.GetRequiredUserIdAsync();
-
-        return await _userManager.FindByIdAsync(userId)
+        var manager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = await manager.FindByIdAsync(userId)
             ?? throw new InvalidOperationException("Authenticated user was not found.");
+        return (manager, user);
     }
 
     private static void EnsureSucceeded(IdentityResult result)

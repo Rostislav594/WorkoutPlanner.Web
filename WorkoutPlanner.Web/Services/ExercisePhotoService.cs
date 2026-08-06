@@ -2,7 +2,8 @@
 
 namespace WorkoutPlanner.Web.Services;
 
-public class ExercisePhotoService
+public sealed class ExercisePhotoService :
+    Application.Abstractions.IExercisePhotoService
 {
     public const long MaxPhotoSize = 5 * 1024 * 1024;
 
@@ -18,12 +19,14 @@ public class ExercisePhotoService
     }
 
     public async Task<string> SavePhotoAsync(
-        IBrowserFile file,
+        Application.Contracts.PhotoUpload upload,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(upload);
+        if (upload.Length <= 0 || upload.Length > MaxPhotoSize)
+            throw new InvalidDataException("The image exceeds the allowed size.");
 
-        var extension = GetTrustedExtension(file.ContentType);
+        var extension = GetTrustedExtension(upload.ContentType);
         var identifier = Guid.NewGuid().ToString("N");
         var fileName = $"{identifier}{extension}";
 
@@ -39,7 +42,7 @@ public class ExercisePhotoService
 
         try
         {
-            await using (var input = file.OpenReadStream(MaxPhotoSize, cancellationToken))
+            await using (var input = upload.Content)
             await using (var output = new FileStream(
                 temporaryPath,
                 FileMode.CreateNew,

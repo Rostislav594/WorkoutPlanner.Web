@@ -1,15 +1,11 @@
 @page "/profile"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
-@using WorkoutPlanner.Web.Data
-@using WorkoutPlanner.Web.Models
-@inject WorkoutDbContext Db
-@inject UserManager<IdentityUser> UserManager
-@inject SignInManager<IdentityUser> SignInManager
-@inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
-@inject WorkoutPlanner.Web.Services.Auth.AccountDeletionService AccountDeletionService
-@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService AppGuideService
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IProfileService ProfileService
+@inject IAccountService AccountService
+@inject IOnboardingService AppGuideService
 @inject ILogger<Profile> Logger
 @inject NavigationManager Navigation
 
@@ -231,8 +227,6 @@
 }
 
 @code {
-    private IdentityUser? CurrentUser { get; set; }
-
     private UserProfile? CurrentProfile { get; set; }
 
     private ProfileInput ProfileInputModel { get; } = new();
@@ -241,7 +235,7 @@
 
     private List<string> PasswordErrors { get; } = new();
 
-    private string Email => CurrentUser?.Email ?? string.Empty;
+    private string Email => CurrentProfile?.Email ?? string.Empty;
 
     private string FullName => string.Join(" ", new[]
     {
@@ -266,16 +260,7 @@
 
     private async Task LoadAsync()
     {
-        var userId = await CurrentUserService.GetRequiredUserIdAsync();
-
-        CurrentUser = await UserManager.FindByIdAsync(userId);
-        CurrentProfile = await Db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId);
-
-        if (CurrentUser is null)
-        {
-            Navigation.NavigateTo("/account/login", forceLoad: true);
-            return;
-        }
+        CurrentProfile = await ProfileService.GetCurrentProfileAsync();
 
         if (CurrentProfile is null)
         {
@@ -300,13 +285,18 @@
             return;
         }
 
-        CurrentProfile.FirstName = ProfileInputModel.FirstName.Trim();
-        CurrentProfile.LastName = ProfileInputModel.LastName.Trim();
-        CurrentProfile.BirthDate = ProfileInputModel.BirthDate;
-        CurrentProfile.Gender = ProfileInputModel.Gender;
-        CurrentProfile.UpdatedAt = DateTime.UtcNow;
-
-        await Db.SaveChangesAsync();
+        var updated = await ProfileService.UpdateCurrentProfileAsync(
+            new ProfileUpdateRequest(
+                ProfileInputModel.FirstName,
+                ProfileInputModel.LastName,
+                ProfileInputModel.BirthDate,
+                ProfileInputModel.Gender));
+        if (!updated)
+        {
+            ProfileError = "Профиль не найден.";
+            return;
+        }
+        await LoadAsync();
 
         ProfileMessage = "Данные профиля сохранены.";
     }
@@ -316,25 +306,18 @@
         PasswordErrors.Clear();
         PasswordMessage = null;
 
-        if (CurrentUser is null)
-            return;
-
-        var result = await UserManager.ChangePasswordAsync(
-            CurrentUser,
-            PasswordInputModel.CurrentPassword,
-            PasswordInputModel.NewPassword);
+        var result = await AccountService.ChangePasswordAsync(
+            new PasswordChangeRequest(
+                PasswordInputModel.CurrentPassword,
+                PasswordInputModel.NewPassword));
 
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors)
-            {
-                PasswordErrors.Add(TranslateIdentityError(error));
-            }
+            PasswordErrors.AddRange(result.Errors);
 
             return;
         }
 
-        await SignInManager.RefreshSignInAsync(CurrentUser);
         PasswordInputModel.CurrentPassword = string.Empty;
         PasswordInputModel.NewPassword = string.Empty;
         PasswordInputModel.ConfirmPassword = string.Empty;
@@ -363,14 +346,11 @@
 
     private async Task DeleteAccountAsync()
     {
-        if (CurrentUser is null)
-            return;
-
         ShowDeleteConfirmation = false;
 
         try
         {
-            var result = await AccountDeletionService.DeleteCurrentAccountAsync();
+            var result = await AccountService.DeleteCurrentAccountAsync();
 
             if (!result.Succeeded)
             {
@@ -379,8 +359,7 @@
             }
 
             CurrentProfile = null;
-            CurrentUser = null;
-            await SignInManager.SignOutAsync();
+            await AccountService.SignOutAsync();
             Navigation.NavigateTo("/account/register", forceLoad: true);
         }
         catch (Exception exception)

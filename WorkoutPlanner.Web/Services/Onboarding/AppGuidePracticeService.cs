@@ -13,35 +13,39 @@ public sealed class AppGuidePracticeService
     public const string TutorialWorkoutName = "Знакомство с GymPlanner";
     public const string TutorialExerciseName = "Первое упражнение";
 
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly CurrentUserService _currentUser;
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public AppGuidePracticeService(
-        WorkoutDbContext db,
+        IDbContextFactory<WorkoutDbContext> dbFactory,
         CurrentUserService currentUser,
-        UserManager<IdentityUser> userManager)
+        IServiceScopeFactory scopeFactory)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
-        _userManager = userManager;
+        _scopeFactory = scopeFactory;
     }
 
     public async Task<int> EnsureTutorialPlanAsync(
         CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
-        var user = await _userManager.FindByIdAsync(userId)
+        await using var identityScope = _scopeFactory.CreateAsyncScope();
+        var userManager = identityScope.ServiceProvider
+            .GetRequiredService<UserManager<IdentityUser>>();
+        var user = await userManager.FindByIdAsync(userId)
             ?? throw new InvalidOperationException("Authenticated user was not found.");
-        var storedPlanId = await _userManager.GetAuthenticationTokenAsync(
+        var storedPlanId = await userManager.GetAuthenticationTokenAsync(
             user,
             LoginProvider,
             TutorialPlanTokenName);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 
         TrainingPlan? plan = null;
         if (int.TryParse(storedPlanId, out var tutorialPlanId))
         {
-            plan = await _db.TrainingPlans
+            plan = await db.TrainingPlans
             .Include(x => x.Exercises)
                 .ThenInclude(x => x.Sets)
             .FirstOrDefaultAsync(
@@ -57,7 +61,7 @@ public sealed class AppGuidePracticeService
                 WorkoutName = TutorialWorkoutName,
                 Date = DateTime.Today
             };
-            _db.TrainingPlans.Add(plan);
+            db.TrainingPlans.Add(plan);
         }
 
         if (plan.Exercises.Count == 0)
@@ -78,9 +82,9 @@ public sealed class AppGuidePracticeService
             });
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
 
-        var tokenResult = await _userManager.SetAuthenticationTokenAsync(
+        var tokenResult = await userManager.SetAuthenticationTokenAsync(
             user,
             LoginProvider,
             TutorialPlanTokenName,
@@ -106,7 +110,8 @@ public sealed class AppGuidePracticeService
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
         var planId = await EnsureTutorialPlanAsync(cancellationToken);
-        var plan = await _db.TrainingPlans
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var plan = await db.TrainingPlans
             .Include(x => x.Exercises)
                 .ThenInclude(x => x.Sets)
             .FirstAsync(x => x.Id == planId && x.UserId == userId, cancellationToken);
@@ -118,13 +123,13 @@ public sealed class AppGuidePracticeService
                 set.Completed = false;
         }
 
-        var today = await _db.WorkoutDays.FirstOrDefaultAsync(
+        var today = await db.WorkoutDays.FirstOrDefaultAsync(
             x => x.UserId == userId && x.Date.Date == DateTime.Today,
             cancellationToken);
 
         if (today is null)
         {
-            _db.WorkoutDays.Add(new WorkoutDay
+            db.WorkoutDays.Add(new WorkoutDay
             {
                 UserId = userId,
                 Date = DateTime.Today,
@@ -137,6 +142,6 @@ public sealed class AppGuidePracticeService
             today.IsCompleted = false;
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

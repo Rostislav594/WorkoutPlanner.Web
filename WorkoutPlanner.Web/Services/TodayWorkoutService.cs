@@ -1,39 +1,49 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
-using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services;
 
-public class TodayWorkoutService
+public sealed class TodayWorkoutService : ITodayWorkoutService
 {
-    private readonly WorkoutDbContext _db;
+    private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly CurrentUserService _currentUser;
 
     public TodayWorkoutService(
-        WorkoutDbContext db,
+        IDbContextFactory<WorkoutDbContext> dbFactory,
         CurrentUserService currentUser)
     {
-        _db = db;
+        _dbFactory = dbFactory;
         _currentUser = currentUser;
     }
 
-    public async Task<TrainingPlan?> GetTodayWorkoutAsync()
+    public async Task<TrainingPlan?> GetTodayWorkoutAsync(
+        CancellationToken cancellationToken = default)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Date.Date == DateTime.Today &&
+                     !x.IsCompleted &&
+                     x.UserId == userId,
+                cancellationToken);
 
-        var day = await _db.WorkoutDays
-            .FirstOrDefaultAsync(x =>
-                x.Date.Date == DateTime.Today &&
-                !x.IsCompleted &&
-                x.UserId == userId);
-
-        if (day == null)
+        if (day is null)
             return null;
 
-        return await _db.TrainingPlans
-            .FirstOrDefaultAsync(x =>
-                x.Id == day.TrainingPlanId &&
-                x.UserId == userId);
+        var plan = await db.TrainingPlans
+            .AsNoTracking()
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.Sets)
+            .FirstOrDefaultAsync(
+                x => x.Id == day.TrainingPlanId && x.UserId == userId,
+                cancellationToken);
+
+        return plan?.ToContract();
     }
 }

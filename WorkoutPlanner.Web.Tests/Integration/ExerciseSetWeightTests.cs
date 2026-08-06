@@ -4,6 +4,8 @@ using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Tests.Infrastructure;
+using ContractExercise = WorkoutPlanner.Web.Application.Contracts.Exercise;
+using ContractSet = WorkoutPlanner.Web.Application.Contracts.ExerciseTemplateSet;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
 
@@ -31,28 +33,27 @@ public sealed class ExerciseSetWeightTests
             db.TrainingPlans.Add(plan);
             await db.SaveChangesAsync();
 
-            var exercise = new Exercise
+            var exercise = new ContractExercise
             {
-                UserId = "untrusted-client-value",
                 Name = "Bench press",
                 WorkoutName = plan.WorkoutName,
                 TrainingPlanId = plan.Id,
                 SetsCount = 3,
                 Sets =
                 [
-                    new ExerciseTemplateSet
+                    new ContractSet
                     {
                         SetNumber = 1,
                         Weight = 60,
                         Repetitions = 8
                     },
-                    new ExerciseTemplateSet
+                    new ContractSet
                     {
                         SetNumber = 2,
                         Weight = 65,
                         Repetitions = 7
                     },
-                    new ExerciseTemplateSet
+                    new ContractSet
                     {
                         SetNumber = 3,
                         Weight = 70,

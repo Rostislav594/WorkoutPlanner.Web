@@ -1,14 +1,15 @@
 ﻿@page "/workout/{Id:int}"
 @rendermode InteractiveServer
-@using WorkoutPlanner.Web.Models
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @using Microsoft.AspNetCore.Components.Forms
-@inject TrainingPlanService TrainingPlanService
-@inject ExerciseService ExerciseService
-@inject ExerciseDefinitionService ExerciseDefinitionService
-@inject ExercisePhotoService ExercisePhotoService
+@inject ITrainingPlanService TrainingPlanService
+@inject IExerciseService ExerciseService
+@inject IExerciseDefinitionService ExerciseDefinitionService
+@inject IExercisePhotoService ExercisePhotoService
 @inject ILogger<WorkoutDetails> Logger
-@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
+@inject IOnboardingService Guide
 
 
 
@@ -542,7 +543,7 @@ else
 
         try
         {
-            await ExerciseService.DeleteExerciseAsync(exercise);
+            await ExerciseService.DeleteExerciseAsync(exercise.Id);
             ExercisePhotoService.TryDeletePhoto(photoPath);
 
             Exercises = await ExerciseService.GetExercisesAsync(CurrentPlan!.WorkoutName);
@@ -724,7 +725,7 @@ else
                 exerciseSets[index].Repetitions = EditSets[index].Repetitions;
             }
 
-            await ExerciseService.SaveChangesAsync();
+            await ExerciseService.UpdateExerciseAsync(SelectedExercise);
 
             IsEditing = false;
             EditSets.Clear();
@@ -833,7 +834,7 @@ else
 
         try
         {
-            await ExerciseService.SaveChangesAsync();
+            await ExerciseService.UpdateExerciseAsync(exercise);
             FullscreenPhotoExercise = null;
 
             if (!ExercisePhotoService.TryDeletePhoto(previousPhotoPath))
@@ -870,12 +871,16 @@ else
 
         try
         {
-            newPhotoPath = await ExercisePhotoService.SavePhotoAsync(eventArgs.File);
+            var file = eventArgs.File;
+            var stream = file.OpenReadStream(
+                WorkoutPlanner.Web.Services.ExercisePhotoService.MaxPhotoSize);
+            newPhotoPath = await ExercisePhotoService.SavePhotoAsync(
+                new PhotoUpload(stream, file.ContentType, file.Size));
             exercise.PhotoPath = newPhotoPath;
 
             try
             {
-                await ExerciseService.SaveChangesAsync();
+                await ExerciseService.UpdateExerciseAsync(exercise);
             }
             catch
             {

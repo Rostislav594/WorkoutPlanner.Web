@@ -4,6 +4,7 @@ using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Tests.Infrastructure;
+using ContractExercise = WorkoutPlanner.Web.Application.Contracts.Exercise;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
 
@@ -106,13 +107,13 @@ public sealed class UserIsolationTests
                 userAPlan.WorkoutName);
 
             Assert.Single(visiblePlans);
-            Assert.Equal("user-a", visiblePlans[0].UserId);
+            Assert.Equal(userAPlan.Id, visiblePlans[0].Id);
             Assert.Single(visibleExercises);
-            Assert.Equal("user-a", visibleExercises[0].UserId);
+            Assert.Equal("User A exercise", visibleExercises[0].Name);
             var visibleProgress = await progressService
                 .GetWorkoutProgressAsync("Shared progress");
             Assert.Single(visibleProgress);
-            Assert.Equal("user-a", visibleProgress[0].UserId);
+            Assert.Equal(1, visibleProgress[0].Score);
             Assert.Null(await planService.GetByIdAsync(userBPlan.Id));
 
             var renameResult = await planService.RenameAsync(
@@ -129,9 +130,8 @@ public sealed class UserIsolationTests
 
             await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 exerciseService.AddExerciseAsync(
-                    new Exercise
+                    new ContractExercise
                     {
-                        UserId = "user-a",
                         Name = "Cross-user exercise",
                         WorkoutName = userBPlan.WorkoutName,
                         TrainingPlanId = userBPlan.Id

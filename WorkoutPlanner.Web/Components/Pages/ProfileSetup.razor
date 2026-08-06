@@ -1,10 +1,8 @@
 @page "/profile/setup"
 @rendermode InteractiveServer
-@using Microsoft.EntityFrameworkCore
-@using WorkoutPlanner.Web.Data
-@using WorkoutPlanner.Web.Models
-@inject WorkoutDbContext Db
-@inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IProfileService ProfileService
 @inject NavigationManager Navigation
 
 <div class="profile-page">
@@ -69,8 +67,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var userId = await CurrentUserService.GetRequiredUserIdAsync();
-        var hasProfile = await Db.UserProfiles.AnyAsync(x => x.UserId == userId);
+        var hasProfile = await ProfileService.CurrentUserHasProfileAsync();
 
         if (hasProfile)
         {
@@ -80,28 +77,18 @@
 
     private async Task SaveProfileAsync()
     {
-        var userId = await CurrentUserService.GetRequiredUserIdAsync();
-        var existingProfile = await Db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId);
+        var created = await ProfileService.CreateCurrentProfileAsync(
+            new ProfileUpdateRequest(
+                InputModel.FirstName,
+                InputModel.LastName,
+                InputModel.BirthDate,
+                InputModel.Gender));
 
-        if (existingProfile is not null)
+        if (!created)
         {
             Navigation.NavigateTo("/profile");
             return;
         }
-
-        var profile = new UserProfile
-        {
-            UserId = userId,
-            FirstName = InputModel.FirstName.Trim(),
-            LastName = InputModel.LastName.Trim(),
-            BirthDate = InputModel.BirthDate,
-            Gender = InputModel.Gender,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        Db.UserProfiles.Add(profile);
-        await Db.SaveChangesAsync();
 
         Navigation.NavigateTo("/firstlaunch", true);
     }
