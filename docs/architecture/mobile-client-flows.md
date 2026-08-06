@@ -13,6 +13,9 @@
 - Training-plan list, creation, rename, deletion, and read-only exercise details
   use the protected training-plan API and public DTOs. Plan deletion has an
   explicit confirmation and never performs a local cascade.
+- Exercise creation, editing, and deletion use request DTOs with one explicit
+  weight and repetition value for every set. Set rows are resized deliberately;
+  the mobile client performs no automatic weight or repetition progression.
 
 ## Boundary
 

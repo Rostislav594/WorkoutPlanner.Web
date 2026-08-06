@@ -1,29 +1,113 @@
 @page "/workouts/{Id:int}"
 @attribute [Authorize]
+@using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
 
 <section class="details-page">
     <a class="back-link" href="/workouts">← К планам</a>
     @if (_loading) { <p role="status">Загружаем тренировку…</p> }
-    else if (_errors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _errors)</div> }
+    else if (_loadErrors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _loadErrors)</div><button class="secondary" @onclick="LoadAsync">Повторить</button> }
     else if (_plan is not null)
     {
-        <h1>@_plan.WorkoutName</h1>
+        <header><h1>@_plan.WorkoutName</h1><button class="primary" type="button" @onclick="BeginCreate">Добавить упражнение</button></header>
+        @if (_operationErrors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _operationErrors)</div> }
         @if (_plan.Exercises.Count == 0) { <p class="empty">Упражнений пока нет.</p> }
         @foreach (var exercise in _plan.Exercises)
         {
-            <article class="exercise-card"><h2>@exercise.Name</h2><div class="sets">
-                @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
-                { <span>Подход @set.SetNumber: <strong>@set.Weight кг × @set.Repetitions</strong></span> }
-            </div></article>
+            <article class="exercise-card">
+                <div class="exercise-heading"><h2>@exercise.Name</h2><span>@exercise.SetsCount подходов</span></div>
+                <div class="sets">
+                    @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                    { <span>Подход @set.SetNumber: <strong>@set.Weight кг × @set.Repetitions</strong></span> }
+                </div>
+                <div class="actions"><button class="secondary" type="button" @onclick="() => BeginEdit(exercise)">Изменить</button>
+                    @if (_deleteExerciseId == exercise.Id) { <button class="secondary" @onclick="CancelDelete">Отмена</button><button class="danger" disabled="@_busy" @onclick="() => DeleteAsync(exercise.Id)">Удалить точно</button> }
+                    else { <button class="danger" type="button" @onclick="() => _deleteExerciseId = exercise.Id">Удалить</button> }
+                </div>
+            </article>
         }
     }
 </section>
 
+@if (_showEditor)
+{
+    <div class="editor-backdrop"><section class="exercise-editor" role="dialog" aria-modal="true" aria-labelledby="exercise-editor-title">
+        <h2 id="exercise-editor-title">@(_editingId is null ? "Новое упражнение" : "Параметры упражнения")</h2>
+        @if (_editorErrors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _editorErrors)</div> }
+        <div class="auth-field"><label for="definition">Из библиотеки</label><select id="definition" class="auth-input" @bind="_draft.DefinitionId" @bind:after="ApplyDefinition"><option value="">Не выбрано</option>@foreach (var item in _definitions) { <option value="@item.Id">@item.Name</option> }</select></div>
+        <div class="auth-field"><label for="exercise-name">Название</label><input id="exercise-name" class="auth-input" maxlength="160" @bind="_draft.Name" /></div>
+        <div class="auth-field"><label for="sets-count">Количество подходов</label><input id="sets-count" class="auth-input" type="number" min="1" max="20" value="@_draft.SetsCount" @onchange="ChangeSetsCount" /></div>
+        <div class="set-editor-list">
+            @foreach (var set in _draft.Sets)
+            {
+                <fieldset><legend>Подход @set.SetNumber</legend><label>Вес, кг<input class="auth-input" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" /></label><label>Повторения<input class="auth-input" type="number" min="1" max="1000" @bind="set.Repetitions" /></label></fieldset>
+            }
+        </div>
+        <div class="actions"><button class="primary" type="button" disabled="@_busy" @onclick="SaveAsync">@(_busy ? "Сохраняем…" : "Сохранить")</button><button class="secondary" type="button" disabled="@_busy" @onclick="CloseEditor">Отмена</button></div>
+    </section></div>
+}
+
 @code {
     [Parameter] public int Id { get; set; }
-    private WorkoutPlanner.Api.Contracts.TrainingPlanApiResponse? _plan;
-    private readonly List<string> _errors = [];
-    private bool _loading = true;
-    protected override async Task OnParametersSetAsync() { _loading = true; _errors.Clear(); var result = await WorkoutClient.GetPlanAsync(Id); if (!result.Succeeded) _errors.AddRange(result.Errors); else _plan = result.Value; _loading = false; }
+    private TrainingPlanApiResponse? _plan;
+    private readonly List<ExerciseDefinitionApiResponse> _definitions = [];
+    private readonly List<string> _loadErrors = [], _operationErrors = [], _editorErrors = [];
+    private ExerciseDraft _draft = ExerciseDraft.Create();
+    private bool _loading = true, _busy, _showEditor;
+    private int? _editingId, _deleteExerciseId;
+    protected override Task OnParametersSetAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true; _loadErrors.Clear();
+        var planTask = WorkoutClient.GetPlanAsync(Id); var definitionsTask = WorkoutClient.GetExerciseDefinitionsAsync();
+        await Task.WhenAll(planTask, definitionsTask);
+        if (!planTask.Result.Succeeded) _loadErrors.AddRange(planTask.Result.Errors); else _plan = planTask.Result.Value;
+        if (!definitionsTask.Result.Succeeded) _loadErrors.AddRange(definitionsTask.Result.Errors); else { _definitions.Clear(); _definitions.AddRange(definitionsTask.Result.Value!); }
+        _loading = false;
+    }
+
+    private void BeginCreate() { _editingId = null; _draft = ExerciseDraft.Create(); _editorErrors.Clear(); _showEditor = true; }
+    private void BeginEdit(ExerciseApiResponse exercise) { _editingId = exercise.Id; _draft = ExerciseDraft.From(exercise); _editorErrors.Clear(); _showEditor = true; }
+    private void CloseEditor() { if (_busy) return; _showEditor = false; _editingId = null; }
+    private void CancelDelete() => _deleteExerciseId = null;
+    private void ApplyDefinition() { var definition = _definitions.FirstOrDefault(x => x.Id == _draft.DefinitionId); if (definition is not null) _draft.Name = definition.Name; }
+    private void ChangeSetsCount(ChangeEventArgs args) { if (!int.TryParse(args.Value?.ToString(), out var count)) return; _draft.Resize(Math.Clamp(count, 1, 20)); }
+
+    private async Task SaveAsync()
+    {
+        if (_busy) return; _editorErrors.Clear();
+        if (string.IsNullOrWhiteSpace(_draft.Name)) { _editorErrors.Add("Введите название упражнения."); return; }
+        if (_draft.Sets.Any(x => !double.IsFinite(x.Weight) || x.Weight is < 0 or > 2000 || x.Repetitions is < 1 or > 1000)) { _editorErrors.Add("Проверьте вес и повторения каждого подхода."); return; }
+        _busy = true;
+        try
+        {
+            var request = new SaveExerciseRequest(_draft.Name.Trim(), _draft.SetsCount, _draft.Status, _draft.DefinitionId, _draft.Sets.Select(x => new SaveExerciseSetRequest(x.SetNumber, x.Repetitions, x.Weight, x.Completed)).ToArray());
+            var result = _editingId is { } id ? await WorkoutClient.UpdateExerciseAsync(id, request) : await WorkoutClient.CreateExerciseAsync(Id, request);
+            if (!result.Succeeded) { _editorErrors.AddRange(result.Errors); return; }
+            ReplaceExercise(result.Value!); _showEditor = false; _editingId = null;
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteAsync(int id)
+    {
+        if (_busy) return; _busy = true; _operationErrors.Clear();
+        try { var result = await WorkoutClient.DeleteExerciseAsync(id); if (!result.Succeeded) _operationErrors.AddRange(result.Errors); else { _plan = _plan! with { Exercises = _plan.Exercises.Where(x => x.Id != id).ToArray() }; _deleteExerciseId = null; } }
+        finally { _busy = false; }
+    }
+
+    private void ReplaceExercise(ExerciseApiResponse exercise)
+    {
+        var items = _plan!.Exercises.ToList(); var index = items.FindIndex(x => x.Id == exercise.Id); if (index < 0) items.Add(exercise); else items[index] = exercise; _plan = _plan with { Exercises = items };
+    }
+
+    private sealed class ExerciseDraft
+    {
+        public string Name { get; set; } = string.Empty; public string Status { get; set; } = "NotCompleted"; public int? DefinitionId { get; set; } public int SetsCount => Sets.Count; public List<SetDraft> Sets { get; } = [];
+        public static ExerciseDraft Create() { var value = new ExerciseDraft(); value.Resize(3); return value; }
+        public static ExerciseDraft From(ExerciseApiResponse exercise) { var value = new ExerciseDraft { Name = exercise.Name, Status = exercise.Status, DefinitionId = exercise.ExerciseDefinitionId }; value.Sets.AddRange(exercise.Sets.OrderBy(x => x.SetNumber).Select(x => new SetDraft(x.SetNumber, x.Repetitions, x.Weight, x.Completed))); return value; }
+        public void Resize(int count) { while (Sets.Count < count) Sets.Add(new(Sets.Count + 1, 8, 0, false)); while (Sets.Count > count) Sets.RemoveAt(Sets.Count - 1); for (var i = 0; i < Sets.Count; i++) Sets[i].SetNumber = i + 1; }
+    }
+    private sealed class SetDraft(int setNumber, int repetitions, double weight, bool completed) { public int SetNumber { get; set; } = setNumber; public int Repetitions { get; set; } = repetitions; public double Weight { get; set; } = weight; public bool Completed { get; set; } = completed; }
 }

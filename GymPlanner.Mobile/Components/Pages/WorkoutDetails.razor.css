@@ -1,7 +1,24 @@
 .details-page { max-width: 52rem; margin: 0 auto; }
 .back-link { color: #80d89b; text-decoration: none; }
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
 h1 { margin: 1rem 0; font-size: clamp(2rem, 9vw, 3rem); }
 .exercise-card, .empty { margin-top: .75rem; padding: 1rem; border: 1px solid #2b3038; border-radius: 1rem; background: #171a20; }
-.exercise-card h2 { margin-top: 0; }
+.exercise-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.exercise-heading h2 { margin: 0 0 .75rem; }
+.exercise-heading span { color: #aeb7c2; }
 .sets { display: grid; gap: .45rem; color: #aeb7c2; }
 .sets strong { color: #fff; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
+.primary, .secondary, .danger { min-height: 2.6rem; border-radius: .65rem; padding: .5rem .85rem; font: inherit; font-weight: 700; }
+.primary { border: 0; background: #3fb950; color: #08110b; }
+.secondary { border: 1px solid #46505c; background: #242a32; color: #fff; }
+.danger { border: 1px solid #a44d59; background: #4a252b; color: #ffd9dd; }
+.primary:disabled, .secondary:disabled, .danger:disabled { opacity: .55; }
+.editor-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; align-items: end; padding-top: env(safe-area-inset-top); background: rgba(0, 0, 0, .75); }
+.exercise-editor { max-height: 92dvh; overflow: auto; padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 1px solid #46505c; border-radius: 1.25rem 1.25rem 0 0; background: #171a20; }
+.exercise-editor h2 { margin-top: 0; }
+.set-editor-list { display: grid; gap: .75rem; margin-top: 1rem; }
+.set-editor-list fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; border: 1px solid #343b45; border-radius: .8rem; padding: .75rem; }
+.set-editor-list legend { padding: 0 .3rem; color: #80d89b; font-weight: 700; }
+.set-editor-list label { display: grid; gap: .35rem; color: #c9d1d9; }
+@media (min-width: 44rem) { .editor-backdrop { align-items: center; padding: 1rem; } .exercise-editor { width: min(100%, 42rem); margin: auto; border-radius: 1.25rem; } }
