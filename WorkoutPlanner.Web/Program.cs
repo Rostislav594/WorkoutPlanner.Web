@@ -92,6 +92,7 @@ builder.Services.AddScoped<AppGuideCatalog>();
 builder.Services.AddSingleton<CharacterAssetCatalog>();
 builder.Services.AddScoped<AppGuidePracticeService>();
 builder.Services.AddScoped<IOnboardingService, AppGuideService>();
+builder.Services.AddScoped<IOnboardingStateService, OnboardingStateService>();
 builder.Services.AddScoped<IAppGuideCompletionStore, IdentityAppGuideCompletionStore>();
 
 

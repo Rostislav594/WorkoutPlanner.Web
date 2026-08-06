@@ -57,6 +57,16 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
         }
     }
 
+    public async Task<string?> LoadOutcomeAsync()
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+        return await userManager.GetAuthenticationTokenAsync(
+            user,
+            LoginProvider,
+            OutcomeTokenName);
+    }
+
     public async Task SaveProgressAsync(AppGuideProgress progress)
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -110,6 +120,26 @@ public sealed class IdentityAppGuideCompletionStore : IAppGuideCompletionStore
             CompletionTokenName,
             CurrentVersion);
         EnsureSucceeded(result);
+    }
+
+    public async Task ResetAsync()
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var (userManager, user) = await GetCurrentUserAsync(scope);
+
+        foreach (var tokenName in new[]
+                 {
+                     CompletionTokenName,
+                     ProgressTokenName,
+                     OutcomeTokenName
+                 })
+        {
+            var result = await userManager.RemoveAuthenticationTokenAsync(
+                user,
+                LoginProvider,
+                tokenName);
+            EnsureSucceeded(result);
+        }
     }
 
     private async Task<(UserManager<IdentityUser> Manager, IdentityUser User)> GetCurrentUserAsync(

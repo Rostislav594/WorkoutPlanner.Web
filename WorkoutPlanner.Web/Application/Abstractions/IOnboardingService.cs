@@ -1,4 +1,5 @@
 using WorkoutPlanner.Web.Components.Onboarding;
+using WorkoutPlanner.Web.Application.Contracts;
 
 namespace WorkoutPlanner.Web.Application.Abstractions;
 
@@ -24,4 +25,19 @@ public interface IOnboardingService
     Task HandleUnavailableStepAsync();
     void RetryCurrentStep();
     Task PauseAsync();
+}
+
+public interface IOnboardingStateService
+{
+    Task<OnboardingState> GetStateAsync(
+        CancellationToken cancellationToken = default);
+    Task<OnboardingMutationResult> SaveProgressAsync(
+        string stepId,
+        string? outcome,
+        CancellationToken cancellationToken = default);
+    Task<OnboardingMutationResult> CompleteAsync(
+        string? outcome,
+        CancellationToken cancellationToken = default);
+    Task<OnboardingState> ResetAsync(
+        CancellationToken cancellationToken = default);
 }

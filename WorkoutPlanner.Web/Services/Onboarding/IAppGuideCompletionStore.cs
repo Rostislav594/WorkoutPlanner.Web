@@ -6,9 +6,13 @@ public interface IAppGuideCompletionStore
 
     Task<AppGuideProgress?> LoadProgressAsync();
 
+    Task<string?> LoadOutcomeAsync();
+
     Task SaveProgressAsync(AppGuideProgress progress);
 
     Task ClearProgressAsync();
 
     Task MarkCompletedAsync(string? outcome);
+
+    Task ResetAsync();
 }

@@ -38,6 +38,7 @@ public sealed class MobileApiTests
             "/api/v1/progress/workouts/{trainingPlanId}",
             document,
             StringComparison.Ordinal);
+        Assert.Contains("/api/v1/onboarding", document, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -150,6 +151,114 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task OnboardingApi_PersistsValidatedState_PerAuthenticatedUser()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+        using var anonymousState = await firstUser.GetAsync("/api/v1/onboarding");
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousState.StatusCode);
+
+        using var firstRegistration = await firstUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("guide-a@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, firstRegistration.StatusCode);
+        using var secondRegistration = await secondUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("guide-b@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, secondRegistration.StatusCode);
+        SetBearer(
+            firstUser,
+            (await LoginAsync(
+                firstUser,
+                "guide-a@example.test",
+                "password1",
+                "Guide A")).AccessToken);
+        SetBearer(
+            secondUser,
+            (await LoginAsync(
+                secondUser,
+                "guide-b@example.test",
+                "password1",
+                "Guide B")).AccessToken);
+
+        var initial = await firstUser.GetFromJsonAsync<OnboardingStateApiResponse>(
+            "/api/v1/onboarding");
+        Assert.NotNull(initial);
+        Assert.False(initial.IsCompleted);
+        Assert.Null(initial.StepId);
+
+        using var invalidStep = await firstUser.PutAsJsonAsync(
+            "/api/v1/onboarding/progress",
+            new SaveOnboardingProgressRequest("client-invented-step", null));
+        Assert.Equal(HttpStatusCode.BadRequest, invalidStep.StatusCode);
+
+        using var saveProgress = await firstUser.PutAsJsonAsync(
+            "/api/v1/onboarding/progress",
+            new SaveOnboardingProgressRequest(
+                "navigation-calendar-overview",
+                "guided"));
+        Assert.Equal(HttpStatusCode.OK, saveProgress.StatusCode);
+        var saved = await saveProgress.Content
+            .ReadFromJsonAsync<OnboardingStateApiResponse>();
+        Assert.NotNull(saved);
+        Assert.False(saved.IsCompleted);
+        Assert.Equal("navigation-calendar-overview", saved.StepId);
+        Assert.Equal("guided", saved.Outcome);
+        Assert.NotNull(saved.UpdatedAtUtc);
+
+        var secondState = await secondUser.GetFromJsonAsync<
+            OnboardingStateApiResponse>("/api/v1/onboarding");
+        Assert.NotNull(secondState);
+        Assert.False(secondState.IsCompleted);
+        Assert.Null(secondState.StepId);
+
+        using var complete = await firstUser.PostAsJsonAsync(
+            "/api/v1/onboarding/complete",
+            new CompleteOnboardingRequest(null));
+        Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
+        var completed = await complete.Content
+            .ReadFromJsonAsync<OnboardingStateApiResponse>();
+        Assert.NotNull(completed);
+        Assert.True(completed.IsCompleted);
+        Assert.Null(completed.StepId);
+        Assert.Equal("guided", completed.Outcome);
+
+        using var updateCompleted = await firstUser.PutAsJsonAsync(
+            "/api/v1/onboarding/progress",
+            new SaveOnboardingProgressRequest("navigation-welcome", null));
+        Assert.Equal(HttpStatusCode.Conflict, updateCompleted.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var firstUserId = await db.Users
+                .Where(x => x.Email == "guide-a@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var secondUserId = await db.Users
+                .Where(x => x.Email == "guide-b@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            Assert.True(await db.UserTokens.AnyAsync(x =>
+                x.UserId == firstUserId));
+            Assert.False(await db.UserTokens.AnyAsync(x =>
+                x.UserId == secondUserId));
+        }
+
+        using var reset = await firstUser.DeleteAsync("/api/v1/onboarding");
+        Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
+        var resetState = await reset.Content
+            .ReadFromJsonAsync<OnboardingStateApiResponse>();
+        Assert.NotNull(resetState);
+        Assert.False(resetState.IsCompleted);
+        Assert.Null(resetState.StepId);
+        Assert.Null(resetState.Outcome);
     }
 
     [Fact]
