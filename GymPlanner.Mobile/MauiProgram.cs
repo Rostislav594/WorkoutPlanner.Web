@@ -26,6 +26,8 @@ public static class MauiProgram
 		builder.Services.AddAuthorizationCore();
 		builder.Services.AddSingleton<Api.IProfileApiClient, Api.ProfileApiClient>();
 		builder.Services.AddSingleton<Api.IWorkoutApiClient, Api.WorkoutApiClient>();
+		builder.Services.AddSingleton<Api.IWorkoutLifecycleApiClient,
+			Api.WorkoutLifecycleApiClient>();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();

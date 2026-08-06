@@ -5,7 +5,7 @@
 .logout-button { border: 1px solid #3c444f; border-radius: .65rem; padding: .45rem .75rem; background: transparent; color: #dce3e8; }
 .logout-button:disabled { opacity: .55; }
 .mobile-content { padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(5rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
-.mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .25rem; padding: .65rem max(.75rem, env(safe-area-inset-right)) calc(.65rem + env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left)); background: rgba(20, 23, 28, .97); border-top: 1px solid #2b3038; }
+.mobile-navigation { position: fixed; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem; padding: .65rem max(.75rem, env(safe-area-inset-right)) calc(.65rem + env(safe-area-inset-bottom)) max(.75rem, env(safe-area-inset-left)); background: rgba(20, 23, 28, .97); border-top: 1px solid #2b3038; }
 .mobile-navigation a, .mobile-navigation span { padding: .6rem .25rem; color: #aeb7c2; text-align: center; text-decoration: none; border-radius: .65rem; }
 .mobile-navigation a.active { color: #fff; background: #263c2e; }
 .mobile-navigation span[aria-disabled="true"] { opacity: .5; }

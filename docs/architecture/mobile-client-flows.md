@@ -16,6 +16,9 @@
 - Exercise creation, editing, and deletion use request DTOs with one explicit
   weight and repetition value for every set. Set rows are resized deliberately;
   the mobile client performs no automatic weight or repetition progression.
+- The monthly calendar loads only the visible date range and schedules,
+  replaces, or removes user-owned workout days through the protected lifecycle
+  API. Past dates remain read-only and completed days cannot be overwritten.
 
 ## Boundary
 

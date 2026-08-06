@@ -1,0 +1,347 @@
+@page "/calendar"
+@attribute [Authorize]
+@implements IDisposable
+@using System.Globalization
+@using WorkoutPlanner.Api.Contracts
+@inject IWorkoutApiClient WorkoutClient
+@inject IWorkoutLifecycleApiClient LifecycleClient
+
+<section class="calendar-page">
+    <header>
+        <p>Расписание</p>
+        <h1>Календарь</h1>
+    </header>
+
+    @if (_errors.Count > 0)
+    {
+        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+    }
+
+    <div class="month-toolbar">
+        <button type="button" disabled="@_isLoading" @onclick="PreviousMonthAsync" aria-label="Предыдущий месяц">←</button>
+        <h2>@MonthTitle</h2>
+        <button type="button" disabled="@_isLoading" @onclick="NextMonthAsync" aria-label="Следующий месяц">→</button>
+    </div>
+
+    @if (_isLoading)
+    {
+        <div class="state" role="status">Загружаем календарь…</div>
+    }
+    else
+    {
+        <div class="weekdays" aria-hidden="true">
+            @foreach (var dayName in WeekdayNames)
+            {
+                <span>@dayName</span>
+            }
+        </div>
+        <div class="month-grid" aria-label="@MonthTitle">
+            @foreach (var date in CalendarCells)
+            {
+                if (date is null)
+                {
+                    <span class="calendar-cell spacer" aria-hidden="true"></span>
+                }
+                else
+                {
+                    var workoutDay = FindDay(date.Value);
+                    var plan = workoutDay is null
+                        ? null
+                        : _plans.FirstOrDefault(x => x.Id == workoutDay.TrainingPlanId);
+                    <button type="button"
+                            class="calendar-cell @(date.Value.Date == DateTime.Today ? "today" : null) @(workoutDay?.IsCompleted == true ? "completed" : null)"
+                            @onclick="() => OpenDay(date.Value)"
+                            aria-label="@GetDayLabel(date.Value, plan, workoutDay)">
+                        <span class="day-number">@date.Value.Day</span>
+                        @if (plan is not null)
+                        {
+                            <span class="workout-marker">@GetShortName(plan.WorkoutName)</span>
+                        }
+                    </button>
+                }
+            }
+        </div>
+    }
+</section>
+
+@if (_selectedDate is not null)
+{
+    var selectedDay = FindDay(_selectedDate.Value);
+    var selectedPlan = selectedDay is null
+        ? null
+        : _plans.FirstOrDefault(x => x.Id == selectedDay.TrainingPlanId);
+
+    <div class="dialog-backdrop" @onclick="CloseDay">
+        <section class="day-dialog" role="dialog" aria-modal="true" aria-labelledby="selected-day-title" @onclick:stopPropagation="true">
+            <h2 id="selected-day-title">@_selectedDate.Value.ToString("dd MMMM yyyy", RussianCulture)</h2>
+
+            @if (_dialogErrors.Count > 0)
+            {
+                <div class="auth-error" role="alert">@string.Join(" ", _dialogErrors)</div>
+            }
+
+            @if (selectedDay is not null)
+            {
+                <p class="scheduled-label">Назначенная тренировка</p>
+                <h3>@(selectedPlan?.WorkoutName ?? "План недоступен")</h3>
+                @if (selectedDay.IsCompleted)
+                {
+                    <p class="completed-label">Тренировка завершена</p>
+                }
+            }
+
+            @if (_selectedDate.Value.Date >= DateTime.Today && selectedDay?.IsCompleted != true)
+            {
+                <label class="plan-selector" for="calendar-plan">
+                    Тренировочный план
+                    <select id="calendar-plan" class="auth-input" @bind="_selectedPlanId">
+                        <option value="0">Выберите план</option>
+                        @foreach (var plan in _plans)
+                        {
+                            <option value="@plan.Id">@plan.WorkoutName</option>
+                        }
+                    </select>
+                </label>
+                @if (_plans.Count == 0)
+                {
+                    <p class="empty-hint">Сначала создайте тренировочный план.</p>
+                }
+            }
+            else if (selectedDay is null)
+            {
+                <p class="empty-hint">На прошедшую дату нельзя назначить тренировку.</p>
+            }
+
+            <div class="dialog-actions">
+                @if (_selectedDate.Value.Date >= DateTime.Today && selectedDay?.IsCompleted != true)
+                {
+                    <button class="primary" type="button" disabled="@(_isBusy || _selectedPlanId == 0)" @onclick="ScheduleAsync">
+                        @(_isBusy ? "Сохраняем…" : selectedDay is null ? "Назначить" : "Заменить")
+                    </button>
+                }
+                @if (selectedDay is not null && !selectedDay.IsCompleted)
+                {
+                    <button class="danger" type="button" disabled="@_isBusy" @onclick="DeleteAsync">Удалить</button>
+                }
+                <button class="secondary" type="button" disabled="@_isBusy" @onclick="CloseDay">Закрыть</button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
+    private static readonly string[] WeekdayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+    private readonly List<TrainingPlanApiResponse> _plans = [];
+    private readonly List<WorkoutDayApiResponse> _workoutDays = [];
+    private readonly List<string> _errors = [];
+    private readonly List<string> _dialogErrors = [];
+    private readonly CancellationTokenSource _disposeCts = new();
+    private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _selectedDate;
+    private int _selectedPlanId;
+    private bool _isLoading = true;
+    private bool _isBusy;
+
+    private string MonthTitle => _currentMonth.ToString("MMMM yyyy", RussianCulture);
+
+    private IEnumerable<DateTime?> CalendarCells
+    {
+        get
+        {
+            var mondayOffset = ((int)_currentMonth.DayOfWeek + 6) % 7;
+            for (var index = 0; index < mondayOffset; index++)
+                yield return null;
+            for (var day = 1; day <= DateTime.DaysInMonth(_currentMonth.Year, _currentMonth.Month); day++)
+                yield return new DateTime(_currentMonth.Year, _currentMonth.Month, day);
+        }
+    }
+
+    protected override Task OnInitializedAsync() => LoadAsync(loadPlans: true);
+
+    private async Task LoadAsync(bool loadPlans)
+    {
+        _isLoading = true;
+        _errors.Clear();
+        var monthEnd = _currentMonth.AddMonths(1).AddDays(-1);
+        var calendarTask = LifecycleClient.GetCalendarAsync(
+            _currentMonth,
+            monthEnd,
+            _disposeCts.Token);
+        var plansTask = loadPlans
+            ? WorkoutClient.GetPlansAsync(_disposeCts.Token)
+            : null;
+
+        try
+        {
+            if (plansTask is not null)
+                await Task.WhenAll(calendarTask, plansTask);
+            else
+                await calendarTask;
+
+            var calendarResult = await calendarTask;
+            if (!calendarResult.Succeeded)
+                _errors.AddRange(calendarResult.Errors);
+            else
+            {
+                _workoutDays.Clear();
+                _workoutDays.AddRange(calendarResult.Value!);
+            }
+
+            if (plansTask is not null)
+            {
+                var plansResult = await plansTask;
+                if (!plansResult.Succeeded)
+                    _errors.AddRange(plansResult.Errors);
+                else
+                {
+                    _plans.Clear();
+                    _plans.AddRange(plansResult.Value!);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task PreviousMonthAsync()
+    {
+        _currentMonth = _currentMonth.AddMonths(-1);
+        await LoadAsync(loadPlans: false);
+    }
+
+    private async Task NextMonthAsync()
+    {
+        _currentMonth = _currentMonth.AddMonths(1);
+        await LoadAsync(loadPlans: false);
+    }
+
+    private void OpenDay(DateTime date)
+    {
+        _selectedDate = date;
+        _dialogErrors.Clear();
+        _selectedPlanId = FindDay(date)?.TrainingPlanId ?? 0;
+    }
+
+    private void CloseDay()
+    {
+        if (_isBusy)
+            return;
+        CloseDayAfterSuccess();
+    }
+
+    private async Task ScheduleAsync()
+    {
+        if (_isBusy || _selectedDate is null || _selectedPlanId == 0)
+            return;
+
+        _isBusy = true;
+        _dialogErrors.Clear();
+        try
+        {
+            var result = await LifecycleClient.ScheduleWorkoutAsync(
+                new ScheduleWorkoutRequest(_selectedDate.Value.Date, _selectedPlanId),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _dialogErrors.AddRange(result.Errors);
+                return;
+            }
+
+            ReplaceDay(result.Value!);
+            CloseDayAfterSuccess();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        var day = _selectedDate is null ? null : FindDay(_selectedDate.Value);
+        if (_isBusy || day is null)
+            return;
+
+        _isBusy = true;
+        _dialogErrors.Clear();
+        try
+        {
+            var result = await LifecycleClient.DeleteCalendarDayAsync(
+                day.Id,
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _dialogErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _workoutDays.RemoveAll(x => x.Id == day.Id);
+            CloseDayAfterSuccess();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private WorkoutDayApiResponse? FindDay(DateTime date) =>
+        _workoutDays.FirstOrDefault(x => x.Date.Date == date.Date);
+
+    private void ReplaceDay(WorkoutDayApiResponse day)
+    {
+        var existing = _workoutDays.FindIndex(x =>
+            x.Id == day.Id || x.Date.Date == day.Date.Date);
+        if (existing < 0)
+            _workoutDays.Add(day);
+        else
+            _workoutDays[existing] = day;
+    }
+
+    private void CloseDayAfterSuccess()
+    {
+        _selectedDate = null;
+        _selectedPlanId = 0;
+        _dialogErrors.Clear();
+    }
+
+    private static string GetShortName(string name)
+    {
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0)
+            return string.Empty;
+        if (words.Length == 1)
+            return words[0].Length <= 3 ? words[0] : words[0][..3];
+        return string.Concat(words.Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    }
+
+    private static string GetDayLabel(
+        DateTime date,
+        TrainingPlanApiResponse? plan,
+        WorkoutDayApiResponse? day)
+    {
+        var label = date.ToString("dd MMMM yyyy", RussianCulture);
+        if (plan is not null)
+            label += $", {plan.WorkoutName}";
+        if (day?.IsCompleted == true)
+            label += ", завершена";
+        return label;
+    }
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}
