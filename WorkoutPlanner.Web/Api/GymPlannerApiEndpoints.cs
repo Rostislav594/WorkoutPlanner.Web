@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
-using WorkoutPlanner.Web.Api.Contracts;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;

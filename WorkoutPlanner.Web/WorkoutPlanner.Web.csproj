@@ -25,6 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WorkoutPlanner.Api.Contracts\WorkoutPlanner.Api.Contracts.csproj" />
+    <ProjectReference Include="..\WorkoutPlanner.Domain\WorkoutPlanner.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Remove="wwwroot/WorkoutImages/**" />
   </ItemGroup>
 

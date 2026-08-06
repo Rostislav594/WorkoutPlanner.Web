@@ -4,6 +4,7 @@ using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Services.Auth;
 using DataExercise = WorkoutPlanner.Web.Models.Exercise;
+using WorkoutPlanner.Domain;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -168,7 +169,9 @@ public sealed class ProgressService : IProgressService
         return snapshots.Select(snapshot => new ProgressChartPoint
         {
             Label = snapshot.Date.ToString("dd.MM"),
-            Percent = Math.Round((decimal)(firstScore <= 0 ? 0 : ((snapshot.Score - firstScore) / firstScore) * 100), 2)
+            Percent = TrainingMetrics.CalculatePercentageChange(
+                firstScore,
+                snapshot.Score)
         }).ToList();
     }
 

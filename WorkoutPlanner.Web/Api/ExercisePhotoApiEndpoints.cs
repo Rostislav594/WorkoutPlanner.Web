@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using WorkoutPlanner.Web.Api.Contracts;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;

@@ -1,5 +1,7 @@
 ﻿using WorkoutPlanner.Web.Models;
 
+using WorkoutPlanner.Domain;
+
 namespace WorkoutPlanner.Web.Services;
 
 public class MuscleLoadCalculator
@@ -11,8 +13,9 @@ public class MuscleLoadCalculator
         if (exercise.ExerciseDefinition == null)
             return result;
 
-        double volume =
-            exercise.Sets.Sum(x => x.Weight * x.Repetitions);
+        var volume = TrainingMetrics.CalculateVolume(
+            exercise.Sets.Select(x =>
+                new SetPerformance(x.Weight, x.Repetitions)));
 
         // Основная мышца
         result.Add(

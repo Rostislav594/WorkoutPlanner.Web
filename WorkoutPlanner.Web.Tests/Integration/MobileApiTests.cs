@@ -9,7 +9,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using WorkoutPlanner.Web.Api.Contracts;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Data;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
