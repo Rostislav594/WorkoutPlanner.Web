@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="GymPlanner.Mobile/GymPlanner.Mobile.csproj" />
   <Project Path="WorkoutPlanner.Api.Contracts/WorkoutPlanner.Api.Contracts.csproj" />
   <Project Path="WorkoutPlanner.Domain/WorkoutPlanner.Domain.csproj" />
   <Project Path="WorkoutPlanner.UI/WorkoutPlanner.UI.csproj" />

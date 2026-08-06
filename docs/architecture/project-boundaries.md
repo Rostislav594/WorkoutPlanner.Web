@@ -20,3 +20,13 @@ their navigation properties intentionally remain in Web.
 MAUI hosts. Its components must not depend on Web, EF Core, Identity, or a
 server render mode. Hosts select interactivity and inject platform services.
 Server-bound pages remain in Web until HTTP client implementations exist.
+The RCL references the cross-platform `Microsoft.AspNetCore.Components.Web`
+package rather than the server-only `Microsoft.AspNetCore.App` shared runtime.
+
+`GymPlanner.Mobile` is an Android/iOS .NET MAUI Blazor Hybrid host. It references
+Domain, API.Contracts, and UI, but never Web. Its host page uses
+`blazor.webview.js`; it has no Interactive Server circuit or reconnect UI. The
+initial `HttpClient` uses HTTPS development addresses only and does not disable
+certificate validation. Android emulators use `10.0.2.2`, while iOS simulators
+use `localhost`; physical devices and production builds require an environment-
+specific public HTTPS base address and a trusted certificate.

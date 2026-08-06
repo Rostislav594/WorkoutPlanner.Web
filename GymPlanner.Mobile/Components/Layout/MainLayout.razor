@@ -1,0 +1,14 @@
+﻿@inherits LayoutComponentBase
+
+<div class="mobile-shell">
+    <header class="mobile-header">
+        <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">GPlanner</a>
+        <span class="connection-mode">online-first</span>
+    </header>
+    <main class="mobile-content">@Body</main>
+    <nav class="mobile-navigation" aria-label="Основная навигация">
+        <NavLink href="/" Match="NavLinkMatch.All">Главная</NavLink>
+        <span aria-disabled="true">Тренировки</span>
+        <span aria-disabled="true">Профиль</span>
+    </nav>
+</div>
