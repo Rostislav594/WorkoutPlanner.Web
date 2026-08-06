@@ -32,3 +32,20 @@ public sealed record PhotoUpload(
     Stream Content,
     string ContentType,
     long Length);
+
+public sealed record PhotoDownload(
+    Stream Content,
+    string ContentType,
+    long Length);
+
+public enum ExercisePhotoMutationFailure
+{
+    None,
+    ExerciseNotFound,
+    InvalidFile,
+    StorageFailure
+}
+
+public sealed record ExercisePhotoMutationResult(
+    bool Succeeded,
+    ExercisePhotoMutationFailure Failure);

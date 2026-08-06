@@ -23,6 +23,7 @@ public sealed class ExercisePhotoService :
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(upload);
+        await using var input = upload.Content;
         if (upload.Length <= 0 || upload.Length > MaxPhotoSize)
             throw new InvalidDataException("The image exceeds the allowed size.");
 
@@ -42,7 +43,6 @@ public sealed class ExercisePhotoService :
 
         try
         {
-            await using (var input = upload.Content)
             await using (var output = new FileStream(
                 temporaryPath,
                 FileMode.CreateNew,
@@ -51,7 +51,7 @@ public sealed class ExercisePhotoService :
                 81920,
                 FileOptions.Asynchronous))
             {
-                await input.CopyToAsync(output, cancellationToken);
+                await CopyWithLimitAsync(input, output, cancellationToken);
             }
 
             if (!await HasExpectedSignatureAsync(
@@ -99,6 +99,60 @@ public sealed class ExercisePhotoService :
         return uploadDeleted && legacyDeleted;
     }
 
+    public Task<Application.Contracts.PhotoDownload?> OpenPhotoAsync(
+        string photoPath,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var fileName = Path.GetFileName(photoPath);
+        if (string.IsNullOrWhiteSpace(fileName) ||
+            !string.Equals(
+                photoPath,
+                $"/WorkoutImages/{fileName}",
+                StringComparison.Ordinal))
+        {
+            return Task.FromResult<Application.Contracts.PhotoDownload?>(null);
+        }
+
+        var uploadPath = Path.Combine(
+            _environment.ContentRootPath,
+            "App_Data",
+            "WorkoutImages",
+            fileName);
+        var legacyPath = Path.Combine(
+            _environment.WebRootPath,
+            "WorkoutImages",
+            fileName);
+        var path = File.Exists(uploadPath) ? uploadPath : legacyPath;
+        var contentType = GetContentType(Path.GetExtension(fileName));
+        if (contentType is null || !File.Exists(path))
+            return Task.FromResult<Application.Contracts.PhotoDownload?>(null);
+
+        try
+        {
+            var stream = new FileStream(
+                path,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                81920,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            Application.Contracts.PhotoDownload result = new(
+                stream,
+                contentType,
+                stream.Length);
+            return Task.FromResult<Application.Contracts.PhotoDownload?>(result);
+        }
+        catch (FileNotFoundException)
+        {
+            return Task.FromResult<Application.Contracts.PhotoDownload?>(null);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return Task.FromResult<Application.Contracts.PhotoDownload?>(null);
+        }
+    }
+
     private static string GetTrustedExtension(string contentType) =>
         contentType.ToLowerInvariant() switch
         {
@@ -107,6 +161,15 @@ public sealed class ExercisePhotoService :
             "image/webp" => ".webp",
             _ => throw new InvalidDataException(
                 "Only JPG, PNG, and WebP images are supported.")
+        };
+
+    private static string? GetContentType(string extension) =>
+        extension.ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => null
         };
 
     private static async Task<bool> HasExpectedSignatureAsync(
@@ -140,6 +203,34 @@ public sealed class ExercisePhotoService :
                        header.AsSpan(8, 4).SequenceEqual("WEBP"u8),
             _ => false
         };
+    }
+
+    private static async Task CopyWithLimitAsync(
+        Stream input,
+        Stream output,
+        CancellationToken cancellationToken)
+    {
+        var buffer = new byte[81920];
+        long totalBytes = 0;
+        int bytesRead;
+        while ((bytesRead = await input.ReadAsync(
+                   buffer,
+                   cancellationToken)) > 0)
+        {
+            totalBytes += bytesRead;
+            if (totalBytes > MaxPhotoSize)
+            {
+                throw new InvalidDataException(
+                    "The image exceeds the allowed size.");
+            }
+
+            await output.WriteAsync(
+                buffer.AsMemory(0, bytesRead),
+                cancellationToken);
+        }
+
+        if (totalBytes == 0)
+            throw new InvalidDataException("The image is empty.");
     }
 
     private bool TryDeleteFile(string path)

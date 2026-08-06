@@ -35,5 +35,22 @@ public interface IExercisePhotoService
     Task<string> SavePhotoAsync(
         PhotoUpload upload,
         CancellationToken cancellationToken = default);
+    Task<PhotoDownload?> OpenPhotoAsync(
+        string photoPath,
+        CancellationToken cancellationToken = default);
     bool TryDeletePhoto(string? photoPath);
+}
+
+public interface IExercisePhotoApplicationService
+{
+    Task<ExercisePhotoMutationResult> SaveAsync(
+        int exerciseId,
+        PhotoUpload upload,
+        CancellationToken cancellationToken = default);
+    Task<PhotoDownload?> OpenAsync(
+        int exerciseId,
+        CancellationToken cancellationToken = default);
+    Task<ExercisePhotoMutationResult> DeleteAsync(
+        int exerciseId,
+        CancellationToken cancellationToken = default);
 }

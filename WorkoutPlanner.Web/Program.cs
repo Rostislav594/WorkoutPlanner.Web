@@ -81,6 +81,9 @@ builder.Services.AddScoped<IHistoryService, HistoryService>();
 builder.Services.AddScoped<IWorkoutCompletionService, WorkoutCompletionService>();
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<IExercisePhotoService, ExercisePhotoService>();
+builder.Services.AddScoped<
+    IExercisePhotoApplicationService,
+    ExercisePhotoApplicationService>();
 builder.Services.AddScoped<ITrainingPlanService, TrainingPlanService>();
 builder.Services.AddScoped<IStarterPlanService, StarterPlanService>();
 builder.Services.AddScoped<ITodayWorkoutService, TodayWorkoutService>();

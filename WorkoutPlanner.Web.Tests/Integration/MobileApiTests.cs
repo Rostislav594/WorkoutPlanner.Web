@@ -39,6 +39,10 @@ public sealed class MobileApiTests
             document,
             StringComparison.Ordinal);
         Assert.Contains("/api/v1/onboarding", document, StringComparison.Ordinal);
+        Assert.Contains(
+            "/api/v1/exercises/{exerciseId}/photo",
+            document,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -151,6 +155,186 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task ExercisePhotoApi_ValidatesFiles_AndEnforcesOwnership()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+        using var firstRegistration = await firstUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("photo-a@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, firstRegistration.StatusCode);
+        using var secondRegistration = await secondUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("photo-b@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, secondRegistration.StatusCode);
+        SetBearer(
+            firstUser,
+            (await LoginAsync(
+                firstUser,
+                "photo-a@example.test",
+                "password1",
+                "Photo A")).AccessToken);
+        SetBearer(
+            secondUser,
+            (await LoginAsync(
+                secondUser,
+                "photo-b@example.test",
+                "password1",
+                "Photo B")).AccessToken);
+
+        using var createPlan = await firstUser.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("Photo plan"));
+        var plan = await createPlan.Content
+            .ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.NotNull(plan);
+        using var createExercise = await firstUser.PostAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises",
+            new SaveExerciseRequest(
+                "Photo exercise",
+                1,
+                "NotCompleted",
+                null,
+                [new SaveExerciseSetRequest(1, 8, 20, false)]));
+        var exercise = await createExercise.Content
+            .ReadFromJsonAsync<ExerciseApiResponse>();
+        Assert.NotNull(exercise);
+
+        using (var invalidContent = CreatePhotoContent(
+                   [0x01, 0x02, 0x03, 0x04],
+                   "image/png",
+                   "../../unsafe.png"))
+        using (var invalidUpload = await firstUser.PostAsync(
+                   $"/api/v1/exercises/{exercise.Id}/photo",
+                   invalidContent))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, invalidUpload.StatusCode);
+        }
+
+        using (var oversizedContent = CreatePhotoContent(
+                   new byte[WorkoutPlanner.Web.Services.ExercisePhotoService.MaxPhotoSize + 1],
+                   "image/png",
+                   "oversized.png"))
+        using (var oversizedUpload = await firstUser.PostAsync(
+                   $"/api/v1/exercises/{exercise.Id}/photo",
+                   oversizedContent))
+        {
+            Assert.Equal(
+                HttpStatusCode.RequestEntityTooLarge,
+                oversizedUpload.StatusCode);
+        }
+
+        var png = new byte[]
+        {
+            0x89, 0x50, 0x4E, 0x47,
+            0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x00
+        };
+        using var validContent = CreatePhotoContent(
+            png,
+            "image/png",
+            "../../client-name.png");
+        using var upload = await firstUser.PostAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo",
+            validContent);
+        Assert.Equal(HttpStatusCode.OK, upload.StatusCode);
+        var uploadResponse = await upload.Content
+            .ReadFromJsonAsync<ExercisePhotoApiResponse>();
+        Assert.NotNull(uploadResponse);
+        Assert.Equal(
+            $"/api/v1/exercises/{exercise.Id}/photo",
+            uploadResponse.DownloadUrl);
+
+        string firstPhotoPath;
+        string contentRootPath;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            firstPhotoPath = await db.Exercises
+                .Where(x => x.Id == exercise.Id)
+                .Select(x => x.PhotoPath!)
+                .SingleAsync();
+            contentRootPath = scope.ServiceProvider
+                .GetRequiredService<IWebHostEnvironment>()
+                .ContentRootPath;
+        }
+        Assert.StartsWith("/WorkoutImages/", firstPhotoPath, StringComparison.Ordinal);
+        Assert.DoesNotContain("client-name", firstPhotoPath, StringComparison.Ordinal);
+        var firstFile = Path.Combine(
+            contentRootPath,
+            "App_Data",
+            "WorkoutImages",
+            Path.GetFileName(firstPhotoPath));
+        Assert.True(File.Exists(firstFile));
+
+        using var download = await firstUser.GetAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo");
+        Assert.Equal(HttpStatusCode.OK, download.StatusCode);
+        Assert.Equal("image/png", download.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(png, await download.Content.ReadAsByteArrayAsync());
+
+        using var foreignDownload = await secondUser.GetAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDownload.StatusCode);
+        using var foreignDelete = await secondUser.DeleteAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDelete.StatusCode);
+        using var foreignContent = CreatePhotoContent(
+            png,
+            "image/png",
+            "foreign.png");
+        using var foreignUpload = await secondUser.PostAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo",
+            foreignContent);
+        Assert.Equal(HttpStatusCode.NotFound, foreignUpload.StatusCode);
+
+        var jpeg = new byte[]
+        {
+            0xFF, 0xD8, 0xFF, 0xE0,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+        };
+        using var replacementContent = CreatePhotoContent(
+            jpeg,
+            "image/jpeg",
+            "replacement.jpg");
+        using var replacement = await firstUser.PostAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo",
+            replacementContent);
+        Assert.Equal(HttpStatusCode.OK, replacement.StatusCode);
+        Assert.False(File.Exists(firstFile));
+
+        string replacementFile;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var replacementPath = await db.Exercises
+                .Where(x => x.Id == exercise.Id)
+                .Select(x => x.PhotoPath!)
+                .SingleAsync();
+            replacementFile = Path.Combine(
+                contentRootPath,
+                "App_Data",
+                "WorkoutImages",
+                Path.GetFileName(replacementPath));
+        }
+        Assert.True(File.Exists(replacementFile));
+
+        using var delete = await firstUser.DeleteAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo");
+        Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+        Assert.False(File.Exists(replacementFile));
+        using var deletedDownload = await firstUser.GetAsync(
+            $"/api/v1/exercises/{exercise.Id}/photo");
+        Assert.Equal(HttpStatusCode.NotFound, deletedDownload.StatusCode);
     }
 
     [Fact]
@@ -930,6 +1114,18 @@ public sealed class MobileApiTests
     {
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", accessToken);
+    }
+
+    private static MultipartFormDataContent CreatePhotoContent(
+        byte[] bytes,
+        string contentType,
+        string fileName)
+    {
+        var content = new MultipartFormDataContent();
+        var file = new ByteArrayContent(bytes);
+        file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        content.Add(file, "file", fileName);
+        return content;
     }
 
     private sealed class GymPlannerApiFactory : WebApplicationFactory<Program>
