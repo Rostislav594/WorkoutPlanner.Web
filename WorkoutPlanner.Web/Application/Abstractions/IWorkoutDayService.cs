@@ -6,13 +6,20 @@ public interface IWorkoutDayService
 {
     Task<List<WorkoutDay>> GetDaysAsync(
         CancellationToken cancellationToken = default);
-    Task SaveDayAsync(
+    Task<List<WorkoutDay>> GetDaysAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default);
+    Task<WorkoutDay?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default);
+    Task<WorkoutDay> SaveDayAsync(
         DateTime date,
         int trainingPlanId,
         CancellationToken cancellationToken = default);
     Task RemoveTodayWorkoutAsync(
         CancellationToken cancellationToken = default);
-    Task DeleteDayAsync(
+    Task<bool> DeleteDayAsync(
         int id,
         CancellationToken cancellationToken = default);
     Task CompleteTodayWorkoutAsync(

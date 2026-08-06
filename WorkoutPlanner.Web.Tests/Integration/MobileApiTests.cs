@@ -32,6 +32,8 @@ public sealed class MobileApiTests
         Assert.Contains("/api/v1/profile", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/training-plans", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/exercises/{id}", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/calendar", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/history", document, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -144,6 +146,194 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task WorkoutLifecycleApi_CompletesAtomically_AndReturnsImmutableSnapshot()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+
+        using var anonymousCalendar = await firstUser.GetAsync("/api/v1/calendar");
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousCalendar.StatusCode);
+
+        using var firstRegistration = await firstUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("lifecycle-a@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, firstRegistration.StatusCode);
+        using var secondRegistration = await secondUser.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("lifecycle-b@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, secondRegistration.StatusCode);
+        SetBearer(
+            firstUser,
+            (await LoginAsync(
+                firstUser,
+                "lifecycle-a@example.test",
+                "password1",
+                "Lifecycle A")).AccessToken);
+        SetBearer(
+            secondUser,
+            (await LoginAsync(
+                secondUser,
+                "lifecycle-b@example.test",
+                "password1",
+                "Lifecycle B")).AccessToken);
+
+        using var createPlan = await firstUser.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("Lifecycle plan"));
+        var plan = await createPlan.Content
+            .ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.NotNull(plan);
+
+        var exerciseRequest = new SaveExerciseRequest(
+            "Lifecycle exercise",
+            2,
+            "NotCompleted",
+            null,
+            [
+                new SaveExerciseSetRequest(1, 8, 42.5, true),
+                new SaveExerciseSetRequest(2, 6, 47.5, false)
+            ]);
+        using var createExercise = await firstUser.PostAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises",
+            exerciseRequest);
+        var exercise = await createExercise.Content
+            .ReadFromJsonAsync<ExerciseApiResponse>();
+        Assert.NotNull(exercise);
+
+        using var schedule = await firstUser.PostAsJsonAsync(
+            "/api/v1/calendar",
+            new ScheduleWorkoutRequest(DateTime.Today, plan.Id));
+        Assert.Equal(HttpStatusCode.Created, schedule.StatusCode);
+        var day = await schedule.Content.ReadFromJsonAsync<WorkoutDayApiResponse>();
+        Assert.NotNull(day);
+
+        using var foreignSchedule = await secondUser.PostAsJsonAsync(
+            "/api/v1/calendar",
+            new ScheduleWorkoutRequest(DateTime.Today, plan.Id));
+        Assert.Equal(HttpStatusCode.NotFound, foreignSchedule.StatusCode);
+        using var foreignDay = await secondUser.GetAsync(
+            $"/api/v1/calendar/{day.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDay.StatusCode);
+        using var foreignDayDelete = await secondUser.DeleteAsync(
+            $"/api/v1/calendar/{day.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignDayDelete.StatusCode);
+        using var foreignStart = await secondUser.PostAsync(
+            "/api/v1/workouts/today/start",
+            content: null);
+        Assert.Equal(HttpStatusCode.NotFound, foreignStart.StatusCode);
+
+        using var start = await firstUser.PostAsync(
+            "/api/v1/workouts/today/start",
+            content: null);
+        Assert.Equal(HttpStatusCode.OK, start.StatusCode);
+        var started = await start.Content
+            .ReadFromJsonAsync<TodayWorkoutApiResponse>();
+        Assert.NotNull(started);
+        Assert.Equal(plan.Id, started.TrainingPlan.Id);
+        Assert.Equal([42.5d, 47.5d], started.TrainingPlan.Exercises
+            .Single(x => x.Id == exercise.Id)
+            .Sets.Select(x => x.Weight));
+
+        using var incomplete = await firstUser.PostAsync(
+            "/api/v1/workouts/today/complete",
+            content: null);
+        Assert.Equal(HttpStatusCode.Conflict, incomplete.StatusCode);
+
+        using var updateExercise = await firstUser.PutAsJsonAsync(
+            $"/api/v1/exercises/{exercise.Id}",
+            exerciseRequest with { Status = "Hard" });
+        Assert.Equal(HttpStatusCode.OK, updateExercise.StatusCode);
+
+        using var complete = await firstUser.PostAsync(
+            "/api/v1/workouts/today/complete",
+            content: null);
+        Assert.Equal(HttpStatusCode.Created, complete.StatusCode);
+        var completedHistory = await complete.Content
+            .ReadFromJsonAsync<WorkoutHistoryApiResponse>();
+        Assert.NotNull(completedHistory);
+        Assert.True(completedHistory.SnapshotAvailable);
+        Assert.Equal("Hard", Assert.Single(completedHistory.Exercises).Status);
+        Assert.Equal(
+            [42.5d, 47.5d],
+            completedHistory.Exercises[0].Sets.Select(x => x.Weight));
+
+        using var duplicateCompletion = await firstUser.PostAsync(
+            "/api/v1/workouts/today/complete",
+            content: null);
+        Assert.Equal(HttpStatusCode.Conflict, duplicateCompletion.StatusCode);
+        using var noActiveToday = await firstUser.GetAsync(
+            "/api/v1/workouts/today");
+        Assert.Equal(HttpStatusCode.NotFound, noActiveToday.StatusCode);
+
+        var completedDay = await firstUser.GetFromJsonAsync<WorkoutDayApiResponse>(
+            $"/api/v1/calendar/{day.Id}");
+        Assert.NotNull(completedDay);
+        Assert.True(completedDay.IsCompleted);
+        var secondHistory = await secondUser.GetFromJsonAsync<
+            List<WorkoutHistoryApiResponse>>("/api/v1/history");
+        Assert.NotNull(secondHistory);
+        Assert.Empty(secondHistory);
+        using var foreignHistory = await secondUser.GetAsync(
+            $"/api/v1/history/{completedHistory.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignHistory.StatusCode);
+        using var foreignHistoryDelete = await secondUser.DeleteAsync(
+            $"/api/v1/history/{completedHistory.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, foreignHistoryDelete.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var firstUserId = await db.Users
+                .Where(x => x.Email == "lifecycle-a@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var storedHistory = await db.WorkoutHistory
+                .AsNoTracking()
+                .SingleAsync(x => x.Id == completedHistory.Id);
+            Assert.Equal(firstUserId, storedHistory.UserId);
+            Assert.Contains("42.5", storedHistory.Details, StringComparison.Ordinal);
+            Assert.Contains("47.5", storedHistory.Details, StringComparison.Ordinal);
+            Assert.Single(await db.ProgressSnapshots
+                .Where(x => x.UserId == firstUserId)
+                .ToListAsync());
+            Assert.Single(await db.ExerciseProgressSnapshots
+                .Where(x => x.UserId == firstUserId)
+                .ToListAsync());
+            Assert.False(await db.TrainingSessions.AnyAsync(x =>
+                x.UserId == firstUserId));
+
+            db.WorkoutHistory.Add(new WorkoutPlanner.Web.Models.WorkoutHistory
+            {
+                UserId = firstUserId,
+                WorkoutName = "Legacy malformed snapshot",
+                Date = DateTime.UtcNow.AddDays(-1),
+                Details = "not-json"
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var history = await firstUser.GetFromJsonAsync<
+            List<WorkoutHistoryApiResponse>>("/api/v1/history");
+        Assert.NotNull(history);
+        Assert.Contains(history, x =>
+            x.Id == completedHistory.Id && x.SnapshotAvailable);
+        Assert.Contains(history, x =>
+            x.WorkoutName == "Legacy malformed snapshot" &&
+            !x.SnapshotAvailable &&
+            x.Exercises.Count == 0);
+
+        using var deleteHistory = await firstUser.DeleteAsync(
+            $"/api/v1/history/{completedHistory.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, deleteHistory.StatusCode);
+        using var deletedHistory = await firstUser.GetAsync(
+            $"/api/v1/history/{completedHistory.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, deletedHistory.StatusCode);
     }
 
     [Fact]

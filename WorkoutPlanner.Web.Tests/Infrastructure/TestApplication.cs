@@ -68,6 +68,7 @@ internal sealed class TestApplication : IAsyncDisposable
         var services = new ServiceCollection();
 
         services.AddLogging();
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton(connection);
         services.AddSingleton(authenticationStateProvider);
         services.AddSingleton<AuthenticationStateProvider>(
@@ -85,6 +86,7 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddScoped<ExerciseService>();
         services.AddScoped<WorkoutDayService>();
         services.AddScoped<HistoryService>();
+        services.AddScoped<WorkoutCompletionService>();
         services.AddScoped<ExerciseIndexService>();
         services.AddScoped<ProgressService>();
 

@@ -78,6 +78,7 @@ builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, UserProfileService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
+builder.Services.AddScoped<IWorkoutCompletionService, WorkoutCompletionService>();
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<IExercisePhotoService, ExercisePhotoService>();
 builder.Services.AddScoped<ITrainingPlanService, TrainingPlanService>();

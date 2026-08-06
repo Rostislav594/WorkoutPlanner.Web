@@ -51,7 +51,22 @@ public sealed class HistoryService : IHistoryService
         return history.Select(x => x.ToContract()).ToList();
     }
 
-    public async Task DeleteHistoryAsync(
+    public async Task<WorkoutHistory?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var item = await db.WorkoutHistory
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == id && x.UserId == userId,
+                cancellationToken);
+
+        return item?.ToContract();
+    }
+
+    public async Task<bool> DeleteHistoryAsync(
         int id,
         CancellationToken cancellationToken = default)
     {
@@ -62,9 +77,10 @@ public sealed class HistoryService : IHistoryService
             cancellationToken);
 
         if (item is null)
-            return;
+            return false;
 
         db.WorkoutHistory.Remove(item);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 }

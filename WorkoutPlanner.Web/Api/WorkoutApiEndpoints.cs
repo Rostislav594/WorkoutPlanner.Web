@@ -89,7 +89,7 @@ public static class WorkoutApiEndpoints
         CancellationToken cancellationToken)
     {
         var plans = await trainingPlans.GetTrainingPlansAsync(cancellationToken);
-        return Results.Ok(plans.Select(ToResponse).ToList());
+        return Results.Ok(plans.Select(ToApiResponse).ToList());
     }
 
     private static async Task<IResult> GetTrainingPlanAsync(
@@ -98,7 +98,7 @@ public static class WorkoutApiEndpoints
         CancellationToken cancellationToken)
     {
         var plan = await trainingPlans.GetByIdAsync(id, cancellationToken);
-        return plan is null ? Results.NotFound() : Results.Ok(ToResponse(plan));
+        return plan is null ? Results.NotFound() : Results.Ok(ToApiResponse(plan));
     }
 
     private static async Task<IResult> CreateTrainingPlanAsync(
@@ -134,7 +134,7 @@ public static class WorkoutApiEndpoints
 
         return Results.Created(
             $"/api/v1/training-plans/{created.Id}",
-            ToResponse(created));
+            ToApiResponse(created));
     }
 
     private static async Task<IResult> RenameTrainingPlanAsync(
@@ -164,7 +164,7 @@ public static class WorkoutApiEndpoints
         var renamed = await trainingPlans.GetByIdAsync(id, cancellationToken);
         return renamed is null
             ? Results.NotFound()
-            : Results.Ok(ToResponse(renamed));
+            : Results.Ok(ToApiResponse(renamed));
     }
 
     private static async Task<IResult> DeleteTrainingPlanAsync(
@@ -281,7 +281,7 @@ public static class WorkoutApiEndpoints
             .ToList());
     }
 
-    private static TrainingPlanApiResponse ToResponse(
+    internal static TrainingPlanApiResponse ToApiResponse(
         AppContracts.TrainingPlan plan) =>
         new(
             plan.Id,

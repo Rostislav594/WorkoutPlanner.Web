@@ -34,7 +34,45 @@ public sealed class WorkoutDayService : IWorkoutDayService
         return days.Select(x => x.ToContract()).ToList();
     }
 
-    public async Task SaveDayAsync(
+    public async Task<List<WorkoutDay>> GetDaysAsync(
+        DateTime from,
+        DateTime to,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        var start = from.Date;
+        var endExclusive = to.Date == DateTime.MaxValue.Date
+            ? DateTime.MaxValue
+            : to.Date.AddDays(1);
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var days = await db.WorkoutDays
+            .AsNoTracking()
+            .Where(x =>
+                x.UserId == userId &&
+                x.Date >= start &&
+                x.Date < endExclusive)
+            .OrderBy(x => x.Date)
+            .ToListAsync(cancellationToken);
+
+        return days.Select(x => x.ToContract()).ToList();
+    }
+
+    public async Task<WorkoutDay?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == id && x.UserId == userId,
+                cancellationToken);
+
+        return day?.ToContract();
+    }
+
+    public async Task<WorkoutDay> SaveDayAsync(
         DateTime date,
         int trainingPlanId,
         CancellationToken cancellationToken = default)
@@ -52,28 +90,32 @@ public sealed class WorkoutDayService : IWorkoutDayService
             x => x.Date.Date == date.Date && x.UserId == userId,
             cancellationToken);
 
+        Models.WorkoutDay day;
         if (existing is null)
         {
-            db.WorkoutDays.Add(new Models.WorkoutDay
+            day = new Models.WorkoutDay
             {
                 UserId = userId,
                 Date = date,
                 TrainingPlanId = trainingPlanId
-            });
+            };
+            db.WorkoutDays.Add(day);
         }
         else
         {
             existing.TrainingPlanId = trainingPlanId;
+            day = existing;
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        return day.ToContract();
     }
 
     public Task RemoveTodayWorkoutAsync(
         CancellationToken cancellationToken = default) =>
         DeleteForDateAsync(DateTime.Today, requireIncomplete: false, cancellationToken);
 
-    public async Task DeleteDayAsync(
+    public async Task<bool> DeleteDayAsync(
         int id,
         CancellationToken cancellationToken = default)
     {
@@ -84,10 +126,11 @@ public sealed class WorkoutDayService : IWorkoutDayService
             cancellationToken);
 
         if (day is null)
-            return;
+            return false;
 
         db.WorkoutDays.Remove(day);
         await db.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     public async Task CompleteTodayWorkoutAsync(

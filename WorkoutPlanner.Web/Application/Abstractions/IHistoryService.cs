@@ -9,7 +9,16 @@ public interface IHistoryService
         CancellationToken cancellationToken = default);
     Task<List<WorkoutHistory>> GetHistoryAsync(
         CancellationToken cancellationToken = default);
-    Task DeleteHistoryAsync(
+    Task<WorkoutHistory?> GetByIdAsync(
         int id,
+        CancellationToken cancellationToken = default);
+    Task<bool> DeleteHistoryAsync(
+        int id,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IWorkoutCompletionService
+{
+    Task<WorkoutCompletionResult> CompleteTodayAsync(
         CancellationToken cancellationToken = default);
 }

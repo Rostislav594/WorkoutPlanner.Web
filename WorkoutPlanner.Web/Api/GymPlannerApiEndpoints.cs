@@ -83,6 +83,7 @@ public static class GymPlannerApiEndpoints
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         api.MapWorkoutApiEndpoints();
+        api.MapWorkoutLifecycleApiEndpoints();
 
         return api;
     }

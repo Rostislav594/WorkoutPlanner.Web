@@ -46,3 +46,16 @@ public sealed class WorkoutHistorySet
     public int Repetitions { get; set; }
     public bool Completed { get; set; }
 }
+
+public enum WorkoutCompletionFailure
+{
+    None,
+    NoScheduledWorkout,
+    NoExercises,
+    ExerciseStatusMissing
+}
+
+public sealed record WorkoutCompletionResult(
+    bool Succeeded,
+    WorkoutCompletionFailure Failure,
+    WorkoutHistory? History);

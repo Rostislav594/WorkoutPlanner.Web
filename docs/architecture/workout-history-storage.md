@@ -23,6 +23,19 @@ history and must not overwrite or reinterpret an existing snapshot.
 - Photo paths are internal references. A client receives photos only through an
   authenticated ownership-checked endpoint.
 
+## Mobile completion boundary
+
+`POST /api/v1/workouts/today/complete` reads the authenticated user's scheduled
+plan and current per-set values on the server. In one database transaction it
+claims the incomplete calendar day, writes the immutable JSON snapshot, updates
+workout and exercise progress, and marks the day complete. A repeated completion
+is rejected and cannot create another history row through the normal API flow.
+
+The API deserializes snapshots into dedicated response DTOs. It never returns
+the raw JSON or stored photo paths. Invalid legacy JSON remains unchanged in the
+database and is returned with `SnapshotAvailable = false`, allowing the client
+to show metadata without losing or rewriting the original record.
+
 ## Future analytics migration
 
 If normalized analytics becomes necessary, introduce versioned snapshot
