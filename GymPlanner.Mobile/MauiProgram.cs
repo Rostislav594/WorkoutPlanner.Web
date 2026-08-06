@@ -16,10 +16,23 @@ public static class MauiProgram
 
 		builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddSingleton(Infrastructure.MobileApiOptions.CreateDefault());
+		builder.Services.AddSingleton(TimeProvider.System);
+		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
+			Authentication.SecureMobileTokenStore>();
+		builder.Services.AddSingleton<Authentication.MobileAuthenticationService>();
+		builder.Services.AddSingleton<Authentication.MobileAuthenticationStateProvider>();
+		builder.Services.AddSingleton<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
+			serviceProvider => serviceProvider.GetRequiredService<Authentication.MobileAuthenticationStateProvider>());
+		builder.Services.AddAuthorizationCore();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();
-			return new HttpClient { BaseAddress = options.BaseAddress };
+			var handler = new Authentication.AuthenticatedHttpMessageHandler(
+				serviceProvider.GetRequiredService<Authentication.MobileAuthenticationService>())
+			{
+				InnerHandler = new HttpClientHandler()
+			};
+			return new HttpClient(handler) { BaseAddress = options.BaseAddress };
 		});
 
 #if DEBUG

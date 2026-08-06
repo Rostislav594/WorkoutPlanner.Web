@@ -1,0 +1,105 @@
+@page "/account/login"
+@layout AuthLayout
+@attribute [AllowAnonymous]
+@using System.ComponentModel.DataAnnotations
+@inject MobileAuthenticationService Authentication
+@inject NavigationManager Navigation
+
+<section class="auth-card" aria-labelledby="login-title">
+    <div class="auth-brand" aria-hidden="true">G</div>
+    <h1 id="login-title">Вход</h1>
+    <p class="auth-intro">Войдите в централизованный аккаунт GymPlanner.</p>
+
+    @if (_errors.Count > 0)
+    {
+        <div class="auth-error" role="alert">
+            @foreach (var error in _errors)
+            {
+                <div>@error</div>
+            }
+        </div>
+    }
+
+    <EditForm Model="_input" OnValidSubmit="LoginAsync">
+        <DataAnnotationsValidator />
+
+        <div class="auth-field">
+            <label for="login-email">Email</label>
+            <InputText id="login-email" class="auth-input" @bind-Value="_input.Email" autocomplete="username" inputmode="email" />
+            <ValidationMessage For="@(() => _input.Email)" />
+        </div>
+
+        <div class="auth-field">
+            <label for="login-password">Пароль</label>
+            <InputText id="login-password" class="auth-input" type="password" @bind-Value="_input.Password" autocomplete="current-password" />
+            <ValidationMessage For="@(() => _input.Password)" />
+        </div>
+
+        <button class="auth-submit" type="submit" disabled="@_isBusy">
+            @(_isBusy ? "Входим…" : "Войти")
+        </button>
+    </EditForm>
+
+    <p class="auth-footer">Нет аккаунта? <a href="/account/register">Создать</a></p>
+</section>
+
+@code {
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    private readonly LoginInput _input = new();
+    private readonly List<string> _errors = [];
+    private bool _isBusy;
+
+    private async Task LoginAsync()
+    {
+        if (_isBusy)
+            return;
+
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var result = await Authentication.LoginAsync(
+                _input.Email,
+                _input.Password,
+                GetDeviceName());
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            Navigation.NavigateTo(GetSafeReturnUrl(), replace: true);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private string GetSafeReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl) ||
+            ReturnUrl.StartsWith("//", StringComparison.Ordinal) ||
+            ReturnUrl.Contains('\\'))
+        {
+            return "/";
+        }
+
+        return ReturnUrl.StartsWith('/') ? ReturnUrl : $"/{ReturnUrl}";
+    }
+
+    private static string GetDeviceName() =>
+        $"{DeviceInfo.Current.Platform} {DeviceInfo.Current.Model}";
+
+    private sealed class LoginInput
+    {
+        [Required(ErrorMessage = "Введите email.")]
+        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите пароль.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

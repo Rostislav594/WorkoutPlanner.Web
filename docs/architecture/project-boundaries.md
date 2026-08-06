@@ -30,3 +30,6 @@ initial `HttpClient` uses HTTPS development addresses only and does not disable
 certificate validation. Android emulators use `10.0.2.2`, while iOS simulators
 use `localhost`; physical devices and production builds require an environment-
 specific public HTTPS base address and a trusted certificate.
+
+Mobile session storage, refresh, revocation, and Blazor authentication-state
+behavior are documented in [mobile-authentication.md](mobile-authentication.md).

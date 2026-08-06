@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -29,6 +28,7 @@ public sealed class MobileApiTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var document = await response.Content.ReadAsStringAsync();
         Assert.Contains("/api/v1/auth/login", document, StringComparison.Ordinal);
+        Assert.Contains("MobileTokenResponse", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/profile", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/training-plans", document, StringComparison.Ordinal);
         Assert.Contains("/api/v1/exercises/{id}", document, StringComparison.Ordinal);
@@ -92,7 +92,7 @@ public sealed class MobileApiTests
             "/api/v1/auth/login",
             new MobileLoginRequest("mobile-a@example.test", "password1"));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        var tokens = await login.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        var tokens = await login.Content.ReadFromJsonAsync<MobileTokenResponse>();
         Assert.NotNull(tokens);
         Assert.False(string.IsNullOrWhiteSpace(tokens.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(tokens.RefreshToken));
@@ -125,7 +125,7 @@ public sealed class MobileApiTests
             new MobileRefreshRequest(tokens.RefreshToken));
         Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
         var refreshedTokens = await refresh.Content
-            .ReadFromJsonAsync<AccessTokenResponse>();
+            .ReadFromJsonAsync<MobileTokenResponse>();
         Assert.NotNull(refreshedTokens);
         Assert.False(string.IsNullOrWhiteSpace(refreshedTokens.AccessToken));
 
@@ -141,7 +141,7 @@ public sealed class MobileApiTests
             "/api/v1/auth/login",
             new MobileLoginRequest("mobile-b@example.test", "password1"));
         var secondTokens = await secondLogin.Content
-            .ReadFromJsonAsync<AccessTokenResponse>();
+            .ReadFromJsonAsync<MobileTokenResponse>();
         Assert.NotNull(secondTokens);
         secondClient.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", secondTokens.AccessToken);
@@ -1095,7 +1095,7 @@ public sealed class MobileApiTests
             AllowAutoRedirect = false
         });
 
-    private static async Task<AccessTokenResponse> LoginAsync(
+    private static async Task<MobileTokenResponse> LoginAsync(
         HttpClient client,
         string email,
         string password,
@@ -1105,7 +1105,7 @@ public sealed class MobileApiTests
             "/api/v1/auth/login",
             new MobileLoginRequest(email, password, deviceName));
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
-        var tokens = await login.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        var tokens = await login.Content.ReadFromJsonAsync<MobileTokenResponse>();
         Assert.NotNull(tokens);
         return tokens;
     }

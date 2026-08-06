@@ -29,13 +29,13 @@ public static class GymPlannerApiEndpoints
 
         authentication.MapPost("/login", LoginAsync)
             .AllowAnonymous()
-            .Produces<AccessTokenResponse>()
+            .Produces<MobileTokenResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
         authentication.MapPost("/refresh", RefreshAsync)
             .AllowAnonymous()
-            .Produces<AccessTokenResponse>()
+            .Produces<MobileTokenResponse>()
             .Produces(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
