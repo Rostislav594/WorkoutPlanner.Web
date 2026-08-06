@@ -4,13 +4,22 @@
     color: white;
 }
 
+.layout-page-actions {
+    width: min(1080px, 100%);
+    margin: 20px auto 0;
+    padding: 0 clamp(16px, 4vw, 40px);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
 .home-nav-button,
 .home-nav-button:visited,
-.home-nav-button:link {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 2000;
+.home-nav-button:link,
+.page-nav-button,
+.page-nav-button:visited,
+.page-nav-button:link {
     min-height: 44px;
     display: inline-flex;
     align-items: center;
@@ -24,33 +33,36 @@
     font-size: 16px;
     font-weight: 700;
     box-shadow: 0 10px 24px rgba(0,0,0,.28);
-    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    transition: background .18s ease, border-color .18s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
 .home-nav-button:hover,
-.home-nav-button:focus {
+.home-nav-button:focus,
+.page-nav-button:hover,
+.page-nav-button:focus {
     color: white;
     text-decoration: none;
     background: #303030;
     border-color: #ff7a1a;
-    transform: translateY(-1px);
 }
 
 @media (max-width: 600px) {
-    .home-nav-button,
-    .home-nav-button:visited,
-    .home-nav-button:link {
-        top: 16px;
-        right: 12px;
-        min-height: 42px;
+    .layout-page-actions {
+        margin-top: 16px;
         padding: 0 12px;
-        font-size: 14px;
+        gap: 8px;
     }
 
-    .home-nav-button:hover,
-    .home-nav-button:focus {
-        transform: none;
+    .home-nav-button,
+    .home-nav-button:visited,
+    .home-nav-button:link,
+    .page-nav-button,
+    .page-nav-button:visited,
+    .page-nav-button:link {
+        min-height: 42px;
+        padding: 0 10px;
+        font-size: 13px;
     }
 }

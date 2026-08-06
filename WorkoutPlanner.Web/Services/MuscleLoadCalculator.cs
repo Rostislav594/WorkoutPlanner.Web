@@ -12,8 +12,7 @@ public class MuscleLoadCalculator
             return result;
 
         double volume =
-            exercise.CurrentWeight *
-            exercise.Sets.Sum(x => x.Repetitions);
+            exercise.Sets.Sum(x => x.Weight * x.Repetitions);
 
         // Основная мышца
         result.Add(

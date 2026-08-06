@@ -17,4 +17,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\WorkoutImages\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="wwwroot/WorkoutImages/**" />
+  </ItemGroup>
+
 </Project>

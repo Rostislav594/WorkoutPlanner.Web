@@ -18,8 +18,7 @@ public class ExerciseIndexService
             return 0;
 
         double volume =
-            exercise.CurrentWeight *
-            exercise.Sets.Sum(x => x.Repetitions);
+        exercise.Sets.Sum(x => x.Weight * x.Repetitions);
 
         double exerciseCoefficient =
             exercise.ExerciseDefinition.ExerciseCoefficient;

@@ -2,20 +2,18 @@
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Models
 @using WorkoutPlanner.Web.Services
+@using Microsoft.AspNetCore.Components.Forms
 @inject TrainingPlanService TrainingPlanService
 @inject ExerciseService ExerciseService
-@inject NavigationManager Navigation
 @inject ExerciseDefinitionService ExerciseDefinitionService
-@inject ExerciseIndexService ExerciseIndexService
-@inject SecondaryMuscleCoefficientService SecondaryMuscleCoefficientService
+@inject ExercisePhotoService ExercisePhotoService
+@inject ILogger<WorkoutDetails> Logger
+@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
 
 
+
+<section class="workout-details-page" aria-busy="@IsLoading">
 <div class="workout-header">
-
-    <button class="back-button"
-            @onclick="GoBack">
-         К тренировкам
-    </button>
 
     <div class="workout-title-card">
 
@@ -29,97 +27,209 @@
 
 </div>
 
-<button class="finish-button add-exercise-button"
-        @onclick="OpenAddWindow">
-     Добавить упражнение
-</button>
+@if (IsLoading)
+{
+    <div class="page-state" role="status">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        Загружаем тренировку…
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(LoadError))
+{
+    <div class="page-state page-state-error" role="alert">@LoadError</div>
+}
+else if (CurrentPlan == null)
+{
+    <div class="page-state">
+        <strong>Тренировка не найдена</strong>
+        <span>Вернитесь к списку и выберите другой шаблон.</span>
+    </div>
+}
+else
+{
+    <div class="workout-toolbar">
+        <button class="finish-button add-exercise-button"
+                data-guide="exercise-add"
+                type="button"
+                @onclick="OpenAddWindow">
+            <span aria-hidden="true">＋</span>
+            Добавить упражнение
+        </button>
+    </div>
 
 @if (Exercises.Count > 0)
 {
     @foreach (var exercise in Exercises)
     {
-        <div class="exercise-card"
-             @onclick="() => SelectExercise(exercise)">
+        <article class="exercise-card"
+                 data-guide="@(IsTutorialExercise(exercise) ? "practice-exercise-card" : null)">
 
-            <b>@exercise.Name</b><br />
-            Вес: @exercise.CurrentWeight кг<br />
-            Шаг: +@exercise.WeightStep кг<br />
-            Повторы:
-            @string.Join(", ",
-                exercise.Sets
-                    .OrderBy(x => x.SetNumber)
-                    .Select(x => x.Repetitions))
+            <div class="exercise-card-header">
+                <h2>@exercise.Name</h2>
+                <button class="card-menu-button"
+                        data-guide="@(IsTutorialExercise(exercise) ? "practice-exercise-menu" : null)"
+                        type="button"
+                        disabled="@IsPhotoBusy(exercise.Id)"
+                        aria-label="Настроить упражнение @exercise.Name"
+                        @onclick="() => SelectExerciseAsync(exercise)">
+                    <span aria-hidden="true">⋯</span>
+                </button>
+            </div>
 
-            <p>
-                Exercise:
-                @exercise.ExerciseDefinition?.ExerciseCoefficient
-            </p>
+            <div class="exercise-card-body">
+            <div class="exercise-photo-panel">
 
-            <p>
-                Secondary:
-                @SecondaryMuscleCoefficientService.GetCoefficient(exercise.ExerciseDefinition!.Id)
-            </p>
+                <InputFile @key="GetPhotoInputKey(exercise.Id)"
+                           id="@($"photo-{exercise.Id}")"
+                           OnChange="@(e => UploadPhoto(e, exercise))"
+                           accept=".jpg,.jpeg,.png,.webp"
+                           disabled="@IsPhotoBusy(exercise.Id)"
+                           class="visually-hidden-file" />
 
-            <p>
-                Index:
-                @ExerciseIndexService.Calculate(exercise)
-            </p>
+                @if (!string.IsNullOrWhiteSpace(exercise.PhotoPath))
+                {
+                    <button class="exercise-photo-button"
+                            type="button"
+                            aria-label="Открыть фото упражнения @exercise.Name в полном размере"
+                            @onclick="() => OpenPhoto(exercise)">
+                        <img class="exercise-photo-thumb"
+                             src="@exercise.PhotoPath"
+                             alt="Фото упражнения @exercise.Name"
+                             loading="lazy"
+                             decoding="async" />
+                    </button>
+                }
+                else
+                {
+                    <div class="exercise-photo-placeholder" aria-hidden="true">
+                        <span class="material-symbols-rounded">photo_camera</span>
+                    </div>
+                }
 
-        </div>
+                <div class="photo-actions">
+                    <label class="photo-upload-button @(IsPhotoBusy(exercise.Id) ? "is-busy" : null)"
+                           for="@($"photo-{exercise.Id}")"
+                           aria-disabled="@IsPhotoBusy(exercise.Id)">
+                        @if (IsPhotoBusy(exercise.Id))
+                        {
+                            <span class="button-spinner" aria-hidden="true"></span>
+                            <span>@(IsPhotoDeleting(exercise.Id) ? "Удаляем…" : "Загружаем…")</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                            <span>@(string.IsNullOrWhiteSpace(exercise.PhotoPath) ? "Добавить фото" : "Заменить фото")</span>
+                        }
+                    </label>
+
+                    @if (!string.IsNullOrWhiteSpace(exercise.PhotoPath))
+                    {
+                        <button class="photo-delete-button"
+                                type="button"
+                                disabled="@IsPhotoBusy(exercise.Id)"
+                                @onclick="() => DeletePhoto(exercise)">
+                            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            <span>Удалить</span>
+                        </button>
+                    }
+                </div>
+
+                @if (PhotoErrors.TryGetValue(exercise.Id, out var photoError))
+                {
+                    <span class="photo-error" role="alert">@photoError</span>
+                }
+            </div>
+
+            <div class="exercise-sets">
+                @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                {
+                    <div class="exercise-set-row">
+
+                        <span class="set-name">
+                            Подход @set.SetNumber
+                        </span>
+
+                        <span class="set-value">
+                            @set.Weight кг × @set.Repetitions
+                        </span>
+
+                    </div>
+                }
+
+            </div>
+            </div>
+
+        </article>
     }
 }
-
 else
 {
-    @foreach (var exercise in Exercises)
-    {
-        <div class="exercise-card"
-         @onclick="() => SelectExercise(exercise)">
-            <b>@exercise.Name</b><br />
-            Вес: @exercise.CurrentWeight кг<br />
-            Шаг: +@exercise.WeightStep кг<br />
-            Повторы:
-            @string.Join(", ",
-                exercise.Sets
-                    .OrderBy(x => x.SetNumber)
-                    .Select(x => x.Repetitions))
-            <p>
-                Exercise: @exercise.ExerciseDefinition?.ExerciseCoefficient
-            </p>
+    <div class="empty-exercises">
+        <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
+        <h2>Нет упражнений</h2>
+    </div>
+}
+}
+</section>
 
-            <p>
-                Secondary:
-                @SecondaryMuscleCoefficientService.GetCoefficient(exercise.ExerciseDefinition!.Id)
-            </p>
-
-            <p>
-                Index:
-                @ExerciseIndexService.Calculate(exercise)
-            </p>
-
-        </div>
-    }
+@if (FullscreenPhotoExercise?.PhotoPath is { Length: > 0 } fullscreenPhotoPath)
+{
+    <div class="photo-lightbox"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Фото упражнения @FullscreenPhotoExercise.Name"
+         tabindex="0"
+         @onkeydown="HandlePhotoKeyDown"
+         @onclick="ClosePhoto">
+        <button class="photo-lightbox-close"
+                type="button"
+                autofocus
+                aria-label="Закрыть полноразмерное фото"
+                @onclick="ClosePhoto">×</button>
+        <img src="@fullscreenPhotoPath"
+             alt="Фото упражнения @FullscreenPhotoExercise.Name в полном размере"
+             @onclick:stopPropagation="true" />
+    </div>
 }
 
-@if (SelectedExercise != null)
+
+@if (SelectedExercise != null && !IsEditing)
 {
-    <div class="modal-overlay">
+    <div class="modal-overlay" @onclick="CloseMenu">
 
-        <div class="modal-window">
+        <div class="modal-window action-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="exercise-actions-title"
+             @onclick:stopPropagation="true">
 
-            <h3>@SelectedExercise.Name</h3>
+            <div class="modal-heading">
+                <div>
+                    <span>Управление упражнением</span>
+                    <h3 id="exercise-actions-title">@SelectedExercise.Name</h3>
+                </div>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CloseMenu">×</button>
+            </div>
 
-            <button @onclick="EditExercise">
-                 Изменить
-            </button>
+            <div class="exercise-action-list">
+                <button class="modal-action-button"
+                        data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-edit-action" : null)"
+                        type="button"
+                        @onclick="EditExerciseAsync">
+                    <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+                    <span>Изменить параметры</span>
+                </button>
 
-            <button @onclick="DeleteExercise">
-                 Удалить
-            </button>
+                <button class="modal-action-button danger-action" type="button" disabled="@IsDeletingExercise" @onclick="DeleteExercise">
+                    <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                    <span>@(IsDeletingExercise ? "Удаляем…" : "Удалить упражнение")</span>
+                </button>
 
-            <button @onclick="CloseMenu">
-                 Закрыть
-            </button>
+                <button class="modal-action-button cancel-action" type="button" @onclick="CloseMenu">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                    <span>Отмена</span>
+                </button>
+            </div>
 
         </div>
 
@@ -129,31 +239,50 @@ else
 {
     <div class="modal-overlay">
 
-        <div class="modal-window">
+        <div class="modal-window form-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="edit-exercise-title">
 
-            <h3>Редактирование упражнения</h3>
+            <div class="modal-heading">
+                <div>
+                    <span>Параметры шаблона</span>
+                    <h3 id="edit-exercise-title">Редактирование упражнения</h3>
+                </div>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CancelEditing">×</button>
+            </div>
 
-            <label>Название</label>
-            <input @bind="EditName" />
+            <label for="edit-exercise-name">Название</label>
+            <input id="edit-exercise-name" @bind="EditName" />
 
-            <label>Вес</label>
-            <input type="number"
-                   step="0.5"
-                   @bind="EditWeight" />
+            <label for="edit-sets-count">Количество подходов</label>
+            <input id="edit-sets-count"
+                   data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-set-count" : null)"
+                   type="number" min="1" max="10" @bind="EditSetsCount" />
 
-            <label>Шаг веса</label>
-            <input type="number"
-                   step="0.5"
-                   @bind="EditStep" />
-
-            @foreach (var set in SelectedExercise!.Sets.OrderBy(x => x.SetNumber))
+            @foreach (var set in EditSets.OrderBy(x => x.SetNumber))
             {
-                <label>
-                    Подход @set.SetNumber
-                </label>
+                <div class="edit-set-block">
 
-                <input type="number"
-                       @bind="set.Repetitions" />
+                    <h4>Подход @set.SetNumber</h4>
+
+                    <label for="@($"edit-weight-{set.SetNumber}")">Вес, кг</label>
+
+                    <input id="@($"edit-weight-{set.SetNumber}")"
+                           data-guide="@(IsTutorialExercise(SelectedExercise) && set.SetNumber == 1 ? "practice-set-weight" : null)"
+                           type="number"
+                           min="0"
+                           step="0.5"
+                           @bind="set.Weight" />
+
+                    <label for="@($"edit-reps-{set.SetNumber}")">Повторения</label>
+
+                    <input id="@($"edit-reps-{set.SetNumber}")"
+                           type="number"
+                           min="0"
+                           @bind="set.Repetitions" />
+
+                </div>
             }
 
             @if (!string.IsNullOrWhiteSpace(EditRepsError))
@@ -163,13 +292,17 @@ else
                 </div>
             }
 
-            <button @onclick="SaveExercise">
-                 Сохранить
-            </button>
+            <div class="modal-actions">
+                <button class="finish-button"
+                        data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-save-exercise" : null)"
+                        type="button" disabled="@IsSavingExercise" @onclick="SaveExercise">
+                    @(IsSavingExercise ? "Сохраняем…" : "Сохранить")
+                </button>
 
-            <button @onclick="() => IsEditing = false">
-                 Отмена
-            </button>
+                <button class="secondary-button" type="button" disabled="@IsSavingExercise" @onclick="CancelEditing">
+                    Отмена
+                </button>
+            </div>
 
         </div>
 
@@ -179,17 +312,25 @@ else
 {
     <div class="modal-overlay">
 
-        <div class="modal-window">
+        <div class="modal-window form-modal"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="add-exercise-title">
 
-            <h3>
-                 Новое упражнение
-            </h3>
+            <div class="modal-heading">
+                <div>
+                    <span>Новый элемент шаблона</span>
+                    <h3 id="add-exercise-title">Новое упражнение</h3>
+                </div>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CloseAddWindow">×</button>
+            </div>
 
-            <label>
+            <label for="exercise-library-select">
                  Упражнение из библиотеки
             </label>
 
-            <select class="form-select"
+            <select id="exercise-library-select"
+                    class="form-select"
                     @bind="SelectedExerciseDefinitionId">
 
                 <option value="">-- Не выбрано --</option>
@@ -203,46 +344,48 @@ else
 
             </select>
 
-            <label>
+            <label for="new-exercise-name">
                 Название
             </label>
 
-            <input @bind="NewExerciseName" />
+            <input id="new-exercise-name" @bind="NewExerciseName" />
 
-            <label>
-                Рабочий вес
-            </label>
-
-            <input type="number"
-                   step="0.5"
-                   @bind="NewExerciseWeight" />
-
-            <label>
-                Шаг увеличения
-            </label>
-
-            <input type="number"
-                   step="0.5"
-                   @bind="NewExerciseStep" />
-
-            <label>
+            <label for="new-sets-count">
                 Количество подходов
             </label>
 
-            <input type="number"
+            <input id="new-sets-count"
+                   type="number"
                    min="1"
                    max="10"
                    @bind="NewSetsCount" />
 
-            <button class="finish-button"
-                    @onclick="CreateExercise">
-                 Добавить
-            </button>
+            @foreach (var set in Enumerable.Range(1, NewSetsCount))
+            {
+                <div class="new-set-field">
+                    <label for="@($"new-set-{set}")">Подход @set · вес, кг</label>
+                    <input id="@($"new-set-{set}")"
+                           type="number"
+                           min="0"
+                           step="0.5"
+                           @bind="NewSetWeights[set - 1]" />
+                </div>
+            }
 
-            <button class="secondary-button"
-                    @onclick="CloseAddWindow">
-                 Отмена
-            </button>
+            @if (!string.IsNullOrWhiteSpace(CreateExerciseError))
+            {
+                <div class="edit-error" role="alert">@CreateExerciseError</div>
+            }
+
+            <div class="modal-actions">
+                <button class="finish-button" type="button" disabled="@IsCreatingExercise" @onclick="CreateExercise">
+                    @(IsCreatingExercise ? "Добавляем…" : "Добавить")
+                </button>
+
+                <button class="secondary-button" type="button" disabled="@IsCreatingExercise" @onclick="CloseAddWindow">
+                    Отмена
+                </button>
+            </div>
 
         </div>
 
@@ -257,7 +400,18 @@ else
     TrainingPlan? CurrentPlan;
     List<Exercise> Exercises = new();
     Exercise? SelectedExercise;
+    Exercise? FullscreenPhotoExercise;
     List<ExerciseDefinition> ExerciseLibrary = new();
+    bool IsLoading = true;
+    string LoadError = "";
+    bool IsCreatingExercise;
+    bool IsSavingExercise;
+    bool IsDeletingExercise;
+    string CreateExerciseError = "";
+    readonly HashSet<int> PhotoUploadsInProgress = new();
+    readonly HashSet<int> PhotoDeletesInProgress = new();
+    readonly Dictionary<int, string> PhotoErrors = new();
+    readonly Dictionary<int, int> PhotoInputVersions = new();
 
     private int? _selectedExerciseDefinitionId;
 
@@ -283,166 +437,482 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        CurrentPlan =
-             await TrainingPlanService
-             .GetByIdAsync(Id);
-
-        if (CurrentPlan != null)
+        try
         {
-            Exercises =
-                await ExerciseService
-                    .GetExercisesAsync(
-                        CurrentPlan.WorkoutName);
-        }
+            CurrentPlan = await TrainingPlanService.GetByIdAsync(Id);
 
-        ExerciseLibrary =
-        await ExerciseDefinitionService.GetAllAsync();
+            if (CurrentPlan != null)
+            {
+                Exercises = await ExerciseService.GetExercisesAsync(CurrentPlan.WorkoutName);
+            }
+
+            ExerciseLibrary = await ExerciseDefinitionService.GetAllAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load workout {WorkoutId}.", Id);
+            LoadError = "Не удалось загрузить тренировку. Обновите страницу и попробуйте снова.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
-    
+
     async Task CreateExercise()
     {
-        if (CurrentPlan == null)
+        if (CurrentPlan == null || IsCreatingExercise)
             return;
 
-        if (string.IsNullOrWhiteSpace(
-            NewExerciseName))
+        CreateExerciseError = "";
+
+        if (string.IsNullOrWhiteSpace(NewExerciseName))
+        {
+            CreateExerciseError = "Введите название упражнения.";
             return;
-
-        var exercise = new Exercise
-        {
-            WorkoutName =
-         CurrentPlan.WorkoutName,
-
-            TrainingPlanId =
-         CurrentPlan.Id,
-
-            Name =
-         NewExerciseName,
-
-            ExerciseDefinitionId =
-         SelectedExerciseDefinitionId,
-
-            CurrentWeight =
-         NewExerciseWeight,
-
-            WeightStep =
-         NewExerciseStep,
-
-            SetsCount =
-         NewSetsCount,
-
-            CurrentLevel = 0
-        };
-
-        var defaultReps = new[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
-
-        for (int i = 0; i < exercise.SetsCount; i++)
-        {
-            exercise.Sets.Add(new ExerciseTemplateSet
-            {
-                SetNumber = i + 1,
-                Repetitions = defaultReps[i],
-                Completed = false
-            });
         }
 
-        await ExerciseService
-            .AddExerciseAsync(exercise);
+        if (NewSetWeights.Count != NewSetsCount ||
+            NewSetWeights.Any(x => !double.IsFinite(x) || x < 0))
+        {
+            CreateExerciseError = "Проверьте вес во всех подходах.";
+            return;
+        }
 
-        Exercises =
-            await ExerciseService
-                .GetExercisesAsync(
-                    CurrentPlan.WorkoutName);
+        IsCreatingExercise = true;
 
-        IsAdding = false;
+        try
+        {
+            var exercise = new Exercise
+            {
+                WorkoutName = CurrentPlan.WorkoutName,
+                TrainingPlanId = CurrentPlan.Id,
+                Name = NewExerciseName.Trim(),
+                ExerciseDefinitionId = SelectedExerciseDefinitionId,
+                SetsCount = NewSetsCount
+            };
+
+            var defaultReps = new[] { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+
+            for (var index = 0; index < exercise.SetsCount; index++)
+            {
+                exercise.Sets.Add(new ExerciseTemplateSet
+                {
+                    SetNumber = index + 1,
+                    Repetitions = defaultReps[index],
+                    Weight = NewSetWeights[index],
+                    Completed = false
+                });
+            }
+
+            await ExerciseService.AddExerciseAsync(exercise);
+            Exercises = await ExerciseService.GetExercisesAsync(CurrentPlan.WorkoutName);
+
+            IsAdding = false;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to create exercise in workout {WorkoutId}.", Id);
+            CreateExerciseError = "Не удалось добавить упражнение. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            IsCreatingExercise = false;
+        }
     }
 
-    void SelectExercise(Exercise exercise)
+    async Task SelectExerciseAsync(Exercise exercise)
     {
         SelectedExercise = exercise;
+
+        if (IsTutorialExercise(exercise))
+            await Guide.NotifyActionAsync("exercise-menu-opened");
     }
 
     async Task DeleteExercise()
     {
-        if (SelectedExercise == null)
+        if (SelectedExercise == null ||
+            IsDeletingExercise ||
+            IsPhotoBusy(SelectedExercise.Id))
             return;
 
-        await ExerciseService
-            .DeleteExerciseAsync(
-                SelectedExercise);
+        IsDeletingExercise = true;
+        var exercise = SelectedExercise;
+        var photoPath = exercise.PhotoPath;
 
-        Exercises =
-            await ExerciseService
-                .GetExercisesAsync(
-                    CurrentPlan!.WorkoutName);
+        try
+        {
+            await ExerciseService.DeleteExerciseAsync(exercise);
+            ExercisePhotoService.TryDeletePhoto(photoPath);
 
-        SelectedExercise = null;
+            Exercises = await ExerciseService.GetExercisesAsync(CurrentPlan!.WorkoutName);
+            SelectedExercise = null;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to delete exercise {ExerciseId}.", exercise.Id);
+            PhotoErrors[exercise.Id] = "Не удалось удалить упражнение. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            IsDeletingExercise = false;
+        }
     }
 
     bool IsEditing = false;
 
     string EditName = "";
-    double EditWeight;
-    double EditStep;
-    int EditSetsCount;
+    int _editSetsCount;
+    List<EditSetDraft> EditSets = new();
+
+    int EditSetsCount
+    {
+        get => _editSetsCount;
+        set
+        {
+            _editSetsCount = Math.Clamp(value, 1, 10);
+            SyncEditSets();
+        }
+    }
+
     string EditRepsError = "";
     bool IsAdding = false;
     string NewExerciseName = "";
-    double NewExerciseWeight = 50;
-    double NewExerciseStep = 2.5;
-    int NewSetsCount = 3;
+    private List<double> NewSetWeights = new();
 
-    void EditExercise()
+    private int _newSetsCount = 3;
+
+    int NewSetsCount
+    {
+        get => _newSetsCount;
+        set
+        {
+            _newSetsCount = Math.Clamp(value, 1, 10);
+            RefreshWeights();
+        }
+    }
+
+    async Task EditExerciseAsync()
     {
         if (SelectedExercise == null)
             return;
 
+        var isTutorialExercise = IsTutorialExercise(SelectedExercise);
+
         EditName = SelectedExercise.Name;
-        EditWeight = SelectedExercise.CurrentWeight;
-        EditStep = SelectedExercise.WeightStep;
+
         EditRepsError = "";
-        EditSetsCount = SelectedExercise.SetsCount;
-      
+        EditSets = SelectedExercise.Sets
+            .OrderBy(x => x.SetNumber)
+            .Select(x => new EditSetDraft
+            {
+                SetNumber = x.SetNumber,
+                Weight = x.Weight,
+                Repetitions = x.Repetitions
+            })
+            .ToList();
+        _editSetsCount = SelectedExercise.SetsCount;
+        SyncEditSets();
 
         IsEditing = true;
+
+        if (isTutorialExercise)
+            await Guide.NotifyActionAsync("exercise-edit-opened");
     }
+
+    void SyncEditSets()
+    {
+        while (EditSets.Count < _editSetsCount)
+        {
+            EditSets.Add(new EditSetDraft
+            {
+                SetNumber = EditSets.Count + 1,
+                Weight = 0,
+                Repetitions = 8
+            });
+        }
+
+        while (EditSets.Count > _editSetsCount)
+        {
+            EditSets.RemoveAt(EditSets.Count - 1);
+        }
+
+        for (var index = 0; index < EditSets.Count; index++)
+        {
+            EditSets[index].SetNumber = index + 1;
+        }
+    }
+
+    private void RefreshEditWeights()
+    {
+        if (SelectedExercise == null)
+            return;
+
+        while (SelectedExercise.Sets.Count < SelectedExercise.SetsCount)
+        {
+            SelectedExercise.Sets.Add(new ExerciseTemplateSet
+            {
+                SetNumber = SelectedExercise.Sets.Count + 1,
+                Weight = 0,
+                Repetitions = 8,
+                Completed = false
+            });
+        }
+
+        while (SelectedExercise.Sets.Count > SelectedExercise.SetsCount)
+        {
+            SelectedExercise.Sets.RemoveAt(SelectedExercise.Sets.Count - 1);
+        }
+
+        int number = 1;
+
+        foreach (var set in SelectedExercise.Sets)
+        {
+            set.SetNumber = number++;
+        }
+    }
+
     void CloseMenu()
     {
         SelectedExercise = null;
     }
+
     async Task SaveExercise()
     {
-        if (SelectedExercise == null)
+        if (SelectedExercise == null || IsSavingExercise)
             return;
 
-        SelectedExercise.Name = EditName;
-        SelectedExercise.CurrentWeight = EditWeight;
-        SelectedExercise.WeightStep = EditStep;
-        SelectedExercise.SetsCount = EditSetsCount;
-       
-        await ExerciseService
-            .SaveChangesAsync();
+        EditRepsError = "";
 
+        if (string.IsNullOrWhiteSpace(EditName))
+        {
+            EditRepsError = "Введите название упражнения.";
+            return;
+        }
+
+        if (EditSetsCount is < 1 or > 10)
+        {
+            EditRepsError = "Количество подходов должно быть от 1 до 10.";
+            return;
+        }
+
+        if (EditSets.Count != EditSetsCount ||
+            EditSets.Any(x => !double.IsFinite(x.Weight) ||
+                              x.Weight < 0 ||
+                              x.Repetitions is < 1 or > 1000))
+        {
+            EditRepsError = "Проверьте вес и повторения во всех подходах.";
+            return;
+        }
+
+        IsSavingExercise = true;
+        var savingTutorialExercise = IsTutorialExercise(SelectedExercise);
+
+        try
+        {
+            SelectedExercise.Name = EditName.Trim();
+            SelectedExercise.SetsCount = EditSetsCount;
+            RefreshEditWeights();
+
+            var exerciseSets = SelectedExercise.Sets
+                .OrderBy(x => x.SetNumber)
+                .ToList();
+
+            for (var index = 0; index < exerciseSets.Count; index++)
+            {
+                exerciseSets[index].Weight = EditSets[index].Weight;
+                exerciseSets[index].Repetitions = EditSets[index].Repetitions;
+            }
+
+            await ExerciseService.SaveChangesAsync();
+
+            IsEditing = false;
+            EditSets.Clear();
+            SelectedExercise = null;
+
+            if (savingTutorialExercise)
+                await Guide.NotifyActionAsync("exercise-saved");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to save exercise {ExerciseId}.", SelectedExercise?.Id);
+            EditRepsError = "Не удалось сохранить изменения. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            IsSavingExercise = false;
+        }
+    }
+
+    private bool IsTutorialExercise(Exercise? exercise) =>
+        exercise is not null &&
+        CurrentPlan?.WorkoutName ==
+            WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName &&
+        exercise.Name ==
+            WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialExerciseName;
+
+    void CancelEditing()
+    {
         IsEditing = false;
         EditRepsError = "";
+        EditSets.Clear();
         SelectedExercise = null;
     }
+
     void OpenAddWindow()
     {
+        CreateExerciseError = "";
+        SelectedExerciseDefinitionId = null;
         NewExerciseName = "";
-        NewExerciseWeight = 50;
-        NewExerciseStep = 2.5;
         NewSetsCount = 3;
+
+        NewSetWeights.Clear();
+        RefreshWeights();
 
         IsAdding = true;
     }
     void CloseAddWindow()
     {
+        if (IsCreatingExercise)
+            return;
+
+        CreateExerciseError = "";
         IsAdding = false;
     }
-    void GoBack()
+    private void RefreshWeights()
     {
-        Navigation.NavigateTo("/workouts");
+    while (NewSetWeights.Count < NewSetsCount)
+        NewSetWeights.Add(0);
+
+    while (NewSetWeights.Count > NewSetsCount)
+        NewSetWeights.RemoveAt(NewSetWeights.Count - 1);
     }
-    
+
+    bool IsPhotoBusy(int exerciseId) =>
+        PhotoUploadsInProgress.Contains(exerciseId) ||
+        PhotoDeletesInProgress.Contains(exerciseId);
+
+    bool IsPhotoDeleting(int exerciseId) =>
+        PhotoDeletesInProgress.Contains(exerciseId);
+
+    string GetPhotoInputKey(int exerciseId) =>
+        $"photo-{exerciseId}-{PhotoInputVersions.GetValueOrDefault(exerciseId)}";
+
+    void OpenPhoto(Exercise exercise)
+    {
+        if (!string.IsNullOrWhiteSpace(exercise.PhotoPath))
+        {
+            FullscreenPhotoExercise = exercise;
+        }
+    }
+
+    void ClosePhoto()
+    {
+        FullscreenPhotoExercise = null;
+    }
+
+    void HandlePhotoKeyDown(KeyboardEventArgs eventArgs)
+    {
+        if (eventArgs.Key == "Escape")
+        {
+            ClosePhoto();
+        }
+    }
+
+    async Task DeletePhoto(Exercise exercise)
+    {
+        if (string.IsNullOrWhiteSpace(exercise.PhotoPath) ||
+            IsDeletingExercise ||
+            IsPhotoBusy(exercise.Id) ||
+            !PhotoDeletesInProgress.Add(exercise.Id))
+            return;
+
+        PhotoErrors.Remove(exercise.Id);
+        var previousPhotoPath = exercise.PhotoPath;
+        exercise.PhotoPath = null;
+
+        try
+        {
+            await ExerciseService.SaveChangesAsync();
+            FullscreenPhotoExercise = null;
+
+            if (!ExercisePhotoService.TryDeletePhoto(previousPhotoPath))
+            {
+                Logger.LogWarning(
+                    "Exercise photo {PhotoPath} was detached but could not be deleted from storage.",
+                    previousPhotoPath);
+            }
+        }
+        catch (Exception exception)
+        {
+            exercise.PhotoPath = previousPhotoPath;
+            Logger.LogError(exception, "Failed to delete photo for exercise {ExerciseId}.", exercise.Id);
+            PhotoErrors[exercise.Id] = "Не удалось удалить фото. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            PhotoDeletesInProgress.Remove(exercise.Id);
+        }
+    }
+
+    async Task UploadPhoto(
+        InputFileChangeEventArgs eventArgs,
+        Exercise exercise)
+    {
+        if ((IsDeletingExercise && SelectedExercise?.Id == exercise.Id) ||
+            IsPhotoBusy(exercise.Id) ||
+            !PhotoUploadsInProgress.Add(exercise.Id))
+            return;
+
+        PhotoErrors.Remove(exercise.Id);
+        var previousPhotoPath = exercise.PhotoPath;
+        string? newPhotoPath = null;
+
+        try
+        {
+            newPhotoPath = await ExercisePhotoService.SavePhotoAsync(eventArgs.File);
+            exercise.PhotoPath = newPhotoPath;
+
+            try
+            {
+                await ExerciseService.SaveChangesAsync();
+            }
+            catch
+            {
+                exercise.PhotoPath = previousPhotoPath;
+                ExercisePhotoService.TryDeletePhoto(newPhotoPath);
+                throw;
+            }
+
+            ExercisePhotoService.TryDeletePhoto(previousPhotoPath);
+        }
+        catch (InvalidDataException exception)
+        {
+            Logger.LogInformation(exception, "Rejected exercise photo for exercise {ExerciseId}.", exercise.Id);
+            PhotoErrors[exercise.Id] = "Выберите корректное изображение JPG, PNG или WebP до 5 МБ.";
+        }
+        catch (IOException exception)
+        {
+            Logger.LogWarning(exception, "Failed to store exercise photo for exercise {ExerciseId}.", exercise.Id);
+            PhotoErrors[exercise.Id] = "Не удалось сохранить фото. Проверьте размер файла и попробуйте снова.";
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to update photo for exercise {ExerciseId}.", exercise.Id);
+            PhotoErrors[exercise.Id] = "Не удалось обновить фото. Старое изображение сохранено.";
+        }
+        finally
+        {
+            PhotoUploadsInProgress.Remove(exercise.Id);
+            PhotoInputVersions[exercise.Id] =
+                PhotoInputVersions.GetValueOrDefault(exercise.Id) + 1;
+        }
+    }
+
+    sealed class EditSetDraft
+    {
+        public int SetNumber { get; set; }
+        public double Weight { get; set; }
+        public int Repetitions { get; set; }
+    }
 }

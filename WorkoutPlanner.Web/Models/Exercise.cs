@@ -10,9 +10,9 @@ public class Exercise
     public string? UserId { get; set; }
     public string Name { get; set; } = "";
 
-    public string WorkoutName { get; set; } = "";
+    public string? PhotoPath { get; set; }
 
-    public string BaseReps { get; set; } = "8,7,6";
+    public string WorkoutName { get; set; } = "";
 
     public int SetsCount { get; set; } = 3;
 
@@ -34,36 +34,11 @@ public class Exercise
 
     public List<ExerciseTemplateSet> Sets { get; set; } = new();
 
-    public double CurrentWeight { get; set; }
-
-    public double WeightStep { get; set; }
-
-    public int CurrentLevel { get; set; }
-
-    [NotMapped]
-    public string Reps =>
-    ProgressionService.GetReps(BaseReps, CurrentLevel);
-
-    [NotMapped]
-    public string[] RepsArray =>
-        Reps.Split(',');
-
+ 
     [NotMapped]
     public bool IsCompleted =>
     Sets.Count > 0 &&
     Sets.All(x => x.Completed);
-
-    [NotMapped]
-    public string DisplayWeightStep =>
-        $"+{WeightStep} кг";
-
-    [NotMapped]
-    public bool IsLastLevel =>
-    CurrentLevel >= 4;
-
-    [NotMapped]
-    public double NextWeight =>
-        CurrentWeight + WeightStep;
 
     [NotMapped]
     public IEnumerable<int> Repetitions =>

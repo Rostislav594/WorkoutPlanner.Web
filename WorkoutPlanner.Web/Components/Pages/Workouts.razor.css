@@ -20,10 +20,10 @@
 
 .workout-card {
     position: relative;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 30px;
+    background: var(--surface-card, #1e1e1e);
+    border: 1px solid var(--border-subtle, #333);
+    border-radius: 16px;
+    padding: 24px;
     min-height: 150px;
     color: white;
     font-size: 24px;
@@ -32,10 +32,13 @@
     transition: 0.2s;
 }
 
-.workout-card:hover {
+.workout-card:hover,
+.workout-card:focus-visible,
+.workout-card:focus-within {
     transform: translateY(-3px);
-    border-color: #ff6600;
+    border-color: var(--accent-orange, #ff7a1a);
     box-shadow: 0 0 15px rgba(255,102,0,.3);
+    outline: none;
 }
 
 .workout-name {
@@ -73,7 +76,7 @@
     width: min(520px, calc(100% - 40px));
     margin: 18px auto 0;
     padding: 12px 14px;
-    border-radius: 8px;
+    border-radius: 10px;
     background: rgba(220, 53, 69, 0.16);
     color: #ffb4b4;
     font-weight: 700;
@@ -103,4 +106,23 @@
 .dialog-button {
     width: 260px;
     margin: 0;
+}
+
+@media (max-width: 600px) {
+    .workout-grid {
+        gap: 14px;
+        padding: 16px;
+        padding-bottom: 32px;
+    }
+
+    .workout-card {
+        min-height: 132px;
+        padding: 20px;
+    }
+
+    .workout-card:hover,
+    .workout-card:focus-visible,
+    .workout-card:focus-within {
+        transform: none;
+    }
 }

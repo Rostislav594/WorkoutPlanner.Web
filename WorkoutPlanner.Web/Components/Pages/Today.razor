@@ -4,6 +4,7 @@
 @using WorkoutPlanner.Web.Models
 @using WorkoutPlanner.Web.Services
 @using Microsoft.JSInterop
+@using System.Text.Json
 
 @inject HistoryService HistoryService
 @inject TodayWorkoutService TodayWorkoutService
@@ -11,6 +12,7 @@
 @inject WorkoutDayService WorkoutDayService
 @inject IJSRuntime JS
 @inject ProgressService ProgressService
+@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService Guide
 
 <div class="page-content">
 
@@ -79,28 +81,20 @@
                     <h3>@exercise.Name</h3>
                 </div>
 
-                <div class="exercise-info">
-                    <span>
-                        @exercise.CurrentWeight кг
-
-                        @if (exercise.IsLastLevel)
-                        {
-                            <text> → @exercise.NextWeight кг</text>
-                        }
-                    </span>
-                </div>
-
                 <div class="sets-block">
 
                     @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                     {
                         <label>
 
-                            <input type="checkbox"
+                             <input type="checkbox"
+                                   data-guide="@(IsFirstTutorialSet(exercise, set) ? "practice-first-set" : null)"
                                    checked="@set.Completed"
                                    @onchange="async e => await SetCompleted(set, (bool)e.Value!)" />
 
-                            @set.Repetitions
+                            <span class="set-text">
+                                @set.Weight кг × @set.Repetitions
+                            </span>
 
                         </label>
                     }
@@ -122,7 +116,8 @@
                     </span>
 
                     <button class="status-button"
-                            @onclick="() => OpenStatusWindow(exercise)">
+                            data-guide="@(IsFirstTutorialExercise(exercise) ? "practice-status-button" : null)"
+                            @onclick="() => OpenStatusWindowAsync(exercise)">
                         ⚡
                     </button>
 
@@ -132,6 +127,7 @@
         }
 
         <button class="finish-button"
+                data-guide="@(IsTutorialWorkout ? "practice-finish-workout" : null)"
                 @onclick="FinishWorkout">
             Завершить тренировку
         </button>
@@ -148,6 +144,7 @@
                 <h3>Оцените выполнение</h3>
 
                     <div class="status-option"
+                         data-guide="@(IsFirstTutorialExercise(StatusExercise) ? "practice-status-option" : null)"
                          style="cursor:pointer"
                          @onclick="() => SetStatus(ExerciseStatus.Easy)">
 
@@ -298,9 +295,12 @@
         }
     }
 
-    void OpenStatusWindow(Exercise exercise)
+    async Task OpenStatusWindowAsync(Exercise exercise)
     {
         StatusExercise = exercise;
+
+        if (IsFirstTutorialExercise(exercise))
+            await Guide.NotifyActionAsync("practice-status-opened");
     }
 
     void CloseStatusWindow()
@@ -313,12 +313,17 @@
         if (StatusExercise == null)
             return;
 
+        var isTutorialExercise = IsFirstTutorialExercise(StatusExercise);
+
         StatusExercise.Status = status;
 
         await ExerciseService
             .SaveChangesAsync();
 
         StatusExercise = null;
+
+        if (isTutorialExercise)
+            await Guide.NotifyActionAsync("practice-status-selected");
     }
 
     async Task FinishWorkout()
@@ -328,28 +333,33 @@
         if (Exercises.Any(x =>
         x.Status == ExerciseStatus.NotCompleted))
         {
-            ShowStatusWarning = true;
-            return;
-        }
-        if (Exercises.Any(x =>
-        x.Status == ExerciseStatus.NotCompleted))
-        {
             await JS.InvokeVoidAsync(
                 "alert",
                 "Оцените все упражнения перед завершением тренировки");
 
             return;
         }
-        var details = string.Join("\n",
-            Exercises.Select(x =>
+        var history = new WorkoutHistoryDetails
+        {
+            Exercises = Exercises.Select(x => new WorkoutHistoryExercise
             {
-                var sets = string.Join("|",
-                    x.Sets
-                        .OrderBy(set => set.SetNumber)
-                        .Select(set => $"{set.Repetitions}:{set.Completed}"));
+                Name = x.Name,
+                Status = x.Status,
 
-                return $"{x.Name}|{x.CurrentWeight} кг|{x.StatusText}|{sets}";
-            }));
+                Sets = x.Sets
+                    .OrderBy(s => s.SetNumber)
+                    .Select(s => new WorkoutHistorySet
+                    {
+                        SetNumber = s.SetNumber,
+                        Weight = s.Weight,
+                        Repetitions = s.Repetitions,
+                        Completed = s.Completed
+                    })
+                    .ToList()
+            }).ToList()
+        };
+
+        var details = JsonSerializer.Serialize(history);
 
         await HistoryService.AddHistoryAsync(
             new WorkoutHistory
@@ -367,17 +377,16 @@
             TodayWorkout.WorkoutName );
             
 
-        foreach (var exercise in Exercises)
-        {
-            WorkoutProgressionService
-                .ProgressExercise(exercise);
-        }
-        await ExerciseService.SaveChangesAsync();
 
+
+        await ExerciseService.SaveChangesAsync();
         await WorkoutDayService
             .CompleteTodayWorkoutAsync();
 
         ShowWorkoutCompleted = true;
+
+        if (IsTutorialWorkout)
+            await Guide.NotifyActionAsync("practice-workout-finished");
     }
     void CloseCompletedWindow()
     {
@@ -395,6 +404,9 @@
         set.Completed = value;
 
         await ExerciseService.SaveChangesAsync();
+
+        if (value && IsFirstTutorialSet(set))
+            await Guide.NotifyActionAsync("practice-set-completed");
     }
 
     void CloseWarning()
@@ -409,5 +421,24 @@
         Exercises.Count == 0
             ? 0
             : CompletedExercises * 100.0 / Exercises.Count;
-}
 
+    bool IsTutorialWorkout =>
+        TodayWorkout?.WorkoutName ==
+        WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName;
+
+    bool IsFirstTutorialExercise(Exercise? exercise) =>
+        IsTutorialWorkout &&
+        exercise is not null &&
+        Exercises.Count > 0 &&
+        exercise.Id == Exercises[0].Id;
+
+    bool IsFirstTutorialSet(Exercise exercise, ExerciseTemplateSet set) =>
+        IsFirstTutorialExercise(exercise) && IsFirstTutorialSet(set);
+
+    bool IsFirstTutorialSet(ExerciseTemplateSet set) =>
+        IsTutorialWorkout &&
+        Exercises.Count > 0 &&
+        Exercises[0].Sets
+            .OrderBy(x => x.SetNumber)
+            .FirstOrDefault()?.Id == set.Id;
+}

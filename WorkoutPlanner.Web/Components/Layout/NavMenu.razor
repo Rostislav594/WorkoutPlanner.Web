@@ -1,4 +1,7 @@
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager Navigation
 
 @if (!Visible)
 {
@@ -34,6 +37,12 @@
                     Профиль
                 </a>
             </nav>
+
+            <div class="side-menu-footer">
+                <button class="menu-logout-button" type="button" @onclick="LogoutAsync">
+                    Выйти из аккаунта
+                </button>
+            </div>
         </Authorized>
     </AuthorizeView>
 
@@ -54,5 +63,12 @@
     void CloseMenu()
     {
         isOpen = false;
+    }
+
+    async Task LogoutAsync()
+    {
+        await SignInManager.SignOutAsync();
+        isOpen = false;
+        Navigation.NavigateTo("/account/login", forceLoad: true);
     }
 }

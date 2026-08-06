@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WorkoutPlanner.Web.Data;
 
@@ -10,9 +11,11 @@ using WorkoutPlanner.Web.Data;
 namespace WorkoutPlanner.Web.Migrations
 {
     [DbContext(typeof(WorkoutDbContext))]
-    partial class WorkoutDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260803121159_AddSetWeight")]
+    partial class AddSetWeight
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -247,14 +250,21 @@ namespace WorkoutPlanner.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BaseReps")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentLevel")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("CurrentWeight")
+                        .HasColumnType("REAL");
+
                     b.Property<int?>("ExerciseDefinitionId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PhotoPath")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Set1Completed")
@@ -277,6 +287,9 @@ namespace WorkoutPlanner.Web.Migrations
 
                     b.Property<string>("UserId")
                         .HasColumnType("TEXT");
+
+                    b.Property<double>("WeightStep")
+                        .HasColumnType("REAL");
 
                     b.Property<string>("WorkoutName")
                         .IsRequired()

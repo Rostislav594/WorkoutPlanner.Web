@@ -27,6 +27,8 @@
     z-index: 1500;
     padding-top: 20px;
     box-shadow: none;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
     .side-menu.open {
@@ -124,8 +126,9 @@
 }
 
 .nav-logo {
-    width: 300px;
-    height: 300px;
+    width: min(180px, 100%);
+    height: auto;
+    max-height: 180px;
     object-fit: contain;
     margin-bottom: 0px;
 }

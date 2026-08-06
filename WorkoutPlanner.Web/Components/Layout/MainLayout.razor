@@ -8,15 +8,23 @@
 
 @if (ShowHomeButton)
 {
-    <a class="home-nav-button"
-       href="@NavigationButtonHref">
-        @NavigationButtonText
-    </a>
+    <nav class="layout-page-actions" aria-label="Навигация страницы">
+        @if (IsWorkoutDetailsPage)
+        {
+            <a class="page-nav-button" href="workouts">К тренировкам</a>
+        }
+        <a class="home-nav-button"
+           href="@NavigationButtonHref">
+            @NavigationButtonText
+        </a>
+    </nav>
 }
 
 <div class="page-transition" @key="CurrentPageKey">
     @Body
 </div>
+
+<WorkoutPlanner.Web.Components.Onboarding.AppGuide @rendermode='InteractiveServer' />
 
 @code {
     string CurrentPagePath =>
@@ -35,6 +43,9 @@
     bool IsProgressDetailsPage =>
         CurrentPagePath.Equals("progress/workouts", StringComparison.OrdinalIgnoreCase) ||
         CurrentPagePath.Equals("progress/exercises", StringComparison.OrdinalIgnoreCase);
+
+    bool IsWorkoutDetailsPage =>
+        CurrentPagePath.StartsWith("workout/", StringComparison.OrdinalIgnoreCase);
 
     string NavigationButtonHref =>
         IsProgressDetailsPage

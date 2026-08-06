@@ -1,16 +1,20 @@
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using WorkoutPlanner.Web.Components;
+using WorkoutPlanner.Web.Components.Onboarding;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Onboarding;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+builder.Services.AddScoped<ExercisePhotoService>();
 
 builder.Services.AddDbContext<WorkoutDbContext>(
     options =>
@@ -51,6 +55,11 @@ builder.Services.AddScoped<ProgressService>();
 builder.Services.AddScoped<ExerciseDefinitionService>();
 builder.Services.AddScoped<ExerciseIndexService>();
 builder.Services.AddScoped<SecondaryMuscleCoefficientService>();
+builder.Services.AddScoped<AppGuideCatalog>();
+builder.Services.AddSingleton<CharacterAssetCatalog>();
+builder.Services.AddScoped<AppGuidePracticeService>();
+builder.Services.AddScoped<AppGuideService>();
+builder.Services.AddScoped<IAppGuideCompletionStore, IdentityAppGuideCompletionStore>();
 
 
 // Add services to the container.
@@ -76,7 +85,98 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments(
+            "/WorkoutImages",
+            out var remainingPath))
+    {
+        var fileName = Path.GetFileName(remainingPath.Value);
+        var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId) ||
+            string.IsNullOrWhiteSpace(fileName) ||
+            !string.Equals(
+                remainingPath.Value,
+                $"/{fileName}",
+                StringComparison.Ordinal))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        var db = context.RequestServices.GetRequiredService<WorkoutDbContext>();
+        var photoPath = $"/WorkoutImages/{fileName}";
+        var ownsPhoto = await db.Exercises
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId && x.PhotoPath == photoPath);
+
+        if (!ownsPhoto)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+    }
+
+    await next(context);
+});
+
 app.MapStaticAssets();
+
+app.MapGet(
+    "/WorkoutImages/{fileName}",
+    async Task<IResult> (
+        string fileName,
+        ClaimsPrincipal principal,
+        WorkoutDbContext db,
+        IWebHostEnvironment environment) =>
+    {
+        var safeFileName = Path.GetFileName(fileName);
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId) ||
+            !string.Equals(fileName, safeFileName, StringComparison.Ordinal))
+        {
+            return Results.NotFound();
+        }
+
+        var photoPath = $"/WorkoutImages/{safeFileName}";
+        var ownsPhoto = await db.Exercises
+            .AsNoTracking()
+            .AnyAsync(x => x.UserId == userId && x.PhotoPath == photoPath);
+
+        if (!ownsPhoto)
+            return Results.NotFound();
+
+        var uploadPath = Path.Combine(
+            environment.ContentRootPath,
+            "App_Data",
+            "WorkoutImages",
+            safeFileName);
+
+        var legacyPath = Path.Combine(
+            environment.WebRootPath,
+            "WorkoutImages",
+            safeFileName);
+
+        var filePath = File.Exists(uploadPath) ? uploadPath : legacyPath;
+
+        if (!File.Exists(filePath))
+            return Results.NotFound();
+
+        var contentType = Path.GetExtension(safeFileName).ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".webp" => "image/webp",
+            _ => null
+        };
+
+        return contentType == null
+            ? Results.NotFound()
+            : Results.File(filePath, contentType, enableRangeProcessing: true);
+    })
+    .RequireAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

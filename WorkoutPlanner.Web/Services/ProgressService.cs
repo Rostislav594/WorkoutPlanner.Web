@@ -249,7 +249,8 @@ public class ProgressService
 
         var exercises = await _db.Exercises
             .Include(x => x.ExerciseDefinition)
-                .ThenInclude(x => x!.SecondaryMuscles)
+            .ThenInclude(x => x!.SecondaryMuscles)
+            .ThenInclude(x => x.Muscle)
             .Include(x => x.Sets)
             .Where(x =>
                 x.WorkoutName == workoutName &&

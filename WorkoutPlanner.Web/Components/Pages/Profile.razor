@@ -8,142 +8,225 @@
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
 @inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
+@inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService AppGuideService
 @inject NavigationManager Navigation
 
 <div class="profile-page">
-    <section class="profile-panel">
-        <div class="profile-heading profile-heading-row">
-            <div>
-                <p class="profile-kicker">Профиль пользователя</p>
-                <h1>@FullName</h1>
-                <p>@Email</p>
-            </div>
+    <div class="profile-shell">
+        <main class="profile-main">
+            @if (ActiveSection == ProfileSection.Profile)
+            {
+                <section class="profile-panel">
+                    <div class="profile-heading">
+                        <p class="profile-kicker">Профиль пользователя</p>
+                        <h1>@FullName</h1>
+                        <p>@Email</p>
+                    </div>
 
-            <a class="profile-secondary-action" href="/workouts">
-                Настройка тренировки
-            </a>
-        </div>
+                    @if (!string.IsNullOrWhiteSpace(ProfileMessage))
+                    {
+                        <div class="profile-success">@ProfileMessage</div>
+                    }
 
-        @if (!string.IsNullOrWhiteSpace(ProfileMessage))
-        {
-            <div class="profile-success">@ProfileMessage</div>
-        }
+                    @if (!string.IsNullOrWhiteSpace(ProfileError))
+                    {
+                        <div class="auth-error">@ProfileError</div>
+                    }
 
-        @if (!string.IsNullOrWhiteSpace(ProfileError))
-        {
-            <div class="auth-error">@ProfileError</div>
-        }
+                    <EditForm Model="ProfileInputModel" OnValidSubmit="SaveProfileAsync">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
 
-        <EditForm Model="ProfileInputModel" OnValidSubmit="SaveProfileAsync">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="validation-summary" />
+                        <div class="profile-form-grid">
+                            <div class="field">
+                                <label>Email</label>
+                                <input class="auth-input" value="@Email" readonly />
+                            </div>
 
-            <div class="profile-form-grid">
-                <div class="field">
-                    <label>Email</label>
-                    <input class="auth-input" value="@Email" readonly />
-                </div>
+                            <div class="field">
+                                <label>Имя</label>
+                                <InputText class="auth-input" @bind-Value="ProfileInputModel.FirstName" />
+                                <ValidationMessage For="@(() => ProfileInputModel.FirstName)" />
+                            </div>
 
-                <div class="field">
-                    <label>Имя</label>
-                    <InputText class="auth-input" @bind-Value="ProfileInputModel.FirstName" />
-                    <ValidationMessage For="@(() => ProfileInputModel.FirstName)" />
-                </div>
+                            <div class="field">
+                                <label>Фамилия</label>
+                                <InputText class="auth-input" @bind-Value="ProfileInputModel.LastName" />
+                                <ValidationMessage For="@(() => ProfileInputModel.LastName)" />
+                            </div>
 
-                <div class="field">
-                    <label>Фамилия</label>
-                    <InputText class="auth-input" @bind-Value="ProfileInputModel.LastName" />
-                    <ValidationMessage For="@(() => ProfileInputModel.LastName)" />
-                </div>
+                            <div class="field">
+                                <label>Дата рождения</label>
+                                <InputDate class="auth-input" @bind-Value="ProfileInputModel.BirthDate" />
+                                <ValidationMessage For="@(() => ProfileInputModel.BirthDate)" />
+                            </div>
 
-                <div class="field">
-                    <label>Дата рождения</label>
-                    <InputDate class="auth-input" @bind-Value="ProfileInputModel.BirthDate" />
-                    <ValidationMessage For="@(() => ProfileInputModel.BirthDate)" />
-                </div>
+                            <div class="field">
+                                <label>Пол</label>
+                                <InputSelect class="auth-input" @bind-Value="ProfileInputModel.Gender">
+                                    <option value="">Выберите</option>
+                                    <option value="Мужской">Мужской</option>
+                                    <option value="Женский">Женский</option>
+                                    <option value="Не указывать">Не указывать</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => ProfileInputModel.Gender)" />
+                            </div>
+                        </div>
 
-                <div class="field">
-                    <label>Пол</label>
-                    <InputSelect class="auth-input" @bind-Value="ProfileInputModel.Gender">
-                        <option value="">Выберите</option>
-                        <option value="Мужской">Мужской</option>
-                        <option value="Женский">Женский</option>
-                        <option value="Не указывать">Не указывать</option>
-                    </InputSelect>
-                    <ValidationMessage For="@(() => ProfileInputModel.Gender)" />
-                </div>
-            </div>
+                        <button class="finish-button auth-button profile-primary-action" type="submit">
+                            Сохранить изменения
+                        </button>
 
-            <button class="finish-button auth-button profile-primary-action" type="submit">
-                Сохранить изменения
+                        <hr class="profile-divider" />
+
+                        <div class="profile-danger-zone">
+
+                            <button class="profile-danger-action"
+                                    type="button"
+                                    @onclick="ShowDeleteDialog">
+                                Удалить аккаунт
+                            </button>
+
+                        </div>
+                    </EditForm>
+                </section>
+            }
+
+            @if (ActiveSection == ProfileSection.Security)
+            {
+                <section class="profile-panel profile-actions-panel">
+                    <div class="profile-heading">
+                        <p class="profile-kicker">Безопасность</p>
+                        <h1>Настройки безопасности</h1>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(PasswordMessage))
+                    {
+                        <div class="profile-success">@PasswordMessage</div>
+                    }
+
+                    @if (PasswordErrors.Any())
+                    {
+                        <div class="validation-summary">
+                            @foreach (var error in PasswordErrors)
+                            {
+                                <div>@error</div>
+                            }
+                        </div>
+                    }
+
+                    <EditForm Model="PasswordInputModel" OnValidSubmit="ChangePasswordAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="profile-form-grid">
+                            <div class="field">
+                                <label>Текущий пароль</label>
+                                <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.CurrentPassword" />
+                                <ValidationMessage For="@(() => PasswordInputModel.CurrentPassword)" />
+                            </div>
+
+                            <div class="field">
+                                <label>Новый пароль</label>
+                                <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.NewPassword" />
+                                <ValidationMessage For="@(() => PasswordInputModel.NewPassword)" />
+                            </div>
+
+                            <div class="field">
+                                <label>Подтверждение нового пароля</label>
+                                <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.ConfirmPassword" />
+                                <ValidationMessage For="@(() => PasswordInputModel.ConfirmPassword)" />
+                            </div>
+                        </div>
+
+                        <button class="profile-secondary-action" type="submit">
+                            Изменить пароль
+                        </button>
+                    </EditForm>
+
+                </section>
+            }
+
+            @if (ActiveSection == ProfileSection.Training)
+            {
+                <section class="profile-panel">
+                    <div class="profile-heading">
+
+                        <h1>Настройки тренировок</h1>
+                        <p>Интерактивное знакомство с основными разделами приложения.</p>
+                    </div>
+
+                    <button class="profile-secondary-action"
+                            type="button"
+                            @onclick="RestartGuideAsync">
+                        Повторить знакомство
+                    </button>
+
+                    <button class="profile-secondary-action"
+                            type="button"
+                            @onclick="StartFirstWorkoutTutorialAsync">
+                        Пройти первую тренировку с гидом
+                    </button>
+                </section>
+            }
+        </main>
+
+        <aside class="profile-sidebar" aria-label="Разделы профиля">
+            <button class="profile-tab @(ActiveSection == ProfileSection.Profile ? "active" : "")"
+                    type="button"
+                    @onclick="() => ActiveSection = ProfileSection.Profile">
+                Профиль
             </button>
-        </EditForm>
-    </section>
 
-    <section class="profile-panel profile-actions-panel">
-        <div class="profile-heading">
-            <h2>Безопасность и аккаунт</h2>
-        </div>
-
-        @if (!string.IsNullOrWhiteSpace(PasswordMessage))
-        {
-            <div class="profile-success">@PasswordMessage</div>
-        }
-
-        @if (PasswordErrors.Any())
-        {
-            <div class="validation-summary">
-                @foreach (var error in PasswordErrors)
-                {
-                    <div>@error</div>
-                }
-            </div>
-        }
-
-        <EditForm Model="PasswordInputModel" OnValidSubmit="ChangePasswordAsync">
-            <DataAnnotationsValidator />
-
-            <div class="profile-form-grid">
-                <div class="field">
-                    <label>Текущий пароль</label>
-                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.CurrentPassword" />
-                    <ValidationMessage For="@(() => PasswordInputModel.CurrentPassword)" />
-                </div>
-
-                <div class="field">
-                    <label>Новый пароль</label>
-                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.NewPassword" />
-                    <ValidationMessage For="@(() => PasswordInputModel.NewPassword)" />
-                </div>
-
-                <div class="field">
-                    <label>Подтверждение нового пароля</label>
-                    <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.ConfirmPassword" />
-                    <ValidationMessage For="@(() => PasswordInputModel.ConfirmPassword)" />
-                </div>
-            </div>
-
-            <button class="profile-secondary-action" type="submit">
-                Изменить пароль
-            </button>
-        </EditForm>
-
-        <div class="profile-account-actions">
-            <button class="profile-secondary-action" type="button" @onclick="LogoutAsync">
-                Выйти из аккаунта
+            <button class="profile-tab @(ActiveSection == ProfileSection.Security ? "active" : "")"
+                    type="button"
+                    @onclick="() => ActiveSection = ProfileSection.Security">
+                Настройки безопасности
             </button>
 
-            <label class="profile-danger-confirm">
-                <InputCheckbox @bind-Value="DeleteConfirmed" />
-                <span>Я понимаю, что аккаунт будет удален</span>
-            </label>
-
-            <button class="profile-danger-action" type="button" disabled="@(!DeleteConfirmed)" @onclick="DeleteAccountAsync">
-                Удалить аккаунт
+            <button class="profile-tab @(ActiveSection == ProfileSection.Training ? "active" : "")"
+                    type="button"
+                    @onclick="() => ActiveSection = ProfileSection.Training">
+                Настройки тренировок
             </button>
-        </div>
-    </section>
+        </aside>
+    </div>
 </div>
+
+@if (ShowDeleteConfirmation)
+{
+    <div class="modal-overlay">
+
+        <div class="modal-window">
+
+            <h2>⚠️ Удаление аккаунта</h2>
+
+            <p>
+                Вы действительно хотите удалить аккаунт?
+            </p>
+
+            <p style="opacity:.8">
+                Будут удалены профиль, история тренировок,
+                прогресс и все пользовательские данные.
+            </p>
+
+            <div class="history-buttons">
+
+                <button class="secondary-button"
+                        @onclick="CloseDeleteDialog">
+                    Отмена
+                </button>
+
+                <button class="danger-button"
+                        @onclick="DeleteAccountAsync">
+                    Удалить
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+}
 
 @code {
     private IdentityUser? CurrentUser { get; set; }
@@ -170,7 +253,9 @@
 
     private string? PasswordMessage { get; set; }
 
-    private bool DeleteConfirmed { get; set; }
+    private bool ShowDeleteConfirmation;
+
+    private ProfileSection ActiveSection { get; set; } = ProfileSection.Profile;
 
     protected override async Task OnInitializedAsync()
     {
@@ -254,16 +339,32 @@
         PasswordMessage = "Пароль изменен.";
     }
 
-    private async Task LogoutAsync()
+    private async Task RestartGuideAsync()
     {
-        await SignInManager.SignOutAsync();
-        Navigation.NavigateTo("/account/login", forceLoad: true);
+        await AppGuideService.StartGuideAsync();
+    }
+
+    private async Task StartFirstWorkoutTutorialAsync()
+    {
+        await AppGuideService.StartFirstWorkoutTutorialAsync();
+    }
+
+    private void ShowDeleteDialog()
+    {
+        ShowDeleteConfirmation = true;
+    }
+
+    private void CloseDeleteDialog()
+    {
+        ShowDeleteConfirmation = false;
     }
 
     private async Task DeleteAccountAsync()
     {
-        if (!DeleteConfirmed || CurrentUser is null)
+        if (CurrentUser is null)
             return;
+
+        ShowDeleteConfirmation = false;
 
         if (CurrentProfile is not null)
         {
@@ -318,5 +419,12 @@
             "PasswordRequiresNonAlphanumeric" => "Пароль должен содержать хотя бы один специальный символ.",
             _ => error.Description
         };
+    }
+
+    private enum ProfileSection
+    {
+        Profile,
+        Security,
+        Training
     }
 }

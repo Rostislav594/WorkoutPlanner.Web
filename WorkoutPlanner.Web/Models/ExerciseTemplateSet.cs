@@ -12,5 +12,7 @@ public class ExerciseTemplateSet
 
     public int Repetitions { get; set; }
 
+    public double Weight { get; set; }
+
     public bool Completed { get; set; }
 }
