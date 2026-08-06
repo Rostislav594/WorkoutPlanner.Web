@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using WorkoutPlanner.Web.Components;
 using WorkoutPlanner.Web.Components.Onboarding;
+using WorkoutPlanner.Web.Api;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
@@ -29,11 +32,11 @@ builder.Services.AddDataProtection()
                 "App_Data",
                 "DataProtectionKeys")));
 
-builder.Services.AddAuthentication(IdentityConstants.ApplicationScheme)
-    .AddIdentityCookies();
 builder.Services.AddAuthorization();
+builder.Services.AddProblemDetails();
+builder.Services.AddOpenApi();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddIdentityCore<IdentityUser>(options =>
+builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
     {
         options.SignIn.RequireConfirmedAccount = false;
         options.User.RequireUniqueEmail = true;
@@ -42,8 +45,19 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
         options.Password.RequireUppercase = false;
     })
     .AddEntityFrameworkStores<WorkoutDbContext>()
-    .AddSignInManager()
     .AddDefaultTokenProviders();
+builder.Services.Configure<BearerTokenOptions>(
+    IdentityConstants.BearerScheme,
+    options =>
+    {
+        options.BearerTokenExpiration = TimeSpan.FromMinutes(15);
+        options.RefreshTokenExpiration = TimeSpan.FromDays(7);
+    });
+builder.Services.Configure<AuthenticationOptions>(options =>
+{
+    options.DefaultChallengeScheme =
+        IdentityConstants.ApplicationScheme;
+});
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -74,12 +88,25 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseWhen(
+        context => !context.Request.Path.StartsWithSegments("/api"),
+        web => web.UseExceptionHandler("/Error", createScopeForErrors: true));
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/api"),
+    api =>
+    {
+        api.UseExceptionHandler();
+        api.UseStatusCodePages();
+    });
+app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/api"),
+    web => web.UseStatusCodePagesWithReExecute(
+        "/not-found",
+        createScopeForStatusCodePages: true));
 
 app.UseHttpsRedirection();
 
@@ -184,6 +211,13 @@ app.MapGet(
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+app.MapGymPlannerApi();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
 using (var scope = app.Services.CreateScope())
 {
     var db =
@@ -200,3 +234,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+public partial class Program;

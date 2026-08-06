@@ -73,6 +73,7 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddSingleton<AuthenticationStateProvider>(
             authenticationStateProvider);
         services.AddSingleton<IWebHostEnvironment>(environment);
+        services.AddHttpContextAccessor();
         services.AddDbContextFactory<WorkoutDbContext>((provider, options) =>
             options.UseSqlite(provider.GetRequiredService<SqliteConnection>()));
         services.AddIdentityCore<IdentityUser>()
