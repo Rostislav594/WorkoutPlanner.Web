@@ -1,34 +1,20 @@
-@rendermode InteractiveServer
-
 @if (_visible)
 {
     <div class="app-splash @(_isLeaving ? "app-splash-leaving" : null)"
          role="status"
          aria-live="polite"
          aria-label="Загрузка приложения">
-
         <div class="app-splash-content">
-            <div class="app-splash-title">
-                GPlanner
-            </div>
-
-            <div class="app-splash-subtitle">
-                Загрузка
-            </div>
-
-            <div class="app-splash-loader"
-                 aria-hidden="true">
-                <span></span>
-                <span></span>
-                <span></span>
+            <div class="app-splash-title">GPlanner</div>
+            <div class="app-splash-subtitle">Загрузка</div>
+            <div class="app-splash-loader" aria-hidden="true">
+                <span></span><span></span><span></span>
             </div>
         </div>
-
     </div>
 }
 
-@code
-{
+@code {
     private bool _visible = true;
     private bool _isLeaving;
 
@@ -38,14 +24,10 @@
             return;
 
         await Task.Delay(2200);
-
-        // Запускаем анимацию исчезновения
         _isLeaving = true;
         StateHasChanged();
 
-        // Ждем завершения анимации
         await Task.Delay(800);
-
         _visible = false;
         StateHasChanged();
     }
