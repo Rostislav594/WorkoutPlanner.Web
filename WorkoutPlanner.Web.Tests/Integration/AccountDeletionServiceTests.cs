@@ -219,6 +219,23 @@ public sealed class AccountDeletionServiceTests
             db.UserProfiles.AddRange(
                 CreateProfile("user-a"),
                 CreateProfile("user-b"));
+            db.MobileSessions.AddRange(
+                new MobileSession
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = "user-a",
+                    DeviceName = "User A phone",
+                    CreatedAtUtc = DateTime.UtcNow,
+                    ExpiresAtUtc = DateTime.UtcNow.AddDays(7)
+                },
+                new MobileSession
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = "user-b",
+                    DeviceName = "User B phone",
+                    CreatedAtUtc = DateTime.UtcNow,
+                    ExpiresAtUtc = DateTime.UtcNow.AddDays(7)
+                });
 
             await db.SaveChangesAsync();
 
@@ -273,6 +290,8 @@ public sealed class AccountDeletionServiceTests
             x.UserId == "user-a"));
         Assert.False(await verificationDb.UserProfiles.AnyAsync(x =>
             x.UserId == "user-a"));
+        Assert.False(await verificationDb.MobileSessions.AnyAsync(x =>
+            x.UserId == "user-a"));
         Assert.True(await verificationDb.WorkoutHistory.AnyAsync(x =>
             x.UserId == "user-b"));
         Assert.True(await verificationDb.ProgressSnapshots.AnyAsync(x =>
@@ -280,6 +299,8 @@ public sealed class AccountDeletionServiceTests
         Assert.True(await verificationDb.ExerciseProgressSnapshots.AnyAsync(x =>
             x.UserId == "user-b"));
         Assert.True(await verificationDb.UserProfiles.AnyAsync(x =>
+            x.UserId == "user-b"));
+        Assert.True(await verificationDb.MobileSessions.AnyAsync(x =>
             x.UserId == "user-b"));
 
         Assert.False(File.Exists(userAPhoto));

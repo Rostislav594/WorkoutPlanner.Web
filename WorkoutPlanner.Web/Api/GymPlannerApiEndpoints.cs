@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.BearerToken;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using WorkoutPlanner.Web.Api.Contracts;
+using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 
@@ -18,42 +19,68 @@ public static class GymPlannerApiEndpoints
             .WithTags("GymPlanner API");
 
         var authentication = api.MapGroup("/auth")
-            .WithTags("Authentication")
-            .AllowAnonymous();
+            .WithTags("Authentication");
 
         authentication.MapPost("/register", RegisterAsync)
+            .AllowAnonymous()
             .Produces<RegistrationResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         authentication.MapPost("/login", LoginAsync)
+            .AllowAnonymous()
             .Produces<AccessTokenResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
         authentication.MapPost("/refresh", RefreshAsync)
+            .AllowAnonymous()
             .Produces<AccessTokenResponse>()
             .Produces(StatusCodes.Status401Unauthorized)
             .ProducesValidationProblem();
 
-        var bearerOnly = new AuthorizeAttribute
-        {
-            AuthenticationSchemes = IdentityConstants.BearerScheme
-        };
+        authentication.MapPost("/logout", LogoutAsync)
+            .RequireAuthorization(MobileApiAuthorization.PolicyName)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
 
         api.MapGet("/profile", GetProfileAsync)
             .WithTags("Profile")
-            .RequireAuthorization(bearerOnly)
+            .RequireAuthorization(MobileApiAuthorization.PolicyName)
             .Produces<ProfileResponse>()
-            .Produces(StatusCodes.Status401Unauthorized);
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
 
         api.MapPut("/profile", UpdateProfileAsync)
             .WithTags("Profile")
-            .RequireAuthorization(bearerOnly)
+            .RequireAuthorization(MobileApiAuthorization.PolicyName)
             .Produces<ProfileResponse>()
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
+
+        var account = api.MapGroup("/account")
+            .WithTags("Account")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName);
+
+        account.MapPost("/change-password", ChangePasswordAsync)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        account.MapPost("/revoke-access", RevokeAccessAsync)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        account.MapDelete("", DeleteAccountAsync)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status500InternalServerError);
 
         return api;
     }
@@ -115,6 +142,10 @@ public static class GymPlannerApiEndpoints
     private static async Task<IResult> LoginAsync(
         MobileLoginRequest request,
         SignInManager<IdentityUser> signInManager,
+        UserManager<IdentityUser> userManager,
+        MobileSessionService mobileSessions,
+        IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
+        TimeProvider timeProvider,
         CancellationToken cancellationToken)
     {
         var errors = ValidateCredentials(request.Email, request.Password);
@@ -122,23 +153,47 @@ public static class GymPlannerApiEndpoints
             return Results.ValidationProblem(errors);
 
         cancellationToken.ThrowIfCancellationRequested();
-        signInManager.AuthenticationScheme = IdentityConstants.BearerScheme;
-        var result = await signInManager.PasswordSignInAsync(
-            request.Email.Trim(),
-            request.Password,
-            isPersistent: false,
-            lockoutOnFailure: true);
-
-        return result.Succeeded
-            ? Results.Empty
-            : Results.Problem(
+        var user = await userManager.FindByEmailAsync(request.Email.Trim());
+        if (user is null)
+        {
+            return Results.Problem(
                 title: "Invalid email or password.",
                 statusCode: StatusCodes.Status401Unauthorized);
+        }
+
+        var result = await signInManager.CheckPasswordSignInAsync(
+            user,
+            request.Password,
+            lockoutOnFailure: true);
+        if (!result.Succeeded)
+        {
+            return Results.Problem(
+                title: "Invalid email or password.",
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+
+        var refreshLifetime = bearerTokenOptions
+            .Get(IdentityConstants.BearerScheme)
+            .RefreshTokenExpiration;
+        var expiresAtUtc = timeProvider.GetUtcNow()
+            .Add(refreshLifetime)
+            .UtcDateTime;
+        var session = await mobileSessions.CreateAsync(
+            user.Id,
+            request.DeviceName,
+            expiresAtUtc,
+            cancellationToken);
+        var principal = await signInManager.CreateUserPrincipalAsync(user);
+        MobileSessionService.AddSessionClaim(principal, session.Id);
+        return Results.SignIn(
+            principal,
+            authenticationScheme: IdentityConstants.BearerScheme);
     }
 
     private static async Task<IResult> RefreshAsync(
         MobileRefreshRequest request,
         SignInManager<IdentityUser> signInManager,
+        MobileSessionService mobileSessions,
         IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
@@ -165,10 +220,89 @@ public static class GymPlannerApiEndpoints
             return Results.Unauthorized();
         }
 
+        if (!await mobileSessions.RefreshAsync(
+                ticket.Principal,
+                user.Id,
+                cancellationToken) ||
+            !MobileSessionService.TryGetSessionId(
+                ticket.Principal,
+                out var sessionId))
+        {
+            return Results.Unauthorized();
+        }
+
         var principal = await signInManager.CreateUserPrincipalAsync(user);
+        MobileSessionService.AddSessionClaim(principal, sessionId);
         return Results.SignIn(
             principal,
             authenticationScheme: IdentityConstants.BearerScheme);
+    }
+
+    private static async Task<IResult> LogoutAsync(
+        HttpContext context,
+        MobileSessionService mobileSessions,
+        CancellationToken cancellationToken)
+    {
+        await mobileSessions.RevokeCurrentAsync(
+            context.User,
+            GetRequiredUserId(context.User),
+            cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ChangePasswordAsync(
+        ChangePasswordApiRequest request,
+        HttpContext context,
+        UserManager<IdentityUser> userManager,
+        MobileSessionService mobileSessions,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.CurrentPassword)] = ["Current and new passwords are required."]
+            });
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var user = await userManager.GetUserAsync(context.User);
+        if (user is null)
+            return Results.Unauthorized();
+
+        var result = await userManager.ChangePasswordAsync(
+            user,
+            request.CurrentPassword,
+            request.NewPassword);
+        if (!result.Succeeded)
+            return Results.ValidationProblem(ToValidationErrors(result));
+
+        await mobileSessions.RevokeAllAsync(user.Id, cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> RevokeAccessAsync(
+        HttpContext context,
+        MobileSessionService mobileSessions,
+        CancellationToken cancellationToken)
+    {
+        await mobileSessions.RevokeAllAsync(
+            GetRequiredUserId(context.User),
+            cancellationToken);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> DeleteAccountAsync(
+        IAccountService accountService,
+        CancellationToken cancellationToken)
+    {
+        var result = await accountService.DeleteCurrentAccountAsync(cancellationToken);
+        return result.Succeeded
+            ? Results.NoContent()
+            : Results.Problem(
+                title: "Account deletion could not be completed.",
+                statusCode: StatusCodes.Status500InternalServerError);
     }
 
     private static async Task<IResult> GetProfileAsync(
@@ -266,4 +400,9 @@ public static class GymPlannerApiEndpoints
                 x => x.Key,
                 x => x.Select(error => error.Description).Distinct().ToArray(),
                 StringComparer.Ordinal);
+
+    private static string GetRequiredUserId(ClaimsPrincipal principal) =>
+        principal.FindFirstValue(ClaimTypes.NameIdentifier)
+        ?? throw new InvalidOperationException(
+            "Authenticated mobile principal has no user identifier.");
 }

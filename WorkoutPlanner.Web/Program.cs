@@ -7,6 +7,7 @@ using System.Security.Claims;
 using WorkoutPlanner.Web.Components;
 using WorkoutPlanner.Web.Components.Onboarding;
 using WorkoutPlanner.Web.Api;
+using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
@@ -32,7 +33,17 @@ builder.Services.AddDataProtection()
                 "App_Data",
                 "DataProtectionKeys")));
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        MobileApiAuthorization.PolicyName,
+        policy =>
+        {
+            policy.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new MobileApiSessionRequirement());
+        });
+});
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddCascadingAuthenticationState();
@@ -59,6 +70,10 @@ builder.Services.Configure<AuthenticationOptions>(options =>
         IdentityConstants.ApplicationScheme;
 });
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<MobileSessionService>();
+builder.Services.AddScoped<
+    Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    MobileApiSessionAuthorizationHandler>();
 builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, UserProfileService>();

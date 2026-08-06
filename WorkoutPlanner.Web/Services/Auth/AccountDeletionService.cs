@@ -96,6 +96,10 @@ public sealed class AccountDeletionService
                 .Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken);
 
+            await _db.MobileSessions
+                .Where(x => x.UserId == userId)
+                .ExecuteDeleteAsync(cancellationToken);
+
             await _db.TrainingSessions
                 .Where(x => x.UserId == userId)
                 .ExecuteDeleteAsync(cancellationToken);

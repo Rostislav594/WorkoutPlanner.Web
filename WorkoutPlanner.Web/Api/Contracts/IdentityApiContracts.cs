@@ -6,7 +6,8 @@ public sealed record MobileRegisterRequest(
 
 public sealed record MobileLoginRequest(
     string Email,
-    string Password);
+    string Password,
+    string? DeviceName = null);
 
 public sealed record MobileRefreshRequest(
     string RefreshToken);
@@ -26,3 +27,7 @@ public sealed record UpdateProfileRequest(
     string LastName,
     DateTime? BirthDate,
     string Gender);
+
+public sealed record ChangePasswordApiRequest(
+    string CurrentPassword,
+    string NewPassword);

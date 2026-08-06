@@ -54,6 +54,9 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<ExerciseTemplateSet> ExerciseTemplateSets =>
     Set<ExerciseTemplateSet>();
 
+    public DbSet<MobileSession> MobileSessions =>
+        Set<MobileSession>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -79,6 +82,22 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<UserProfile>()
             .Property(x => x.Gender)
             .HasMaxLength(30);
+
+        modelBuilder.Entity<MobileSession>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MobileSession>()
+            .HasIndex(x => new { x.UserId, x.RevokedAtUtc });
+
+        modelBuilder.Entity<MobileSession>()
+            .HasIndex(x => x.ExpiresAtUtc);
+
+        modelBuilder.Entity<MobileSession>()
+            .Property(x => x.DeviceName)
+            .HasMaxLength(120);
 
         modelBuilder.Entity<Exercise>()
             .HasOne(x => x.ExerciseDefinition)

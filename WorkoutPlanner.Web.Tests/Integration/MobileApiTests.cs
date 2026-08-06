@@ -144,6 +144,157 @@ public sealed class MobileApiTests
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
     }
 
+    [Fact]
+    public async Task SessionAndAccountLifecycle_RevokesTokensAndDeletesOwnedData()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstDevice = CreateClient(factory);
+        using var secondDevice = CreateClient(factory);
+
+        using var registration = await firstDevice.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("lifecycle@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+
+        var firstTokens = await LoginAsync(
+            firstDevice,
+            "lifecycle@example.test",
+            "password1",
+            "First phone");
+        var secondTokens = await LoginAsync(
+            secondDevice,
+            "lifecycle@example.test",
+            "password1",
+            "Second phone");
+        SetBearer(firstDevice, firstTokens.AccessToken);
+        SetBearer(secondDevice, secondTokens.AccessToken);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var deviceNames = await db.MobileSessions
+                .OrderBy(x => x.CreatedAtUtc)
+                .Select(x => x.DeviceName)
+                .ToArrayAsync();
+            Assert.Collection(
+                deviceNames,
+                value => Assert.Equal("First phone", value),
+                value => Assert.Equal("Second phone", value));
+        }
+
+        using var logout = await firstDevice.PostAsync(
+            "/api/v1/auth/logout",
+            content: null);
+        Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
+        using var firstAfterLogout = await firstDevice.GetAsync("/api/v1/profile");
+        Assert.Equal(HttpStatusCode.Forbidden, firstAfterLogout.StatusCode);
+        using var secondAfterLogout = await secondDevice.GetAsync("/api/v1/profile");
+        Assert.Equal(HttpStatusCode.OK, secondAfterLogout.StatusCode);
+        using var firstRefresh = await firstDevice.PostAsJsonAsync(
+            "/api/v1/auth/refresh",
+            new MobileRefreshRequest(firstTokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, firstRefresh.StatusCode);
+
+        using var revokeAll = await secondDevice.PostAsync(
+            "/api/v1/account/revoke-access",
+            content: null);
+        Assert.Equal(HttpStatusCode.NoContent, revokeAll.StatusCode);
+        using var secondAfterRevoke = await secondDevice.GetAsync("/api/v1/profile");
+        Assert.Equal(HttpStatusCode.Forbidden, secondAfterRevoke.StatusCode);
+        using var secondRefresh = await secondDevice.PostAsJsonAsync(
+            "/api/v1/auth/refresh",
+            new MobileRefreshRequest(secondTokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, secondRefresh.StatusCode);
+
+        using var passwordClient = CreateClient(factory);
+        var passwordTokens = await LoginAsync(
+            passwordClient,
+            "lifecycle@example.test",
+            "password1",
+            "Password phone");
+        SetBearer(passwordClient, passwordTokens.AccessToken);
+        using var passwordChange = await passwordClient.PostAsJsonAsync(
+            "/api/v1/account/change-password",
+            new ChangePasswordApiRequest("password1", "newpassword1"));
+        Assert.Equal(HttpStatusCode.NoContent, passwordChange.StatusCode);
+        using var afterPasswordChange = await passwordClient.GetAsync(
+            "/api/v1/profile");
+        Assert.Equal(HttpStatusCode.Forbidden, afterPasswordChange.StatusCode);
+        using var passwordRefresh = await passwordClient.PostAsJsonAsync(
+            "/api/v1/auth/refresh",
+            new MobileRefreshRequest(passwordTokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, passwordRefresh.StatusCode);
+
+        using var oldPasswordLogin = await passwordClient.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new MobileLoginRequest(
+                "lifecycle@example.test",
+                "password1",
+                "Old password"));
+        Assert.Equal(HttpStatusCode.Unauthorized, oldPasswordLogin.StatusCode);
+
+        using var deletionClient = CreateClient(factory);
+        var deletionTokens = await LoginAsync(
+            deletionClient,
+            "lifecycle@example.test",
+            "newpassword1",
+            "Deletion phone");
+        SetBearer(deletionClient, deletionTokens.AccessToken);
+        using var deletion = await deletionClient.DeleteAsync("/api/v1/account");
+        Assert.Equal(HttpStatusCode.NoContent, deletion.StatusCode);
+        using var afterDeletion = await deletionClient.GetAsync("/api/v1/profile");
+        Assert.Equal(HttpStatusCode.Forbidden, afterDeletion.StatusCode);
+        using var deletedLogin = await deletionClient.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new MobileLoginRequest(
+                "lifecycle@example.test",
+                "newpassword1",
+                "Deleted account"));
+        Assert.Equal(HttpStatusCode.Unauthorized, deletedLogin.StatusCode);
+
+        await using var verificationScope = factory.Services.CreateAsyncScope();
+        var verificationFactory = verificationScope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var verificationDb =
+            await verificationFactory.CreateDbContextAsync();
+        Assert.False(await verificationDb.Users.AnyAsync(x =>
+            x.Email == "lifecycle@example.test"));
+        Assert.False(await verificationDb.MobileSessions.AnyAsync());
+        Assert.False(await verificationDb.TrainingPlans.AnyAsync(x =>
+            x.UserId != null));
+    }
+
+    private static HttpClient CreateClient(
+        WebApplicationFactory<Program> factory) =>
+        factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            BaseAddress = new Uri("https://localhost"),
+            AllowAutoRedirect = false
+        });
+
+    private static async Task<AccessTokenResponse> LoginAsync(
+        HttpClient client,
+        string email,
+        string password,
+        string deviceName)
+    {
+        using var login = await client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new MobileLoginRequest(email, password, deviceName));
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var tokens = await login.Content.ReadFromJsonAsync<AccessTokenResponse>();
+        Assert.NotNull(tokens);
+        return tokens;
+    }
+
+    private static void SetBearer(HttpClient client, string accessToken)
+    {
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", accessToken);
+    }
+
     private sealed class GymPlannerApiFactory : WebApplicationFactory<Program>
     {
         private readonly string _environmentName;

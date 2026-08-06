@@ -54,6 +54,19 @@ public sealed class MigrationTests
         Assert.True(await db.TrainingPlans.AnyAsync(x =>
             x.UserId == null &&
             x.WorkoutName == "Legacy global plan"));
+
+        var mobileSession = new MobileSession
+        {
+            Id = Guid.NewGuid(),
+            UserId = "user-a",
+            DeviceName = "Migration test phone",
+            CreatedAtUtc = DateTime.UtcNow,
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(7)
+        };
+        db.MobileSessions.Add(mobileSession);
+        await db.SaveChangesAsync();
+        Assert.True(await db.MobileSessions.AnyAsync(x =>
+            x.Id == mobileSession.Id && x.UserId == "user-a"));
         Assert.Empty(await db.Database.GetPendingMigrationsAsync());
     }
 
