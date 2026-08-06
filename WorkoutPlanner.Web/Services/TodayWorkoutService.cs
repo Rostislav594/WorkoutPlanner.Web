@@ -26,20 +26,14 @@ public class TodayWorkoutService
             .FirstOrDefaultAsync(x =>
                 x.Date.Date == DateTime.Today &&
                 !x.IsCompleted &&
-                (x.UserId == userId || x.UserId == null));
+                x.UserId == userId);
 
         if (day == null)
             return null;
 
-        if (day.UserId == null)
-        {
-            day.UserId = userId;
-            await _db.SaveChangesAsync();
-        }
-
         return await _db.TrainingPlans
             .FirstOrDefaultAsync(x =>
                 x.Id == day.TrainingPlanId &&
-                (x.UserId == userId || x.UserId == null));
+                x.UserId == userId);
     }
 }

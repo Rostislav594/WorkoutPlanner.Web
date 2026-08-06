@@ -25,11 +25,9 @@ public class TrainingPlanService
 
         var plans = await _db.TrainingPlans
             .Include(x => x.Exercises)
-            .Where(x => x.UserId == userId || x.UserId == null)
+            .Where(x => x.UserId == userId)
             .OrderBy(x => x.Id)
             .ToListAsync();
-
-        await ClaimLegacyPlansAsync(plans, userId);
 
         return plans;
     }
@@ -41,13 +39,7 @@ public class TrainingPlanService
         var plan = await _db.TrainingPlans
             .FirstOrDefaultAsync(x =>
                 x.Id == id &&
-                (x.UserId == userId || x.UserId == null));
-
-        if (plan != null && plan.UserId == null)
-        {
-            plan.UserId = userId;
-            await _db.SaveChangesAsync();
-        }
+                x.UserId == userId);
 
         return plan;
     }
@@ -90,7 +82,7 @@ public class TrainingPlanService
         var plan = await _db.TrainingPlans
             .FirstOrDefaultAsync(x =>
                 x.Id == id &&
-                (x.UserId == userId || x.UserId == null));
+                x.UserId == userId);
 
         if (plan == null)
             return (false, "Тренировка не найдена.");
@@ -99,7 +91,6 @@ public class TrainingPlanService
             return (false, "Тренировка с таким названием уже есть.");
 
         var previousName = plan.WorkoutName;
-        plan.UserId = userId;
         plan.WorkoutName = normalizedName;
 
         await RenameRelatedDataAsync(previousName, normalizedName, userId);
@@ -126,21 +117,19 @@ public class TrainingPlanService
             return;
 
         var workoutDays = await _db.WorkoutDays
-            .Where(x =>
-                x.TrainingPlanId == plan.Id &&
-                (x.UserId == userId || x.UserId == null))
+            .Where(x => x.TrainingPlanId == plan.Id)
             .ToListAsync();
 
         var workoutProgress = await _db.ProgressSnapshots
             .Where(x =>
                 x.WorkoutName == plan.WorkoutName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         var exerciseProgress = await _db.ExerciseProgressSnapshots
             .Where(x =>
                 x.WorkoutName == plan.WorkoutName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         _db.WorkoutDays.RemoveRange(workoutDays);
@@ -158,7 +147,7 @@ public class TrainingPlanService
     {
         return await _db.TrainingPlans.AnyAsync(x =>
             x.WorkoutName == workoutName &&
-            (x.UserId == userId || x.UserId == null) &&
+            x.UserId == userId &&
             (!exceptId.HasValue || x.Id != exceptId.Value));
     }
 
@@ -170,69 +159,46 @@ public class TrainingPlanService
         var exercises = await _db.Exercises
             .Where(x =>
                 x.WorkoutName == previousName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         foreach (var exercise in exercises)
         {
-            exercise.UserId = userId;
             exercise.WorkoutName = newName;
         }
 
         var workoutProgress = await _db.ProgressSnapshots
             .Where(x =>
                 x.WorkoutName == previousName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         foreach (var snapshot in workoutProgress)
         {
-            snapshot.UserId = userId;
             snapshot.WorkoutName = newName;
         }
 
         var exerciseProgress = await _db.ExerciseProgressSnapshots
             .Where(x =>
                 x.WorkoutName == previousName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         foreach (var snapshot in exerciseProgress)
         {
-            snapshot.UserId = userId;
             snapshot.WorkoutName = newName;
         }
 
         var history = await _db.WorkoutHistory
             .Where(x =>
                 x.WorkoutName == previousName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
 
         foreach (var item in history)
         {
-            item.UserId = userId;
             item.WorkoutName = newName;
         }
-    }
-
-    private async Task ClaimLegacyPlansAsync(
-        IEnumerable<TrainingPlan> plans,
-        string userId)
-    {
-        var legacyPlans = plans
-            .Where(x => x.UserId == null)
-            .ToList();
-
-        if (legacyPlans.Count == 0)
-            return;
-
-        foreach (var plan in legacyPlans)
-        {
-            plan.UserId = userId;
-        }
-
-        await _db.SaveChangesAsync();
     }
 
     private static string NormalizeWorkoutName(string workoutName)

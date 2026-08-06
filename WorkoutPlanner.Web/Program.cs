@@ -45,10 +45,12 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     .AddSignInManager()
     .AddDefaultTokenProviders();
 builder.Services.AddScoped<CurrentUserService>();
+builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<UserProfileService>();
 builder.Services.AddScoped<HistoryService>();
 builder.Services.AddScoped<ExerciseService>();
 builder.Services.AddScoped<TrainingPlanService>();
+builder.Services.AddScoped<StarterPlanService>();
 builder.Services.AddScoped<TodayWorkoutService>();
 builder.Services.AddScoped<WorkoutDayService>();
 builder.Services.AddScoped<ProgressService>();

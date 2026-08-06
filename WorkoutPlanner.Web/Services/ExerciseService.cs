@@ -30,10 +30,8 @@ public class ExerciseService
             .Include(x => x.Sets)
             .Where(x =>
                 x.WorkoutName == workoutName &&
-                (x.UserId == userId || x.UserId == null))
+                x.UserId == userId)
             .ToListAsync();
-
-        await ClaimLegacyExercisesAsync(exercises, userId);
 
         return exercises;
     }
@@ -41,7 +39,18 @@ public class ExerciseService
     public async Task AddExerciseAsync(
         Exercise exercise)
     {
-        exercise.UserId = await _currentUser.GetRequiredUserIdAsync();
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        var ownsPlan = await _db.TrainingPlans.AnyAsync(x =>
+            x.Id == exercise.TrainingPlanId &&
+            x.UserId == userId);
+
+        if (!ownsPlan)
+        {
+            throw new InvalidOperationException(
+                "The selected training plan does not belong to the current user.");
+        }
+
+        exercise.UserId = userId;
 
         var definition = await _db.ExerciseDefinitions
             .FirstOrDefaultAsync(x => x.Name == exercise.Name);
@@ -75,22 +84,4 @@ public class ExerciseService
         await _db.SaveChangesAsync();
     }
 
-    private async Task ClaimLegacyExercisesAsync(
-        IEnumerable<Exercise> exercises,
-        string userId)
-    {
-        var legacyExercises = exercises
-            .Where(x => x.UserId == null)
-            .ToList();
-
-        if (legacyExercises.Count == 0)
-            return;
-
-        foreach (var exercise in legacyExercises)
-        {
-            exercise.UserId = userId;
-        }
-
-        await _db.SaveChangesAsync();
-    }
 }

@@ -3,6 +3,8 @@
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
+@inject WorkoutPlanner.Web.Services.StarterPlanService StarterPlanService
+@inject ILoggerFactory LoggerFactory
 @inject NavigationManager Navigation
 
 <div class="auth-page">
@@ -132,6 +134,31 @@
                 }
             }
 
+            return;
+        }
+
+        try
+        {
+            await StarterPlanService.CreateForUserAsync(user.Id);
+        }
+        catch (Exception exception)
+        {
+            var logger = LoggerFactory.CreateLogger("Registration");
+            logger.LogError(
+                exception,
+                "Failed to create starter plans for user {UserId}.",
+                user.Id);
+
+            var cleanupResult = await UserManager.DeleteAsync(user);
+
+            if (!cleanupResult.Succeeded)
+            {
+                logger.LogCritical(
+                    "Failed to roll back user {UserId} after starter plan provisioning failed.",
+                    user.Id);
+            }
+
+            Errors.Add("Не удалось завершить регистрацию. Попробуйте ещё раз.");
             return;
         }
 

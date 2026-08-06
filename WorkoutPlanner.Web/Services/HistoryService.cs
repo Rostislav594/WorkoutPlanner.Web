@@ -34,11 +34,9 @@ public class HistoryService
         var userId = await _currentUser.GetRequiredUserIdAsync();
 
         var history = await _db.WorkoutHistory
-            .Where(x => x.UserId == userId || x.UserId == null)
+            .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.Date)
             .ToListAsync();
-
-        await ClaimLegacyHistoryAsync(history, userId);
 
         return history;
     }
@@ -61,22 +59,4 @@ public class HistoryService
         await _db.SaveChangesAsync();
     }
 
-    private async Task ClaimLegacyHistoryAsync(
-        IEnumerable<WorkoutHistory> history,
-        string userId)
-    {
-        var legacyHistory = history
-            .Where(x => x.UserId == null)
-            .ToList();
-
-        if (legacyHistory.Count == 0)
-            return;
-
-        foreach (var item in legacyHistory)
-        {
-            item.UserId = userId;
-        }
-
-        await _db.SaveChangesAsync();
-    }
 }

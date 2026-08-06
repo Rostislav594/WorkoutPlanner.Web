@@ -23,11 +23,9 @@ public class WorkoutDayService
         var userId = await _currentUser.GetRequiredUserIdAsync();
 
         var days = await _db.WorkoutDays
-            .Where(x => x.UserId == userId || x.UserId == null)
+            .Where(x => x.UserId == userId)
             .OrderBy(x => x.Date)
             .ToListAsync();
-
-        await ClaimLegacyDaysAsync(days, userId);
 
         return days;
     }
@@ -37,16 +35,24 @@ public class WorkoutDayService
         int trainingPlanId)
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
+        var ownsPlan = await _db.TrainingPlans.AnyAsync(x =>
+            x.Id == trainingPlanId &&
+            x.UserId == userId);
+
+        if (!ownsPlan)
+        {
+            throw new InvalidOperationException(
+                "The selected training plan does not belong to the current user.");
+        }
 
         var existing =
             await _db.WorkoutDays
                 .FirstOrDefaultAsync(x =>
                     x.Date.Date == date.Date &&
-                    (x.UserId == userId || x.UserId == null));
+                    x.UserId == userId);
 
         if (existing != null)
         {
-            existing.UserId = userId;
             existing.TrainingPlanId = trainingPlanId;
         }
         else
@@ -107,33 +113,14 @@ public class WorkoutDayService
             await _db.WorkoutDays
                 .FirstOrDefaultAsync(x =>
                     x.Date.Date == DateTime.Today &&
-                    (x.UserId == userId || x.UserId == null));
+                    x.UserId == userId);
 
         if (todayWorkout == null)
             return;
 
-        todayWorkout.UserId = userId;
         todayWorkout.IsCompleted = true;
 
         await _db.SaveChangesAsync();
     }
 
-    private async Task ClaimLegacyDaysAsync(
-        IEnumerable<WorkoutDay> days,
-        string userId)
-    {
-        var legacyDays = days
-            .Where(x => x.UserId == null)
-            .ToList();
-
-        if (legacyDays.Count == 0)
-            return;
-
-        foreach (var day in legacyDays)
-        {
-            day.UserId = userId;
-        }
-
-        await _db.SaveChangesAsync();
-    }
 }

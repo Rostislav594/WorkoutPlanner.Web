@@ -8,7 +8,9 @@
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
 @inject WorkoutPlanner.Web.Services.Auth.CurrentUserService CurrentUserService
+@inject WorkoutPlanner.Web.Services.Auth.AccountDeletionService AccountDeletionService
 @inject WorkoutPlanner.Web.Services.Onboarding.AppGuideService AppGuideService
+@inject ILogger<Profile> Logger
 @inject NavigationManager Navigation
 
 <div class="profile-page">
@@ -366,15 +368,26 @@
 
         ShowDeleteConfirmation = false;
 
-        if (CurrentProfile is not null)
+        try
         {
-            Db.UserProfiles.Remove(CurrentProfile);
-            await Db.SaveChangesAsync();
-        }
+            var result = await AccountDeletionService.DeleteCurrentAccountAsync();
 
-        await SignInManager.SignOutAsync();
-        await UserManager.DeleteAsync(CurrentUser);
-        Navigation.NavigateTo("/account/register", forceLoad: true);
+            if (!result.Succeeded)
+            {
+                ProfileError = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
+                return;
+            }
+
+            CurrentProfile = null;
+            CurrentUser = null;
+            await SignInManager.SignOutAsync();
+            Navigation.NavigateTo("/account/register", forceLoad: true);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to delete the current account.");
+            ProfileError = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
+        }
     }
 
     private sealed class ProfileInput

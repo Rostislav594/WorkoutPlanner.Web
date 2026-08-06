@@ -7,19 +7,8 @@ public static class DbSeeder
     public static void Seed(WorkoutDbContext db)
     {
         SeedMuscles(db);
-
-        if (!db.TrainingPlans.Any())
-        {
-            db.TrainingPlans.AddRange(
-                new TrainingPlan { WorkoutName = "Верх 1" },
-                new TrainingPlan { WorkoutName = "Низ 1" },
-                new TrainingPlan { WorkoutName = "Верх 2" },
-                new TrainingPlan { WorkoutName = "Низ 2" }
-            );
-
-            db.SaveChanges();
-        }
     }
+
     private static void SeedMuscles(WorkoutDbContext db)
     {
         string[] muscleNames =
