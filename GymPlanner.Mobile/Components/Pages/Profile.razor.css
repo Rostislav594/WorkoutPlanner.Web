@@ -1,0 +1,20 @@
+.profile-page { max-width: 50rem; margin: 0 auto; }
+.profile-heading p { margin: 0; color: #80d89b; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.profile-heading h1 { margin: .35rem 0; font-size: clamp(2rem, 8vw, 3rem); }
+.profile-heading span { color: #aeb7c2; }
+.profile-state, .profile-panel { margin-top: 1.25rem; padding: 1.25rem; border: 1px solid #2b3038; border-radius: 1.1rem; background: #171a20; }
+.profile-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-top: 1.25rem; }
+.profile-tabs button { border: 1px solid #3c444f; border-radius: .75rem; padding: .7rem; background: transparent; color: #aeb7c2; }
+.profile-tabs button.active { border-color: #3fb950; background: #263c2e; color: #fff; }
+.profile-grid { display: grid; gap: 0 1rem; }
+.primary-action, .secondary-action, .danger-action { min-height: 2.8rem; border-radius: .75rem; padding: .65rem 1rem; font: inherit; font-weight: 750; }
+.primary-action { width: 100%; border: 0; background: #3fb950; color: #08110b; }
+.secondary-action { border: 1px solid #46505c; background: #242a32; color: #fff; }
+.danger-action { border: 1px solid #a44d59; background: #4a252b; color: #ffd9dd; }
+.primary-action:disabled, .secondary-action:disabled, .danger-action:disabled { opacity: .55; }
+.profile-success { margin-bottom: 1rem; padding: .75rem; border: 1px solid #347344; border-radius: .75rem; background: #1d3825; color: #b9f5c8; }
+.profile-panel hr { margin: 1.5rem 0; border: 0; border-top: 1px solid #343b45; }
+.profile-panel p { color: #aeb7c2; line-height: 1.5; }
+.delete-confirmation { display: grid; gap: 1rem; padding: 1rem; border: 1px solid #a44d59; border-radius: .75rem; background: #351d21; }
+.confirmation-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+@media (min-width: 42rem) { .profile-grid { grid-template-columns: 1fr 1fr; } }
