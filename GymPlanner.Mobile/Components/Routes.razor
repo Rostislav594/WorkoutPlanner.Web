@@ -1,3 +1,9 @@
+@implements IDisposable
+@inject MobileAuthenticationService Authentication
+@inject NavigationManager Navigation
+@inject MobileBackNavigationService BackNavigation
+@inject MobileLifecycleService Lifecycle
+
 <AppSplash />
 
 <CascadingAuthenticationState>
@@ -12,3 +18,102 @@
         </Found>
     </Router>
 </CascadingAuthenticationState>
+
+@code {
+    private bool _resumeInProgress;
+    private bool _navigatingBack;
+    private readonly List<string> _navigationHistory = [];
+
+    protected override void OnInitialized()
+    {
+        BackNavigation.BackRequested += RequestBack;
+        Lifecycle.Resumed += ResumeSession;
+        Navigation.LocationChanged += LocationChanged;
+        _navigationHistory.Add(Navigation.Uri);
+        UpdateBackAvailability();
+    }
+
+    private void LocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        if (_navigatingBack)
+        {
+            _navigatingBack = false;
+        }
+        else if (ShouldResetHistory(args.Location))
+        {
+            _navigationHistory.Clear();
+            _navigationHistory.Add(args.Location);
+        }
+        else if (_navigationHistory.Count == 0 ||
+                 !string.Equals(_navigationHistory[^1], args.Location, StringComparison.Ordinal))
+        {
+            _navigationHistory.Add(args.Location);
+        }
+
+        UpdateBackAvailability();
+    }
+
+    private bool ShouldResetHistory(string nextLocation)
+    {
+        if (_navigationHistory.Count == 0)
+            return false;
+
+        var nextRoute = Navigation.ToBaseRelativePath(nextLocation);
+        var previousRoute = Navigation.ToBaseRelativePath(_navigationHistory[^1]);
+        var nextIsAccount = nextRoute.StartsWith(
+            "account/",
+            StringComparison.OrdinalIgnoreCase);
+        var previousIsAccount = previousRoute.StartsWith(
+            "account/",
+            StringComparison.OrdinalIgnoreCase);
+
+        return (nextIsAccount && !previousIsAccount) ||
+               (nextRoute.Length == 0 && previousIsAccount);
+    }
+
+    private void RequestBack() => _ = InvokeAsync(NavigateBack);
+
+    private void NavigateBack()
+    {
+        if (_navigationHistory.Count < 2)
+        {
+            UpdateBackAvailability();
+            return;
+        }
+
+        _navigationHistory.RemoveAt(_navigationHistory.Count - 1);
+        var target = _navigationHistory[^1];
+        _navigatingBack = true;
+        UpdateBackAvailability();
+        Navigation.NavigateTo(target, replace: true);
+    }
+
+    private void UpdateBackAvailability() =>
+        BackNavigation.SetCanNavigateBack(_navigationHistory.Count > 1);
+
+    private void ResumeSession() => _ = InvokeAsync(RefreshSessionAfterResumeAsync);
+
+    private async Task RefreshSessionAfterResumeAsync()
+    {
+        if (_resumeInProgress)
+            return;
+
+        _resumeInProgress = true;
+        try
+        {
+            await Authentication.GetValidAccessTokenAsync();
+        }
+        finally
+        {
+            _resumeInProgress = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        BackNavigation.BackRequested -= RequestBack;
+        Lifecycle.Resumed -= ResumeSession;
+        Navigation.LocationChanged -= LocationChanged;
+        BackNavigation.SetCanNavigateBack(false);
+    }
+}

@@ -3,8 +3,6 @@
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
-@inject MobileBackNavigationService BackNavigation
-@inject MobileLifecycleService Lifecycle
 
 <div class="mobile-shell">
     <header class="mobile-header">
@@ -37,20 +35,10 @@
 
 @code {
     private bool _isLoggingOut;
-    private bool _resumeInProgress;
-    private bool _navigatingBack;
     private string? _logoutError;
-    private readonly List<string> _navigationHistory = [];
 
-    protected override void OnInitialized()
-    {
+    protected override void OnInitialized() =>
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
-        BackNavigation.BackRequested += RequestBack;
-        Lifecycle.Resumed += ResumeSession;
-        Navigation.LocationChanged += LocationChanged;
-        _navigationHistory.Add(Navigation.Uri);
-        UpdateBackAvailability();
-    }
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -61,77 +49,6 @@
 
     private void OpenNotificationRoute(string route) =>
         _ = InvokeAsync(() => Navigation.NavigateTo(route));
-
-    private void LocationChanged(object? sender, LocationChangedEventArgs args)
-    {
-        if (_navigatingBack)
-        {
-            _navigatingBack = false;
-        }
-        else if (ShouldResetHistory(args.Location))
-        {
-            _navigationHistory.Clear();
-            _navigationHistory.Add(args.Location);
-        }
-        else if (_navigationHistory.Count == 0 ||
-                 !string.Equals(_navigationHistory[^1], args.Location, StringComparison.Ordinal))
-        {
-            _navigationHistory.Add(args.Location);
-        }
-
-        UpdateBackAvailability();
-    }
-
-    private bool ShouldResetHistory(string nextLocation)
-    {
-        var nextRoute = Navigation.ToBaseRelativePath(nextLocation);
-        if (nextRoute.StartsWith("account/", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (_navigationHistory.Count == 0 || nextRoute.Length != 0)
-            return false;
-
-        var previousRoute = Navigation.ToBaseRelativePath(_navigationHistory[^1]);
-        return previousRoute.StartsWith("account/", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void RequestBack() => _ = InvokeAsync(NavigateBack);
-
-    private void NavigateBack()
-    {
-        if (_navigationHistory.Count < 2)
-        {
-            UpdateBackAvailability();
-            return;
-        }
-
-        _navigationHistory.RemoveAt(_navigationHistory.Count - 1);
-        var target = _navigationHistory[^1];
-        _navigatingBack = true;
-        UpdateBackAvailability();
-        Navigation.NavigateTo(target, replace: true);
-    }
-
-    private void UpdateBackAvailability() =>
-        BackNavigation.SetCanNavigateBack(_navigationHistory.Count > 1);
-
-    private void ResumeSession() => _ = InvokeAsync(RefreshSessionAfterResumeAsync);
-
-    private async Task RefreshSessionAfterResumeAsync()
-    {
-        if (_resumeInProgress)
-            return;
-
-        _resumeInProgress = true;
-        try
-        {
-            await Authentication.GetValidAccessTokenAsync();
-        }
-        finally
-        {
-            _resumeInProgress = false;
-        }
-    }
 
     private async Task LogoutAsync()
     {
@@ -157,12 +74,6 @@
         }
     }
 
-    public void Dispose()
-    {
+    public void Dispose() =>
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
-        BackNavigation.BackRequested -= RequestBack;
-        Lifecycle.Resumed -= ResumeSession;
-        Navigation.LocationChanged -= LocationChanged;
-        BackNavigation.SetCanNavigateBack(false);
-    }
 }

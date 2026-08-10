@@ -45,11 +45,12 @@
 - Shared character images and Material Symbols are packaged as local RCL static
   assets. Neither MAUI nor the Web shell depends on a font or icon CDN at
   runtime.
-- The Android system Back action uses a bounded in-app route history and falls
-  through to the platform only at the root. Authentication route transitions
-  reset that history, so Back cannot reopen login after a successful sign-in.
-  A resumed MAUI window revalidates or refreshes an expiring SecureStorage
-  session before the next protected request.
+- The Android system Back action uses a root-level bounded in-app route history
+  across both authenticated and account layouts, and falls through to the
+  platform only at the root. Crossing the authentication boundary resets that
+  history, so Back cannot reopen login after a successful sign-in, while
+  Register can still return to Login. A resumed MAUI window revalidates or
+  refreshes an expiring SecureStorage session before the next protected request.
 
 ## Boundary
 
