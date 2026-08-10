@@ -15,7 +15,8 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
-		builder.Services.AddSingleton(Infrastructure.MobileApiOptions.CreateDefault());
+		builder.Services.AddSingleton(
+			Infrastructure.MobileApiOptions.CreateDefault(builder.Configuration));
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
 			Authentication.SecureMobileTokenStore>();

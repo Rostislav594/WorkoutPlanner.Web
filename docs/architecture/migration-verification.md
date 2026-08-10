@@ -16,7 +16,9 @@
 - API DTOs contain no trusted `UserId`; protected endpoint groups require the
   mobile-session bearer policy. EF entities and navigation graphs remain inside
   Web.
-- The development client URL uses backend HTTPS port `7196`. Certificate
+- The development client URL uses backend HTTPS port `7196`. Device/production
+  builds can override it through configuration, environment, or an MSBuild
+  package property; only an absolute HTTPS base URI is accepted. Certificate
   validation is not bypassed.
 
 ## Device acceptance still required

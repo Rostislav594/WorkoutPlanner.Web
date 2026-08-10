@@ -62,4 +62,15 @@ Development defaults match the backend HTTPS launch profile:
 `https://10.0.2.2:7196` for the Android emulator and
 `https://localhost:7196` for the iOS simulator. Certificate validation is never
 disabled. Physical devices and production packages require a trusted public
-HTTPS endpoint supplied by environment-specific mobile configuration.
+HTTPS endpoint. Supply it with `MobileApi:BaseAddress`, the
+`GYMPLANNER_API_BASE_ADDRESS` environment variable, or at package build time:
+
+```powershell
+dotnet publish GymPlanner.Mobile/GymPlanner.Mobile.csproj `
+  -f net10.0-android -c Release `
+  -p:GymPlannerApiBaseAddress=https://api.example.com/
+```
+
+The client rejects non-HTTPS addresses, embedded credentials, query strings,
+and fragments. The endpoint is configuration, not a secret; production
+credentials and certificate private keys remain outside the repository.
