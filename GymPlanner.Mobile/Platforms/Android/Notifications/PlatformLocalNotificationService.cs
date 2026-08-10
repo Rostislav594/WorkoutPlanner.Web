@@ -66,6 +66,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
     }
 
     public Task<NotificationOperationResult> CancelAllAsync(
+        IReadOnlyCollection<int> workoutDayIds,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -79,7 +80,11 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
 
         var notificationManager =
             context.GetSystemService(Context.NotificationService) as NotificationManager;
-        foreach (var workoutDayId in AndroidReminderStore.GetWorkoutDayIds(context))
+        var scheduledIds = AndroidReminderStore.GetWorkoutDayIds(context)
+            .Concat(workoutDayIds)
+            .Where(workoutDayId => workoutDayId > 0)
+            .Distinct();
+        foreach (var workoutDayId in scheduledIds)
         {
             var pendingIntent = AndroidNotificationSupport.CreateAlarmIntent(
                 context,

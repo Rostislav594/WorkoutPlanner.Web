@@ -59,6 +59,7 @@ public interface ILocalNotificationPlatform
         CancellationToken cancellationToken = default);
 
     Task<NotificationOperationResult> CancelAllAsync(
+        IReadOnlyCollection<int> workoutDayIds,
         CancellationToken cancellationToken = default);
 }
 
@@ -118,7 +119,7 @@ public sealed class LocalWorkoutReminderService(
         CancellationToken cancellationToken = default)
     {
         var reminderIds = GetReminderIds();
-        var result = await platform.CancelAllAsync(cancellationToken);
+        var result = await platform.CancelAllAsync(reminderIds, cancellationToken);
         if (!result.Succeeded)
             return result;
 

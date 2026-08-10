@@ -66,6 +66,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
     }
 
     public Task<NotificationOperationResult> CancelAllAsync(
+        IReadOnlyCollection<int> workoutDayIds,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
