@@ -64,6 +64,34 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         AndroidReminderStore.Remove(context, workoutDayId);
         return Task.FromResult(NotificationOperationResult.Success);
     }
+
+    public Task<NotificationOperationResult> CancelAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var context = Platform.AppContext;
+        var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+        if (alarmManager is null)
+        {
+            return Task.FromResult(NotificationOperationResult.Failure(
+                "Системная служба напоминаний недоступна."));
+        }
+
+        var notificationManager =
+            context.GetSystemService(Context.NotificationService) as NotificationManager;
+        foreach (var workoutDayId in AndroidReminderStore.GetWorkoutDayIds(context))
+        {
+            var pendingIntent = AndroidNotificationSupport.CreateAlarmIntent(
+                context,
+                workoutDayId);
+            alarmManager.Cancel(pendingIntent);
+            pendingIntent.Cancel();
+            notificationManager?.Cancel(workoutDayId);
+        }
+
+        AndroidReminderStore.Clear(context);
+        return Task.FromResult(NotificationOperationResult.Success);
+    }
 }
 
 internal static class AndroidNotificationSupport
@@ -308,6 +336,30 @@ internal static class AndroidReminderStore
                 Remove(context, workoutDayId);
             return reminders;
         }
+    }
+
+    public static IReadOnlyList<int> GetWorkoutDayIds(Context context)
+    {
+        lock (Sync)
+        {
+            return GetIds(GetPreferences(context))
+                .Select(value => int.TryParse(
+                    value,
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    out var workoutDayId)
+                    ? workoutDayId
+                    : 0)
+                .Where(workoutDayId => workoutDayId > 0)
+                .Distinct()
+                .ToArray();
+        }
+    }
+
+    public static void Clear(Context context)
+    {
+        lock (Sync)
+            GetPreferences(context).Edit()!.Clear()!.Commit();
     }
 
     private static ISharedPreferences GetPreferences(Context context) =>

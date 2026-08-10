@@ -25,7 +25,9 @@ credential or workout details beyond the local notification fields.
 The local index in MAUI Preferences exists only to show and cancel scheduled
 reminders. It contains no credentials. Logout, password change, access revocation,
 token invalidation, and account deletion clear indexed reminders before local
-session state is discarded. Android alarms are recreated after a full device
+session state is discarded. Platform-wide cancellation does not depend on the
+MAUI display index, so a corrupt index cannot leave Android reboot alarms or iOS
+pending notifications behind. Android alarms are recreated after a full device
 reboot. Delivery after reboot still requires device acceptance testing across
 the supported Android versions.
 

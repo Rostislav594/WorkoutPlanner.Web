@@ -57,6 +57,9 @@ public interface ILocalNotificationPlatform
     Task<NotificationOperationResult> CancelAsync(
         int workoutDayId,
         CancellationToken cancellationToken = default);
+
+    Task<NotificationOperationResult> CancelAllAsync(
+        CancellationToken cancellationToken = default);
 }
 
 public sealed class LocalWorkoutReminderService(
@@ -114,22 +117,13 @@ public sealed class LocalWorkoutReminderService(
     public async Task<NotificationOperationResult> CancelAllAsync(
         CancellationToken cancellationToken = default)
     {
-        var errors = new List<string>();
-        foreach (var workoutDayId in GetReminderIds())
-        {
-            var result = await platform.CancelAsync(workoutDayId, cancellationToken);
-            if (!result.Succeeded)
-            {
-                errors.AddRange(result.Errors);
-                continue;
-            }
+        var reminderIds = GetReminderIds();
+        var result = await platform.CancelAllAsync(cancellationToken);
+        if (!result.Succeeded)
+            return result;
 
+        foreach (var workoutDayId in reminderIds)
             Preferences.Default.Remove(GetPreferenceKey(workoutDayId));
-        }
-
-        if (errors.Count > 0)
-            return NotificationOperationResult.Failure([.. errors.Distinct()]);
-
         Preferences.Default.Remove(ReminderIndexKey);
         return NotificationOperationResult.Success;
     }

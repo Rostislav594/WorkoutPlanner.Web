@@ -65,6 +65,15 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         return Task.FromResult(NotificationOperationResult.Success);
     }
 
+    public Task<NotificationOperationResult> CancelAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        UNUserNotificationCenter.Current.RemoveAllPendingNotificationRequests();
+        UNUserNotificationCenter.Current.RemoveAllDeliveredNotifications();
+        return Task.FromResult(NotificationOperationResult.Success);
+    }
+
     private static string GetIdentifier(int workoutDayId) =>
         $"workout-reminder-{workoutDayId}";
 }
