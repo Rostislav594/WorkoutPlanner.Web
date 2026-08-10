@@ -58,7 +58,8 @@ logout leaves the local credentials in place so revocation can be retried rather
 than silently leaving an active server session. The optional device name is
 diagnostic metadata only and is never used as an authorization decision.
 
-Development defaults are `https://10.0.2.2:5001` for the Android emulator and
-`https://localhost:5001` for the iOS simulator. Certificate validation is never
+Development defaults match the backend HTTPS launch profile:
+`https://10.0.2.2:7196` for the Android emulator and
+`https://localhost:7196` for the iOS simulator. Certificate validation is never
 disabled. Physical devices and production packages require a trusted public
 HTTPS endpoint supplied by environment-specific mobile configuration.

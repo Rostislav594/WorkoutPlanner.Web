@@ -51,3 +51,7 @@
 The MAUI pages never accept or send a user id. The authenticated server principal
 selects the current user. HTTP failures remain visible and retryable; the client
 does not replace centralized server state with a local Identity database.
+
+Device-only acceptance checks and known platform limitations are tracked in
+[migration-verification.md](migration-verification.md). The separate future
+offline design is documented in [future-offline-sync.md](future-offline-sync.md).

@@ -5,8 +5,8 @@ It has no ASP.NET Core, EF Core, Identity, UI, or filesystem dependency. Domain
 inputs explicitly carry each set's own weight and repetitions.
 
 `WorkoutPlanner.Api.Contracts` contains the mobile HTTP request and response
-DTOs. It has no reference to the web project or EF entities and can be consumed
-by both ASP.NET Core endpoints and the future MAUI client.
+DTOs. It has no reference to the web project or EF entities and is consumed by
+both ASP.NET Core endpoints and the MAUI client.
 
 `WorkoutPlanner.Web` remains the composition root and owner of ASP.NET Core
 Identity, EF Core entities and migrations, SQLite, server implementations,
