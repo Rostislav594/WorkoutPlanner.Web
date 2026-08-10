@@ -30,6 +30,9 @@ public static class MauiProgram
 			Api.WorkoutLifecycleApiClient>();
 		builder.Services.AddSingleton<Api.IProgressApiClient, Api.ProgressApiClient>();
 		builder.Services.AddSingleton<Api.IOnboardingApiClient, Api.OnboardingApiClient>();
+		builder.Services.AddSingleton<Api.IExercisePhotoApiClient,
+			Api.ExercisePhotoApiClient>();
+		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();

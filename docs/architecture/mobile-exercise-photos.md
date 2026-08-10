@@ -17,7 +17,14 @@ if linking it fails, while a failed physical deletion restores the database
 reference. Replacing a photo removes the previous file after the new reference
 is saved. Another user's photo route returns `404 Not Found`.
 
-The future MAUI implementation will use the platform photo picker or camera and
-send the selected stream as multipart content. Permission denial, user cancel,
-and network loss remain client concerns for that stage. No schema migration or
-new package is required here.
+The MAUI client uses the built-in platform photo picker and camera through an
+application abstraction, so no additional package is required. Camera access is
+requested at the point of use; denial, unsupported hardware, cancellation,
+unsupported formats, files over 5 MB, read errors, and network failures are
+reported without changing the exercise record.
+
+The selected bytes are sent as multipart content through the authenticated HTTP
+client. Existing photos are also downloaded through that client and rendered
+from an in-memory data URI, rather than exposing a bearer-free public URL to the
+BlazorWebView. The client can replace or explicitly delete a photo and updates
+its local `HasPhoto` projection only after the server confirms the mutation.

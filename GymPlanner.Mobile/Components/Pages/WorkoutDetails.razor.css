@@ -17,6 +17,10 @@ h1 { margin: 1rem 0; font-size: clamp(2rem, 9vw, 3rem); }
 .editor-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; align-items: end; padding-top: env(safe-area-inset-top); background: rgba(0, 0, 0, .75); }
 .exercise-editor { max-height: 92dvh; overflow: auto; padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 1px solid #46505c; border-radius: 1.25rem 1.25rem 0 0; background: #171a20; }
 .exercise-editor h2 { margin-top: 0; }
+.photo-editor { width: min(100%, 42rem); }
+.exercise-photo { display: block; width: 100%; max-height: 55dvh; border-radius: .85rem; object-fit: contain; background: #0f1115; }
+.empty-photo { margin: .75rem 0; padding: 1.5rem; border: 1px dashed #46505c; border-radius: .85rem; color: #aeb7c2; text-align: center; }
+.photo-hint { color: #aeb7c2; font-size: .9rem; }
 .set-editor-list { display: grid; gap: .75rem; margin-top: 1rem; }
 .set-editor-list fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; border: 1px solid #343b45; border-radius: .8rem; padding: .75rem; }
 .set-editor-list legend { padding: 0 .3rem; color: #80d89b; font-weight: 700; }

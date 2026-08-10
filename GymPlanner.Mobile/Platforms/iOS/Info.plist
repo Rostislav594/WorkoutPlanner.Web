@@ -4,6 +4,10 @@
 <dict>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>NSCameraUsageDescription</key>
+    <string>GymPlanner использует камеру, чтобы добавить фотографию упражнения.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>GymPlanner использует выбранную фотографию для упражнения.</string>
     <key>UIDeviceFamily</key>
     <array>
         <integer>1</integer>

@@ -34,6 +34,10 @@
 - Mobile onboarding is a resumable navigation tour backed by the protected
   onboarding state API. Its coach card and character are local RCL assets; the
   MAUI client does not copy the Web spotlight JavaScript or server circuit.
+- Exercise photos use the MAUI system gallery or camera, validate the 5 MB and
+  JPG/PNG/WebP boundary before upload, and travel only through the protected
+  multipart API. Viewing and deletion also use the bearer-authenticated client;
+  no server file path or public image URL is exposed to the WebView.
 
 ## Boundary
 

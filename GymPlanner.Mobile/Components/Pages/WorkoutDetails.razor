@@ -2,6 +2,8 @@
 @attribute [Authorize]
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
+@inject IExercisePhotoApiClient PhotoClient
+@inject IMobilePhotoPicker PhotoPicker
 
 <section class="details-page">
     <a class="back-link" href="/workouts">← К планам</a>
@@ -20,7 +22,7 @@
                     @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                     { <span>Подход @set.SetNumber: <strong>@set.Weight кг × @set.Repetitions</strong></span> }
                 </div>
-                <div class="actions"><button class="secondary" type="button" @onclick="() => BeginEdit(exercise)">Изменить</button>
+                <div class="actions"><button class="secondary" type="button" @onclick="() => OpenPhotoAsync(exercise)">@(exercise.HasPhoto ? "Фото" : "Добавить фото")</button><button class="secondary" type="button" @onclick="() => BeginEdit(exercise)">Изменить</button>
                     @if (_deleteExerciseId == exercise.Id) { <button class="secondary" @onclick="CancelDelete">Отмена</button><button class="danger" disabled="@_busy" @onclick="() => DeleteAsync(exercise.Id)">Удалить точно</button> }
                     else { <button class="danger" type="button" @onclick="() => _deleteExerciseId = exercise.Id">Удалить</button> }
                 </div>
@@ -47,14 +49,61 @@
     </section></div>
 }
 
+@if (_photoExercise is not null)
+{
+    <div class="editor-backdrop">
+        <section class="exercise-editor photo-editor" role="dialog" aria-modal="true" aria-labelledby="photo-editor-title">
+            <h2 id="photo-editor-title">Фото: @_photoExercise.Name</h2>
+            @if (_photoErrors.Count > 0)
+            {
+                <div class="auth-error" role="alert">@string.Join(" ", _photoErrors)</div>
+            }
+            @if (_photoBusy)
+            {
+                <p role="status">Обрабатываем фотографию…</p>
+            }
+            else if (_photoDataUri is not null)
+            {
+                <img class="exercise-photo" src="@_photoDataUri" alt="Фото упражнения @_photoExercise.Name" />
+            }
+            else
+            {
+                <p class="empty-photo">У этого упражнения пока нет фотографии.</p>
+            }
+            <p class="photo-hint">JPG, PNG или WebP, не более 5 МБ.</p>
+            <div class="actions">
+                <button class="primary" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">Выбрать фото</button>
+                <button class="secondary" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">Сделать снимок</button>
+                @if (_photoExercise.HasPhoto)
+                {
+                    @if (_confirmPhotoDelete)
+                    {
+                        <button class="secondary" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">Отмена удаления</button>
+                        <button class="danger" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">Удалить точно</button>
+                    }
+                    else
+                    {
+                        <button class="danger" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">Удалить фото</button>
+                    }
+                }
+                <button class="secondary" type="button" disabled="@_photoBusy" @onclick="ClosePhoto">Закрыть</button>
+            </div>
+        </section>
+    </div>
+}
+
 @code {
     [Parameter] public int Id { get; set; }
     private TrainingPlanApiResponse? _plan;
     private readonly List<ExerciseDefinitionApiResponse> _definitions = [];
     private readonly List<string> _loadErrors = [], _operationErrors = [], _editorErrors = [];
+    private readonly List<string> _photoErrors = [];
     private ExerciseDraft _draft = ExerciseDraft.Create();
     private bool _loading = true, _busy, _showEditor;
+    private bool _photoBusy, _confirmPhotoDelete;
     private int? _editingId, _deleteExerciseId;
+    private ExerciseApiResponse? _photoExercise;
+    private string? _photoDataUri;
     protected override Task OnParametersSetAsync() => LoadAsync();
 
     private async Task LoadAsync()
@@ -71,6 +120,120 @@
     private void BeginEdit(ExerciseApiResponse exercise) { _editingId = exercise.Id; _draft = ExerciseDraft.From(exercise); _editorErrors.Clear(); _showEditor = true; }
     private void CloseEditor() { if (_busy) return; _showEditor = false; _editingId = null; }
     private void CancelDelete() => _deleteExerciseId = null;
+
+    private async Task OpenPhotoAsync(ExerciseApiResponse exercise)
+    {
+        _photoExercise = exercise;
+        _photoDataUri = null;
+        _confirmPhotoDelete = false;
+        _photoErrors.Clear();
+        if (!exercise.HasPhoto)
+            return;
+
+        _photoBusy = true;
+        try
+        {
+            var result = await PhotoClient.DownloadAsync(exercise.Id);
+            if (!result.Succeeded)
+            {
+                _photoErrors.AddRange(result.Errors);
+            }
+            else if (result.Value is { } photo)
+            {
+                _photoDataUri = $"data:{photo.ContentType};base64,{Convert.ToBase64String(photo.Content)}";
+            }
+            else
+            {
+                SetPhotoAvailability(false);
+            }
+        }
+        finally
+        {
+            _photoBusy = false;
+        }
+    }
+
+    private void ClosePhoto()
+    {
+        if (_photoBusy)
+            return;
+
+        _photoExercise = null;
+        _photoDataUri = null;
+        _photoErrors.Clear();
+        _confirmPhotoDelete = false;
+    }
+
+    private async Task PickPhotoAsync(MobilePhotoSource source)
+    {
+        if (_photoBusy || _photoExercise is null)
+            return;
+
+        _photoBusy = true;
+        _photoErrors.Clear();
+        _confirmPhotoDelete = false;
+        try
+        {
+            var picked = await PhotoPicker.PickAsync(source);
+            if (picked.Cancelled)
+                return;
+            if (!picked.Succeeded)
+            {
+                _photoErrors.AddRange(picked.Errors);
+                return;
+            }
+
+            var result = await PhotoClient.UploadAsync(_photoExercise.Id, picked.Photo!);
+            if (!result.Succeeded)
+            {
+                _photoErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _photoDataUri = $"data:{picked.Photo!.ContentType};base64,{Convert.ToBase64String(picked.Photo.Content)}";
+            SetPhotoAvailability(true);
+        }
+        finally
+        {
+            _photoBusy = false;
+        }
+    }
+
+    private async Task DeletePhotoAsync()
+    {
+        if (_photoBusy || _photoExercise is null)
+            return;
+
+        _photoBusy = true;
+        _photoErrors.Clear();
+        try
+        {
+            var result = await PhotoClient.DeleteAsync(_photoExercise.Id);
+            if (!result.Succeeded)
+            {
+                _photoErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _photoDataUri = null;
+            _confirmPhotoDelete = false;
+            SetPhotoAvailability(false);
+        }
+        finally
+        {
+            _photoBusy = false;
+        }
+    }
+
+    private void SetPhotoAvailability(bool hasPhoto)
+    {
+        if (_photoExercise is null)
+            return;
+
+        _photoExercise = _photoExercise with { HasPhoto = hasPhoto };
+        ReplaceExercise(_photoExercise);
+    }
+
     private void ApplyDefinition() { var definition = _definitions.FirstOrDefault(x => x.Id == _draft.DefinitionId); if (definition is not null) _draft.Name = definition.Name; }
     private void ChangeSetsCount(ChangeEventArgs args) { if (!int.TryParse(args.Value?.ToString(), out var count)) return; _draft.Resize(Math.Clamp(count, 1, 20)); }
 
