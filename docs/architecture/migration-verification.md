@@ -43,7 +43,7 @@ the following before a production release:
 - verify signed Release builds, production entitlements, package identifiers,
   privacy declarations, and store-specific requirements.
 
-Android reminders currently survive app process termination but are not
-recreated after a full device reboot. Remote push and full offline sync are
-deliberately future stages; no provider secret or local Identity database has
-been added.
+Android reminders survive process termination and are restored from a private,
+versioned index after reboot or app replacement. Device delivery remains an
+acceptance gate. Remote push and full offline sync are deliberately future
+stages; no provider secret or local Identity database has been added.

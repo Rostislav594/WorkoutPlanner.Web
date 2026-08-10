@@ -2,6 +2,7 @@ using Android.App;
 using Android.Content;
 using Android.OS;
 using Microsoft.Maui.ApplicationModel;
+using System.Text.Json;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -30,20 +31,13 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
     {
         cancellationToken.ThrowIfCancellationRequested();
         var context = Platform.AppContext;
-        var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
-        if (alarmManager is null)
+        if (!AndroidNotificationSupport.TryScheduleAlarm(context, reminder))
         {
             return Task.FromResult(NotificationOperationResult.Failure(
                 "Системная служба напоминаний недоступна."));
         }
 
-        var pendingIntent = AndroidNotificationSupport.CreateAlarmIntent(
-            context,
-            reminder);
-        alarmManager.SetAndAllowWhileIdle(
-            AlarmType.RtcWakeup,
-            reminder.NotifyAt.ToUnixTimeMilliseconds(),
-            pendingIntent);
+        AndroidReminderStore.Save(context, reminder);
         return Task.FromResult(NotificationOperationResult.Success);
     }
 
@@ -67,6 +61,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         pendingIntent.Cancel();
         (context.GetSystemService(Context.NotificationService) as NotificationManager)?
             .Cancel(workoutDayId);
+        AndroidReminderStore.Remove(context, workoutDayId);
         return Task.FromResult(NotificationOperationResult.Success);
     }
 }
@@ -77,7 +72,23 @@ internal static class AndroidNotificationSupport
     public const string RouteExtra = "gymplanner.notification.route";
     private const string TitleExtra = "gymplanner.notification.title";
     private const string BodyExtra = "gymplanner.notification.body";
-    private const string WorkoutDayIdExtra = "gymplanner.notification.workout-day-id";
+    internal const string WorkoutDayIdExtra = "gymplanner.notification.workout-day-id";
+
+    public static bool TryScheduleAlarm(
+        Context context,
+        LocalWorkoutReminder reminder)
+    {
+        var alarmManager = context.GetSystemService(Context.AlarmService) as AlarmManager;
+        if (alarmManager is null)
+            return false;
+
+        var pendingIntent = CreateAlarmIntent(context, reminder);
+        alarmManager.SetAndAllowWhileIdle(
+            AlarmType.RtcWakeup,
+            reminder.NotifyAt.ToUnixTimeMilliseconds(),
+            pendingIntent);
+        return true;
+    }
 
     public static PendingIntent CreateAlarmIntent(
         Context context,
@@ -168,7 +179,145 @@ public sealed class WorkoutReminderReceiver : BroadcastReceiver
 {
     public override void OnReceive(Context? context, Intent? intent)
     {
-        if (context is not null && intent is not null)
-            AndroidNotificationSupport.Show(context, intent);
+        if (context is null || intent is null)
+            return;
+
+        var workoutDayId = intent.GetIntExtra(
+            AndroidNotificationSupport.WorkoutDayIdExtra,
+            0);
+        if (workoutDayId > 0)
+            AndroidReminderStore.Remove(context, workoutDayId);
+        AndroidNotificationSupport.Show(context, intent);
     }
+}
+
+[BroadcastReceiver(Enabled = true, Exported = false)]
+[IntentFilter(new[]
+{
+    "android.intent.action.BOOT_COMPLETED",
+    "android.intent.action.MY_PACKAGE_REPLACED"
+})]
+public sealed class WorkoutReminderRestoreReceiver : BroadcastReceiver
+{
+    public override void OnReceive(Context? context, Intent? intent)
+    {
+        if (context is null)
+            return;
+
+        foreach (var reminder in AndroidReminderStore.LoadFuture(context))
+            AndroidNotificationSupport.TryScheduleAlarm(context, reminder);
+    }
+}
+
+internal static class AndroidReminderStore
+{
+    private const string PreferenceName = "gymplanner.workout-reminders";
+    private const string VersionKey = "schema-version";
+    private const string IndexKey = "reminder-index";
+    private const string ReminderPrefix = "reminder:";
+    private const int CurrentVersion = 1;
+    private static readonly object Sync = new();
+
+    public static void Save(Context context, LocalWorkoutReminder reminder)
+    {
+        lock (Sync)
+        {
+            var preferences = GetPreferences(context);
+            var ids = GetIds(preferences);
+            ids.Add(reminder.WorkoutDayId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            preferences.Edit()!
+                .PutInt(VersionKey, CurrentVersion)!
+                .PutString(GetReminderKey(reminder.WorkoutDayId), JsonSerializer.Serialize(reminder))!
+                .PutStringSet(IndexKey, ids)!
+                .Commit();
+        }
+    }
+
+    public static void Remove(Context context, int workoutDayId)
+        => Remove(
+            context,
+            workoutDayId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+    private static void Remove(Context context, string workoutDayId)
+    {
+        lock (Sync)
+        {
+            var preferences = GetPreferences(context);
+            var ids = GetIds(preferences);
+            ids.Remove(workoutDayId);
+            var editor = preferences.Edit()!
+                .Remove($"{ReminderPrefix}{workoutDayId}")!;
+            if (ids.Count == 0)
+                editor.Remove(IndexKey)!.Remove(VersionKey)!.Commit();
+            else
+                editor.PutStringSet(IndexKey, ids)!.Commit();
+        }
+    }
+
+    public static IReadOnlyList<LocalWorkoutReminder> LoadFuture(Context context)
+    {
+        lock (Sync)
+        {
+            var preferences = GetPreferences(context);
+            if (preferences.GetInt(VersionKey, CurrentVersion) != CurrentVersion)
+            {
+                preferences.Edit()!.Clear()!.Commit();
+                return [];
+            }
+
+            var reminders = new List<LocalWorkoutReminder>();
+            var invalidIds = new List<string>();
+            foreach (var idValue in GetIds(preferences))
+            {
+                if (!int.TryParse(
+                        idValue,
+                        System.Globalization.NumberStyles.None,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var workoutDayId))
+                {
+                    invalidIds.Add(idValue);
+                    continue;
+                }
+
+                try
+                {
+                    var json = preferences.GetString(
+                        GetReminderKey(workoutDayId),
+                        null);
+                    var reminder = string.IsNullOrWhiteSpace(json)
+                        ? null
+                        : JsonSerializer.Deserialize<LocalWorkoutReminder>(json);
+                    if (reminder is not null &&
+                        reminder.WorkoutDayId == workoutDayId &&
+                        reminder.NotifyAt > DateTimeOffset.Now)
+                    {
+                        reminders.Add(reminder);
+                    }
+                    else
+                    {
+                        invalidIds.Add(idValue);
+                    }
+                }
+                catch (JsonException)
+                {
+                    invalidIds.Add(idValue);
+                }
+            }
+
+            foreach (var workoutDayId in invalidIds)
+                Remove(context, workoutDayId);
+            return reminders;
+        }
+    }
+
+    private static ISharedPreferences GetPreferences(Context context) =>
+        context.GetSharedPreferences(PreferenceName, FileCreationMode.Private)!;
+
+    private static HashSet<string> GetIds(ISharedPreferences preferences) =>
+        new(
+            preferences.GetStringSet(IndexKey, null) ?? [],
+            StringComparer.Ordinal);
+
+    private static string GetReminderKey(int workoutDayId) =>
+        $"{ReminderPrefix}{workoutDayId}";
 }

@@ -16,12 +16,18 @@ navigation service that accepts only positive-id workout routes. Authentication
 still applies after navigation, so an expired session goes to login rather than
 showing protected data.
 
+Android mirrors scheduled reminder metadata into a private, versioned
+SharedPreferences index. `BOOT_COMPLETED` and app replacement recreate only
+future alarms; a fired or cancelled reminder is removed from that index. The
+receiver is not exported to other applications, and the index contains no
+credential or workout details beyond the local notification fields.
+
 The local index in MAUI Preferences exists only to show and cancel scheduled
 reminders. It contains no credentials. Logout, password change, access revocation,
 token invalidation, and account deletion clear indexed reminders before local
-session state is discarded. Android alarms currently do not get recreated after
-a full device reboot; adding a boot receiver and rescheduling from a deliberately
-versioned reminder index is a future reliability improvement.
+session state is discarded. Android alarms are recreated after a full device
+reboot. Delivery after reboot still requires device acceptance testing across
+the supported Android versions.
 
 ## Remote push foundation
 
