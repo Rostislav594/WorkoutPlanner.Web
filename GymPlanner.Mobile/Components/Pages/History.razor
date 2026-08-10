@@ -11,6 +11,11 @@
         <h1>История</h1>
     </header>
 
+    <nav class="journal-tabs" aria-label="Разделы журнала">
+        <NavLink href="history" Match="NavLinkMatch.All">История</NavLink>
+        <NavLink href="progress">Прогресс</NavLink>
+    </nav>
+
     @if (_errors.Count > 0)
     {
         <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>

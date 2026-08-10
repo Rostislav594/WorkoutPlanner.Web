@@ -27,6 +27,10 @@
   recorded value and completion state of every set. Malformed legacy snapshots
   remain visible as metadata-only archive entries and are never rewritten by
   the client. Deletion uses the ownership-checked history endpoint.
+- Workout and exercise progress use server-computed percentage points rendered
+  by a dependency-free SVG component from the shared Razor Class Library. The
+  client can clear server-owned analytical scopes after confirmation but cannot
+  submit scores or trigger automatic progression.
 
 ## Boundary
 
