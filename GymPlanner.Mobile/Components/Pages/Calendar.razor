@@ -5,6 +5,7 @@
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
 @inject IWorkoutLifecycleApiClient LifecycleClient
+@inject ILocalWorkoutReminderService ReminderService
 
 <section class="calendar-page">
     <header>
@@ -50,7 +51,7 @@
                         : _plans.FirstOrDefault(x => x.Id == workoutDay.TrainingPlanId);
                     <button type="button"
                             class="calendar-cell @(date.Value.Date == DateTime.Today ? "today" : null) @(workoutDay?.IsCompleted == true ? "completed" : null)"
-                            @onclick="() => OpenDay(date.Value)"
+                            @onclick="() => OpenDayAsync(date.Value)"
                             aria-label="@GetDayLabel(date.Value, plan, workoutDay)">
                         <span class="day-number">@date.Value.Day</span>
                         @if (plan is not null)
@@ -112,6 +113,35 @@
                 <p class="empty-hint">На прошедшую дату нельзя назначить тренировку.</p>
             }
 
+            @if (selectedDay is not null &&
+                !selectedDay.IsCompleted &&
+                _selectedDate.Value.Date >= DateTime.Today)
+            {
+                <section class="reminder-settings" aria-labelledby="reminder-title">
+                    <h4 id="reminder-title">Локальное напоминание</h4>
+                    @if (_reminderErrors.Count > 0)
+                    {
+                        <div class="auth-error" role="alert">@string.Join(" ", _reminderErrors)</div>
+                    }
+                    @if (_scheduledReminder is not null)
+                    {
+                        <p class="reminder-status" role="status">Запланировано на @(_scheduledReminder.NotifyAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")).</p>
+                    }
+                    <label for="reminder-time">
+                        Время
+                        <input id="reminder-time" class="auth-input" type="time" value="@_reminderTime" @onchange="ChangeReminderTime" />
+                    </label>
+                    <div class="reminder-actions">
+                        <button class="secondary" type="button" disabled="@_isBusy" @onclick="ScheduleReminderAsync">
+                            @(_scheduledReminder is null ? "Напомнить" : "Изменить время")
+                        </button>
+                        @if (_scheduledReminder is not null)
+                        {
+                            <button class="danger" type="button" disabled="@_isBusy" @onclick="CancelReminderAsync">Отменить напоминание</button>
+                        }
+                    </div>
+                </section>
+            }
             <div class="dialog-actions">
                 @if (_selectedDate.Value.Date >= DateTime.Today && selectedDay?.IsCompleted != true)
                 {
@@ -136,10 +166,13 @@
     private readonly List<WorkoutDayApiResponse> _workoutDays = [];
     private readonly List<string> _errors = [];
     private readonly List<string> _dialogErrors = [];
+    private readonly List<string> _reminderErrors = [];
     private readonly CancellationTokenSource _disposeCts = new();
     private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private DateTime? _selectedDate;
     private int _selectedPlanId;
+    private string _reminderTime = "09:00";
+    private LocalWorkoutReminder? _scheduledReminder;
     private bool _isLoading = true;
     private bool _isBusy;
 
@@ -221,11 +254,21 @@
         await LoadAsync(loadPlans: false);
     }
 
-    private void OpenDay(DateTime date)
+    private Task OpenDayAsync(DateTime date)
     {
         _selectedDate = date;
         _dialogErrors.Clear();
+        _reminderErrors.Clear();
         _selectedPlanId = FindDay(date)?.TrainingPlanId ?? 0;
+        var day = FindDay(date);
+        _scheduledReminder = day is null
+            ? null
+            : ReminderService.GetScheduled(day.Id);
+        if (_scheduledReminder is not null)
+            _reminderTime = _scheduledReminder.NotifyAt.ToLocalTime().ToString("HH:mm");
+        else
+            _reminderTime = "09:00";
+        return Task.CompletedTask;
     }
 
     private void CloseDay()
@@ -233,6 +276,12 @@
         if (_isBusy)
             return;
         CloseDayAfterSuccess();
+    }
+
+    private void ChangeReminderTime(ChangeEventArgs args)
+    {
+        if (args.Value is not null)
+            _reminderTime = args.Value.ToString() ?? _reminderTime;
     }
 
     private async Task ScheduleAsync()
@@ -254,6 +303,25 @@
             }
 
             ReplaceDay(result.Value!);
+            if (_scheduledReminder is not null)
+            {
+                var plan = _plans.First(x => x.Id == _selectedPlanId);
+                var updatedReminder = new LocalWorkoutReminder(
+                    result.Value!.Id,
+                    plan.Id,
+                    plan.WorkoutName,
+                    _scheduledReminder.NotifyAt);
+                var reminderResult = await ReminderService.ScheduleAsync(
+                    updatedReminder,
+                    _disposeCts.Token);
+                if (!reminderResult.Succeeded)
+                {
+                    _reminderErrors.AddRange(reminderResult.Errors);
+                    return;
+                }
+
+                _scheduledReminder = updatedReminder;
+            }
             CloseDayAfterSuccess();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -285,6 +353,15 @@
             }
 
             _workoutDays.RemoveAll(x => x.Id == day.Id);
+            var reminderResult = await ReminderService.CancelAsync(
+                day.Id,
+                _disposeCts.Token);
+            if (!reminderResult.Succeeded)
+            {
+                _dialogErrors.AddRange(reminderResult.Errors);
+                return;
+            }
+
             CloseDayAfterSuccess();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -314,6 +391,113 @@
         _selectedDate = null;
         _selectedPlanId = 0;
         _dialogErrors.Clear();
+        _reminderErrors.Clear();
+        _scheduledReminder = null;
+    }
+
+    private async Task ScheduleReminderAsync()
+    {
+        var day = _selectedDate is null ? null : FindDay(_selectedDate.Value);
+        var plan = day is null
+            ? null
+            : _plans.FirstOrDefault(x => x.Id == day.TrainingPlanId);
+        if (_isBusy || day is null || plan is null)
+            return;
+
+        _reminderErrors.Clear();
+        if (!TimeOnly.TryParseExact(
+                _reminderTime,
+                "HH:mm",
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var time))
+        {
+            _reminderErrors.Add("Укажите корректное время напоминания.");
+            return;
+        }
+
+        var localDateTime = DateTime.SpecifyKind(
+            day.Date.Date.Add(time.ToTimeSpan()),
+            DateTimeKind.Unspecified);
+        if (TimeZoneInfo.Local.IsInvalidTime(localDateTime))
+        {
+            _reminderErrors.Add("Это время пропускается при переходе на летнее время.");
+            return;
+        }
+
+        var notifyAt = new DateTimeOffset(
+            localDateTime,
+            TimeZoneInfo.Local.GetUtcOffset(localDateTime));
+        if (notifyAt <= DateTimeOffset.Now)
+        {
+            _reminderErrors.Add("Время напоминания должно быть в будущем.");
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            var permission = await ReminderService.RequestPermissionAsync(
+                _disposeCts.Token);
+            if (!permission.Succeeded)
+            {
+                _reminderErrors.AddRange(permission.Errors);
+                return;
+            }
+
+            var reminder = new LocalWorkoutReminder(
+                day.Id,
+                plan.Id,
+                plan.WorkoutName,
+                notifyAt);
+            var result = await ReminderService.ScheduleAsync(
+                reminder,
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _reminderErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _scheduledReminder = reminder;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task CancelReminderAsync()
+    {
+        var day = _selectedDate is null ? null : FindDay(_selectedDate.Value);
+        if (_isBusy || day is null)
+            return;
+
+        _isBusy = true;
+        _reminderErrors.Clear();
+        try
+        {
+            var result = await ReminderService.CancelAsync(
+                day.Id,
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _reminderErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _scheduledReminder = null;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 
     private static string GetShortName(string name)

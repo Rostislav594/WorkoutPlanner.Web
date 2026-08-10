@@ -15,12 +15,17 @@ header h1 { margin: .3rem 0 1rem; font-size: clamp(2rem, 9vw, 3rem); }
 .workout-marker { width: calc(100% - .3rem); overflow: hidden; border-radius: .35rem; padding: .18rem; background: #324f3c; color: #c9f4d4; font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
 .state { padding: 1rem; border: 1px solid #2b3038; border-radius: 1rem; background: #171a20; color: #aeb7c2; }
 .dialog-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; align-items: end; padding-top: env(safe-area-inset-top); background: rgba(0, 0, 0, .75); }
-.day-dialog { padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 1px solid #46505c; border-radius: 1.25rem 1.25rem 0 0; background: #171a20; }
+.day-dialog { max-height: 92dvh; overflow: auto; padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border: 1px solid #46505c; border-radius: 1.25rem 1.25rem 0 0; background: #171a20; }
 .day-dialog h2 { margin-top: 0; text-transform: capitalize; }
 .day-dialog h3 { margin-top: .25rem; }
 .scheduled-label, .empty-hint { color: #aeb7c2; }
 .completed-label { color: #80d89b; font-weight: 700; }
 .plan-selector { display: grid; gap: .4rem; margin-top: 1rem; color: #c9d1d9; }
+.reminder-settings { display: grid; gap: .65rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #343b45; }
+.reminder-settings h4, .reminder-settings p { margin: 0; }
+.reminder-settings label { display: grid; gap: .4rem; color: #c9d1d9; }
+.reminder-status { color: #80d89b; }
+.reminder-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .dialog-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }
 .primary { border-color: #3f8f54; background: #3fb950; color: #08110b; }
 .danger { border-color: #a44d59; background: #4a252b; color: #ffd9dd; }

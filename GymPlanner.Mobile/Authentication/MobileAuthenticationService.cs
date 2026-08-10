@@ -3,8 +3,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 using WorkoutPlanner.Api.Contracts;
 using GymPlanner.Mobile.Infrastructure;
+using GymPlanner.Mobile.Notifications;
 
 namespace GymPlanner.Mobile.Authentication;
 
@@ -14,6 +16,8 @@ public sealed class MobileAuthenticationService : IDisposable
     private readonly IMobileTokenStore _tokenStore;
     private readonly TimeProvider _timeProvider;
     private readonly HttpClient _authenticationClient;
+    private readonly ILocalWorkoutReminderService _reminders;
+    private readonly ILogger<MobileAuthenticationService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private MobileTokenSet? _tokens;
     private bool _initialized;
@@ -21,10 +25,14 @@ public sealed class MobileAuthenticationService : IDisposable
     public MobileAuthenticationService(
         MobileApiOptions options,
         IMobileTokenStore tokenStore,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        ILocalWorkoutReminderService reminders,
+        ILogger<MobileAuthenticationService> logger)
     {
         _tokenStore = tokenStore;
         _timeProvider = timeProvider;
+        _reminders = reminders;
+        _logger = logger;
         _authenticationClient = new HttpClient
         {
             BaseAddress = options.BaseAddress
@@ -276,6 +284,23 @@ public sealed class MobileAuthenticationService : IDisposable
 
     private async Task ClearCoreAsync(CancellationToken cancellationToken)
     {
+        try
+        {
+            var result = await _reminders.CancelAllAsync(cancellationToken);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning(
+                    "Could not cancel all local workout reminders: {Errors}",
+                    string.Join(" ", result.Errors));
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Could not cancel local workout reminders while clearing the session.");
+        }
+
         await _tokenStore.ClearAsync(cancellationToken);
         _tokens = null;
     }

@@ -1,6 +1,8 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
+@inject NotificationNavigationService NotificationNavigation
 
 <div class="mobile-shell">
     <header class="mobile-header">
@@ -35,6 +37,19 @@
     private bool _isLoggingOut;
     private string? _logoutError;
 
+    protected override void OnInitialized() =>
+        NotificationNavigation.RouteRequested += OpenNotificationRoute;
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && NotificationNavigation.ConsumePendingRoute() is { } route)
+            Navigation.NavigateTo(route);
+        return Task.CompletedTask;
+    }
+
+    private void OpenNotificationRoute(string route) =>
+        _ = InvokeAsync(() => Navigation.NavigateTo(route));
+
     private async Task LogoutAsync()
     {
         if (_isLoggingOut)
@@ -58,4 +73,7 @@
             _isLoggingOut = false;
         }
     }
+
+    public void Dispose() =>
+        NotificationNavigation.RouteRequested -= OpenNotificationRoute;
 }

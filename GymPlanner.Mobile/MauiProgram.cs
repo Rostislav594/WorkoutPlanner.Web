@@ -33,6 +33,11 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.IExercisePhotoApiClient,
 			Api.ExercisePhotoApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
+		builder.Services.AddSingleton<Notifications.NotificationNavigationService>();
+		builder.Services.AddSingleton<Notifications.ILocalNotificationPlatform,
+			Notifications.PlatformLocalNotificationService>();
+		builder.Services.AddSingleton<Notifications.ILocalWorkoutReminderService,
+			Notifications.LocalWorkoutReminderService>();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();

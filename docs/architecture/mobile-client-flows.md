@@ -38,6 +38,10 @@
   JPG/PNG/WebP boundary before upload, and travel only through the protected
   multipart API. Viewing and deletion also use the bearer-authenticated client;
   no server file path or public image URL is exposed to the WebView.
+- Calendar entries can schedule and cancel platform-local reminders after an
+  explicit permission request. Taps open only an allowlisted workout route and
+  still pass through mobile authentication. Remote push remains a documented
+  contract boundary with no provider SDK, endpoint, or repository secret.
 
 ## Boundary
 
