@@ -42,6 +42,9 @@
   explicit permission request. Taps open only an allowlisted workout route and
   still pass through mobile authentication. Remote push remains a documented
   contract boundary with no provider SDK, endpoint, or repository secret.
+- Shared character images and Material Symbols are packaged as local RCL static
+  assets. Neither MAUI nor the Web shell depends on a font or icon CDN at
+  runtime.
 
 ## Boundary
 
