@@ -16,6 +16,9 @@
 - Native Back events are bridged to Razor route history without JavaScript;
   window resume triggers token-expiry validation through the authentication
   service. Duplicate Back and resume events are guarded.
+- Safe-area insets are owned once by each layout, fixed navigation includes the
+  bottom inset, compact-height authentication scrolls, and Android requests
+  `AdjustResize` so the software keyboard reduces the WebView viewport.
 - API DTOs contain no trusted `UserId`; protected endpoint groups require the
   mobile-session bearer policy. EF entities and navigation graphs remain inside
   Web.
