@@ -2,8 +2,13 @@
 
 ## Verified in the current environment
 
-- `WorkoutPlanner.Web`, shared contracts/domain/RCL, Android, and iOS simulator
-  targets compile without warnings or errors.
+- `dotnet build WorkoutPlanner.Web.slnx -c Release --no-restore -m:1
+  /nodeReuse:false` builds Web, tests, shared contracts/domain/RCL, Android
+  Release, and iOS simulator Release with 0 warnings and 0 errors.
+- `dotnet test WorkoutPlanner.Web.Tests/WorkoutPlanner.Web.Tests.csproj
+  -c Release --no-build --no-restore` passes all 17 tests with no skips.
+- `dotnet ef migrations has-pending-model-changes` reports that the current EF
+  model matches the latest migration.
 - The automated test suite covers per-user starter plans, ownership isolation,
   per-set weights, immutable history, atomic completion, progress, onboarding,
   protected photos, token revocation, and transactional account deletion.
@@ -26,6 +31,21 @@
   builds can override it through configuration, environment, or an MSBuild
   package property; only an absolute HTTPS base URI is accepted. Certificate
   validation is not bypassed.
+
+These checks were last run on 2026-08-10 at commits `3a876d3` through
+`1fbe63f`. Android's merged manifest also contains the camera, network,
+notification, and boot permissions plus non-exported notification receivers.
+iOS simulator compilation validates `Info.plist` and the privacy manifest, but
+does not replace a signed device archive produced on a Mac build host.
+
+## Release boundary
+
+The migration branch is source/build/test ready, but it is not claimed to be
+store ready. A release operator must provide the public HTTPS API endpoint,
+Android keystore, Apple signing team/provisioning profile, production Data
+Protection key persistence, deployment database backup, and environment
+credentials outside source control. `ApplicationDisplayVersion` and
+`ApplicationVersion` must be advanced for each submitted package.
 
 ## Device acceptance still required
 
