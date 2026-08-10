@@ -31,6 +31,9 @@
   by a dependency-free SVG component from the shared Razor Class Library. The
   client can clear server-owned analytical scopes after confirmation but cannot
   submit scores or trigger automatic progression.
+- Mobile onboarding is a resumable navigation tour backed by the protected
+  onboarding state API. Its coach card and character are local RCL assets; the
+  MAUI client does not copy the Web spotlight JavaScript or server circuit.
 
 ## Boundary
 

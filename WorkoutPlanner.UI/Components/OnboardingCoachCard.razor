@@ -1,0 +1,69 @@
+<article class="coach-card" aria-live="polite">
+    <div class="character-stage">
+        <img src="@ImageSource" alt="Персонаж-помощник GymPlanner" />
+    </div>
+    <div class="coach-content">
+        <p class="coach-eyebrow">@Eyebrow</p>
+        <h2>@Title</h2>
+        <p class="coach-message">@Message</p>
+
+        @if (StepCount > 0)
+        {
+            <div class="coach-progress" aria-label="Шаг @StepNumber из @StepCount">
+                <span style="width:@ProgressPercent%"></span>
+            </div>
+            <small>Шаг @StepNumber из @StepCount</small>
+        }
+
+        <div class="coach-actions">
+            <button class="coach-secondary" type="button" disabled="@(!CanGoBack || IsBusy)" @onclick="OnPrevious">Назад</button>
+            <button class="coach-primary" type="button" disabled="@IsBusy" @onclick="OnNext">
+                @(IsBusy ? "Сохраняем…" : PrimaryButtonText)
+            </button>
+        </div>
+        <button class="coach-pause" type="button" disabled="@IsBusy" @onclick="OnPause">Закрыть и продолжить позже</button>
+    </div>
+</article>
+
+@code {
+    [Parameter]
+    public string ImageSource { get; set; } =
+        "_content/WorkoutPlanner.UI/images/character-shrug.png";
+
+    [Parameter]
+    public string Eyebrow { get; set; } = "Знакомство с GymPlanner";
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Message { get; set; } = string.Empty;
+
+    [Parameter]
+    public int StepNumber { get; set; }
+
+    [Parameter]
+    public int StepCount { get; set; }
+
+    [Parameter]
+    public bool CanGoBack { get; set; }
+
+    [Parameter]
+    public bool IsBusy { get; set; }
+
+    [Parameter]
+    public string PrimaryButtonText { get; set; } = "Далее";
+
+    [Parameter]
+    public EventCallback OnPrevious { get; set; }
+
+    [Parameter]
+    public EventCallback OnNext { get; set; }
+
+    [Parameter]
+    public EventCallback OnPause { get; set; }
+
+    private double ProgressPercent => StepCount <= 0
+        ? 0
+        : Math.Clamp(StepNumber * 100d / StepCount, 0, 100);
+}

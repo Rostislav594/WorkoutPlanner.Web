@@ -11,7 +11,9 @@ contain a `UserId`; Identity resolves the authenticated user.
 
 The API supports reading state, saving a resumable step, marking onboarding
 complete, and explicitly resetting it. Reset affects only the authenticated
-user. Guide content and local visual assets will be shared through the future
-Razor Class Library; the API carries state only.
+user. The mobile navigation tour uses existing validated navigation step IDs
+and keeps its presentation content local. A reusable coach card and the existing
+character image are served by the Razor Class Library to both hosts. The API
+carries state only and does not expose Web-only spotlight or JavaScript details.
 
 No schema migration or new external dependency is required.

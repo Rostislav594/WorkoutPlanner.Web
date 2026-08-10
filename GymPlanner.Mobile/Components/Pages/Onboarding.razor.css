@@ -1,0 +1,19 @@
+.onboarding-page { max-width: 52rem; margin: 0 auto; }
+header p { margin: 0; color: #80d89b; text-transform: uppercase; letter-spacing: .08em; font-size: .8rem; }
+header h1 { margin: .3rem 0 1rem; font-size: clamp(2rem, 8vw, 3rem); }
+.state { border: 1px solid #2b3038; border-radius: 1rem; padding: 1rem; background: #171a20; color: #aeb7c2; }
+.section-link { width: 100%; min-height: 2.7rem; margin-top: .75rem; border: 1px solid #46505c; border-radius: .7rem; padding: .55rem .8rem; background: #242a32; color: #fff; font: inherit; font-weight: 700; }
+.section-link:disabled { opacity: .55; }
+.completed-card { overflow: hidden; border: 1px solid #343b45; border-radius: 1.25rem; background: #171a20; }
+.completed-card > img { display: block; width: 100%; max-height: 19rem; object-fit: contain; object-position: center bottom; background: radial-gradient(circle at 50% 70%, #31523b 0, #1a2d21 34%, #111419 72%); }
+.completed-card > div { padding: 1.2rem; }
+.completed-card p { margin: 0; color: #80d89b; text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; font-weight: 800; }
+.completed-card h2 { margin: .35rem 0 .6rem; }
+.completed-card span { color: #c9d1d9; line-height: 1.5; }
+.completed-actions, .reset-confirmation { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+.reset-confirmation strong { width: 100%; }
+.primary, .secondary { min-height: 2.7rem; display: inline-flex; align-items: center; justify-content: center; border-radius: .7rem; padding: .55rem .85rem; font: inherit; font-weight: 750; text-decoration: none; }
+.primary { border: 0; background: #3fb950; color: #08110b; }
+.secondary { border: 1px solid #46505c; background: #242a32; color: #fff; }
+.primary:disabled, .secondary:disabled { opacity: .55; }
+@media (min-width: 44rem) { .completed-card { display: grid; grid-template-columns: .85fr 1.15fr; } .completed-card > img { height: 100%; max-height: 28rem; } .completed-card > div { align-self: center; padding: 1.5rem; } }

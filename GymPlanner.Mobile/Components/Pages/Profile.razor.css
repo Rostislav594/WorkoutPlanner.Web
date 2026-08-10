@@ -10,6 +10,7 @@
 .primary-action, .secondary-action, .danger-action { min-height: 2.8rem; border-radius: .75rem; padding: .65rem 1rem; font: inherit; font-weight: 750; }
 .primary-action { width: 100%; border: 0; background: #3fb950; color: #08110b; }
 .secondary-action { border: 1px solid #46505c; background: #242a32; color: #fff; }
+.onboarding-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
 .danger-action { border: 1px solid #a44d59; background: #4a252b; color: #ffd9dd; }
 .primary-action:disabled, .secondary-action:disabled, .danger-action:disabled { opacity: .55; }
 .profile-success { margin-bottom: 1rem; padding: .75rem; border: 1px solid #347344; border-radius: .75rem; background: #1d3825; color: #b9f5c8; }

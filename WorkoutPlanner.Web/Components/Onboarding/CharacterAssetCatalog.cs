@@ -2,7 +2,8 @@ namespace WorkoutPlanner.Web.Components.Onboarding;
 
 public sealed class CharacterAssetCatalog
 {
-    public const string ReferenceImage = "/images/character-shrug.png";
+    public const string ReferenceImage =
+        "/_content/WorkoutPlanner.UI/images/character-shrug.png";
 
     public string Get(CharacterPose pose) => ReferenceImage;
 

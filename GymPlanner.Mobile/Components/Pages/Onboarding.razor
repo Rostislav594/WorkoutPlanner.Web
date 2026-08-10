@@ -1,0 +1,287 @@
+@page "/onboarding"
+@attribute [Authorize]
+@implements IDisposable
+@using GymPlanner.Mobile.Onboarding
+@using WorkoutPlanner.Api.Contracts
+@inject IOnboardingApiClient OnboardingClient
+@inject NavigationManager Navigation
+
+<section class="onboarding-page">
+    <header>
+        <p>Помощник</p>
+        <h1>Знакомство с GymPlanner</h1>
+    </header>
+
+    @if (_errors.Count > 0)
+    {
+        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="state" role="status">Загружаем обучение…</div>
+    }
+    else if (_state?.IsCompleted == true)
+    {
+        <section class="completed-card">
+            <img src="_content/WorkoutPlanner.UI/images/character-shrug.png" alt="Персонаж-помощник GymPlanner" />
+            <div>
+                <p>Обучение завершено</p>
+                <h2>Вы готовы к тренировке</h2>
+                <span>Экскурсию можно пройти повторно в любой момент. Тренировочные данные при сбросе обучения не изменяются.</span>
+                @if (_confirmReset)
+                {
+                    <div class="reset-confirmation">
+                        <strong>Начать обучение заново?</strong>
+                        <button class="primary" type="button" disabled="@_isBusy" @onclick="ResetAsync">@(_isBusy ? "Сбрасываем…" : "Начать заново")</button>
+                        <button class="secondary" type="button" disabled="@_isBusy" @onclick="() => _confirmReset = false">Отмена</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="completed-actions">
+                        <a class="primary" href="/">На главную</a>
+                        <button class="secondary" type="button" @onclick="() => _confirmReset = true">Пройти ещё раз</button>
+                    </div>
+                }
+            </div>
+        </section>
+    }
+    else
+    {
+        <OnboardingCoachCard
+            Title="@CurrentStep.Title"
+            Message="@CurrentStep.Message"
+            StepNumber="@(_stepIndex + 1)"
+            StepCount="@Steps.Count"
+            CanGoBack="@(_stepIndex > 0)"
+            IsBusy="@_isBusy"
+            PrimaryButtonText="@(_stepIndex == Steps.Count - 1 ? "Завершить" : "Далее")"
+            OnPrevious="PreviousAsync"
+            OnNext="NextAsync"
+            OnPause="PauseAsync" />
+
+        @if (CurrentStep.Route is not null)
+        {
+            <button class="section-link" type="button" disabled="@_isBusy" @onclick="OpenSectionAsync">
+                Открыть этот раздел приложения
+            </button>
+        }
+    }
+</section>
+
+@code {
+    private static IReadOnlyList<MobileOnboardingStep> Steps =>
+        MobileOnboardingCatalog.Steps;
+    private readonly List<string> _errors = [];
+    private readonly CancellationTokenSource _disposeCts = new();
+    private OnboardingStateApiResponse? _state;
+    private int _stepIndex;
+    private bool _isLoading = true;
+    private bool _isBusy;
+    private bool _confirmReset;
+
+    private MobileOnboardingStep CurrentStep => Steps[_stepIndex];
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _errors.Clear();
+        try
+        {
+            var result = await OnboardingClient.GetStateAsync(_disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            ApplyState(result.Value!);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task NextAsync()
+    {
+        if (_isBusy)
+            return;
+
+        if (_stepIndex == Steps.Count - 1)
+        {
+            await CompleteAsync();
+            return;
+        }
+
+        await SaveStepAsync(_stepIndex + 1);
+    }
+
+    private Task PreviousAsync() => _stepIndex > 0
+        ? SaveStepAsync(_stepIndex - 1)
+        : Task.CompletedTask;
+
+    private async Task SaveStepAsync(int targetIndex)
+    {
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var target = Steps[targetIndex];
+            var result = await OnboardingClient.SaveProgressAsync(
+                new SaveOnboardingProgressRequest(target.Id, _state?.Outcome),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            _stepIndex = targetIndex;
+            _state = result.Value;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task PauseAsync()
+    {
+        if (_isBusy)
+            return;
+
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var result = await OnboardingClient.SaveProgressAsync(
+                new SaveOnboardingProgressRequest(CurrentStep.Id, _state?.Outcome),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            Navigation.NavigateTo("/profile");
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task OpenSectionAsync()
+    {
+        if (_isBusy || CurrentStep.Route is null)
+            return;
+
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var result = await OnboardingClient.SaveProgressAsync(
+                new SaveOnboardingProgressRequest(CurrentStep.Id, _state?.Outcome),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            Navigation.NavigateTo(CurrentStep.Route);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var result = await OnboardingClient.CompleteAsync(
+                new CompleteOnboardingRequest(_state?.Outcome),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            ApplyState(result.Value!);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        if (_isBusy)
+            return;
+
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            var result = await OnboardingClient.ResetAsync(_disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            ApplyState(result.Value!);
+            _confirmReset = false;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void ApplyState(OnboardingStateApiResponse state)
+    {
+        _state = state;
+        if (state.IsCompleted)
+            return;
+
+        var index = state.StepId is null
+            ? 0
+            : Steps.ToList().FindIndex(x => x.Id == state.StepId);
+        _stepIndex = index >= 0 ? index : 0;
+    }
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

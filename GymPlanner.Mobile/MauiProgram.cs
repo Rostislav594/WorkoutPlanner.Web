@@ -29,6 +29,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.IWorkoutLifecycleApiClient,
 			Api.WorkoutLifecycleApiClient>();
 		builder.Services.AddSingleton<Api.IProgressApiClient, Api.ProgressApiClient>();
+		builder.Services.AddSingleton<Api.IOnboardingApiClient, Api.OnboardingApiClient>();
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();
