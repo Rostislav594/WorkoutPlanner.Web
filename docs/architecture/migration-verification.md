@@ -13,6 +13,9 @@
 - MAUI references Domain, API.Contracts, and UI but not Web. It uses
   `blazor.webview.js`, has no Interactive Server render mode, no server database,
   and no external font/icon CDN.
+- Native Back events are bridged to Razor route history without JavaScript;
+  window resume triggers token-expiry validation through the authentication
+  service. Duplicate Back and resume events are guarded.
 - API DTOs contain no trusted `UserId`; protected endpoint groups require the
   mobile-session bearer policy. EF entities and navigation graphs remain inside
   Web.

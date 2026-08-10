@@ -18,6 +18,9 @@ public static class MauiProgram
 		builder.Services.AddSingleton(
 			Infrastructure.MobileApiOptions.CreateDefault(builder.Configuration));
 		builder.Services.AddSingleton(TimeProvider.System);
+		builder.Services.AddSingleton<Navigation.MobileBackNavigationService>();
+		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();
+		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
 			Authentication.SecureMobileTokenStore>();
 		builder.Services.AddSingleton<Authentication.MobileAuthenticationService>();
