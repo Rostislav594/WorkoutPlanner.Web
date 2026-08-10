@@ -33,9 +33,10 @@
   validation is not bypassed.
 
 These checks were last run on 2026-08-10 through commit `1fbe63f`; Android and
-iOS Release targets were run again after the notification privacy fix in
-`a75edd9`. Android's merged manifest also contains the camera, network,
-notification, and boot permissions plus non-exported notification receivers.
+iOS Release targets were run again after the final notification and navigation
+fixes in `0eb8129` and `301e390`. Android's merged manifest also contains the
+camera, network, notification, and boot permissions plus non-exported
+notification receivers.
 iOS simulator compilation validates `Info.plist` and the privacy manifest, but
 does not replace a signed device archive produced on a Mac build host.
 
