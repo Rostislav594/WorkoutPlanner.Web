@@ -154,4 +154,52 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 "Нет соединения с сервером.");
         }
     }
+
+    public async Task<ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>> GetHistoryAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.GetAsync(
+                "api/v1/history",
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(
+                    null,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            }
+
+            var history = await response.Content.ReadFromJsonAsync<
+                List<WorkoutHistoryApiResponse>>(cancellationToken);
+            return ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>.Success(
+                history ?? []);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>.Failure(
+                "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult> DeleteHistoryAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.DeleteAsync(
+                $"api/v1/history/{id}",
+                cancellationToken);
+            return response.IsSuccessStatusCode
+                ? ApiResult.Success
+                : new(
+                    false,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult.Failure("Нет соединения с сервером.");
+        }
+    }
 }

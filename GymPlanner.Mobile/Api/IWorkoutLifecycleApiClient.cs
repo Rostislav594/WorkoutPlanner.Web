@@ -22,4 +22,11 @@ public interface IWorkoutLifecycleApiClient
 
     Task<ApiResult<WorkoutHistoryApiResponse>> CompleteTodayWorkoutAsync(
         CancellationToken cancellationToken = default);
+
+    Task<ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>> GetHistoryAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResult> DeleteHistoryAsync(
+        int id,
+        CancellationToken cancellationToken = default);
 }

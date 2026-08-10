@@ -1,0 +1,240 @@
+@page "/history"
+@attribute [Authorize]
+@implements IDisposable
+@using System.Globalization
+@using WorkoutPlanner.Api.Contracts
+@inject IWorkoutLifecycleApiClient LifecycleClient
+
+<section class="history-page">
+    <header>
+        <p>Журнал</p>
+        <h1>История</h1>
+    </header>
+
+    @if (_errors.Count > 0)
+    {
+        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="state" role="status">Загружаем историю…</div>
+    }
+    else if (_history.Count == 0)
+    {
+        <div class="empty-state">
+            <h2>История пока пуста</h2>
+            <p>Завершённые тренировки появятся здесь вместе с фактическими значениями подходов.</p>
+            <a href="/">Перейти к тренировке</a>
+            @if (_errors.Count > 0)
+            {
+                <button class="secondary" type="button" @onclick="LoadAsync">Повторить</button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="history-list">
+            @foreach (var item in _history)
+            {
+                <button class="history-card" type="button" @onclick="() => OpenHistory(item)">
+                    <span>
+                        <strong>@item.WorkoutName</strong>
+                        <small>@item.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)</small>
+                    </span>
+                    <span class="card-meta">
+                        @if (item.SnapshotAvailable)
+                        {
+                            @($"{item.Exercises.Count} упр.")
+                        }
+                        else
+                        {
+                            <span class="legacy-label">Архивная запись</span>
+                        }
+                    </span>
+                </button>
+            }
+        </div>
+    }
+</section>
+
+@if (_selected is not null)
+{
+    <div class="dialog-backdrop" @onclick="CloseHistory">
+        <section class="history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title" @onclick:stopPropagation="true">
+            <header class="dialog-header">
+                <div>
+                    <p>@_selected.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)</p>
+                    <h2 id="history-title">@_selected.WorkoutName</h2>
+                </div>
+                <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="Закрыть историю">×</button>
+            </header>
+
+            @if (_dialogErrors.Count > 0)
+            {
+                <div class="auth-error" role="alert">@string.Join(" ", _dialogErrors)</div>
+            }
+
+            @if (!_selected.SnapshotAvailable)
+            {
+                <div class="snapshot-unavailable" role="status">
+                    <h3>Детали архивной записи недоступны</h3>
+                    <p>Исходные данные сохранены на сервере без изменений и не будут перезаписаны.</p>
+                </div>
+            }
+            else
+            {
+                <div class="history-exercises">
+                    @foreach (var exercise in _selected.Exercises)
+                    {
+                        <article class="history-exercise">
+                            <div class="exercise-heading">
+                                <h3>@exercise.Name</h3>
+                                <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@GetStatusText(exercise.Status)</span>
+                            </div>
+                            <div class="history-sets">
+                                @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                                {
+                                    <div class="history-set">
+                                        <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">@(set.Completed ? "✓" : "—")</span>
+                                        <span>Подход @set.SetNumber</span>
+                                        <strong>@set.Weight.ToString("0.##", RussianCulture) кг × @set.Repetitions</strong>
+                                    </div>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_selected.Summary))
+            {
+                <p class="history-summary">@_selected.Summary</p>
+            }
+
+            <div class="dialog-actions">
+                @if (_confirmDelete)
+                {
+                    <p class="delete-warning">Удалить эту запись истории без возможности восстановления?</p>
+                    <button class="danger" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
+                        @(_isBusy ? "Удаляем…" : "Удалить точно")
+                    </button>
+                    <button class="secondary" type="button" disabled="@_isBusy" @onclick="CancelDelete">Отмена</button>
+                }
+                else
+                {
+                    <button class="danger" type="button" @onclick="ConfirmDelete">Удалить запись</button>
+                    <button class="secondary" type="button" @onclick="CloseHistory">Закрыть</button>
+                }
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo RussianCulture =
+        CultureInfo.GetCultureInfo("ru-RU");
+    private readonly List<WorkoutHistoryApiResponse> _history = [];
+    private readonly List<string> _errors = [];
+    private readonly List<string> _dialogErrors = [];
+    private readonly CancellationTokenSource _disposeCts = new();
+    private WorkoutHistoryApiResponse? _selected;
+    private bool _isLoading = true;
+    private bool _isBusy;
+    private bool _confirmDelete;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _errors.Clear();
+        try
+        {
+            var result = await LifecycleClient.GetHistoryAsync(_disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _errors.AddRange(result.Errors);
+                return;
+            }
+
+            _history.Clear();
+            _history.AddRange(result.Value!
+                .OrderByDescending(x => x.Date));
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OpenHistory(WorkoutHistoryApiResponse item)
+    {
+        _selected = item;
+        _confirmDelete = false;
+        _dialogErrors.Clear();
+    }
+
+    private void CloseHistory()
+    {
+        if (_isBusy)
+            return;
+
+        _selected = null;
+        _confirmDelete = false;
+        _dialogErrors.Clear();
+    }
+
+    private void ConfirmDelete() => _confirmDelete = true;
+    private void CancelDelete() => _confirmDelete = false;
+
+    private async Task DeleteAsync()
+    {
+        if (_isBusy || _selected is null)
+            return;
+
+        _isBusy = true;
+        _dialogErrors.Clear();
+        var id = _selected.Id;
+        try
+        {
+            var result = await LifecycleClient.DeleteHistoryAsync(
+                id,
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _dialogErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _history.RemoveAll(x => x.Id == id);
+            _selected = null;
+            _confirmDelete = false;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static string GetStatusText(string status) => status switch
+    {
+        "Easy" => "Легко",
+        "Medium" => "Средне",
+        "Hard" => "Тяжело",
+        "Max" => "Предел",
+        _ => "Не оценено"
+    };
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

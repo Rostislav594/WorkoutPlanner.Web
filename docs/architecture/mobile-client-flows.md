@@ -23,6 +23,10 @@
   repetitions, completion, and effort status explicit for every set/exercise,
   saves them through exercise DTOs, and only then asks the server to atomically
   create the immutable history snapshot and progress records.
+- Workout history displays server-projected immutable snapshots, including the
+  recorded value and completion state of every set. Malformed legacy snapshots
+  remain visible as metadata-only archive entries and are never rewritten by
+  the client. Deletion uses the ownership-checked history endpoint.
 
 ## Boundary
 
