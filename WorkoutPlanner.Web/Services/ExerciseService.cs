@@ -80,6 +80,7 @@ public sealed class ExerciseService : IExerciseService
             Status = (Models.ExerciseStatus)exercise.Status,
             TrainingPlanId = plan.Id,
             ExerciseDefinitionId = exercise.ExerciseDefinitionId,
+            SupersetGroupId = exercise.SupersetGroupId,
             PhotoPath = exercise.PhotoPath,
             Sets = exercise.Sets
                 .OrderBy(x => x.SetNumber)
@@ -88,7 +89,8 @@ public sealed class ExerciseService : IExerciseService
                     SetNumber = x.SetNumber,
                     Repetitions = x.Repetitions,
                     Weight = x.Weight,
-                    Completed = x.Completed
+                    Completed = x.Completed,
+                    IsWarmup = x.IsWarmup
                 })
                 .ToList()
         };
@@ -135,6 +137,7 @@ public sealed class ExerciseService : IExerciseService
         entity.SetsCount = exercise.SetsCount;
         entity.Status = (Models.ExerciseStatus)exercise.Status;
         entity.ExerciseDefinitionId = exercise.ExerciseDefinitionId;
+        entity.SupersetGroupId = exercise.SupersetGroupId;
         entity.PhotoPath = exercise.PhotoPath;
 
         var retainedSetIds = new HashSet<int>();
@@ -157,6 +160,7 @@ public sealed class ExerciseService : IExerciseService
             targetSet.Repetitions = sourceSet.Repetitions;
             targetSet.Weight = sourceSet.Weight;
             targetSet.Completed = sourceSet.Completed;
+            targetSet.IsWarmup = sourceSet.IsWarmup;
 
             if (targetSet.Id > 0)
                 retainedSetIds.Add(targetSet.Id);

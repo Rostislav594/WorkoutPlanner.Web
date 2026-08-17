@@ -3,52 +3,191 @@
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
 
-<section class="workouts-page">
-    <header><p>Шаблоны</p><h1>Тренировки</h1></header>
+<section class="workouts-page" aria-busy="@_isLoading">
+    <header class="workouts-header">
+        <h1>Шаблоны тренировок</h1>
+    </header>
 
-    @if (_errors.Count > 0) { <div class="auth-error" role="alert">@string.Join(" ", _errors)</div> }
+    @if (_errors.Count > 0)
+    {
+        <div class="workout-form-error" role="alert">@string.Join(" ", _errors)</div>
+    }
 
-    <div class="create-row">
-        <label for="new-plan-name">Новый план</label>
-        <input id="new-plan-name" class="auth-input" maxlength="120" @bind="_newName" placeholder="Например, Силовая тренировка" />
-        <button type="button" disabled="@_isBusy" @onclick="CreateAsync">Добавить</button>
-    </div>
-
-    @if (_isLoading) { <div class="state">Загружаем планы…</div> }
-    else if (_plans.Count == 0) { <div class="state">Планов пока нет.</div> }
+    @if (_isLoading)
+    {
+        <div class="workouts-state" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Загружаем шаблоны…</span>
+        </div>
+    }
+    else if (_plans.Count == 0)
+    {
+    }
     else
     {
-        <div class="plan-list">
+        <div class="workout-grid">
             @foreach (var plan in _plans)
             {
-                <article class="plan-card">
-                    @if (_editingId == plan.Id)
+                <article class="workout-card">
+                    <a class="workout-card-link"
+                       href="@($"/workouts/{plan.Id}")"
+                       aria-label="Открыть шаблон @plan.WorkoutName">
+                        <span class="workout-name">@plan.WorkoutName</span>
+                        <span class="workout-description">Упражнений: @plan.Exercises.Count</span>
+                    </a>
+
+                    <button class="card-menu-button workout-card-menu"
+                            type="button"
+                            title="Настройки"
+                            aria-label="Настройки шаблона @plan.WorkoutName"
+                            aria-expanded="@(_menuPlanId == plan.Id)"
+                            @onclick="() => ToggleMenu(plan.Id)">
+                        <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
+                    </button>
+
+                    @if (_menuPlanId == plan.Id)
                     {
-                        <input class="auth-input" maxlength="120" @bind="_editName" aria-label="Новое название плана" />
-                        <div class="actions"><button @onclick="() => RenameAsync(plan.Id)">Сохранить</button><button @onclick="CancelEdit">Отмена</button></div>
-                    }
-                    else
-                    {
-                        <a href="@($"/workouts/{plan.Id}")"><strong>@plan.WorkoutName</strong><span>@plan.Exercises.Count упражнений</span></a>
-                        <div class="actions"><button @onclick="() => BeginEdit(plan)">Переименовать</button><button class="danger" @onclick="() => ConfirmDelete(plan)">Удалить</button></div>
+                        <div class="context-menu workout-template-menu">
+                            <button class="context-item"
+                                    type="button"
+                                    @onclick="() => BeginEdit(plan)">
+                                Изменить название
+                            </button>
+                            <button class="context-item danger-context-item"
+                                    type="button"
+                                    @onclick="() => ConfirmDelete(plan)">
+                                Удалить шаблон
+                            </button>
+                        </div>
                     }
                 </article>
             }
         </div>
     }
+
+    <footer class="workouts-footer @(_plans.Count == 0 && !_isLoading ? "workouts-footer-empty" : null)">
+        <button class="add-template-button"
+                type="button"
+                disabled="@_isBusy"
+                @onclick="OpenCreateDialog">
+            <span aria-hidden="true">+</span>
+            Добавить шаблон
+        </button>
+    </footer>
 </section>
+
+@if (_menuPlanId is not null)
+{
+    <div class="context-menu-overlay" @onclick="CloseMenu"></div>
+}
+
+@if (_isCreateOpen || _editingId is not null)
+{
+    <div class="modal-overlay" @onclick="ClosePlanDialog">
+        <section class="modal-window"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="plan-dialog-title"
+                 @onclick:stopPropagation="true">
+            <h2 id="plan-dialog-title">@(_isCreateOpen ? "Новый шаблон" : "Название шаблона")</h2>
+
+            <label for="plan-name">Название</label>
+            @if (_isCreateOpen)
+            {
+                <input id="plan-name"
+                       class="form-control"
+                       maxlength="120"
+                       @bind="_newName"
+                       @bind:event="oninput"
+                       autocomplete="off" />
+            }
+            else
+            {
+                <input id="plan-name"
+                       class="form-control"
+                       maxlength="120"
+                       @bind="_editName"
+                       @bind:event="oninput"
+                       autocomplete="off" />
+            }
+
+            @if (_errors.Count > 0)
+            {
+                <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
+            }
+
+            <div class="template-dialog-buttons">
+                @if (_isCreateOpen)
+                {
+                    <button class="dialog-button primary-button"
+                            type="button"
+                            disabled="@(_isBusy || string.IsNullOrWhiteSpace(_newName))"
+                            @onclick="CreateAsync">
+                        @(_isBusy ? "Сохраняем…" : "Сохранить")
+                    </button>
+                }
+                else if (_editingId is int editingId)
+                {
+                    <button class="dialog-button primary-button"
+                            type="button"
+                            disabled="@(_isBusy || string.IsNullOrWhiteSpace(_editName))"
+                            @onclick="() => RenameAsync(editingId)">
+                        @(_isBusy ? "Сохраняем…" : "Сохранить")
+                    </button>
+                }
+
+                <button class="dialog-button secondary-button"
+                        type="button"
+                        disabled="@_isBusy"
+                        @onclick="ClosePlanDialog">
+                    Отмена
+                </button>
+            </div>
+        </section>
+    </div>
+}
 
 @if (_deleteTarget is not null)
 {
-    <div class="dialog-backdrop"><section class="confirm-dialog" role="dialog" aria-modal="true"><h2>Удалить план?</h2><p>@_deleteTarget.WorkoutName и все упражнения этого плана будут удалены.</p><div class="actions"><button @onclick="() => _deleteTarget = null">Отмена</button><button class="danger" disabled="@_isBusy" @onclick="DeleteAsync">Удалить</button></div></section></div>
+    <div class="modal-overlay" @onclick="CloseDeleteDialog">
+        <section class="modal-window"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="delete-dialog-title"
+                 @onclick:stopPropagation="true">
+            <h2 id="delete-dialog-title">Удалить шаблон?</h2>
+            <p>
+                Будет удалён шаблон <strong>@_deleteTarget.WorkoutName</strong>,
+                его упражнения, назначения в календаре и прогресс.
+            </p>
+            @if (_errors.Count > 0)
+            {
+                <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
+            }
+            <div class="template-dialog-buttons">
+                <button class="dialog-button secondary-button"
+                        type="button"
+                        disabled="@_isBusy"
+                        @onclick="CloseDeleteDialog">
+                    Отмена
+                </button>
+                <button class="dialog-button danger-button"
+                        type="button"
+                        disabled="@_isBusy"
+                        @onclick="DeleteAsync">
+                    @(_isBusy ? "Удаляем…" : "Удалить")
+                </button>
+            </div>
+        </section>
+    </div>
 }
 
 @code {
     private readonly List<TrainingPlanApiResponse> _plans = [];
     private readonly List<string> _errors = [];
-    private bool _isLoading = true, _isBusy;
+    private bool _isLoading = true, _isBusy, _isCreateOpen;
     private string _newName = string.Empty, _editName = string.Empty;
-    private int? _editingId;
+    private int? _editingId, _menuPlanId;
     private TrainingPlanApiResponse? _deleteTarget;
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -64,7 +203,7 @@
     private async Task CreateAsync()
     {
         if (_isBusy || string.IsNullOrWhiteSpace(_newName)) return;
-        await RunAsync(() => WorkoutClient.CreatePlanAsync(new(_newName.Trim())), plan => { _plans.Add(plan); _newName = string.Empty; });
+        await RunAsync(() => WorkoutClient.CreatePlanAsync(new(_newName.Trim())), plan => { _plans.Add(plan); _newName = string.Empty; _isCreateOpen = false; });
     }
 
     private async Task RenameAsync(int id)
@@ -90,7 +229,12 @@
     }
 
     private void Replace(TrainingPlanApiResponse plan) { var index = _plans.FindIndex(x => x.Id == plan.Id); if (index >= 0) _plans[index] = plan; }
-    private void BeginEdit(TrainingPlanApiResponse plan) { _editingId = plan.Id; _editName = plan.WorkoutName; }
+    private void OpenCreateDialog() { _errors.Clear(); _newName = string.Empty; _isCreateOpen = true; CloseMenu(); }
+    private void BeginEdit(TrainingPlanApiResponse plan) { _errors.Clear(); _editingId = plan.Id; _editName = plan.WorkoutName; CloseMenu(); }
     private void CancelEdit() { _editingId = null; _editName = string.Empty; }
-    private void ConfirmDelete(TrainingPlanApiResponse plan) => _deleteTarget = plan;
+    private void ConfirmDelete(TrainingPlanApiResponse plan) { _deleteTarget = plan; CloseMenu(); }
+    private void ToggleMenu(int id) => _menuPlanId = _menuPlanId == id ? null : id;
+    private void CloseMenu() => _menuPlanId = null;
+    private void ClosePlanDialog() { if (_isBusy) return; _isCreateOpen = false; _newName = string.Empty; CancelEdit(); _errors.Clear(); }
+    private void CloseDeleteDialog() { if (_isBusy) return; _deleteTarget = null; }
 }

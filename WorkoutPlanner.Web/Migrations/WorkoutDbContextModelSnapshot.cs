@@ -272,6 +272,9 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("SupersetGroupId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TrainingPlanId")
                         .HasColumnType("INTEGER");
 
@@ -358,6 +361,9 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Property<bool>("Completed")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsWarmup")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Repetitions")
                         .HasColumnType("INTEGER");
 
@@ -387,6 +393,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ExerciseId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsWarmup")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Repetitions")

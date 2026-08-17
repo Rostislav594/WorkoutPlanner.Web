@@ -60,15 +60,6 @@ public sealed class WorkoutCompletionService(
             return new(false, WorkoutCompletionFailure.NoExercises, null);
         }
 
-        if (plan.Exercises.Any(x =>
-                x.Status == Models.ExerciseStatus.NotCompleted))
-        {
-            return new(
-                false,
-                WorkoutCompletionFailure.ExerciseStatusMissing,
-                null);
-        }
-
         await using var transaction = await db.Database.BeginTransactionAsync(
             cancellationToken);
         var claimedDay = await db.WorkoutDays
@@ -128,6 +119,233 @@ public sealed class WorkoutCompletionService(
             });
     }
 
+    public async Task<FreeWorkoutCompletionResult> CompleteFreeAsync(
+        FreeWorkoutCompletion workout,
+        CancellationToken cancellationToken = default)
+    {
+        var validation = ValidateFreeWorkout(workout);
+        if (validation is not null)
+            return validation;
+
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        var now = timeProvider.GetLocalNow().DateTime;
+        var workoutName = workout.SaveAsTemplate
+            ? workout.TemplateName!.Trim()
+            : "Свободная тренировка";
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        if (workout.SaveAsTemplate && await db.TrainingPlans.AnyAsync(
+                x => x.UserId == userId && x.WorkoutName == workoutName,
+                cancellationToken))
+        {
+            return new(
+                false,
+                FreeWorkoutCompletionFailure.TemplateNameConflict,
+                "Шаблон с таким названием уже существует.",
+                null,
+                null);
+        }
+
+        var definitionIds = workout.Exercises
+            .Select(x => x.ExerciseDefinitionId!.Value)
+            .Distinct()
+            .ToArray();
+        var definitions = await db.ExerciseDefinitions
+            .Include(x => x.SecondaryMuscles)
+            .Where(x => definitionIds.Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+        if (definitions.Count != definitionIds.Length)
+        {
+            return new(
+                false,
+                FreeWorkoutCompletionFailure.ExerciseDefinitionMissing,
+                "Одно из выбранных упражнений больше не существует.",
+                null,
+                null);
+        }
+
+        var historySnapshot = new WorkoutHistoryDetails
+        {
+            Exercises = workout.Exercises
+                .Select(ToFreeSnapshot)
+                .ToList()
+        };
+        var historyEntity = new Models.WorkoutHistory
+        {
+            UserId = userId,
+            WorkoutName = workoutName,
+            Date = now,
+            Summary = workout.SaveAsTemplate
+                ? "Выполнено как свободная тренировка и сохранено в шаблоны."
+                : "Свободная тренировка",
+            Details = JsonSerializer.Serialize(historySnapshot)
+        };
+
+        Models.TrainingPlan? plan = null;
+        List<DataExercise> templateExercises = [];
+
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            cancellationToken);
+        if (workout.SaveAsTemplate)
+        {
+            plan = new Models.TrainingPlan
+            {
+                UserId = userId,
+                WorkoutName = workoutName,
+                Date = now.Date
+            };
+            templateExercises = workout.Exercises
+                .Select(x => ToTemplateExercise(
+                    x,
+                    plan,
+                    userId,
+                    workoutName,
+                    definitions[x.ExerciseDefinitionId!.Value]))
+                .ToList();
+            plan.Exercises.AddRange(templateExercises);
+            db.TrainingPlans.Add(plan);
+            SaveFreeProgress(
+                db,
+                userId,
+                workoutName,
+                templateExercises,
+                now);
+        }
+
+        db.WorkoutHistory.Add(historyEntity);
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return new(
+            true,
+            FreeWorkoutCompletionFailure.None,
+            null,
+            new WorkoutHistory
+            {
+                Id = historyEntity.Id,
+                WorkoutName = historyEntity.WorkoutName,
+                Date = historyEntity.Date,
+                Summary = historyEntity.Summary,
+                Details = historyEntity.Details
+            },
+            plan?.Id);
+    }
+
+    private static FreeWorkoutCompletionResult? ValidateFreeWorkout(
+        FreeWorkoutCompletion workout)
+    {
+        if (workout.SaveAsTemplate &&
+            (string.IsNullOrWhiteSpace(workout.TemplateName) ||
+             workout.TemplateName.Trim().Length > 120))
+        {
+            return new(
+                false,
+                FreeWorkoutCompletionFailure.TemplateNameRequired,
+                "Введите название шаблона длиной до 120 символов.",
+                null,
+                null);
+        }
+
+        var invalidExercise = workout.Exercises.Count == 0 ||
+            workout.Exercises.Any(exercise =>
+                string.IsNullOrWhiteSpace(exercise.Name) ||
+                exercise.Name.Trim().Length > 160 ||
+                exercise.ExerciseDefinitionId is null ||
+                !Enum.IsDefined(exercise.Status) ||
+                exercise.Sets.Count is < 1 or > 20 ||
+                !exercise.Sets
+                    .OrderBy(x => x.SetNumber)
+                    .Select(x => x.SetNumber)
+                    .SequenceEqual(Enumerable.Range(1, exercise.Sets.Count)) ||
+                exercise.Sets.Any(set =>
+                    set.Repetitions is < 1 or > 1000 ||
+                    !double.IsFinite(set.Weight) ||
+                    set.Weight is < 0 or > 2000));
+        if (!invalidExercise)
+            return null;
+
+        return new(
+            false,
+            FreeWorkoutCompletionFailure.InvalidWorkout,
+            "Заполните упражнение и проверьте параметры каждого подхода.",
+            null,
+            null);
+    }
+
+    private static WorkoutHistoryExercise ToFreeSnapshot(Exercise exercise) =>
+        new()
+        {
+            Name = exercise.Name.Trim(),
+            Status = exercise.Status,
+            Sets = exercise.Sets
+                .OrderBy(x => x.SetNumber)
+                .Select(x => new WorkoutHistorySet
+                {
+                    SetNumber = x.SetNumber,
+                    Weight = x.Weight,
+                    Repetitions = x.Repetitions,
+                    Completed = x.Completed,
+                    IsWarmup = x.IsWarmup
+                })
+                .ToList()
+        };
+
+    private static DataExercise ToTemplateExercise(
+        Exercise source,
+        Models.TrainingPlan plan,
+        string userId,
+        string workoutName,
+        Models.ExerciseDefinition definition) =>
+        new()
+        {
+            UserId = userId,
+            Name = source.Name.Trim(),
+            WorkoutName = workoutName,
+            SetsCount = source.Sets.Count,
+            Status = Models.ExerciseStatus.NotCompleted,
+            TrainingPlan = plan,
+            ExerciseDefinitionId = definition.Id,
+            ExerciseDefinition = definition,
+            SupersetGroupId = source.SupersetGroupId,
+            Sets = source.Sets
+                .OrderBy(x => x.SetNumber)
+                .Select(x => new Models.ExerciseTemplateSet
+                {
+                    SetNumber = x.SetNumber,
+                    Repetitions = x.Repetitions,
+                    Weight = x.Weight,
+                    Completed = false,
+                    IsWarmup = x.IsWarmup
+                })
+                .ToList()
+        };
+
+    private void SaveFreeProgress(
+        WorkoutDbContext db,
+        string userId,
+        string workoutName,
+        IReadOnlyCollection<DataExercise> exercises,
+        DateTime now)
+    {
+        db.ProgressSnapshots.Add(new Models.ProgressSnapshot
+        {
+            UserId = userId,
+            WorkoutName = workoutName,
+            Date = now,
+            Score = Math.Round(exercises.Sum(exerciseIndexService.Calculate), 2)
+        });
+
+        db.ExerciseProgressSnapshots.AddRange(exercises.Select(exercise =>
+            new Models.ExerciseProgressSnapshot
+            {
+                UserId = userId,
+                WorkoutName = workoutName,
+                ExerciseName = exercise.Name,
+                Date = now,
+                Score = Math.Round(exerciseIndexService.Calculate(exercise), 2)
+            }));
+    }
+
     private WorkoutHistoryExercise ToSnapshot(DataExercise exercise)
     {
         return new WorkoutHistoryExercise
@@ -141,7 +359,8 @@ public sealed class WorkoutCompletionService(
                     SetNumber = x.SetNumber,
                     Weight = x.Weight,
                     Repetitions = x.Repetitions,
-                    Completed = x.Completed
+                    Completed = x.Completed,
+                    IsWarmup = x.IsWarmup
                 })
                 .ToList(),
             Photos = string.IsNullOrWhiteSpace(exercise.PhotoPath)

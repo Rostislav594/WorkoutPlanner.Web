@@ -15,20 +15,45 @@
 }
 
 @code {
+    [Parameter]
+    public bool? Ready { get; set; }
+
     private bool _visible = true;
     private bool _isLeaving;
+    private bool _hideStarted;
+    private DateTime _shownAtUtc = DateTime.UtcNow;
+
+    protected override void OnParametersSet()
+    {
+        if (Ready == true && !_hideStarted)
+            _ = HideAsync();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (!firstRender || Ready is not null)
             return;
 
         await Task.Delay(2200);
-        _isLeaving = true;
-        StateHasChanged();
+        await HideAsync();
+    }
 
-        await Task.Delay(800);
+    private async Task HideAsync()
+    {
+        if (_hideStarted)
+            return;
+
+        _hideStarted = true;
+        var elapsed = DateTime.UtcNow - _shownAtUtc;
+        var minimumDuration = TimeSpan.FromMilliseconds(450);
+        if (elapsed < minimumDuration)
+            await Task.Delay(minimumDuration - elapsed);
+
+        _isLeaving = true;
+        await InvokeAsync(StateHasChanged);
+
+        await Task.Delay(300);
         _visible = false;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 }

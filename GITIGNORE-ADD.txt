@@ -1,0 +1,3 @@
+# Local Codex logs and secrets
+.codex-log/
+.env

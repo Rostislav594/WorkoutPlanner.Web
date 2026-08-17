@@ -1,13 +1,13 @@
-﻿.progress-workouts {
+.progress-workouts {
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
 .progress-card {
-    background: #1f1f1f;
-    border: 1px solid #333;
-    border-radius: 14px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 18px;
     transition: .2s;
 }
@@ -36,13 +36,13 @@
     border: none;
     border-radius: 8px;
     background: transparent;
-    color: #9ca3af;
+    color: var(--color-text-muted);
     cursor: pointer;
     font-size: 20px;
 }
 
     .card-menu-button:hover {
-        background: #323232;
+        background: var(--color-surface-hover);
         color: white;
     }
 
@@ -61,10 +61,10 @@
     bottom: 30px;
     left: 50%;
     transform: translate(-50%, 20px);
-    background: #28a745;
+    background: var(--color-success);
     color: white;
     padding: 14px 28px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 16px;
     font-weight: 600;
     box-shadow: 0 8px 25px rgba(0,0,0,.35);

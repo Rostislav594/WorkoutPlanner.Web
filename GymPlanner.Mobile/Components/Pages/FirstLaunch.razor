@@ -1,0 +1,44 @@
+@page "/firstlaunch"
+@attribute [Authorize]
+@implements IDisposable
+@inject NavigationManager Navigation
+
+<div class="welcome-screen">
+    <div class="welcome-content @(_isLeaving ? "welcome-leaving" : string.Empty)"
+         role="status"
+         aria-label="Добро пожаловать в GymPlanner">
+        <div class="welcome-title">Добро пожаловать в</div>
+        <div class="welcome-logo">
+            <span class="gym">Gym</span><span class="planner">Planner</span>
+        </div>
+    </div>
+</div>
+
+@code {
+    private readonly CancellationTokenSource _disposeCts = new();
+    private bool _isLeaving;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            await Task.Delay(6000, _disposeCts.Token);
+            _isLeaving = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(800, _disposeCts.Token);
+            Navigation.NavigateTo("/", replace: true);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

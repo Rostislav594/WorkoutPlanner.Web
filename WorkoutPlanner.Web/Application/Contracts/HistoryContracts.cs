@@ -45,6 +45,7 @@ public sealed class WorkoutHistorySet
     public double Weight { get; set; }
     public int Repetitions { get; set; }
     public bool Completed { get; set; }
+    public bool IsWarmup { get; set; }
 }
 
 public enum WorkoutCompletionFailure
@@ -59,3 +60,26 @@ public sealed record WorkoutCompletionResult(
     bool Succeeded,
     WorkoutCompletionFailure Failure,
     WorkoutHistory? History);
+
+public sealed class FreeWorkoutCompletion
+{
+    public bool SaveAsTemplate { get; set; }
+    public string? TemplateName { get; set; }
+    public List<Exercise> Exercises { get; set; } = [];
+}
+
+public enum FreeWorkoutCompletionFailure
+{
+    None,
+    InvalidWorkout,
+    TemplateNameRequired,
+    TemplateNameConflict,
+    ExerciseDefinitionMissing
+}
+
+public sealed record FreeWorkoutCompletionResult(
+    bool Succeeded,
+    FreeWorkoutCompletionFailure Failure,
+    string? Error,
+    WorkoutHistory? History,
+    int? TrainingPlanId);

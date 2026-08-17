@@ -1,6 +1,7 @@
 :root {
     color-scheme: dark;
     --color-bg: #0f0f10;
+    --color-bg-elevated: #151516;
     --color-surface: #1e1e1f;
     --color-surface-raised: #262627;
     --color-surface-hover: #303032;
@@ -14,14 +15,35 @@
     --color-accent-soft: rgba(255, 122, 26, .12);
     --color-accent-soft-hover: rgba(255, 122, 26, .2);
     --color-success: #3fb950;
+    --color-success-hover: #4fc46b;
+    --color-success-soft: rgba(63, 185, 80, .14);
     --color-danger: #f85149;
     --color-danger-soft: #ffb4b4;
+    --color-danger-surface: #3b2025;
+    --color-danger-action: #9d2929;
+    --color-warning: #e8c879;
+    --font-body: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+    --text-page-title: clamp(2rem, 7vw, 2.75rem);
+    --text-section-title: clamp(1.35rem, 4vw, 1.65rem);
+    --text-card-title: 1.125rem;
+    --text-body: 1rem;
+    --text-label: .875rem;
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
     --radius-sm: 10px;
-    --radius-md: 14px;
+    --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 20px;
-    --shadow-card: 0 18px 45px rgba(0, 0, 0, .28);
-    --shadow-modal: 0 24px 70px rgba(0, 0, 0, .55);
+    --border-subtle: 1px solid var(--color-border);
+    --shadow-card: 0 10px 28px rgba(0, 0, 0, .24);
+    --shadow-modal: 0 20px 52px rgba(0, 0, 0, .5);
+    --control-height: 46px;
+    --touch-target: 44px;
+    --transition-ui: 160ms ease;
 }
 
 *,
@@ -32,7 +54,7 @@
 
 html, body {
     min-height: 100%;
-    font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+    font-family: var(--font-body);
     background-color: var(--color-bg);
     color: var(--color-text);
     margin: 0;
@@ -50,7 +72,7 @@ a, .btn-link {
 }
 
 .btn-primary {
-    color: #fff;
+    color: var(--color-text);
     background-color: var(--color-accent);
     border-color: var(--color-accent);
 }
@@ -82,7 +104,7 @@ h1:focus {
 .blazor-error-boundary {
     background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
     padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
+    color: var(--color-text);
 }
 
     .blazor-error-boundary::after {
@@ -102,9 +124,9 @@ h1:focus {
     text-align: start;
 }
 .history-card {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 16px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 16px;
     margin-bottom: 14px;
     box-shadow: 0 4px 12px rgba(0,0,0,.25);
@@ -122,17 +144,17 @@ h1:focus {
 }
 
 .history-date {
-    color: #999;
+    color: var(--color-text-subtle);
     font-size: .9rem;
     margin-bottom: 10px;
 }
 
 .history-summary {
-    color: #ddd;
+    color: var(--color-text-muted);
 }
 .history-exercise {
-    background: #252525;
-    border-radius: 12px;
+    background: var(--color-surface-raised);
+    border-radius: var(--radius-md);
     padding: 12px;
     margin-bottom: 10px;
 }
@@ -143,7 +165,7 @@ h1:focus {
 }
 
 .history-exercise-weight {
-    color: #aaa;
+    color: var(--color-text-muted);
     margin-top: 4px;
 }
 
@@ -152,7 +174,7 @@ h1:focus {
     font-weight: 500;
 }
 .history-popup-date {
-    color: #999;
+    color: var(--color-text-subtle);
     margin-bottom: 15px;
 }
 .history-modal-header {
@@ -165,7 +187,7 @@ h1:focus {
 
 .history-row {
     padding: 12px 0;
-    border-bottom: 1px solid #333;
+    border-bottom: var(--border-subtle);
 }
 
     .history-row:last-child {
@@ -179,7 +201,7 @@ h1:focus {
 
 .history-row-info {
     margin-top: 4px;
-    color: #aaa;
+    color: var(--color-text-muted);
 }
 
 .history-buttons {
@@ -189,19 +211,19 @@ h1:focus {
 }
 
 .danger-button {
-    background: #8b1e1e;
-    color: white;
+    background: var(--color-danger-action);
+    color: var(--color-text);
     border: none;
     padding: 10px 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
 }
 
 .secondary-button {
     width: 100%;
-    background: #2d2d2d;
-    color: #ddd;
-    border: 1px solid #444;
-    border-radius: 12px;
+    background: var(--color-surface-raised);
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
     padding: 12px;
     font-size: 16px;
     font-weight: 600;
@@ -210,7 +232,7 @@ h1:focus {
 }
 
     .secondary-button:hover {
-        background: #383838;
+        background: var(--color-surface-hover);
         border-color: #666;
     }
 .modal-overlay {
@@ -224,9 +246,9 @@ h1:focus {
 }
 
 .modal-window {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 16px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
     width: 600px;
     max-width: 90vw;
     max-height: 90vh;
@@ -274,10 +296,10 @@ h1:focus {
 .finish-button {
     width: 40%;
     border: none;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     padding: 14px;
-    background: #28a745;
-    color: white;
+    background: var(--color-success);
+    color: var(--color-text);
     font-size: 18px;
     font-weight: 600;
     margin-top: 20px;
@@ -294,7 +316,7 @@ h1:focus {
     }
 .status-badge {
     padding: 6px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     font-weight: 600;
     display: inline-block;
 }
@@ -309,25 +331,25 @@ h1:focus {
 
 .progress-text {
     margin-bottom: 8px;
-    color: #aaa;
+    color: var(--color-text-muted);
 }
 
 .progress-bar {
     height: 12px;
     background: #222;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
-    background: #28a745;
+    background: var(--color-success);
     transition: .3s;
 }
 .status-button {
     border: none;
     background: #333;
-    color: white;
+    color: var(--color-text);
     width: 42px;
     height: 42px;
     border-radius: 50%;
@@ -340,9 +362,9 @@ h1:focus {
 }
 
     .status-option {
-        background: #252525;
-        border: 1px solid #333;
-        border-radius: 12px;
+        background: var(--color-surface-raised);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
         padding: 14px;
         margin-bottom: 10px;
         cursor: pointer;
@@ -356,9 +378,9 @@ h1:focus {
 
 
     .status-option {
-        background: #252525;
-        border: 1px solid #333;
-        border-radius: 14px;
+        background: var(--color-surface-raised);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
         padding: 14px;
         margin-bottom: 12px;
         cursor: pointer;
@@ -376,7 +398,7 @@ h1:focus {
     }
 
     .status-description {
-        color: #999;
+        color: var(--color-text-subtle);
         font-size: 14px;
         margin-top: 4px;
     }
@@ -399,8 +421,8 @@ h1:focus {
     }
 
     .completed-stats {
-        background: #252525;
-        border-radius: 12px;
+        background: var(--color-surface-raised);
+        border-radius: var(--radius-md);
         padding: 15px;
         margin: 20px 0;
     }
@@ -417,10 +439,10 @@ h1:focus {
 
     .complete-button {
         width: 100%;
-        background: #28a745;
-        color: white;
+        background: var(--color-success);
+        color: var(--color-text);
         border: none;
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         padding: 12px;
         font-size: 16px;
         font-weight: 600;
@@ -428,10 +450,10 @@ h1:focus {
 
     .secondary-button {
         width: 100%;
-        background: #2d2d2d;
-        color: #ddd;
-        border: 1px solid #444;
-        border-radius: 12px;
+        background: var(--color-surface-raised);
+        color: var(--color-text-muted);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-md);
         padding: 12px;
         font-size: 16px;
         font-weight: 600;
@@ -439,14 +461,14 @@ h1:focus {
     }
 
         .secondary-button:hover {
-            background: #383838;
+            background: var(--color-surface-hover);
             border-color: #666;
         }
 
     .status-option {
-        background: #252525;
-        border: 1px solid #333;
-        border-radius: 14px;
+        background: var(--color-surface-raised);
+        border: var(--border-subtle);
+        border-radius: var(--radius-md);
         padding: 14px;
         margin-bottom: 10px;
         cursor: pointer;
@@ -455,16 +477,16 @@ h1:focus {
 
         .status-option:hover {
             border-color: #3fb950;
-            background: #2d2d2d;
+            background: var(--color-surface-raised);
             transform: translateY(-2px);
         }
 
     .complete-button {
         width: 100%;
-        background: #28a745;
-        color: white;
+        background: var(--color-success);
+        color: var(--color-text);
         border: none;
-        border-radius: 12px;
+        border-radius: var(--radius-md);
         padding: 12px;
         font-size: 16px;
         font-weight: 600;
@@ -477,9 +499,9 @@ h1:focus {
     .cancel-button {
         width: 100%;
         background: #2b2b2b;
-        color: #ddd;
-        border: 1px solid #444;
-        border-radius: 12px;
+        color: var(--color-text-muted);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-md);
         padding: 12px;
         margin-top: 10px;
         font-size: 16px;
@@ -488,7 +510,7 @@ h1:focus {
     }
 
         .cancel-button:hover {
-            background: #383838;
+            background: var(--color-surface-hover);
             border-color: #666;
         }
 
@@ -503,9 +525,9 @@ h1:focus {
         width: 100%;
         padding: 14px;
         border: none;
-        border-radius: 12px;
-        background: #2d2d2d;
-        color: white;
+        border-radius: var(--radius-md);
+        background: var(--color-surface-raised);
+        color: var(--color-text);
         font-size: 18px;
         font-weight: 600;
         margin-top: 10px;
@@ -528,9 +550,9 @@ h1:focus {
 .status-option {
     cursor: pointer;
     user-select: none;
-    background: #252525;
-    border: 1px solid #333;
-    border-radius: 14px;
+    background: var(--color-surface-raised);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 14px;
     margin-bottom: 10px;
     transition: .2s;
@@ -538,7 +560,7 @@ h1:focus {
 
     .status-option:hover {
         border-color: #3fb950;
-        background: #2d2d2d;
+        background: var(--color-surface-raised);
         transform: translateY(-2px);
     }
 .home-container {
@@ -551,15 +573,15 @@ h1:focus {
     padding: 20px;
 }
 .calendar-workout-card {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 14px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 15px;
     margin-bottom: 12px;
 }
 
 .calendar-date {
-    color: #999;
+    color: var(--color-text-subtle);
     font-size: 14px;
 }
 
@@ -569,10 +591,10 @@ h1:focus {
     margin-top: 5px;
 }
 .workout-select-button {
-    background: #252525;
-    color: white;
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 12px 18px;
     margin: 5px;
     cursor: pointer;
@@ -590,14 +612,14 @@ h1:focus {
     .calendar-date-block label {
         display: block;
         margin-bottom: 8px;
-        color: #aaa;
+        color: var(--color-text-muted);
     }
 
     .calendar-date-block input {
-        background: #1e1e1e;
-        color: white;
-        border: 1px solid #333;
-        border-radius: 10px;
+        background: var(--color-surface);
+        color: var(--color-text);
+        border: var(--border-subtle);
+        border-radius: var(--radius-sm);
         padding: 10px;
     }
 
@@ -609,10 +631,10 @@ h1:focus {
 }
 
 .workout-select-button {
-    background: #252525;
-    color: white;
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 12px 18px;
     cursor: pointer;
     transition: .2s;
@@ -624,15 +646,15 @@ h1:focus {
     }
 
 .calendar-workout-card {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 14px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 15px;
     margin-bottom: 12px;
 }
 
 .calendar-date {
-    color: #999;
+    color: var(--color-text-subtle);
     font-size: 14px;
 }
 
@@ -649,9 +671,9 @@ h1:focus {
 }
 
 .calendar-day {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 12px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     min-height: 70px;
     padding: 10px;
     text-align: center;
@@ -682,9 +704,9 @@ h1:focus {
     }
 .calendar-marker {
     margin-top: 8px;
-    background: #28a745;
-    color: white;
-    border-radius: 8px;
+    background: var(--color-success);
+    color: var(--color-text);
+    border-radius: var(--radius-sm);
     padding: 3px 6px;
     font-size: 12px;
     text-align: center;
@@ -717,10 +739,10 @@ h1:focus {
 }
 
 .month-button {
-    background: #252525;
-    color: white;
-    border: 1px solid #333;
-    border-radius: 10px;
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
     width: 40px;
     height: 40px;
     cursor: pointer;
@@ -759,19 +781,19 @@ h1:focus {
     width: 45px;
     height: 45px;
     padding: 0;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
 }
 .back-button {
-    min-height: 44px;
+    min-height: var(--touch-target);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0 16px;
-    color: white;
+    color: var(--color-text);
     text-decoration: none;
-    background: #242424;
-    border: 1px solid #444;
-    border-radius: 8px;
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
     font-size: 16px;
     font-weight: 700;
     box-shadow: 0 10px 24px rgba(0,0,0,.28);
@@ -782,7 +804,7 @@ h1:focus {
     .back-button:hover {
         background: #2f2f2f;
         border-color: #555;
-        color: white;
+        color: var(--color-text);
     }
 .workout-grid {
     display: grid;
@@ -791,9 +813,9 @@ h1:focus {
 }
 
 .workout-card {
-    background: #1e1e1e;
-    border: 1px solid #333;
-    border-radius: 16px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 20px;
     cursor: pointer;
     transition: .2s;
@@ -811,7 +833,7 @@ h1:focus {
 }
 
 .workout-description {
-    color: #999;
+    color: var(--color-text-subtle);
     font-size: 14px;
 }
 .workout-header {
@@ -824,10 +846,10 @@ h1:focus {
     top: 0;
     right: 0;
     background: #2a2a2a;
-    border: 1px solid #444;
-    color: white;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
     padding: 12px 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 18px;
     font-weight: 600;
     cursor: pointer;
@@ -841,10 +863,10 @@ h1:focus {
 
 .workout-title-card {
     text-align: center;
-    background: #1e1e1e;
-    border: 1px solid #333;
+    background: var(--color-surface);
+    border: var(--border-subtle);
     border-top: 3px solid #28a745;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     padding: 30px;
     margin-top: 50px;
 }
@@ -863,8 +885,8 @@ h1:focus {
 .title-line {
     width: 60px;
     height: 5px;
-    background: #28a745;
-    border-radius: 10px;
+    background: var(--color-success);
+    border-radius: var(--radius-sm);
     margin: 15px auto 0;
 }
 .workout-header {
@@ -877,10 +899,10 @@ h1:focus {
     top: -70px;
     right: 20px;
     background: #2a2a2a;
-    border: 1px solid #444;
-    color: white;
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
     padding: 12px 20px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     font-size: 18px;
     font-weight: 600;
     cursor: pointer;
@@ -894,10 +916,10 @@ h1:focus {
 
 .workout-title-card {
     text-align: center;
-    background: #1e1e1e;
-    border: 1px solid #333;
+    background: var(--color-surface);
+    border: var(--border-subtle);
     border-top: 3px solid #28a745;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     padding: 30px;
     margin-top: 90px;
 }
@@ -916,15 +938,15 @@ h1:focus {
 .title-line {
     width: 60px;
     height: 5px;
-    background: #28a745;
-    border-radius: 10px;
+    background: var(--color-success);
+    border-radius: var(--radius-sm);
     margin: 15px auto 0;
 }
 
 .empty-workout {
     text-align: center;
     margin-top: 50px;
-    color: #999;
+    color: var(--color-text-subtle);
 }
 
 .empty-icon {
@@ -934,7 +956,7 @@ h1:focus {
 
 .empty-title {
     font-size: 24px;
-    color: white;
+    color: var(--color-text);
     margin-bottom: 8px;
 }
 
@@ -953,7 +975,7 @@ h1:focus {
 }
 
     .workout-icon i {
-        color: white;
+        color: var(--color-text);
         font-size: 40px;
     }
 
@@ -966,8 +988,8 @@ h1:focus {
     width: 80px;
     height: 6px;
     margin: 20px auto 0;
-    background: #28a745;
-    border-radius: 10px;
+    background: var(--color-success);
+    border-radius: var(--radius-sm);
 }
 .nav-link i {
     width: 24px;
@@ -997,7 +1019,7 @@ h1:focus {
 
         .calendar-date-block input {
             width: 100%;
-            min-height: 44px;
+            min-height: var(--touch-target);
             font-size: 16px;
         }
 
@@ -1009,7 +1031,7 @@ h1:focus {
     }
 
     .workout-select-button {
-        min-height: 44px;
+        min-height: var(--touch-target);
         margin: 0;
         padding: 10px 8px;
         font-size: 15px;
@@ -1033,7 +1055,7 @@ h1:focus {
         flex: 0 0 44px;
         width: 44px;
         height: 44px;
-        border-radius: 10px;
+        border-radius: var(--radius-sm);
         font-size: 18px;
     }
 
@@ -1102,7 +1124,7 @@ h1:focus {
         max-height: 90vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        border-radius: 18px 18px 0 0;
+        border-radius: var(--radius-lg) 18px 0 0;
         padding: 20px;
     }
 
@@ -1122,17 +1144,17 @@ h1:focus {
 .tab-button {
     flex: 1;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 12px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     background: #2b2b2b;
-    color: white;
+    color: var(--color-text);
 }
 
     .tab-button.active {
-        background: #28a745;
+        background: var(--color-success);
     }
 
 .graph-container {
@@ -1148,7 +1170,7 @@ h1:focus {
 
 .graph-date {
     width: 60px;
-    color: #999;
+    color: var(--color-text-subtle);
     font-size: 14px;
 }
 
@@ -1156,14 +1178,14 @@ h1:focus {
     flex: 1;
     height: 22px;
     background: #2b2b2b;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     overflow: hidden;
 }
 
 .graph-fill {
     height: 100%;
-    background: #28a745;
-    border-radius: 12px;
+    background: var(--color-success);
+    border-radius: var(--radius-md);
 }
 
 .graph-value {
@@ -1208,9 +1230,9 @@ h1:focus {
     display: flex;
     align-items: center;
     gap: 14px;
-    background: #1f1f1f;
-    border: 1px solid #333;
-    border-radius: 14px;
+    background: var(--color-surface);
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
     padding: 20px;
 }
 .card-menu-button {
@@ -1220,7 +1242,7 @@ h1:focus {
     align-items: center;
     justify-content: center;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: #9ca3af;
     cursor: pointer;
@@ -1228,14 +1250,14 @@ h1:focus {
 }
 .card-menu-button:hover {
         background: #2f2f2f;
-        color: white;
+        color: var(--color-text);
 }
 .context-item {
     width: 100%;
     padding: 12px;
     background: none;
     border: none;
-    color: white;
+    color: var(--color-text);
     text-align: left;
     cursor: pointer;
     transition: .15s;
@@ -1257,9 +1279,9 @@ h1:focus {
 .context-menu {
     position: absolute;
     width: 180px;
-    background: #252525;
+    background: var(--color-surface-raised);
     border: 1px solid #3a3a3a;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: 0 12px 35px rgba(0,0,0,.45);
     z-index: 5;
@@ -1277,7 +1299,7 @@ h1:focus {
 .auth-panel {
     width: min(100%, 420px);
     padding: 28px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: #ffffff;
     box-shadow: 0 18px 50px rgba(30, 41, 59, 0.12);
 }
@@ -1305,11 +1327,11 @@ h1:focus {
 
 .auth-primary {
     width: 100%;
-    min-height: 44px;
+    min-height: var(--touch-target);
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: #2563eb;
-    color: #ffffff;
+    color: var(--color-text)fff;
     font-weight: 700;
 }
 
@@ -1324,7 +1346,7 @@ h1:focus {
 .auth-error {
     margin-bottom: 16px;
     padding: 12px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: #fee2e2;
     color: #991b1b;
     font-weight: 600;
@@ -1403,9 +1425,9 @@ h1:focus {
 
 .auth-card {
     width: 520px;
-    background: #242424;
+    background: var(--color-surface-raised);
     border: 1px solid #353535;
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     padding: 14px 40px 28px;
     box-shadow: 0 20px 45px rgba(0,0,0,.45);
 }
@@ -1413,7 +1435,7 @@ h1:focus {
     .auth-card h1 {
         margin: 0;
         text-align: center;
-        color: white;
+        color: var(--color-text);
         font-size: 40px;
     }
 
@@ -1432,7 +1454,7 @@ h1:focus {
     .field label {
         display: block;
         margin-bottom: 8px;
-        color: white;
+        color: var(--color-text);
         font-weight: 600;
     }
 
@@ -1440,7 +1462,7 @@ h1:focus {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #ddd;
+    color: var(--color-text-muted);
     margin: 24px 0;
 }
 
@@ -1470,7 +1492,7 @@ h1:focus {
     margin-bottom: 20px;
     background: rgba(180,40,40,.2);
     border: 1px solid rgba(255,80,80,.35);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     color: #ffb2b2;
     padding: 12px;
 }
@@ -1485,9 +1507,9 @@ h1:focus {
     height: 52px;
     padding: 0 16px;
     background: #1b1b1b;
-    color: white;
-    border: 1px solid #444;
-    border-radius: 12px;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
     font-size: 17px;
     box-sizing: border-box;
     appearance: none;
@@ -1504,7 +1526,7 @@ h1:focus {
     .auth-input:-webkit-autofill,
     .auth-input:-webkit-autofill:hover,
     .auth-input:-webkit-autofill:focus {
-        -webkit-text-fill-color: white;
+        -webkit-text-fill-color: var(--color-text);
         -webkit-box-shadow: 0 0 0 1000px #1b1b1b inset;
     }
 
@@ -1562,16 +1584,16 @@ h1:focus {
 .profile-page {
     min-height: 100vh;
     background: #121212;
-    color: #ffffff;
+    color: var(--color-text)fff;
     padding: 48px clamp(18px, 4vw, 56px);
 }
 
 .profile-panel {
     max-width: 980px;
     margin: 0 auto 24px;
-    background: #242424;
+    background: var(--color-surface-raised);
     border: 1px solid #353535;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: clamp(22px, 4vw, 36px);
     box-shadow: 0 20px 45px rgba(0,0,0,.35);
 }
@@ -1600,7 +1622,7 @@ h1:focus {
 .profile-heading h1,
 .profile-heading h2 {
     margin: 0;
-    color: #ffffff;
+    color: var(--color-text)fff;
     font-weight: 800;
     letter-spacing: 0;
 }
@@ -1633,9 +1655,9 @@ h1:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 46px;
+    min-height: var(--control-height);
     padding: 0 18px;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     font-weight: 700;
     text-decoration: none;
     transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, border-color .2s ease;
@@ -1643,15 +1665,15 @@ h1:focus {
 
 .profile-secondary-action {
     border: 1px solid #3a3a3a;
-    background: #303030;
-    color: #ffffff;
+    background: var(--color-surface-hover);
+    color: var(--color-text)fff;
 }
 
 .profile-secondary-action:hover,
 .profile-secondary-action:focus {
-    color: #ffffff;
+    color: var(--color-text)fff;
     background: #3a3a3a;
-    border-color: #4a4a4a;
+    border-color: var(--color-border-strong);
     box-shadow: 0 10px 22px rgba(0,0,0,.28);
     transform: translateY(-2px);
 }
@@ -1659,7 +1681,7 @@ h1:focus {
 .profile-danger-action {
     border: 1px solid #7f1d1d;
     background: #b42318;
-    color: #ffffff;
+    color: var(--color-text)fff;
 }
 
 .profile-danger-action:hover:not(:disabled),
@@ -1679,7 +1701,7 @@ h1:focus {
     border: 1px solid rgba(63,185,80,.45);
     background: rgba(63,185,80,.12);
     color: #adf0bd;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: 12px 14px;
 }
 
@@ -1740,9 +1762,9 @@ h1:focus {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background: #242424;
+    background: var(--color-surface-raised);
     border: 1px solid #353535;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 14px;
     box-shadow: 0 20px 45px rgba(0,0,0,.28);
 }
@@ -1750,7 +1772,7 @@ h1:focus {
 .profile-tab {
     min-height: 48px;
     border: 1px solid transparent;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     background: transparent;
     color: #d0d7de;
     text-align: left;
@@ -1763,13 +1785,13 @@ h1:focus {
 
 .profile-tab:hover,
 .profile-tab:focus {
-    color: #ffffff;
-    background: #303030;
+    color: var(--color-text)fff;
+    background: var(--color-surface-hover);
     border-color: #3f3f3f;
 }
 
 .profile-tab.active {
-    color: #ffffff;
+    color: var(--color-text)fff;
     background: #2fb344;
     border-color: #3fb950;
 }
@@ -1793,11 +1815,11 @@ h1:focus {
 
 .menu-logout-button {
     width: 100%;
-    min-height: 46px;
+    min-height: var(--control-height);
     border: 1px solid rgba(255,255,255,.14);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: rgba(255,255,255,.06);
-    color: #ffffff;
+    color: var(--color-text)fff;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
@@ -1858,24 +1880,24 @@ h1:focus {
 .modal-window select,
 .modal-window textarea {
     width: 100%;
-    min-height: 44px;
+    min-height: var(--touch-target);
     padding: 10px 12px;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-    background: #19191a;
+    background: var(--color-bg-elevated);
     color: var(--color-text);
 }
 
 .form-select option,
 .modal-window option {
-    background: #19191a;
+    background: var(--color-bg-elevated);
     color: var(--color-text);
 }
 
 .modal-window label {
     display: block;
     margin: 14px 0 6px;
-    color: #d7d7dc;
+    color: var(--color-text-muted);
     font-weight: 650;
 }
 
@@ -1921,7 +1943,7 @@ select:disabled,
 }
 
 .danger-button {
-    background: #9d2929;
+    background: var(--color-danger-action);
 }
 
 @media (max-width: 600px) {
@@ -1935,7 +1957,7 @@ select:disabled,
         max-width: none;
         max-height: 92vh;
         padding: 20px 16px max(20px, env(safe-area-inset-bottom));
-        border-radius: 18px 18px 0 0;
+        border-radius: var(--radius-lg) 18px 0 0;
     }
 }
 

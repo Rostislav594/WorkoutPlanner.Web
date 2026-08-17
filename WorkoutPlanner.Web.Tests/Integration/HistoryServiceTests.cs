@@ -107,4 +107,102 @@ public sealed class HistoryServiceTests
         Assert.True(await verificationDb.WorkoutHistory.AnyAsync(x =>
             x.UserId == null));
     }
+
+    [Fact]
+    public async Task DeleteHistory_RemovesMatchingProgress_KeepsCalendar_AndRebasesChart()
+    {
+        await using var application = await TestApplication.CreateAsync();
+        await application.CreateUserAsync("user-a");
+        await application.CreateUserAsync("user-b");
+        application.AuthenticationStateProvider.SetUser("user-a");
+
+        var firstDate = new DateTime(2026, 8, 1, 18, 0, 0);
+        var deletedDate = new DateTime(2026, 8, 8, 18, 0, 0);
+        var lastDate = new DateTime(2026, 8, 15, 18, 0, 0);
+        int historyId;
+
+        await using (var scope = application.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var plan = new TrainingPlan
+            {
+                UserId = "user-a",
+                WorkoutName = "Full body",
+                Date = firstDate
+            };
+            db.TrainingPlans.Add(plan);
+            await db.SaveChangesAsync();
+
+            var history = new WorkoutHistory
+            {
+                UserId = "user-a",
+                WorkoutName = "Full body",
+                Date = deletedDate,
+                Details = "{}"
+            };
+            db.WorkoutHistory.AddRange(
+                new WorkoutHistory
+                {
+                    UserId = "user-a",
+                    WorkoutName = "Full body",
+                    Date = firstDate,
+                    Details = "{}"
+                },
+                history,
+                new WorkoutHistory
+                {
+                    UserId = "user-a",
+                    WorkoutName = "Full body",
+                    Date = lastDate,
+                    Details = "{}"
+                });
+            db.ProgressSnapshots.AddRange(
+                new ProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", Date = firstDate, Score = 100 },
+                new ProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", Date = deletedDate, Score = 120 },
+                new ProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", Date = lastDate, Score = 150 },
+                new ProgressSnapshot { UserId = "user-a", WorkoutName = "Other", Date = deletedDate, Score = 90 },
+                new ProgressSnapshot { UserId = "user-b", WorkoutName = "Full body", Date = deletedDate, Score = 80 });
+            db.ExerciseProgressSnapshots.AddRange(
+                new ExerciseProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", ExerciseName = "Squat", Date = firstDate, Score = 40 },
+                new ExerciseProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", ExerciseName = "Squat", Date = deletedDate, Score = 50 },
+                new ExerciseProgressSnapshot { UserId = "user-a", WorkoutName = "Full body", ExerciseName = "Squat", Date = lastDate, Score = 60 },
+                new ExerciseProgressSnapshot { UserId = "user-b", WorkoutName = "Full body", ExerciseName = "Squat", Date = deletedDate, Score = 70 });
+            db.WorkoutDays.Add(new WorkoutDay
+            {
+                UserId = "user-a",
+                TrainingPlanId = plan.Id,
+                Date = deletedDate.Date,
+                IsCompleted = true
+            });
+            await db.SaveChangesAsync();
+            historyId = history.Id;
+
+            var historyService = scope.ServiceProvider.GetRequiredService<HistoryService>();
+            Assert.True(await historyService.DeleteHistoryAsync(historyId));
+        }
+
+        await using var verificationScope = application.CreateScope();
+        var verificationDb = verificationScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+
+        Assert.False(await verificationDb.WorkoutHistory.AnyAsync(x => x.Id == historyId));
+        Assert.False(await verificationDb.ProgressSnapshots.AnyAsync(x =>
+            x.UserId == "user-a" && x.WorkoutName == "Full body" && x.Date == deletedDate));
+        Assert.False(await verificationDb.ExerciseProgressSnapshots.AnyAsync(x =>
+            x.UserId == "user-a" && x.WorkoutName == "Full body" && x.Date == deletedDate));
+        Assert.True(await verificationDb.WorkoutDays.AnyAsync(x =>
+            x.UserId == "user-a" && x.Date == deletedDate.Date && x.IsCompleted));
+        Assert.True(await verificationDb.ProgressSnapshots.AnyAsync(x =>
+            x.UserId == "user-a" && x.WorkoutName == "Other" && x.Date == deletedDate));
+        Assert.True(await verificationDb.ProgressSnapshots.AnyAsync(x =>
+            x.UserId == "user-b" && x.WorkoutName == "Full body" && x.Date == deletedDate));
+        Assert.True(await verificationDb.ExerciseProgressSnapshots.AnyAsync(x =>
+            x.UserId == "user-b" && x.WorkoutName == "Full body" && x.Date == deletedDate));
+
+        var progressService = verificationScope.ServiceProvider.GetRequiredService<ProgressService>();
+        var workoutChart = await progressService.GetWorkoutChartAsync("Full body");
+        var exerciseChart = await progressService.GetExerciseChartAsync("Full body", "Squat");
+
+        Assert.Equal([0m, 50m], workoutChart.Select(x => x.Percent).ToArray());
+        Assert.Equal([0m, 50m], exerciseChart.Select(x => x.Percent).ToArray());
+    }
 }

@@ -6,9 +6,11 @@
 @inject NavigationManager Navigation
 
 <section class="auth-card" aria-labelledby="login-title">
-    <div class="auth-brand" aria-hidden="true">G</div>
+    <div class="auth-brand">
+        <img src="_content/WorkoutPlanner.UI/images/Emblem.png" alt="GPlanner" />
+    </div>
     <h1 id="login-title">Вход</h1>
-    <p class="auth-intro">Войдите в централизованный аккаунт GymPlanner.</p>
+    
 
     @if (_errors.Count > 0)
     {

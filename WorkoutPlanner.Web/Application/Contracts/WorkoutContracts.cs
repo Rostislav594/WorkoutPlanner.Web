@@ -19,6 +19,7 @@ public sealed class Exercise
     public ExerciseStatus Status { get; set; }
     public int TrainingPlanId { get; set; }
     public int? ExerciseDefinitionId { get; set; }
+    public int? SupersetGroupId { get; set; }
     public ExerciseDefinition? ExerciseDefinition { get; set; }
     public List<ExerciseTemplateSet> Sets { get; set; } = [];
     public bool IsCompleted => Sets.Count > 0 && Sets.All(x => x.Completed);
@@ -51,6 +52,7 @@ public sealed class ExerciseTemplateSet
     public int Repetitions { get; set; }
     public double Weight { get; set; }
     public bool Completed { get; set; }
+    public bool IsWarmup { get; set; }
 }
 
 public sealed class ExerciseDefinition

@@ -3,9 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:GymPlanner.Mobile"
              xmlns:components="clr-namespace:GymPlanner.Mobile.Components"
-             x:Class="GymPlanner.Mobile.MainPage">
+             x:Class="GymPlanner.Mobile.MainPage"
+             BackgroundColor="#0F1115">
 
-    <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
+    <BlazorWebView x:Name="blazorWebView"
+                   HostPage="wwwroot/index.html"
+                   BackgroundColor="#0F1115">
         <BlazorWebView.RootComponents>
             <RootComponent Selector="#app" ComponentType="{x:Type components:Routes}" />
         </BlazorWebView.RootComponents>

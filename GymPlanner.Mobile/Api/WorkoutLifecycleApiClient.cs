@@ -92,6 +92,31 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         }
     }
 
+    public async Task<ApiResult<WorkoutDayApiResponse>> MoveCalendarDayAsync(
+        int id,
+        MoveWorkoutRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PutAsJsonAsync(
+                $"api/v1/calendar/{id}/date",
+                request,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+
+            var day = await response.Content.ReadFromJsonAsync<WorkoutDayApiResponse>(cancellationToken);
+            return day is null
+                ? ApiResult<WorkoutDayApiResponse>.Failure("Сервер вернул пустую тренировку.")
+                : ApiResult<WorkoutDayApiResponse>.Success(day);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<WorkoutDayApiResponse>.Failure("Нет соединения с сервером.");
+        }
+    }
+
     public async Task<OptionalApiResult<TodayWorkoutApiResponse>> StartTodayWorkoutAsync(
         CancellationToken cancellationToken = default)
     {
@@ -151,6 +176,37 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         catch (HttpRequestException)
         {
             return ApiResult<WorkoutHistoryApiResponse>.Failure(
+                "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult<CompleteFreeWorkoutResponse>> CompleteFreeWorkoutAsync(
+        CompleteFreeWorkoutRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PostAsJsonAsync(
+                "api/v1/workouts/free/complete",
+                request,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(
+                    null,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<
+                CompleteFreeWorkoutResponse>(cancellationToken);
+            return result is null
+                ? ApiResult<CompleteFreeWorkoutResponse>.Failure(
+                    "Сервер вернул пустой результат свободной тренировки.")
+                : ApiResult<CompleteFreeWorkoutResponse>.Success(result);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<CompleteFreeWorkoutResponse>.Failure(
                 "Нет соединения с сервером.");
         }
     }

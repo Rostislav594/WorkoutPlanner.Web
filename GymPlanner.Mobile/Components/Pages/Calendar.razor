@@ -7,26 +7,39 @@
 @inject IWorkoutLifecycleApiClient LifecycleClient
 @inject ILocalWorkoutReminderService ReminderService
 
-<section class="calendar-page">
-    <header>
-        <p>Расписание</p>
+<section class="calendar-page" aria-busy="@_isLoading">
+    <header class="calendar-header">
         <h1>Календарь</h1>
+        <div class="header-line" aria-hidden="true"></div>
     </header>
 
     @if (_errors.Count > 0)
     {
-        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+        <div class="calendar-error" role="alert">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <div>
+                <strong>Не удалось загрузить календарь</strong>
+                <p>@string.Join(" ", _errors)</p>
+            </div>
+        </div>
     }
 
-    <div class="month-toolbar">
-        <button type="button" disabled="@_isLoading" @onclick="PreviousMonthAsync" aria-label="Предыдущий месяц">←</button>
-        <h2>@MonthTitle</h2>
-        <button type="button" disabled="@_isLoading" @onclick="NextMonthAsync" aria-label="Следующий месяц">→</button>
+    <div class="month-header">
+        <button class="month-button" type="button" disabled="@_isLoading" @onclick="PreviousMonthAsync" aria-label="Предыдущий месяц">
+            <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
+        </button>
+        <h2 class="month-title">@MonthTitle</h2>
+        <button class="month-button" type="button" disabled="@_isLoading" @onclick="NextMonthAsync" aria-label="Следующий месяц">
+            <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
+        </button>
     </div>
 
     @if (_isLoading)
     {
-        <div class="state" role="status">Загружаем календарь…</div>
+        <div class="calendar-state" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Загружаем календарь…</span>
+        </div>
     }
     else
     {
@@ -36,12 +49,12 @@
                 <span>@dayName</span>
             }
         </div>
-        <div class="month-grid" aria-label="@MonthTitle">
+        <div class="calendar-grid" aria-label="@MonthTitle">
             @foreach (var date in CalendarCells)
             {
                 if (date is null)
                 {
-                    <span class="calendar-cell spacer" aria-hidden="true"></span>
+                    <span class="calendar-empty" aria-hidden="true"></span>
                 }
                 else
                 {
@@ -50,13 +63,20 @@
                         ? null
                         : _plans.FirstOrDefault(x => x.Id == workoutDay.TrainingPlanId);
                     <button type="button"
-                            class="calendar-cell @(date.Value.Date == DateTime.Today ? "today" : null) @(workoutDay?.IsCompleted == true ? "completed" : null)"
+                            class="calendar-day @(workoutDay is not null ? "has-workout" : null) @(date.Value.Date == DateTime.Today ? "today-day" : null) @(_selectedDate?.Date == date.Value.Date ? "selected-day" : null) @(workoutDay?.IsCompleted == true ? "completed-day" : null)"
                             @onclick="() => OpenDayAsync(date.Value)"
                             aria-label="@GetDayLabel(date.Value, plan, workoutDay)">
                         <span class="day-number">@date.Value.Day</span>
                         @if (plan is not null)
                         {
-                            <span class="workout-marker">@GetShortName(plan.WorkoutName)</span>
+                            <span class="calendar-marker @GetWorkoutMarkerClass(plan)">
+                                @if (workoutDay?.IsCompleted == true)
+                                {
+                                    <span class="marker-completed" aria-hidden="true">✓</span>
+                                }
+                                <span class="calendar-marker-full">@plan.WorkoutName</span>
+                                <span class="calendar-marker-short">@GetShortName(plan.WorkoutName)</span>
+                            </span>
                         }
                     </button>
                 }
@@ -68,95 +88,108 @@
 @if (_selectedDate is not null)
 {
     var selectedDay = FindDay(_selectedDate.Value);
-    var selectedPlan = selectedDay is null
-        ? null
-        : _plans.FirstOrDefault(x => x.Id == selectedDay.TrainingPlanId);
 
-    <div class="dialog-backdrop" @onclick="CloseDay">
-        <section class="day-dialog" role="dialog" aria-modal="true" aria-labelledby="selected-day-title" @onclick:stopPropagation="true">
-            <h2 id="selected-day-title">@_selectedDate.Value.ToString("dd MMMM yyyy", RussianCulture)</h2>
+    @if (selectedDay is not null)
+    {
+        <div class="modal-overlay action-overlay" @onclick="CloseDay">
+            <section class="modal-window workout-action-dialog"
+                     role="dialog"
+                     aria-modal="true"
+                     aria-label="Действия с тренировкой"
+                     @onclick:stopPropagation="true">
+                @if (_dialogErrors.Count > 0)
+                {
+                    <div class="dialog-error" role="alert">@string.Join(" ", _dialogErrors)</div>
+                }
+
+                <div class="workout-action-list">
+                    <button class="danger-button" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
+                        Удалить
+                    </button>
+                    <label class="move-date-action @(_isBusy ? "is-disabled" : null)">
+                        <span>Перенести на другую дату</span>
+                        <input type="date"
+                               min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                               disabled="@_isBusy"
+                               aria-label="Выбрать новую дату тренировки"
+                               @bind="_moveDate"
+                               @bind:after="MoveAsync" />
+                    </label>
+                </div>
+            </section>
+        </div>
+    }
+    else
+    {
+        <div class="modal-overlay" @onclick="CloseDay">
+            <section class="modal-window calendar-day-dialog" role="dialog" aria-modal="true" aria-labelledby="selected-day-title" @onclick:stopPropagation="true">
+            <header class="calendar-modal-header">
+                <div>
+                    <span class="modal-eyebrow">Выбранный день</span>
+                    <h2 id="selected-day-title">
+                        <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
+                        @_selectedDate.Value.ToString("dd MMMM yyyy", RussianCulture)
+                    </h2>
+                </div>
+                <button class="icon-close-button" type="button" disabled="@_isBusy" @onclick="CloseDay" aria-label="Закрыть">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
 
             @if (_dialogErrors.Count > 0)
             {
-                <div class="auth-error" role="alert">@string.Join(" ", _dialogErrors)</div>
+                <div class="dialog-error" role="alert">@string.Join(" ", _dialogErrors)</div>
             }
 
-            @if (selectedDay is not null)
+            @if (_selectedDate.Value.Date >= DateTime.Today)
             {
-                <p class="scheduled-label">Назначенная тренировка</p>
-                <h3>@(selectedPlan?.WorkoutName ?? "План недоступен")</h3>
-                @if (selectedDay.IsCompleted)
-                {
-                    <p class="completed-label">Тренировка завершена</p>
-                }
-            }
-
-            @if (_selectedDate.Value.Date >= DateTime.Today && selectedDay?.IsCompleted != true)
-            {
-                <label class="plan-selector" for="calendar-plan">
-                    Тренировочный план
-                    <select id="calendar-plan" class="auth-input" @bind="_selectedPlanId">
-                        <option value="0">Выберите план</option>
-                        @foreach (var plan in _plans)
-                        {
-                            <option value="@plan.Id">@plan.WorkoutName</option>
-                        }
-                    </select>
-                </label>
-                @if (_plans.Count == 0)
-                {
-                    <p class="empty-hint">Сначала создайте тренировочный план.</p>
-                }
-            }
-            else if (selectedDay is null)
-            {
-                <p class="empty-hint">На прошедшую дату нельзя назначить тренировку.</p>
-            }
-
-            @if (selectedDay is not null &&
-                !selectedDay.IsCompleted &&
-                _selectedDate.Value.Date >= DateTime.Today)
-            {
-                <section class="reminder-settings" aria-labelledby="reminder-title">
-                    <h4 id="reminder-title">Локальное напоминание</h4>
-                    @if (_reminderErrors.Count > 0)
+                <section class="workout-picker" aria-labelledby="workout-picker-title">
+                    <h3 id="workout-picker-title">Назначить тренировку</h3>
+                    @if (_plans.Count == 0)
                     {
-                        <div class="auth-error" role="alert">@string.Join(" ", _reminderErrors)</div>
+                        <p class="empty-hint">Сначала создайте тренировочный план.</p>
                     }
-                    @if (_scheduledReminder is not null)
+                    else
                     {
-                        <p class="reminder-status" role="status">Запланировано на @(_scheduledReminder.NotifyAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")).</p>
+                        <div class="workout-picker-grid">
+                            @foreach (var plan in _plans)
+                            {
+                                <button class="workout-picker-card @(_selectedPlanId == plan.Id ? "selected-plan" : null)"
+                                        type="button"
+                                        disabled="@_isBusy"
+                                        aria-pressed="@(_selectedPlanId == plan.Id)"
+                                        @onclick="() => _selectedPlanId = plan.Id">
+                                    <span class="workout-picker-name">@plan.WorkoutName</span>
+                                    @if (_selectedPlanId == plan.Id)
+                                    {
+                                        <span class="material-symbols-rounded plan-check" aria-hidden="true">check_circle</span>
+                                    }
+                                </button>
+                            }
+                        </div>
                     }
-                    <label for="reminder-time">
-                        Время
-                        <input id="reminder-time" class="auth-input" type="time" value="@_reminderTime" @onchange="ChangeReminderTime" />
-                    </label>
-                    <div class="reminder-actions">
-                        <button class="secondary" type="button" disabled="@_isBusy" @onclick="ScheduleReminderAsync">
-                            @(_scheduledReminder is null ? "Напомнить" : "Изменить время")
-                        </button>
-                        @if (_scheduledReminder is not null)
-                        {
-                            <button class="danger" type="button" disabled="@_isBusy" @onclick="CancelReminderAsync">Отменить напоминание</button>
-                        }
-                    </div>
                 </section>
             }
+            else
+            {
+                <div class="past-day-hint">
+                    <span class="material-symbols-rounded" aria-hidden="true">history</span>
+                    <p>Этот день уже прошёл. Назначить тренировку невозможно.</p>
+                </div>
+            }
+
             <div class="dialog-actions">
-                @if (_selectedDate.Value.Date >= DateTime.Today && selectedDay?.IsCompleted != true)
+                @if (_selectedDate.Value.Date >= DateTime.Today)
                 {
-                    <button class="primary" type="button" disabled="@(_isBusy || _selectedPlanId == 0)" @onclick="ScheduleAsync">
-                        @(_isBusy ? "Сохраняем…" : selectedDay is null ? "Назначить" : "Заменить")
+                    <button class="primary-button" type="button" disabled="@(_isBusy || _selectedPlanId == 0)" @onclick="ScheduleAsync">
+                        @(_isBusy ? "Сохраняем…" : "Назначить")
                     </button>
                 }
-                @if (selectedDay is not null && !selectedDay.IsCompleted)
-                {
-                    <button class="danger" type="button" disabled="@_isBusy" @onclick="DeleteAsync">Удалить</button>
-                }
-                <button class="secondary" type="button" disabled="@_isBusy" @onclick="CloseDay">Закрыть</button>
+                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseDay">Закрыть</button>
             </div>
-        </section>
-    </div>
+            </section>
+        </div>
+    }
 }
 
 @code {
@@ -170,6 +203,7 @@
     private readonly CancellationTokenSource _disposeCts = new();
     private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private DateTime? _selectedDate;
+    private DateTime _moveDate = DateTime.Today.AddDays(1);
     private int _selectedPlanId;
     private string _reminderTime = "09:00";
     private LocalWorkoutReminder? _scheduledReminder;
@@ -260,6 +294,7 @@
         _dialogErrors.Clear();
         _reminderErrors.Clear();
         _selectedPlanId = FindDay(date)?.TrainingPlanId ?? 0;
+        _moveDate = date.Date < DateTime.Today ? DateTime.Today : date.Date.AddDays(1);
         var day = FindDay(date);
         _scheduledReminder = day is null
             ? null
@@ -360,6 +395,54 @@
             {
                 _dialogErrors.AddRange(reminderResult.Errors);
                 return;
+            }
+
+            CloseDayAfterSuccess();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task MoveAsync()
+    {
+        var day = _selectedDate is null ? null : FindDay(_selectedDate.Value);
+        if (_isBusy || day is null)
+            return;
+
+        if (_moveDate.Date < DateTime.Today || _moveDate.Date == day.Date.Date)
+        {
+            _dialogErrors.Clear();
+            _dialogErrors.Add("Выберите другую текущую или будущую дату.");
+            return;
+        }
+
+        _isBusy = true;
+        _dialogErrors.Clear();
+        try
+        {
+            var result = await LifecycleClient.MoveCalendarDayAsync(
+                day.Id,
+                new MoveWorkoutRequest(_moveDate.Date),
+                _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _dialogErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _workoutDays.RemoveAll(x => x.Id == day.Id);
+            if (_moveDate.Year == _currentMonth.Year && _moveDate.Month == _currentMonth.Month)
+                _workoutDays.Add(result.Value!);
+
+            if (_scheduledReminder is not null)
+            {
+                await ReminderService.CancelAsync(day.Id, _disposeCts.Token);
+                _scheduledReminder = null;
             }
 
             CloseDayAfterSuccess();
@@ -509,6 +592,9 @@
             return words[0].Length <= 3 ? words[0] : words[0][..3];
         return string.Concat(words.Take(2).Select(x => char.ToUpperInvariant(x[0])));
     }
+
+    private static string GetWorkoutMarkerClass(TrainingPlanApiResponse plan) =>
+        $"marker-custom-{Math.Abs(plan.Id) % 6}";
 
     private static string GetDayLabel(
         DateTime date,

@@ -22,6 +22,10 @@ public interface IWorkoutDayService
     Task<bool> DeleteDayAsync(
         int id,
         CancellationToken cancellationToken = default);
+    Task<WorkoutDay?> MoveDayAsync(
+        int id,
+        DateTime date,
+        CancellationToken cancellationToken = default);
     Task CompleteTodayWorkoutAsync(
         CancellationToken cancellationToken = default);
 }

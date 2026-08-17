@@ -305,8 +305,10 @@ public static class WorkoutApiEndpoints
                     x.SetNumber,
                     x.Repetitions,
                     x.Weight,
-                    x.Completed))
-                .ToList());
+                    x.Completed,
+                    x.IsWarmup))
+                .ToList(),
+            exercise.SupersetGroupId);
 
     private static AppContracts.Exercise ToContract(
         SaveExerciseRequest request,
@@ -322,6 +324,7 @@ public static class WorkoutApiEndpoints
             Status = status,
             TrainingPlanId = plan.Id,
             ExerciseDefinitionId = request.ExerciseDefinitionId,
+            SupersetGroupId = request.SupersetGroupId,
             Sets = request.Sets!
                 .OrderBy(x => x.SetNumber)
                 .Select(x => new AppContracts.ExerciseTemplateSet
@@ -329,7 +332,8 @@ public static class WorkoutApiEndpoints
                     SetNumber = x.SetNumber,
                     Repetitions = x.Repetitions,
                     Weight = x.Weight,
-                    Completed = x.Completed
+                    Completed = x.Completed,
+                    IsWarmup = x.IsWarmup
                 })
                 .ToList()
         };

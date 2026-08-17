@@ -31,6 +31,7 @@ internal static class ApplicationContractMapper
             Status = (Contracts.ExerciseStatus)source.Status,
             TrainingPlanId = source.TrainingPlanId,
             ExerciseDefinitionId = source.ExerciseDefinitionId,
+            SupersetGroupId = source.SupersetGroupId,
             ExerciseDefinition = source.ExerciseDefinition?.ToContract(),
             Sets = source.Sets
                 .OrderBy(x => x.SetNumber)
@@ -48,7 +49,8 @@ internal static class ApplicationContractMapper
             SetNumber = source.SetNumber,
             Repetitions = source.Repetitions,
             Weight = source.Weight,
-            Completed = source.Completed
+            Completed = source.Completed,
+            IsWarmup = source.IsWarmup
         };
     }
 

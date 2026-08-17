@@ -9,4 +9,5 @@ public class WorkoutHistorySet
     public int Repetitions { get; set; }
 
     public bool Completed { get; set; }
+    public bool IsWarmup { get; set; }
 }

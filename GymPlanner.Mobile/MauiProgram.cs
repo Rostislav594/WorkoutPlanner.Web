@@ -48,7 +48,7 @@ public static class MauiProgram
 			var handler = new Authentication.AuthenticatedHttpMessageHandler(
 				serviceProvider.GetRequiredService<Authentication.MobileAuthenticationService>())
 			{
-				InnerHandler = new HttpClientHandler()
+				InnerHandler = Infrastructure.MobileHttpMessageHandlerFactory.Create()
 			};
 			return new HttpClient(handler) { BaseAddress = options.BaseAddress };
 		});

@@ -1,0 +1,174 @@
+@page "/profile/setup"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using System.Globalization
+@inject IProfileApiClient ProfileClient
+@inject NavigationManager Navigation
+
+<section class="profile-setup-page" aria-busy="@_isLoading">
+    <div class="profile-setup-panel">
+        @if (_isLoading)
+        {
+            <div class="profile-setup-state" role="status">
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span>Проверяем профиль…</span>
+            </div>
+        }
+        else if (_loadErrors.Count > 0)
+        {
+            <div class="profile-setup-state load-error">
+                <div class="auth-error" role="alert">@string.Join(" ", _loadErrors)</div>
+                <button class="profile-secondary-action" type="button" @onclick="LoadAsync">Повторить</button>
+            </div>
+        }
+        else
+        {
+            <header class="profile-heading">
+                <p class="profile-kicker">Профиль пользователя</p>
+                <h1>Настройка профиля</h1>
+                <p>Заполните основные данные, чтобы продолжить работу с GPlanner.</p>
+            </header>
+
+            @if (_operationErrors.Count > 0)
+            {
+                <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
+            }
+
+            <EditForm Model="_input" OnValidSubmit="SaveProfileAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+
+                <div class="profile-form-grid">
+                    <div class="field">
+                        <label for="setup-first-name">Имя</label>
+                        <InputText id="setup-first-name" class="auth-input" @bind-Value="_input.FirstName" autocomplete="given-name" />
+                        <ValidationMessage For="@(() => _input.FirstName)" />
+                    </div>
+
+                    <div class="field">
+                        <label for="setup-last-name">Фамилия</label>
+                        <InputText id="setup-last-name" class="auth-input" @bind-Value="_input.LastName" autocomplete="family-name" />
+                        <ValidationMessage For="@(() => _input.LastName)" />
+                    </div>
+
+                    <div class="field">
+                        <label for="setup-birth-date">Дата рождения</label>
+                        <InputText id="setup-birth-date"
+                                   class="auth-input"
+                                   @bind-Value="_input.BirthDateText"
+                                   inputmode="numeric"
+                                   autocomplete="bday"
+                                   placeholder="ДД.ММ.ГГГГ" />
+                        <ValidationMessage For="@(() => _input.BirthDateText)" />
+                    </div>
+
+                    <div class="field">
+                        <label for="setup-gender">Пол</label>
+                        <InputSelect id="setup-gender" class="auth-input" @bind-Value="_input.Gender">
+                            <option value="">Выберите</option>
+                            <option value="Мужской">Мужской</option>
+                            <option value="Женский">Женский</option>
+                            <option value="Не указывать">Не указывать</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _input.Gender)" />
+                    </div>
+                </div>
+
+                <button class="profile-primary-action" type="submit" disabled="@_isSaving">
+                    @(_isSaving ? "Сохраняем…" : "Сохранить профиль")
+                </button>
+            </EditForm>
+        }
+    </div>
+</section>
+
+@code {
+    private readonly ProfileInput _input = new();
+    private readonly List<string> _loadErrors = [];
+    private readonly List<string> _operationErrors = [];
+    private bool _isLoading = true;
+    private bool _isSaving;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _loadErrors.Clear();
+
+        var result = await ProfileClient.GetAsync();
+        if (!result.Succeeded)
+        {
+            _loadErrors.AddRange(result.Errors);
+        }
+        else if (result.Value!.HasProfile)
+        {
+            Navigation.NavigateTo("/profile", replace: true);
+        }
+
+        _isLoading = false;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_isSaving)
+            return;
+
+        _operationErrors.Clear();
+        if (!DateTime.TryParseExact(
+                _input.BirthDateText.Trim(),
+                ["dd.MM.yyyy", "d.M.yyyy", "yyyy-MM-dd"],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out var birthDate))
+        {
+            _operationErrors.Add("Введите дату рождения в формате ДД.ММ.ГГГГ.");
+            return;
+        }
+
+        if (birthDate.Date > DateTime.Today || birthDate.Year < 1900)
+        {
+            _operationErrors.Add("Укажите корректную дату рождения.");
+            return;
+        }
+
+        _isSaving = true;
+        try
+        {
+            var result = await ProfileClient.SaveAsync(new(
+                _input.FirstName,
+                _input.LastName,
+                birthDate,
+                _input.Gender));
+
+            if (!result.Succeeded)
+            {
+                _operationErrors.AddRange(result.Errors);
+                return;
+            }
+
+            Navigation.NavigateTo("/firstlaunch", replace: true);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private sealed class ProfileInput
+    {
+        [Required(ErrorMessage = "Введите имя.")]
+        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Введите фамилию.")]
+        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Укажите дату рождения.")]
+        public string BirthDateText { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Выберите пол.")]
+        public string Gender { get; set; } = string.Empty;
+    }
+}

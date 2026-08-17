@@ -33,7 +33,8 @@ public sealed class MobileAuthenticationService : IDisposable
         _timeProvider = timeProvider;
         _reminders = reminders;
         _logger = logger;
-        _authenticationClient = new HttpClient
+        _authenticationClient = new HttpClient(
+            MobileHttpMessageHandlerFactory.Create())
         {
             BaseAddress = options.BaseAddress
         };

@@ -17,10 +17,19 @@ public interface IWorkoutLifecycleApiClient
         int id,
         CancellationToken cancellationToken = default);
 
+    Task<ApiResult<WorkoutDayApiResponse>> MoveCalendarDayAsync(
+        int id,
+        MoveWorkoutRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<OptionalApiResult<TodayWorkoutApiResponse>> StartTodayWorkoutAsync(
         CancellationToken cancellationToken = default);
 
     Task<ApiResult<WorkoutHistoryApiResponse>> CompleteTodayWorkoutAsync(
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResult<CompleteFreeWorkoutResponse>> CompleteFreeWorkoutAsync(
+        CompleteFreeWorkoutRequest request,
         CancellationToken cancellationToken = default);
 
     Task<ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>> GetHistoryAsync(

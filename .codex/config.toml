@@ -1,0 +1,18 @@
+# Project-scoped Codex MCP configuration.
+# Keep secrets in environment variables. Do not hardcode tokens here.
+
+[mcp_servers.context7]
+command = "npx"
+args = ["-y", "@upstash/context7-mcp"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60
+enabled = true
+
+# GitHub MCP is intentionally disabled until GITHUB_PAT_TOKEN is configured.
+# Create a least-privilege GitHub Personal Access Token and expose it as an
+# environment variable on your machine. Never commit the token.
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PAT_TOKEN"
+enabled = false
+default_tools_approval_mode = "writes"

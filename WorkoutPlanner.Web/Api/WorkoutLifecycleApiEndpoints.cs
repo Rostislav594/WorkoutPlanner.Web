@@ -36,6 +36,12 @@ public static class WorkoutLifecycleApiEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
+        calendar.MapPut("/{id:int}/date", MoveCalendarDayAsync)
+            .Produces<WorkoutDayApiResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
 
         var workout = api.MapGroup("/workouts/today")
             .WithTags("Workout lifecycle")
@@ -52,6 +58,16 @@ public static class WorkoutLifecycleApiEndpoints
             .Produces(StatusCodes.Status403Forbidden);
         workout.MapPost("/complete", CompleteTodayWorkoutAsync)
             .Produces<WorkoutHistoryApiResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        var freeWorkout = api.MapGroup("/workouts/free")
+            .WithTags("Workout lifecycle")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName);
+        freeWorkout.MapPost("/complete", CompleteFreeWorkoutAsync)
+            .Produces<CompleteFreeWorkoutResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
@@ -174,6 +190,28 @@ public static class WorkoutLifecycleApiEndpoints
             : Results.NotFound();
     }
 
+    private static async Task<IResult> MoveCalendarDayAsync(
+        int id,
+        MoveWorkoutRequest request,
+        IWorkoutDayService workoutDays,
+        CancellationToken cancellationToken)
+    {
+        if (request.Date == default || request.Date.Date < DateTime.Today)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Date)] = ["A current or future workout date is required."]
+            });
+        }
+
+        var moved = await workoutDays.MoveDayAsync(id, request.Date, cancellationToken);
+        return moved is null
+            ? Results.Problem(
+                title: "The workout cannot be moved because the target date is occupied or the workout is unavailable.",
+                statusCode: StatusCodes.Status409Conflict)
+            : Results.Ok(ToResponse(moved));
+    }
+
     private static async Task<IResult> GetTodayWorkoutAsync(
         IWorkoutDayService workoutDays,
         ITodayWorkoutService todayWorkout,
@@ -217,6 +255,87 @@ public static class WorkoutLifecycleApiEndpoints
         return Results.Created(
             $"/api/v1/history/{result.History.Id}",
             ToResponse(result.History));
+    }
+
+    private static async Task<IResult> CompleteFreeWorkoutAsync(
+        CompleteFreeWorkoutRequest request,
+        IWorkoutCompletionService completion,
+        CancellationToken cancellationToken)
+    {
+        if (request.Exercises is null || request.Exercises.Count == 0)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Exercises)] =
+                    ["Добавьте хотя бы одно упражнение."]
+            });
+        }
+
+        var exercises = new List<Exercise>(request.Exercises.Count);
+        foreach (var source in request.Exercises)
+        {
+            if (!Enum.TryParse<ExerciseStatus>(
+                    source.Status,
+                    ignoreCase: true,
+                    out var status) ||
+                !Enum.IsDefined(status) ||
+                source.Sets is null)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    [nameof(request.Exercises)] =
+                        ["Проверьте оценку и подходы каждого упражнения."]
+                });
+            }
+
+            exercises.Add(new Exercise
+            {
+                Name = source.Name,
+                SetsCount = source.SetsCount,
+                Status = status,
+                ExerciseDefinitionId = source.ExerciseDefinitionId,
+                SupersetGroupId = source.SupersetGroupId,
+                Sets = source.Sets
+                    .Select(set => new ExerciseTemplateSet
+                    {
+                        SetNumber = set.SetNumber,
+                        Repetitions = set.Repetitions,
+                        Weight = set.Weight,
+                        Completed = set.Completed,
+                        IsWarmup = set.IsWarmup
+                    })
+                    .ToList()
+            });
+        }
+
+        var result = await completion.CompleteFreeAsync(
+            new FreeWorkoutCompletion
+            {
+                SaveAsTemplate = request.SaveAsTemplate,
+                TemplateName = request.TemplateName,
+                Exercises = exercises
+            },
+            cancellationToken);
+        if (!result.Succeeded || result.History is null)
+        {
+            if (result.Failure == FreeWorkoutCompletionFailure.TemplateNameConflict)
+            {
+                return Results.Problem(
+                    title: result.Error,
+                    statusCode: StatusCodes.Status409Conflict);
+            }
+
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["workout"] = [result.Error ?? "Не удалось сохранить тренировку."]
+            });
+        }
+
+        return Results.Created(
+            $"/api/v1/history/{result.History.Id}",
+            new CompleteFreeWorkoutResponse(
+                ToResponse(result.History),
+                result.TrainingPlanId));
     }
 
     private static async Task<IResult> GetHistoryAsync(
@@ -275,7 +394,8 @@ public static class WorkoutLifecycleApiEndpoints
                                         set.SetNumber,
                                         set.Repetitions,
                                         set.Weight,
-                                        set.Completed))
+                                        set.Completed,
+                                        set.IsWarmup))
                                     .ToList()))
                         .ToList());
             }

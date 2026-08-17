@@ -1,0 +1,355 @@
+@page "/progress/workouts"
+@attribute [Authorize]
+@implements IDisposable
+@using System.Globalization
+@using WorkoutPlanner.Api.Contracts
+@inject IWorkoutApiClient WorkoutClient
+@inject IProgressApiClient ProgressClient
+
+<section class="progress-workouts-page" aria-labelledby="progress-workouts-title" aria-busy="@_isLoading">
+    <div class="page-heading">
+        <a class="back-button" href="/progress" aria-label="Вернуться к разделам прогресса">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        </a>
+        <h1 id="progress-workouts-title">Прогресс тренировок</h1>
+        <span class="heading-spacer" aria-hidden="true"></span>
+    </div>
+
+    @if (_errors.Count > 0)
+    {
+        <div class="error-state" role="alert">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <span>@string.Join(" ", _errors)</span>
+        </div>
+    }
+
+    @if (_isLoading)
+    {
+        <div class="loading-state" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Загружаем тренировки…</span>
+        </div>
+    }
+    else if (_plans.Count == 0)
+    {
+        <div class="empty-state">
+            <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+            <h2>Нет тренировок для анализа</h2>
+            <p>Создайте тренировочный план, чтобы отслеживать его динамику.</p>
+            <a class="primary-action" href="/workouts">Открыть тренировки</a>
+        </div>
+    }
+    else
+    {
+        <div class="progress-workouts">
+            @foreach (var plan in _plans)
+            {
+                <article class="progress-card-wrapper">
+                    <div class="progress-card">
+                        <button class="progress-card-main" type="button" @onclick="() => OpenProgressAsync(plan)">
+                            <span class="progress-card-icon material-symbols-rounded" aria-hidden="true">monitoring</span>
+                            <span class="progress-card-title">@plan.WorkoutName</span>
+                            <span class="material-symbols-rounded card-chevron" aria-hidden="true">chevron_right</span>
+                        </button>
+                        <button class="card-menu-button"
+                                type="button"
+                                aria-label="Действия для тренировки @plan.WorkoutName"
+                                aria-expanded="@(_menuPlanId == plan.Id)"
+                                @onclick:stopPropagation="true"
+                                @onclick="() => ToggleMenu(plan.Id)">
+                            <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
+                        </button>
+                    </div>
+
+                    @if (_menuPlanId == plan.Id)
+                    {
+                        <div class="context-menu" role="menu">
+                            <button class="context-item" type="button" role="menuitem" @onclick="() => AskToClear(plan)">
+                                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                                Очистить историю
+                            </button>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@if (_menuPlanId is not null)
+{
+    <button class="context-menu-overlay" type="button" aria-label="Закрыть меню" @onclick="CloseMenu"></button>
+}
+
+@if (_selectedPlan is not null)
+{
+    <div class="modal-overlay" @onclick="CloseProgress">
+        <section class="modal-window progress-modal"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="workout-progress-title"
+                 @onclick:stopPropagation="true">
+            <header class="modal-heading">
+                <div>
+                    <h2 id="workout-progress-title">@_selectedPlan.WorkoutName</h2>
+                    <p>Динамика роста тренировочного индекса</p>
+                </div>
+                <button class="modal-close" type="button" aria-label="Закрыть" disabled="@_isLoadingProgress" @onclick="CloseProgress">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            @if (_progressErrors.Count > 0)
+            {
+                <div class="error-state compact" role="alert">@string.Join(" ", _progressErrors)</div>
+            }
+
+            @if (_isLoadingProgress)
+            {
+                <div class="loading-state compact" role="status">
+                    <span class="loading-spinner" aria-hidden="true"></span>
+                    <span>Загружаем прогресс…</span>
+                </div>
+            }
+            else if (_selectedProgress is not null && _selectedProgress.Snapshots.Count > 0)
+            {
+                <ProgressLineChart Title="Прогресс, %" Points="_selectedProgress.Chart" />
+
+                @if (_selectedProgress.Chart.Count == 1)
+                {
+                    <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
+                }
+
+                <div class="progress-summary">
+                    <article class="summary-card">
+                        <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
+                            <span class="material-symbols-rounded">trending_up</span>
+                        </span>
+                        <div class="card-content">
+                            <span class="card-title">Рост</span>
+                            <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
+                            <span class="card-subtitle">Относительно последней тренировки</span>
+                        </div>
+                    </article>
+
+                    <article class="summary-card">
+                        <span class="card-icon best-icon" aria-hidden="true">
+                            <span class="material-symbols-rounded">emoji_events</span>
+                        </span>
+                        <div class="card-content">
+                            <span class="card-title">Лучший результат</span>
+                            <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
+                            <span class="card-subtitle">Максимальный рост</span>
+                        </div>
+                    </article>
+
+                    <article class="summary-card">
+                        <span class="card-icon workout-icon" aria-hidden="true">
+                            <span class="material-symbols-rounded">calendar_month</span>
+                        </span>
+                        <div class="card-content">
+                            <span class="card-title">Тренировок</span>
+                            <strong class="card-value blue">@_selectedProgress.Snapshots.Count</strong>
+                            <span class="card-subtitle">Всего в истории</span>
+                        </div>
+                    </article>
+                </div>
+            }
+            else if (!_isLoadingProgress)
+            {
+                <div class="modal-empty">
+                    <span class="material-symbols-rounded" aria-hidden="true">show_chart</span>
+                    <h3>Данных пока нет</h3>
+                    <p>Завершите тренировку, чтобы здесь появилась динамика.</p>
+                </div>
+            }
+
+            <button class="secondary-action modal-action" type="button" disabled="@_isLoadingProgress" @onclick="CloseProgress">Закрыть</button>
+        </section>
+    </div>
+}
+
+@if (_clearPlan is not null)
+{
+    <div class="modal-overlay" @onclick="CloseClearDialog">
+        <section class="modal-window confirm-modal"
+                 role="alertdialog"
+                 aria-modal="true"
+                 aria-labelledby="clear-workout-progress-title"
+                 @onclick:stopPropagation="true">
+            <h2 id="clear-workout-progress-title">Очистить историю тренировки?</h2>
+            <p>Будет удалена вся история тренировки <strong>«@_clearPlan.WorkoutName»</strong>.</p>
+            <p class="warning-copy">Это действие нельзя отменить. История завершённых тренировок не удаляется.</p>
+
+            @if (_dialogErrors.Count > 0)
+            {
+                <div class="error-state compact" role="alert">@string.Join(" ", _dialogErrors)</div>
+            }
+
+            <div class="dialog-buttons">
+                <button class="secondary-action" type="button" disabled="@_isBusy" @onclick="CloseClearDialog">Отмена</button>
+                <button class="danger-action" type="button" disabled="@_isBusy" @onclick="ClearProgressAsync">
+                    @(_isBusy ? "Удаляем…" : "Удалить")
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_showToast)
+{
+    <div class="toast-success" role="status">
+        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+        История успешно удалена
+    </div>
+}
+
+@code {
+    private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
+    private readonly List<TrainingPlanApiResponse> _plans = [];
+    private readonly List<string> _errors = [];
+    private readonly List<string> _progressErrors = [];
+    private readonly List<string> _dialogErrors = [];
+    private readonly CancellationTokenSource _disposeCts = new();
+    private TrainingPlanApiResponse? _selectedPlan;
+    private WorkoutProgressApiResponse? _selectedProgress;
+    private TrainingPlanApiResponse? _clearPlan;
+    private int? _menuPlanId;
+    private bool _isLoading = true;
+    private bool _isLoadingProgress;
+    private bool _isBusy;
+    private bool _showToast;
+
+    private decimal LastTrend => _selectedProgress?.Chart is { Count: >= 2 } chart
+        ? Math.Round(chart[^1].Percent - chart[^2].Percent, 2)
+        : 0;
+
+    private decimal BestGrowth => _selectedProgress?.Chart.Count > 0
+        ? _selectedProgress.Chart.Max(point => point.Percent)
+        : 0;
+
+    private string TrendClass => LastTrend switch
+    {
+        > 0 => "green",
+        < 0 => "red",
+        _ => "neutral"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await WorkoutClient.GetPlansAsync(_disposeCts.Token);
+            if (!result.Succeeded)
+                _errors.AddRange(result.Errors);
+            else
+                _plans.AddRange(result.Value!);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenProgressAsync(TrainingPlanApiResponse plan)
+    {
+        if (_isLoadingProgress)
+            return;
+
+        _menuPlanId = null;
+        _selectedPlan = plan;
+        _selectedProgress = null;
+        _progressErrors.Clear();
+        _isLoadingProgress = true;
+        try
+        {
+            var result = await ProgressClient.GetWorkoutProgressAsync(plan.Id, _disposeCts.Token);
+            if (!result.Succeeded)
+                _progressErrors.AddRange(result.Errors);
+            else
+                _selectedProgress = result.Value;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoadingProgress = false;
+        }
+    }
+
+    private void CloseProgress()
+    {
+        if (_isLoadingProgress)
+            return;
+
+        _selectedPlan = null;
+        _selectedProgress = null;
+        _progressErrors.Clear();
+    }
+
+    private void ToggleMenu(int planId) => _menuPlanId = _menuPlanId == planId ? null : planId;
+    private void CloseMenu() => _menuPlanId = null;
+
+    private void AskToClear(TrainingPlanApiResponse plan)
+    {
+        _menuPlanId = null;
+        _clearPlan = plan;
+        _dialogErrors.Clear();
+    }
+
+    private void CloseClearDialog()
+    {
+        if (_isBusy)
+            return;
+
+        _clearPlan = null;
+        _dialogErrors.Clear();
+    }
+
+    private async Task ClearProgressAsync()
+    {
+        if (_isBusy || _clearPlan is null)
+            return;
+
+        _isBusy = true;
+        _dialogErrors.Clear();
+        try
+        {
+            var planId = _clearPlan.Id;
+            var result = await ProgressClient.ClearWorkoutProgressAsync(planId, _disposeCts.Token);
+            if (!result.Succeeded)
+            {
+                _dialogErrors.AddRange(result.Errors);
+                return;
+            }
+
+            if (_selectedPlan?.Id == planId)
+                CloseProgress();
+
+            _clearPlan = null;
+            _showToast = true;
+            await Task.Delay(2500, _disposeCts.Token);
+            _showToast = false;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static string SignedPercent(decimal value) =>
+        $"{(value > 0 ? "+" : string.Empty)}{value.ToString("0.##", RussianCulture)}%";
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

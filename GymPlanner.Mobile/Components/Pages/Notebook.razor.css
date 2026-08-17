@@ -1,0 +1,32 @@
+.notebook-page { width: 100%; max-width: 860px; margin: 0 auto; }
+.notebook-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.notebook-header h1 { margin: 0; font-size: var(--text-page-title); }
+.notebook-header p { margin: 4px 0 0; color: var(--color-text-muted); }
+.back-button { width: 46px; height: 46px; display: grid; flex: 0 0 46px; place-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); text-decoration: none; }
+.tabs { width: 100%; min-width: 0; display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-inline: contain; padding: 0 0 8px; scrollbar-width: thin; }
+.tab-button, .add-tab-button { min-height: var(--touch-target); padding: 8px 15px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font: inherit; white-space: nowrap; }
+.tab-button { max-width: min(72vw, 260px); flex: 0 0 auto; overflow: hidden; text-overflow: ellipsis; touch-action: pan-x; user-select: none; -webkit-touch-callout: none; }
+.tab-button.active { border-color: var(--color-accent); background: var(--color-accent-soft); }
+.add-tab-button { width: 44px; flex: 0 0 44px; padding: 0; border-color: transparent !important; background: transparent !important; box-shadow: none !important; }
+.add-tab-button:hover, .add-tab-button:focus-visible, .add-tab-button:active { border-color: transparent !important; background: transparent !important; box-shadow: none !important; color: var(--color-accent) !important; }
+.note-editor { display: block; margin-top: 12px; }
+.note-editor textarea { box-sizing: border-box; width: 100%; min-height: 45dvh; resize: vertical; padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-text); font: inherit; line-height: 1.5; }
+.notebook-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.primary-button, .secondary-button, .danger-button { min-height: var(--control-height); padding: 10px 18px; border-radius: var(--radius-sm); font: inherit; font-weight: 700; }
+.primary-button { border: 1px solid var(--color-accent); background: var(--color-accent); color: var(--color-text); }
+.secondary-button { border: 1px solid var(--color-border); background: var(--color-surface-raised); color: var(--color-text); }
+.danger-button { border: 1px solid var(--color-danger-action); background: var(--color-danger-action); color: var(--color-text); }
+.danger-button:disabled { opacity: .5; }
+.modal-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: var(--color-overlay); }
+.modal-window { width: min(100%, 440px); padding: 18px; border: var(--border-subtle); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-modal); }
+.modal-window h2 { margin: 0 0 16px; font-size: var(--text-section-title); }
+.notebook-modal-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.notebook-modal-heading > div { min-width: 0; }
+.notebook-modal-heading span { color: var(--color-accent); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.notebook-modal-heading h2 { margin: 4px 0 0; }
+.notebook-modal-close { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-muted); box-shadow: none; }
+.notebook-modal-close:hover, .notebook-modal-close:focus-visible { background: var(--color-surface-hover); color: var(--color-text); }
+.modal-window label { display: grid; gap: 7px; }
+.form-control { min-height: var(--input-height); padding: var(--input-padding-block) var(--input-padding-inline); border: var(--input-border); border-radius: var(--input-radius); background: var(--input-background); color: var(--color-text); font: inherit; }
+.notebook-error { color: var(--color-danger-soft); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }

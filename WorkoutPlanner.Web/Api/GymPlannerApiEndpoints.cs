@@ -94,7 +94,6 @@ public static class GymPlannerApiEndpoints
     private static async Task<IResult> RegisterAsync(
         MobileRegisterRequest request,
         UserManager<IdentityUser> userManager,
-        IStarterPlanService starterPlanService,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -115,9 +114,6 @@ public static class GymPlannerApiEndpoints
 
         try
         {
-            await starterPlanService.CreateForUserAsync(
-                user.Id,
-                cancellationToken);
         }
         catch (Exception exception)
         {

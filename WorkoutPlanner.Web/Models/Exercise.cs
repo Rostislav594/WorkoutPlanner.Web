@@ -29,6 +29,7 @@ public class Exercise
     public TrainingPlan? TrainingPlan { get; set; }
 
     public int? ExerciseDefinitionId { get; set; }
+    public int? SupersetGroupId { get; set; }
 
     public ExerciseDefinition? ExerciseDefinition { get; set; }
 

@@ -40,12 +40,16 @@
         </AssemblyAttribute>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <AndroidManifestOverlay Include="Platforms\Android\AndroidManifest.Debug.xml" />
+    </ItemGroup>
+
     <ItemGroup>
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0F1115" />
 
         <!-- Splash Screen -->
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0F1115" BaseSize="128,128" />
+        <MauiSplashScreen Include="Resources\Splash\emblem.png" Color="#0F1115" BaseSize="256,256" />
 
         <!-- Images -->
         <MauiImage Include="Resources\Images\*" />

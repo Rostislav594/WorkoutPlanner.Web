@@ -5,35 +5,39 @@
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutLifecycleApiClient LifecycleClient
 
-<section class="history-page">
-    <header>
-        <p>Журнал</p>
+<section class="history-page" aria-busy="@_isLoading">
+    <header class="history-page-header">
         <h1>История</h1>
+        <div class="header-line" aria-hidden="true"></div>
     </header>
-
-    <nav class="journal-tabs" aria-label="Разделы журнала">
-        <NavLink href="history" Match="NavLinkMatch.All">История</NavLink>
-        <NavLink href="progress">Прогресс</NavLink>
-    </nav>
 
     @if (_errors.Count > 0)
     {
-        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+        <div class="history-error" role="alert">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <div>
+                <strong>Не удалось загрузить историю</strong>
+                <p>@string.Join(" ", _errors)</p>
+            </div>
+        </div>
     }
 
     @if (_isLoading)
     {
-        <div class="state" role="status">Загружаем историю…</div>
+        <div class="history-state" role="status">
+            <span class="loading-spinner" aria-hidden="true"></span>
+            <span>Загружаем историю…</span>
+        </div>
     }
     else if (_history.Count == 0)
     {
-        <div class="empty-state">
-            <h2>История пока пуста</h2>
-            <p>Завершённые тренировки появятся здесь вместе с фактическими значениями подходов.</p>
-            <a href="/">Перейти к тренировке</a>
+        <div class="history-empty">
+            <img class="history-empty-image"
+                 src="_content/WorkoutPlanner.UI/images/history-empty.png"
+                 alt="Пустая папка истории тренировок" />
             @if (_errors.Count > 0)
             {
-                <button class="secondary" type="button" @onclick="LoadAsync">Повторить</button>
+                <button class="secondary-button retry-button" type="button" @onclick="LoadAsync">Повторить</button>
             }
         </div>
     }
@@ -42,20 +46,24 @@
         <div class="history-list">
             @foreach (var item in _history)
             {
-                <button class="history-card" type="button" @onclick="() => OpenHistory(item)">
-                    <span>
-                        <strong>@item.WorkoutName</strong>
-                        <small>@item.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)</small>
+                <button class="history-card" type="button" @onclick="() => OpenHistory(item)" aria-label="Открыть историю тренировки @item.WorkoutName">
+                    <span class="history-card-content">
+                        <span class="history-title">@item.WorkoutName</span>
+                        <span class="history-date">
+                            <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
+                            @item.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                        </span>
                     </span>
-                    <span class="card-meta">
+                    <span class="history-card-aside">
                         @if (item.SnapshotAvailable)
                         {
-                            @($"{item.Exercises.Count} упр.")
+                            <span class="card-meta">@item.Exercises.Count @GetExerciseCountLabel(item.Exercises.Count)</span>
                         }
                         else
                         {
-                            <span class="legacy-label">Архивная запись</span>
+                            <span class="legacy-label">Архивная</span>
                         }
+                        <span class="material-symbols-rounded card-chevron" aria-hidden="true">chevron_right</span>
                     </span>
                 </button>
             }
@@ -65,24 +73,30 @@
 
 @if (_selected is not null)
 {
-    <div class="dialog-backdrop" @onclick="CloseHistory">
-        <section class="history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title" @onclick:stopPropagation="true">
+    <div class="modal-overlay" @onclick="CloseHistory">
+        <section class="modal-window history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
-                    <p>@_selected.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)</p>
                     <h2 id="history-title">@_selected.WorkoutName</h2>
+                    <p>
+                        <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
+                        @_selected.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                    </p>
                 </div>
-                <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="Закрыть историю">×</button>
+                <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="Закрыть историю">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
             </header>
 
             @if (_dialogErrors.Count > 0)
             {
-                <div class="auth-error" role="alert">@string.Join(" ", _dialogErrors)</div>
+                <div class="dialog-error" role="alert">@string.Join(" ", _dialogErrors)</div>
             }
 
             @if (!_selected.SnapshotAvailable)
             {
                 <div class="snapshot-unavailable" role="status">
+                    <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
                     <h3>Детали архивной записи недоступны</h3>
                     <p>Исходные данные сохранены на сервере без изменений и не будут перезаписаны.</p>
                 </div>
@@ -94,16 +108,30 @@
                     {
                         <article class="history-exercise">
                             <div class="exercise-heading">
-                                <h3>@exercise.Name</h3>
+                                <div>
+                                    <span class="exercise-index">Упражнение</span>
+                                    <h3>@exercise.Name</h3>
+                                </div>
                                 <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@GetStatusText(exercise.Status)</span>
                             </div>
                             <div class="history-sets">
                                 @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                                 {
                                     <div class="history-set">
-                                        <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">@(set.Completed ? "✓" : "—")</span>
-                                        <span>Подход @set.SetNumber</span>
-                                        <strong>@set.Weight.ToString("0.##", RussianCulture) кг × @set.Repetitions</strong>
+                                        <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
+                                            <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
+                                        </span>
+                                        <span class="history-set-label">
+                                            <span>Подход @set.SetNumber</span>
+                                            <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
+                                                @(set.IsWarmup ? "Разминочный" : "Рабочий")
+                                            </span>
+                                        </span>
+                                        <strong>
+                                            <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
+                                            <span aria-hidden="true">×</span>
+                                            <span>@set.Repetitions</span>
+                                        </strong>
                                     </div>
                                 }
                             </div>
@@ -114,22 +142,25 @@
 
             @if (!string.IsNullOrWhiteSpace(_selected.Summary))
             {
-                <p class="history-summary">@_selected.Summary</p>
+                <div class="history-summary">
+                    <span class="material-symbols-rounded" aria-hidden="true">notes</span>
+                    <p>@_selected.Summary</p>
+                </div>
             }
 
             <div class="dialog-actions">
                 @if (_confirmDelete)
                 {
                     <p class="delete-warning">Удалить эту запись истории без возможности восстановления?</p>
-                    <button class="danger" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
+                    <button class="danger-button" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
                         @(_isBusy ? "Удаляем…" : "Удалить точно")
                     </button>
-                    <button class="secondary" type="button" disabled="@_isBusy" @onclick="CancelDelete">Отмена</button>
+                    <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CancelDelete">Отмена</button>
                 }
                 else
                 {
-                    <button class="danger" type="button" @onclick="ConfirmDelete">Удалить запись</button>
-                    <button class="secondary" type="button" @onclick="CloseHistory">Закрыть</button>
+                    <button class="danger-button" type="button" @onclick="ConfirmDelete">Удалить запись</button>
+                    <button class="secondary-button" type="button" @onclick="CloseHistory">Закрыть</button>
                 }
             </div>
         </section>
@@ -236,6 +267,20 @@
         "Max" => "Предел",
         _ => "Не оценено"
     };
+
+    private static string GetExerciseCountLabel(int count)
+    {
+        var remainder100 = count % 100;
+        if (remainder100 is >= 11 and <= 14)
+            return "упражнений";
+
+        return (count % 10) switch
+        {
+            1 => "упражнение",
+            >= 2 and <= 4 => "упражнения",
+            _ => "упражнений"
+        };
+    }
 
     public void Dispose()
     {

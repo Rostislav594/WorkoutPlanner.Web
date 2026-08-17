@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Maui.MainTheme" parent="Maui.MainTheme.Base">
+        <item name="android:windowBackground">@color/appWindowBackground</item>
+        <item name="android:colorBackground">@color/appWindowBackground</item>
+        <item name="android:navigationBarColor">@color/appWindowBackground</item>
+        <item name="android:statusBarColor">@color/appWindowBackground</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

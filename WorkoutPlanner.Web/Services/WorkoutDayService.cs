@@ -133,6 +133,31 @@ public sealed class WorkoutDayService : IWorkoutDayService
         return true;
     }
 
+    public async Task<WorkoutDay?> MoveDayAsync(
+        int id,
+        DateTime date,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        var targetDate = date.Date;
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays.FirstOrDefaultAsync(
+            x => x.Id == id && x.UserId == userId && !x.IsCompleted,
+            cancellationToken);
+        if (day is null)
+            return null;
+
+        var targetOccupied = await db.WorkoutDays.AnyAsync(
+            x => x.Id != id && x.UserId == userId && x.Date.Date == targetDate,
+            cancellationToken);
+        if (targetOccupied)
+            return null;
+
+        day.Date = targetDate;
+        await db.SaveChangesAsync(cancellationToken);
+        return day.ToContract();
+    }
+
     public async Task CompleteTodayWorkoutAsync(
         CancellationToken cancellationToken = default)
     {

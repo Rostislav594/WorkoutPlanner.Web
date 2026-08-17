@@ -79,8 +79,30 @@ public sealed class HistoryService : IHistoryService
         if (item is null)
             return false;
 
+        var historyDate = item.Date.Date;
+        var nextDate = historyDate.AddDays(1);
+        var workoutProgress = await db.ProgressSnapshots
+            .Where(x =>
+                x.UserId == userId &&
+                x.WorkoutName == item.WorkoutName &&
+                x.Date >= historyDate &&
+                x.Date < nextDate)
+            .ToListAsync(cancellationToken);
+        var exerciseProgress = await db.ExerciseProgressSnapshots
+            .Where(x =>
+                x.UserId == userId &&
+                x.WorkoutName == item.WorkoutName &&
+                x.Date >= historyDate &&
+                x.Date < nextDate)
+            .ToListAsync(cancellationToken);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            cancellationToken);
         db.WorkoutHistory.Remove(item);
+        db.ProgressSnapshots.RemoveRange(workoutProgress);
+        db.ExerciseProgressSnapshots.RemoveRange(exerciseProgress);
         await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return true;
     }
 }

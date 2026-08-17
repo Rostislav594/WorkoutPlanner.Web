@@ -128,7 +128,16 @@ app.UseWhen(
         "/not-found",
         createScopeForStatusCodePages: true));
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseWhen(
+        context => !context.Request.Path.StartsWithSegments("/api"),
+        web => web.UseHttpsRedirection());
+}
+else
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

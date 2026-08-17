@@ -8,7 +8,7 @@
     color: #fff;
     opacity: 1;
     transform: scale(1);
-    transition: opacity .8s ease, transform .8s ease;
+    transition: opacity .3s ease, transform .3s ease;
 }
 
 .app-splash-leaving { opacity: 0; transform: scale(.98); pointer-events: none; }

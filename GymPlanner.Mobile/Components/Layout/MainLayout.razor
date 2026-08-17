@@ -4,27 +4,58 @@
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 
-<div class="mobile-shell">
+<div class="mobile-shell @(IsHomePage ? "home-shell" : null)">
     <header class="mobile-header">
-        <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">GPlanner</a>
+        <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">
+            <span>GPlanner</span>
+        </a>
         <AuthorizeView>
             <Authorized>
-                <button class="logout-button" type="button" disabled="@_isLoggingOut" @onclick="LogoutAsync">
-                    @(_isLoggingOut ? "Выход…" : "Выйти")
-                </button>
+                <div class="header-actions">
+                    <a class="profile-button" href="profile" aria-label="Открыть профиль">
+                        <span class="material-symbols-rounded" aria-hidden="true">person</span>
+                    </a>
+                    <button class="logout-button"
+                            type="button"
+                            disabled="@_isLoggingOut"
+                            aria-label="@(_isLoggingOut ? "Выполняется выход" : "Выйти из аккаунта")"
+                            @onclick="LogoutAsync">
+                        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+                        <span class="action-label">@(_isLoggingOut ? "Выход…" : "Выйти")</span>
+                    </button>
+                </div>
             </Authorized>
             <NotAuthorized>
-                <span class="connection-mode">online-first</span>
+                <span class="connection-mode">GymPlanner</span>
             </NotAuthorized>
         </AuthorizeView>
     </header>
-    <main class="mobile-content">@Body</main>
+    <main class="mobile-content">
+        <div class="page-transition" @key="CurrentPageKey">
+            @Body
+        </div>
+    </main>
     <nav class="mobile-navigation" aria-label="Основная навигация">
-        <NavLink href="/" Match="NavLinkMatch.All">Главная</NavLink>
-        <NavLink href="workouts">Тренировки</NavLink>
-        <NavLink href="calendar">Календарь</NavLink>
-        <NavLink href="history">Журнал</NavLink>
-        <NavLink href="profile">Профиль</NavLink>
+        <NavLink href="today">
+            <span class="material-symbols-rounded" aria-hidden="true">home</span>
+            <span class="navigation-label">Сегодня</span>
+        </NavLink>
+        <NavLink href="workouts">
+            <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
+            <span class="navigation-label">Тренировки</span>
+        </NavLink>
+        <NavLink href="/" Match="NavLinkMatch.All">
+            <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+            <span class="navigation-label">Главная</span>
+        </NavLink>
+        <NavLink href="history">
+            <span class="material-symbols-rounded" aria-hidden="true">history</span>
+            <span class="navigation-label">История</span>
+        </NavLink>
+        <NavLink href="progress">
+            <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+            <span class="navigation-label">Прогресс</span>
+        </NavLink>
     </nav>
 </div>
 
@@ -36,9 +67,19 @@
 @code {
     private bool _isLoggingOut;
     private string? _logoutError;
+    private string CurrentPageKey =>
+        Navigation.ToBaseRelativePath(Navigation.Uri);
+    private bool IsHomePage => string.IsNullOrEmpty(
+        Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
 
-    protected override void OnInitialized() =>
+    protected override void OnInitialized()
+    {
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
 
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -74,6 +115,9 @@
         }
     }
 
-    public void Dispose() =>
+    public void Dispose()
+    {
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
 }

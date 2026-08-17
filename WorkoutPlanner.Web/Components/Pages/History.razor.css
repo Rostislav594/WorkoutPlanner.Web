@@ -11,7 +11,7 @@
 .history-empty-title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: #ffffff;
+    color: var(--color-text)fff;
     margin-bottom: 12px;
 }
 

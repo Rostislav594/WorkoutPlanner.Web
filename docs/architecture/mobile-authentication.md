@@ -60,10 +60,28 @@ diagnostic metadata only and is never used as an authorization decision.
 
 Development defaults match the backend HTTPS launch profile:
 `https://10.0.2.2:7196` for the Android emulator and
-`https://localhost:7196` for the iOS simulator. Certificate validation is never
-disabled. Physical devices and production packages require a trusted public
-HTTPS endpoint. Supply it with `MobileApi:BaseAddress`, the
+`https://localhost:7196` for the iOS simulator. Android Debug builds accept the
+self-signed ASP.NET Core development certificate only when the request target is
+`https://10.0.2.2` and both the certificate subject and issuer are exactly
+`CN=localhost`. This development-only exception is not compiled into Release
+builds; all other HTTPS addresses retain normal certificate validation.
+
+Android Debug builds can also use HTTP for `localhost` and private or link-local
+IP addresses. This supports a physical device on the development LAN without
+hardcoding the current laptop address. Supply the address with
+`MobileApi:BaseAddress`, the
 `GYMPLANNER_API_BASE_ADDRESS` environment variable, or at package build time:
+
+```powershell
+dotnet build GymPlanner.Mobile/GymPlanner.Mobile.csproj `
+  -f net10.0-android -c Debug `
+  -p:GymPlannerApiBaseAddress=http://192.168.115.247:5121/
+```
+
+The Android Debug manifest enables cleartext traffic for this local workflow.
+Release manifests explicitly disable cleartext traffic, and Release validation
+continues to require HTTPS. Production packages require a trusted public HTTPS
+endpoint, for example:
 
 ```powershell
 dotnet publish GymPlanner.Mobile/GymPlanner.Mobile.csproj `
@@ -71,6 +89,6 @@ dotnet publish GymPlanner.Mobile/GymPlanner.Mobile.csproj `
   -p:GymPlannerApiBaseAddress=https://api.example.com/
 ```
 
-The client rejects non-HTTPS addresses, embedded credentials, query strings,
-and fragments. The endpoint is configuration, not a secret; production
-credentials and certificate private keys remain outside the repository.
+All configurations reject embedded credentials, query strings, and fragments.
+The endpoint is configuration, not a secret; production credentials and
+certificate private keys remain outside the repository.

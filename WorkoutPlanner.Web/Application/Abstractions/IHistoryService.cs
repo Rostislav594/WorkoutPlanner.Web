@@ -21,4 +21,7 @@ public interface IWorkoutCompletionService
 {
     Task<WorkoutCompletionResult> CompleteTodayAsync(
         CancellationToken cancellationToken = default);
+    Task<FreeWorkoutCompletionResult> CompleteFreeAsync(
+        FreeWorkoutCompletion workout,
+        CancellationToken cancellationToken = default);
 }

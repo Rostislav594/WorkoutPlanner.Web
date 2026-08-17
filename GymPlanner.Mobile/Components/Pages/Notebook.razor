@@ -1,0 +1,219 @@
+@page "/notebook"
+@attribute [Authorize]
+@implements IDisposable
+@using System.Text.Json
+
+<section class="notebook-page" aria-labelledby="notebook-title">
+    <header class="notebook-header">
+        <a class="back-button" href="/" aria-label="На главную">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        </a>
+        <div>
+            <h1 id="notebook-title">Блокнот</h1>
+            <p>Заметки сохраняются на этом устройстве.</p>
+        </div>
+    </header>
+
+    <div class="tabs" role="tablist" aria-label="Вкладки блокнота">
+        @foreach (var tab in _tabs)
+        {
+            <button class="tab-button @(tab.Id == _activeId ? "active" : null)"
+                    type="button"
+                    role="tab"
+                    aria-selected="@(tab.Id == _activeId)"
+                    aria-label="@($"{tab.Name}. Удерживайте, чтобы переименовать.")"
+                    @onpointerdown="() => BeginRenameHold(tab.Id)"
+                    @onpointerup="CancelRenameHold"
+                    @onpointercancel="CancelRenameHold"
+                    @onpointerleave="CancelRenameHold"
+                    @oncontextmenu="() => OpenRenameTab(tab.Id)"
+                    @oncontextmenu:preventDefault="true"
+                    @onclick="() => SelectTab(tab.Id)">@tab.Name</button>
+        }
+        <button class="add-tab-button" type="button" @onclick="OpenNewTab" aria-label="Добавить вкладку">
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>
+        </button>
+    </div>
+
+    @if (ActiveTab is { } activeTab)
+    {
+        <label class="note-editor">
+            <span class="visually-hidden">Текст заметки @activeTab.Name</span>
+            <textarea @bind="activeTab.Content" @bind:event="oninput" placeholder="Начните писать…"></textarea>
+        </label>
+        <div class="notebook-actions">
+            <button class="primary-button" type="button" @onclick="Save">Сохранить</button>
+            <button class="danger-button" type="button" disabled="@(_tabs.Count == 1)" @onclick="DeleteActive">Удалить вкладку</button>
+        </div>
+    }
+</section>
+
+@if (_showNewTab)
+{
+    <div class="modal-overlay" @onclick="CloseNewTab">
+        <section class="modal-window" role="dialog" aria-modal="true" aria-labelledby="new-tab-title" @onclick:stopPropagation="true">
+            <h2 id="new-tab-title">Новая вкладка</h2>
+            <label>
+                Название
+                <input class="form-control" maxlength="40" @bind="_newTabName" />
+            </label>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="notebook-error" role="alert">@_error</p>
+            }
+            <div class="notebook-actions">
+                <button class="primary-button" type="button" @onclick="CreateTab">Создать</button>
+                <button class="secondary-button" type="button" @onclick="CloseNewTab">Отмена</button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_renameTabId is not null)
+{
+    <div class="modal-overlay" @onclick="CloseRenameTab">
+        <section class="modal-window" role="dialog" aria-modal="true" aria-labelledby="rename-tab-title" @onclick:stopPropagation="true">
+            <div class="notebook-modal-heading">
+                <div>
+                    <span>Настройка вкладки</span>
+                    <h2 id="rename-tab-title">Переименовать вкладку</h2>
+                </div>
+                <button class="notebook-modal-close" type="button" aria-label="Закрыть" @onclick="CloseRenameTab">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </div>
+            <label>
+                Новое название
+                <input class="form-control" maxlength="40" autofocus @bind="_renameTabName" />
+            </label>
+            @if (!string.IsNullOrEmpty(_renameError))
+            {
+                <p class="notebook-error" role="alert">@_renameError</p>
+            }
+            <div class="notebook-actions">
+                <button class="primary-button" type="button" @onclick="RenameTab">Сохранить</button>
+                <button class="secondary-button" type="button" @onclick="CloseRenameTab">Отмена</button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private const string StorageKey = "gymplanner.notebook.v1";
+    private readonly List<NoteTab> _tabs = [];
+    private readonly CancellationTokenSource _disposeCts = new();
+    private Guid _activeId;
+    private bool _showNewTab;
+    private Guid? _renameTabId;
+    private string _newTabName = string.Empty;
+    private string _renameTabName = string.Empty;
+    private string? _error;
+    private string? _renameError;
+    private CancellationTokenSource? _renameHoldCts;
+
+    private NoteTab? ActiveTab => _tabs.FirstOrDefault(x => x.Id == _activeId);
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var json = Preferences.Default.Get(StorageKey, string.Empty);
+            if (!string.IsNullOrWhiteSpace(json))
+                _tabs.AddRange(JsonSerializer.Deserialize<List<NoteTab>>(json) ?? []);
+        }
+        catch (JsonException)
+        {
+            Preferences.Default.Remove(StorageKey);
+        }
+
+        if (_tabs.Count == 0)
+            _tabs.Add(new NoteTab(Guid.NewGuid(), "Заметки", string.Empty));
+        _activeId = _tabs[0].Id;
+    }
+
+    private void SelectTab(Guid id) { Save(); _activeId = id; }
+    private void OpenNewTab() { _newTabName = string.Empty; _error = null; _showNewTab = true; }
+    private void CloseNewTab() { _showNewTab = false; _error = null; }
+
+    private async Task BeginRenameHold(Guid id)
+    {
+        CancelRenameHold();
+        _renameHoldCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
+        try
+        {
+            await Task.Delay(550, _renameHoldCts.Token);
+            OpenRenameTab(id);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void CancelRenameHold()
+    {
+        _renameHoldCts?.Cancel();
+        _renameHoldCts?.Dispose();
+        _renameHoldCts = null;
+    }
+
+    private void OpenRenameTab(Guid id)
+    {
+        CancelRenameHold();
+        var tab = _tabs.FirstOrDefault(x => x.Id == id);
+        if (tab is null) return;
+        _renameTabId = id;
+        _renameTabName = tab.Name;
+        _renameError = null;
+    }
+
+    private void CloseRenameTab()
+    {
+        CancelRenameHold();
+        _renameTabId = null;
+        _renameTabName = string.Empty;
+        _renameError = null;
+    }
+
+    private void RenameTab()
+    {
+        if (_renameTabId is not { } id) return;
+        var name = _renameTabName.Trim();
+        if (string.IsNullOrWhiteSpace(name)) { _renameError = "Введите название вкладки."; return; }
+        if (_tabs.Any(x => x.Id != id && string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _renameError = "Вкладка с таким названием уже есть."; return; }
+        var index = _tabs.FindIndex(x => x.Id == id);
+        if (index < 0) { CloseRenameTab(); return; }
+        var tab = _tabs[index];
+        _tabs[index] = new NoteTab(tab.Id, name, tab.Content);
+        Save();
+        CloseRenameTab();
+    }
+
+    private void CreateTab()
+    {
+        var name = _newTabName.Trim();
+        if (string.IsNullOrWhiteSpace(name)) { _error = "Введите название вкладки."; return; }
+        if (_tabs.Any(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _error = "Вкладка с таким названием уже есть."; return; }
+        var tab = new NoteTab(Guid.NewGuid(), name, string.Empty);
+        _tabs.Add(tab); _activeId = tab.Id; Save(); CloseNewTab();
+    }
+
+    private void DeleteActive()
+    {
+        if (_tabs.Count == 1 || ActiveTab is null) return;
+        _tabs.Remove(ActiveTab); _activeId = _tabs[0].Id; Save();
+    }
+
+    private void Save() => Preferences.Default.Set(StorageKey, JsonSerializer.Serialize(_tabs));
+
+    public void Dispose()
+    {
+        CancelRenameHold();
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+
+    private sealed record NoteTab(Guid Id, string Name, string Content)
+    {
+        public string Content { get; set; } = Content;
+    }
+}

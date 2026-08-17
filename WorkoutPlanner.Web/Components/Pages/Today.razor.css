@@ -1,7 +1,7 @@
 .today-card {
     background: var(--page-background, #111);
     border: 1px solid var(--border-subtle, #333);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     padding: 15px;
     margin-bottom: 15px;
 }
@@ -20,7 +20,7 @@
     width: min(350px, calc(100vw - 32px));
     background: var(--surface-elevated, #1c1c1c);
     border: 1px solid var(--border-subtle, #333);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -31,7 +31,7 @@
     max-width: 500px;
     margin-bottom: 15px;
     padding: 15px;
-    border-radius: 12px;
+    border-radius: var(--radius-md);
     background: var(--surface-card, #161616);
     border: 1px solid var(--border-muted, #2d2d2d);
 }
@@ -65,7 +65,7 @@
     align-items: center;
     gap: 12px;
     padding: 14px 24px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     background: rgba(255,255,255,.05);
     border: 1px solid rgba(255,255,255,.08);
     font-size: 22px;

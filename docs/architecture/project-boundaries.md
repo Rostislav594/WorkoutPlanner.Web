@@ -26,10 +26,14 @@ package rather than the server-only `Microsoft.AspNetCore.App` shared runtime.
 `GymPlanner.Mobile` is an Android/iOS .NET MAUI Blazor Hybrid host. It references
 Domain, API.Contracts, and UI, but never Web. Its host page uses
 `blazor.webview.js`; it has no Interactive Server circuit or reconnect UI. The
-initial `HttpClient` uses HTTPS development addresses only and does not disable
-certificate validation. Android emulators use `10.0.2.2`, while iOS simulators
-use `localhost`; physical devices and production builds accept an environment-
-or build-supplied public HTTPS base address and require a trusted certificate.
+initial `HttpClient` uses HTTPS development addresses by default. Android
+emulators use `10.0.2.2`, while iOS simulators use `localhost`. A physical device
+can use a configuration- or build-supplied HTTP address only in Debug and only
+when the host is localhost or a private/link-local IP address. Android Debug
+permits the local `10.0.2.2` ASP.NET development certificate whose subject and
+issuer are `CN=localhost` and enables cleartext through a Debug-only manifest
+overlay. Release builds require HTTPS, normal certificate validation, and a
+manifest that disables cleartext traffic.
 
 Mobile session storage, refresh, revocation, and Blazor authentication-state
 behavior are documented in [mobile-authentication.md](mobile-authentication.md).

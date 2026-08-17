@@ -4,22 +4,26 @@
 @inject MobileBackNavigationService BackNavigation
 @inject MobileLifecycleService Lifecycle
 
-<AppSplash />
+<AppSplash Ready="@_startupReady" />
 
-<CascadingAuthenticationState>
-    <Router AppAssembly="typeof(MauiProgram).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
-                <NotAuthorized>
-                    <RedirectToLogin />
-                </NotAuthorized>
-            </AuthorizeRouteView>
-            <FocusOnNavigate RouteData="routeData" Selector="h1" />
-        </Found>
-    </Router>
-</CascadingAuthenticationState>
+@if (_startupReady)
+{
+    <CascadingAuthenticationState>
+        <Router AppAssembly="typeof(MauiProgram).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+                <FocusOnNavigate RouteData="routeData" Selector="h1" />
+            </Found>
+        </Router>
+    </CascadingAuthenticationState>
+}
 
 @code {
+    private bool _startupReady;
     private bool _resumeInProgress;
     private bool _navigatingBack;
     private readonly List<string> _navigationHistory = [];
@@ -31,6 +35,12 @@
         Navigation.LocationChanged += LocationChanged;
         _navigationHistory.Add(Navigation.Uri);
         UpdateBackAvailability();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Authentication.InitializeAsync();
+        _startupReady = true;
     }
 
     private void LocationChanged(object? sender, LocationChangedEventArgs args)
