@@ -31,11 +31,13 @@ public sealed record MobileApiOptions(Uri BaseAddress)
         if (!string.IsNullOrWhiteSpace(configuredAddress))
             return new(CreateValidatedBaseAddress(configuredAddress));
 
-        #if ANDROID
-                return new(new Uri("https://10.0.2.2:7196/", UriKind.Absolute));
-        #else
-                return new(new Uri("https://localhost:7196/", UriKind.Absolute));
-        #endif
+#if ANDROID && DEBUG
+        return new(new Uri("http://localhost:5121/", UriKind.Absolute));
+#elif ANDROID
+        return new(new Uri("https://10.0.2.2:7196/", UriKind.Absolute));
+#else
+        return new(new Uri("https://localhost:7196/", UriKind.Absolute));
+#endif
     }
 
     private static Uri CreateValidatedBaseAddress(string value)
