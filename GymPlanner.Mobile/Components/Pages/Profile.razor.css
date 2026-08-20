@@ -1,5 +1,6 @@
 .profile-page {
     width: 100%;
+    min-width: 0;
     max-width: 1180px;
     margin: 0 auto;
     color: var(--color-text);
@@ -130,6 +131,8 @@
     width: 100%;
     min-width: 0;
     min-height: var(--input-height);
+    scroll-margin-top: calc(78px + env(safe-area-inset-top));
+    scroll-margin-bottom: calc(110px + env(safe-area-inset-bottom));
     border-color: var(--color-border-strong);
     border-radius: var(--radius-sm);
     background: var(--input-background);
@@ -311,8 +314,9 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-top: max(16px, env(safe-area-inset-top));
+    padding: max(16px, env(safe-area-inset-top)) env(safe-area-inset-right) 0 env(safe-area-inset-left);
     background: var(--color-overlay);
+    overscroll-behavior: contain;
 }
 
 .modal-window {
@@ -323,10 +327,13 @@
     padding: 18px max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     border: 1px solid var(--color-border-strong);
     border-bottom: 0;
-    border-radius: var(--radius-xl) 22px 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     background: var(--color-surface-raised);
     color: var(--color-text);
     box-shadow: var(--shadow-modal);
+    scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .delete-icon {
@@ -391,7 +398,7 @@
 
     .modal-overlay {
         align-items: center;
-        padding: var(--space-5);
+        padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--space-5), env(safe-area-inset-right)) max(var(--space-5), env(safe-area-inset-bottom)) max(var(--space-5), env(safe-area-inset-left));
     }
 
     .modal-window {
@@ -455,6 +462,17 @@
 
     .profile-heading h1 {
         font-size: 1.95rem;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-overlay {
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    }
+
+    .modal-window {
+        max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+        padding-top: 14px;
     }
 }
 

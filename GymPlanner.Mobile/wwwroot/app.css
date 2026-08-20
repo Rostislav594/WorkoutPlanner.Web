@@ -89,8 +89,29 @@ body,
     font-family: var(--font-body);
 }
 
+html {
+    height: 100%;
+}
+
+#app {
+    min-height: 100dvh;
+}
+
 body {
     overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+}
+
+.modal-overlay {
+    overscroll-behavior: contain;
+}
+
+.modal-window {
+    scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+    touch-action: pan-y;
 }
 
 h1:focus {

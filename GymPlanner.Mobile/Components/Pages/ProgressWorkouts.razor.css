@@ -1,5 +1,6 @@
 .progress-workouts-page {
     width: 100%;
+    min-width: 0;
     max-width: 920px;
     margin: 0 auto;
 }
@@ -307,6 +308,7 @@
     justify-content: center;
     padding-top: max(16px, env(safe-area-inset-top));
     background: var(--color-overlay);
+    overscroll-behavior: contain;
 }
 
 .modal-window {
@@ -321,6 +323,8 @@
     background: var(--color-bg-elevated);
     color: var(--color-text);
     box-shadow: var(--shadow-modal);
+    scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -532,7 +536,7 @@
 
     .modal-overlay {
         align-items: center;
-        padding: 24px;
+        padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
     }
 
     .modal-window {
@@ -602,6 +606,17 @@
 
     .card-chevron {
         display: none;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .modal-overlay {
+        padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    }
+
+    .modal-window {
+        max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+        padding-top: 14px;
     }
 }
 

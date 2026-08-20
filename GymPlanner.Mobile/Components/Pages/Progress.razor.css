@@ -1,5 +1,6 @@
 .progress-menu-page {
     width: 100%;
+    min-width: 0;
     max-width: 960px;
     margin: 0 auto;
 }

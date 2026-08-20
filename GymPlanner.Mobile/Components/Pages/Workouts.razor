@@ -28,7 +28,7 @@
         <div class="workout-grid">
             @foreach (var plan in _plans)
             {
-                <article class="workout-card">
+                <article class="workout-card @(_menuPlanId == plan.Id ? "menu-open" : null)">
                     <a class="workout-card-link"
                        href="@($"/workouts/{plan.Id}")"
                        aria-label="Открыть шаблон @plan.WorkoutName">
@@ -40,6 +40,8 @@
                             type="button"
                             title="Настройки"
                             aria-label="Настройки шаблона @plan.WorkoutName"
+                            aria-haspopup="menu"
+                            aria-controls="@($"workout-menu-{plan.Id}")"
                             aria-expanded="@(_menuPlanId == plan.Id)"
                             @onclick="() => ToggleMenu(plan.Id)">
                         <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
@@ -47,14 +49,19 @@
 
                     @if (_menuPlanId == plan.Id)
                     {
-                        <div class="context-menu workout-template-menu">
+                        <div id="@($"workout-menu-{plan.Id}")"
+                             class="context-menu workout-template-menu"
+                             role="menu"
+                             aria-label="Действия с шаблоном @plan.WorkoutName">
                             <button class="context-item"
                                     type="button"
+                                    role="menuitem"
                                     @onclick="() => BeginEdit(plan)">
                                 Изменить название
                             </button>
                             <button class="context-item danger-context-item"
                                     type="button"
+                                    role="menuitem"
                                     @onclick="() => ConfirmDelete(plan)">
                                 Удалить шаблон
                             </button>
@@ -68,6 +75,7 @@
     <footer class="workouts-footer @(_plans.Count == 0 && !_isLoading ? "workouts-footer-empty" : null)">
         <button class="add-template-button"
                 type="button"
+                aria-haspopup="dialog"
                 disabled="@_isBusy"
                 @onclick="OpenCreateDialog">
             <span aria-hidden="true">+</span>
@@ -89,34 +97,45 @@
                  aria-modal="true"
                  aria-labelledby="plan-dialog-title"
                  @onclick:stopPropagation="true">
-            <h2 id="plan-dialog-title">@(_isCreateOpen ? "Новый шаблон" : "Название шаблона")</h2>
+            <div class="modal-heading">
+                <h2 id="plan-dialog-title">@(_isCreateOpen ? "Новый шаблон" : "Название шаблона")</h2>
+                <button class="icon-close-button"
+                        type="button"
+                        aria-label="Закрыть"
+                        disabled="@_isBusy"
+                        @onclick="ClosePlanDialog">×</button>
+            </div>
 
-            <label for="plan-name">Название</label>
-            @if (_isCreateOpen)
-            {
-                <input id="plan-name"
-                       class="form-control"
-                       maxlength="120"
-                       @bind="_newName"
-                       @bind:event="oninput"
-                       autocomplete="off" />
-            }
-            else
-            {
-                <input id="plan-name"
-                       class="form-control"
-                       maxlength="120"
-                       @bind="_editName"
-                       @bind:event="oninput"
-                       autocomplete="off" />
-            }
+            <div class="modal-body">
+                <label for="plan-name">Название</label>
+                @if (_isCreateOpen)
+                {
+                    <input id="plan-name"
+                           class="form-control"
+                           maxlength="120"
+                           autofocus
+                           @bind="_newName"
+                           @bind:event="oninput"
+                           autocomplete="off" />
+                }
+                else
+                {
+                    <input id="plan-name"
+                           class="form-control"
+                           maxlength="120"
+                           autofocus
+                           @bind="_editName"
+                           @bind:event="oninput"
+                           autocomplete="off" />
+                }
 
-            @if (_errors.Count > 0)
-            {
-                <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
-            }
+                @if (_errors.Count > 0)
+                {
+                    <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
+                }
+            </div>
 
-            <div class="template-dialog-buttons">
+            <div class="template-dialog-buttons modal-footer">
                 @if (_isCreateOpen)
                 {
                     <button class="dialog-button primary-button"
@@ -154,17 +173,27 @@
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="delete-dialog-title"
+                 aria-describedby="delete-dialog-description"
                  @onclick:stopPropagation="true">
-            <h2 id="delete-dialog-title">Удалить шаблон?</h2>
-            <p>
-                Будет удалён шаблон <strong>@_deleteTarget.WorkoutName</strong>,
-                его упражнения, назначения в календаре и прогресс.
-            </p>
-            @if (_errors.Count > 0)
-            {
-                <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
-            }
-            <div class="template-dialog-buttons">
+            <div class="modal-heading">
+                <h2 id="delete-dialog-title">Удалить шаблон?</h2>
+                <button class="icon-close-button"
+                        type="button"
+                        aria-label="Закрыть"
+                        disabled="@_isBusy"
+                        @onclick="CloseDeleteDialog">×</button>
+            </div>
+            <div class="modal-body">
+                <p id="delete-dialog-description">
+                    Будет удалён шаблон <strong>@_deleteTarget.WorkoutName</strong>,
+                    его упражнения, назначения в календаре и прогресс.
+                </p>
+                @if (_errors.Count > 0)
+                {
+                    <div class="edit-error" role="alert">@string.Join(" ", _errors)</div>
+                }
+            </div>
+            <div class="template-dialog-buttons modal-footer">
                 <button class="dialog-button secondary-button"
                         type="button"
                         disabled="@_isBusy"

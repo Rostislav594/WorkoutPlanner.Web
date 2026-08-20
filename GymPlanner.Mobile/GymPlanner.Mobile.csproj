@@ -34,6 +34,10 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <!-- Physical Android devices supported by the app are arm64. Keeping the
+             device Debug package single-RID avoids partially assembled universal
+             APKs being picked up by incremental deployment. -->
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(RuntimeIdentifiers)' == ''">android-arm64</RuntimeIdentifier>
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     </PropertyGroup>
 
@@ -47,6 +51,13 @@
     <ItemGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
         <AndroidManifestOverlay Include="Platforms\Android\AndroidManifest.Debug.xml" />
     </ItemGroup>
+
+    <Target Name="ConfigureGymPlannerAndroidDebugApiReverse"
+            AfterTargets="Install"
+            DependsOnTargets="_ResolveMonoAndroidSdks;_AndroidAdbToolPath"
+            Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(AdbTarget)' != '' and '$(GymPlannerApiBaseAddress)' == ''">
+        <Exec Command="&quot;$(_AdbToolPath)&quot; $(AdbTarget) reverse tcp:5121 tcp:5121" />
+    </Target>
 
     <ItemGroup>
         <!-- App Icon -->

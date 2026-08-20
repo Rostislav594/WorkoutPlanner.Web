@@ -58,18 +58,15 @@ logout leaves the local credentials in place so revocation can be retried rather
 than silently leaving an active server session. The optional device name is
 diagnostic metadata only and is never used as an authorization decision.
 
-Development defaults match the backend HTTPS launch profile:
-`https://10.0.2.2:7196` for the Android emulator and
-`https://localhost:7196` for the iOS simulator. Android Debug builds accept the
-self-signed ASP.NET Core development certificate only when the request target is
-`https://10.0.2.2` and both the certificate subject and issuer are exactly
-`CN=localhost`. This development-only exception is not compiled into Release
-builds; all other HTTPS addresses retain normal certificate validation.
+The Android Debug default is the physical-device workflow:
+`http://127.0.0.1:5121`. Deploying the project configures
+`adb reverse tcp:5121 tcp:5121`, so the device reaches the backend HTTP launch
+profile without a machine-specific LAN address. The iOS simulator default is
+`https://localhost:7196`.
 
 Android Debug builds can also use HTTP for `localhost` and private or link-local
-IP addresses. This supports a physical device on the development LAN without
-hardcoding the current laptop address. Supply the address with
-`MobileApi:BaseAddress`, the
+IP addresses. A custom physical-device LAN endpoint or Android emulator endpoint
+can be supplied with `MobileApi:BaseAddress`, the
 `GYMPLANNER_API_BASE_ADDRESS` environment variable, or at package build time:
 
 ```powershell
@@ -77,6 +74,21 @@ dotnet build GymPlanner.Mobile/GymPlanner.Mobile.csproj `
   -f net10.0-android -c Debug `
   -p:GymPlannerApiBaseAddress=http://192.168.115.247:5121/
 ```
+
+For an x64 Android emulator, explicitly select its runtime and HTTPS endpoint:
+
+```powershell
+dotnet build GymPlanner.Mobile/GymPlanner.Mobile.csproj `
+  -f net10.0-android -c Debug `
+  -p:RuntimeIdentifier=android-x64 `
+  -p:GymPlannerApiBaseAddress=https://10.0.2.2:7196/
+```
+
+Android Debug accepts the self-signed ASP.NET Core development certificate only
+when the request target is `https://10.0.2.2` and both the certificate subject
+and issuer are exactly `CN=localhost`. This development-only exception is not
+compiled into Release builds; all other HTTPS addresses retain normal
+certificate validation.
 
 The Android Debug manifest enables cleartext traffic for this local workflow.
 Release manifests explicitly disable cleartext traffic, and Release validation

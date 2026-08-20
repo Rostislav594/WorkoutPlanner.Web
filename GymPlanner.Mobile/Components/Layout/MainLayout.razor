@@ -4,59 +4,65 @@
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 
-<div class="mobile-shell @(IsHomePage ? "home-shell" : null)">
-    <header class="mobile-header">
-        <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">
-            <span>GPlanner</span>
-        </a>
-        <AuthorizeView>
-            <Authorized>
-                <div class="header-actions">
-                    <a class="profile-button" href="profile" aria-label="Открыть профиль">
-                        <span class="material-symbols-rounded" aria-hidden="true">person</span>
-                    </a>
-                    <button class="logout-button"
-                            type="button"
-                            disabled="@_isLoggingOut"
-                            aria-label="@(_isLoggingOut ? "Выполняется выход" : "Выйти из аккаунта")"
-                            @onclick="LogoutAsync">
-                        <span class="material-symbols-rounded" aria-hidden="true">logout</span>
-                        <span class="action-label">@(_isLoggingOut ? "Выход…" : "Выйти")</span>
-                    </button>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <span class="connection-mode">GymPlanner</span>
-            </NotAuthorized>
-        </AuthorizeView>
-    </header>
+<div class="mobile-shell @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)">
+    @if (!HidesApplicationNavigation)
+    {
+        <header class="mobile-header">
+            <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">
+                <span>GPlanner</span>
+            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <div class="header-actions">
+                        <a class="profile-button" href="profile" aria-label="Открыть профиль">
+                            <span class="material-symbols-rounded" aria-hidden="true">person</span>
+                        </a>
+                        <button class="logout-button"
+                                type="button"
+                                disabled="@_isLoggingOut"
+                                aria-label="@(_isLoggingOut ? "Выполняется выход" : "Выйти из аккаунта")"
+                                @onclick="LogoutAsync">
+                            <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+                            <span class="action-label">@(_isLoggingOut ? "Выход…" : "Выйти")</span>
+                        </button>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <span class="connection-mode">GymPlanner</span>
+                </NotAuthorized>
+            </AuthorizeView>
+        </header>
+    }
     <main class="mobile-content">
         <div class="page-transition" @key="CurrentPageKey">
             @Body
         </div>
     </main>
-    <nav class="mobile-navigation" aria-label="Основная навигация">
-        <NavLink href="today">
-            <span class="material-symbols-rounded" aria-hidden="true">home</span>
-            <span class="navigation-label">Сегодня</span>
-        </NavLink>
-        <NavLink href="workouts">
-            <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-            <span class="navigation-label">Тренировки</span>
-        </NavLink>
-        <NavLink href="/" Match="NavLinkMatch.All">
-            <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
-            <span class="navigation-label">Главная</span>
-        </NavLink>
-        <NavLink href="history">
-            <span class="material-symbols-rounded" aria-hidden="true">history</span>
-            <span class="navigation-label">История</span>
-        </NavLink>
-        <NavLink href="progress">
-            <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
-            <span class="navigation-label">Прогресс</span>
-        </NavLink>
-    </nav>
+    @if (!HidesApplicationNavigation)
+    {
+        <nav class="mobile-navigation" aria-label="Основная навигация">
+            <NavLink href="today">
+                <span class="material-symbols-rounded" aria-hidden="true">home</span>
+                <span class="navigation-label">Сегодня</span>
+            </NavLink>
+            <NavLink href="workouts">
+                <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
+                <span class="navigation-label">Тренировки</span>
+            </NavLink>
+            <NavLink href="/" Match="NavLinkMatch.All">
+                <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+                <span class="navigation-label">Главная</span>
+            </NavLink>
+            <NavLink href="history">
+                <span class="material-symbols-rounded" aria-hidden="true">history</span>
+                <span class="navigation-label">История</span>
+            </NavLink>
+            <NavLink href="progress">
+                <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
+                <span class="navigation-label">Прогресс</span>
+            </NavLink>
+        </nav>
+    }
 </div>
 
 @if (!string.IsNullOrWhiteSpace(_logoutError))
@@ -71,6 +77,12 @@
         Navigation.ToBaseRelativePath(Navigation.Uri);
     private bool IsHomePage => string.IsNullOrEmpty(
         Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
+    private bool HidesApplicationNavigation =>
+        string.Equals(CurrentRoute, "profile/setup", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(CurrentRoute, "firstlaunch", StringComparison.OrdinalIgnoreCase);
+    private string CurrentRoute => Navigation.ToBaseRelativePath(Navigation.Uri)
+        .Split('?', '#')[0]
+        .Trim('/');
 
     protected override void OnInitialized()
     {

@@ -1,4 +1,6 @@
 .onboarding-page {
+    width: 100%;
+    min-width: 0;
     max-width: 52rem;
     margin: 0 auto;
 }
@@ -72,6 +74,12 @@ header h1 {
     margin-top: var(--space-4);
 }
 
+.completed-actions > *,
+.reset-confirmation > button {
+    min-width: min(100%, 10rem);
+    flex: 1 1 10rem;
+}
+
 .reset-confirmation strong {
     width: 100%;
 }
@@ -90,5 +98,24 @@ header h1 {
     .completed-card > div {
         align-self: center;
         padding: var(--space-5);
+    }
+}
+
+@media (max-width: 360px) {
+    .completed-actions,
+    .reset-confirmation {
+        flex-direction: column;
+    }
+
+    .completed-actions > *,
+    .reset-confirmation > button {
+        width: 100%;
+        flex-basis: auto;
+    }
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .completed-card > img {
+        max-height: 9rem;
     }
 }

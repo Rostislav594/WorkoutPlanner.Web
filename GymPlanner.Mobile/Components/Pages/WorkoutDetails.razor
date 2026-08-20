@@ -43,7 +43,7 @@
     else
     {
         <div class="workout-toolbar">
-            <button class="primary-button add-exercise-button" type="button" disabled="@_busy" @onclick="BeginCreate">
+            <button class="primary-button add-exercise-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
                 <span aria-hidden="true">＋</span>
                 Добавить упражнение
             </button>
@@ -75,6 +75,7 @@
                             <button class="card-menu-button"
                                     type="button"
                                     aria-label="Настроить упражнение @exercise.Name"
+                                    aria-haspopup="dialog"
                                     @onclick="() => OpenActions(exercise)">
                                 <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
                             </button>
@@ -101,6 +102,7 @@
                             <div class="exercise-photo-panel">
                                 <button class="exercise-photo-button"
                                         type="button"
+                                        aria-haspopup="dialog"
                                         aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
                                         @onclick="() => OpenPhotoAsync(exercise)">
                                     @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
@@ -118,6 +120,8 @@
                                 </button>
                                 <button class="photo-open-button"
                                         type="button"
+                                        aria-haspopup="dialog"
+                                        aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
                                         @onclick="() => OpenPhotoAsync(exercise)">
                                     <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
                                     <span>@(exercise.HasPhoto ? "Открыть фото" : "Добавить фото")</span>
@@ -144,36 +148,38 @@
                     <span>Управление упражнением</span>
                     <h2 id="exercise-actions-title">@_actionExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CloseActions">×</button>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" autofocus @onclick="CloseActions">×</button>
             </div>
 
             @if (_deleteExerciseId == _actionExercise.Id)
             {
-                <div class="delete-confirmation">
+                <div class="modal-body delete-confirmation">
                     <p>Удалить упражнение и все его подходы из шаблона?</p>
-                    <div class="modal-actions">
-                        <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelDelete">Отмена</button>
-                        <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteAsync(_actionExercise.Id)">
-                            @(_busy ? "Удаляем…" : "Удалить")
-                        </button>
-                    </div>
+                </div>
+                <div class="modal-actions modal-footer">
+                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelDelete">Отмена</button>
+                    <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteAsync(_actionExercise.Id)">
+                        @(_busy ? "Удаляем…" : "Удалить")
+                    </button>
                 </div>
             }
             else
             {
-                <div class="exercise-action-list">
-                    <button class="modal-action-button" type="button" @onclick="() => BeginEdit(_actionExercise)">
-                        <span class="material-symbols-rounded" aria-hidden="true">edit</span>
-                        <span>Изменить параметры</span>
-                    </button>
-                    <button class="modal-action-button danger-action" type="button" @onclick="() => RequestDelete(_actionExercise.Id)">
-                        <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                        <span>Удалить упражнение</span>
-                    </button>
-                    <button class="modal-action-button cancel-action" type="button" @onclick="CloseActions">
-                        <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                        <span>Отмена</span>
-                    </button>
+                <div class="modal-body">
+                    <div class="exercise-action-list">
+                        <button class="modal-action-button" type="button" @onclick="() => BeginEdit(_actionExercise)">
+                            <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+                            <span>Изменить параметры</span>
+                        </button>
+                        <button class="modal-action-button danger-action" type="button" @onclick="() => RequestDelete(_actionExercise.Id)">
+                            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            <span>Удалить упражнение</span>
+                        </button>
+                        <button class="modal-action-button cancel-action" type="button" @onclick="CloseActions">
+                            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                            <span>Отмена</span>
+                        </button>
+                    </div>
                 </div>
             }
         </section>
@@ -196,51 +202,53 @@
                 <button class="icon-close-button" type="button" aria-label="Закрыть" disabled="@_busy" @onclick="CloseEditor">×</button>
             </div>
 
-            @if (_editorErrors.Count > 0)
-            {
-                <div class="edit-error" role="alert">@string.Join(" ", _editorErrors)</div>
-            }
-
-            <div class="form-field">
-                <label for="definition">Упражнение из библиотеки</label>
-                <select id="definition" class="form-control" @bind="_draft.DefinitionId" @bind:after="ApplyDefinition">
-                    <option value="">-- Не выбрано --</option>
-                    @foreach (var item in _definitions)
-                    {
-                        <option value="@item.Id">@item.Name</option>
-                    }
-                </select>
-            </div>
-
-            <div class="form-field">
-                <label for="sets-count">Количество подходов</label>
-                <input id="sets-count"
-                       class="form-control"
-                       type="number"
-                       min="1"
-                       max="20"
-                       value="@_draft.SetsCount"
-                       @onchange="ChangeSetsCount" />
-            </div>
-
-            <div class="set-editor-list">
-                @foreach (var set in _draft.Sets)
+            <div class="modal-body">
+                @if (_editorErrors.Count > 0)
                 {
-                    <fieldset>
-                        <legend>Подход @set.SetNumber</legend>
-                        <label>
-                            <span>Вес, кг</span>
-                            <input class="form-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
-                        </label>
-                        <label>
-                            <span>Повторения</span>
-                            <input class="form-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
-                        </label>
-                    </fieldset>
+                    <div class="edit-error" role="alert">@string.Join(" ", _editorErrors)</div>
                 }
+
+                <div class="form-field">
+                    <label for="definition">Упражнение из библиотеки</label>
+                    <select id="definition" class="form-control" autofocus @bind="_draft.DefinitionId" @bind:after="ApplyDefinition">
+                        <option value="">-- Не выбрано --</option>
+                        @foreach (var item in _definitions)
+                        {
+                            <option value="@item.Id">@item.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="sets-count">Количество подходов</label>
+                    <input id="sets-count"
+                           class="form-control"
+                           type="number"
+                           min="1"
+                           max="20"
+                           value="@_draft.SetsCount"
+                           @onchange="ChangeSetsCount" />
+                </div>
+
+                <div class="set-editor-list">
+                    @foreach (var set in _draft.Sets)
+                    {
+                        <fieldset>
+                            <legend>Подход @set.SetNumber</legend>
+                            <label>
+                                <span>Вес, кг</span>
+                                <input class="form-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
+                            </label>
+                            <label>
+                                <span>Повторения</span>
+                                <input class="form-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
+                            </label>
+                        </fieldset>
+                    }
+                </div>
             </div>
 
-            <div class="modal-actions">
+            <div class="modal-actions modal-footer">
                 <button class="primary-button" type="button" disabled="@_busy" @onclick="SaveAsync">
                     @(_busy ? "Сохраняем…" : "Сохранить")
                 </button>
@@ -263,59 +271,61 @@
                     <span>Фотография упражнения</span>
                     <h2 id="photo-editor-title">@_photoExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" disabled="@_photoBusy" @onclick="ClosePhoto">×</button>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" autofocus disabled="@_photoBusy" @onclick="ClosePhoto">×</button>
             </div>
 
-            @if (_photoErrors.Count > 0)
-            {
-                <div class="edit-error" role="alert">@string.Join(" ", _photoErrors)</div>
-            }
-
-            @if (_photoBusy)
-            {
-                <div class="photo-state" role="status">
-                    <span class="loading-spinner" aria-hidden="true"></span>
-                    <span>Обрабатываем фотографию…</span>
-                </div>
-            }
-            else if (_photoDataUri is not null)
-            {
-                <img class="exercise-photo" src="@_photoDataUri" alt="Фото упражнения @_photoExercise.Name" />
-            }
-            else
-            {
-                <div class="empty-photo">
-                    <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                    <span>У этого упражнения пока нет фотографии.</span>
-                </div>
-            }
-
-            <p class="photo-hint">JPG, PNG или WebP, не более 5 МБ.</p>
-
-            <div class="photo-actions">
-                <button class="primary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
-                    <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
-                    Выбрать фото
-                </button>
-                <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
-                    <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                    Сделать снимок
-                </button>
-
-                @if (_photoExercise.HasPhoto)
+            <div class="modal-body">
+                @if (_photoErrors.Count > 0)
                 {
-                    @if (_confirmPhotoDelete)
-                    {
-                        <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">Отмена удаления</button>
-                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">Удалить точно</button>
-                    }
-                    else
-                    {
-                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">Удалить фото</button>
-                    }
+                    <div class="edit-error" role="alert">@string.Join(" ", _photoErrors)</div>
                 }
 
-                <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="ClosePhoto">Закрыть</button>
+                @if (_photoBusy)
+                {
+                    <div class="photo-state" role="status">
+                        <span class="loading-spinner" aria-hidden="true"></span>
+                        <span>Обрабатываем фотографию…</span>
+                    </div>
+                }
+                else if (_photoDataUri is not null)
+                {
+                    <img class="exercise-photo" src="@_photoDataUri" alt="Фото упражнения @_photoExercise.Name" />
+                }
+                else
+                {
+                    <div class="empty-photo">
+                        <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                        <span>У этого упражнения пока нет фотографии.</span>
+                    </div>
+                }
+
+                <p class="photo-hint">JPG, PNG или WebP, не более 5 МБ.</p>
+
+                <div class="photo-actions">
+                    <button class="primary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
+                        <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
+                        Выбрать фото
+                    </button>
+                    <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
+                        <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                        Сделать снимок
+                    </button>
+
+                    @if (_photoExercise.HasPhoto)
+                    {
+                        @if (_confirmPhotoDelete)
+                        {
+                            <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">Отмена удаления</button>
+                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">Удалить точно</button>
+                        }
+                        else
+                        {
+                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">Удалить фото</button>
+                        }
+                    }
+
+                    <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="ClosePhoto">Закрыть</button>
+                </div>
             </div>
         </section>
     </div>

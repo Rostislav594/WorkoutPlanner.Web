@@ -32,7 +32,7 @@ public sealed record MobileApiOptions(Uri BaseAddress)
             return new(CreateValidatedBaseAddress(configuredAddress));
 
 #if ANDROID && DEBUG
-        return new(new Uri("http://localhost:5121/", UriKind.Absolute));
+        return new(new Uri("http://127.0.0.1:5121/", UriKind.Absolute));
 #elif ANDROID
         return new(new Uri("https://10.0.2.2:7196/", UriKind.Absolute));
 #else

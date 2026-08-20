@@ -29,12 +29,14 @@
   Web.
 - The default development client URL uses backend HTTPS port `7196`. Builds can
   override it through configuration, environment, or an MSBuild package
-  property. Android Debug additionally accepts HTTP only for localhost and
-  private or link-local IP addresses and enables cleartext traffic through a
-  Debug-only manifest overlay for physical-device LAN testing. Release still
-  requires an absolute HTTPS URI and explicitly disables cleartext traffic.
-  Android Debug accepts the local `10.0.2.2` ASP.NET development certificate
-  only when its subject and issuer are `CN=localhost`.
+  property. Android Debug uses `http://127.0.0.1:5121` and configures
+  `adb reverse` after deployment so a physical device reaches the local API.
+  It additionally accepts HTTP only for localhost and private or link-local IP
+  addresses and enables cleartext traffic through a Debug-only manifest
+  overlay for physical-device LAN testing. Release still requires an absolute
+  HTTPS URI and explicitly disables cleartext traffic. Android Debug accepts
+  the local `10.0.2.2` ASP.NET development certificate only when its subject
+  and issuer are `CN=localhost`.
 
 These checks were last run on 2026-08-10 through commit `1fbe63f`; Android and
 iOS Release targets were run again after the final notification and navigation
