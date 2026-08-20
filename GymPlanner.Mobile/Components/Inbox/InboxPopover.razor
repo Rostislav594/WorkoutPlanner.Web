@@ -1,0 +1,168 @@
+@implements IDisposable
+@inject IInboxApiClient InboxApi
+@inject InboxNotificationState InboxState
+
+<div class="inbox-popover">
+    <button class="inbox-trigger"
+            type="button"
+            aria-label="Открыть уведомления"
+            aria-expanded="@_isOpen"
+            @onclick="ToggleAsync">
+        <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
+        @if (InboxState.UnreadCount > 0)
+        {
+            <span class="inbox-trigger__badge" aria-label="@GetUnreadLabel()">@GetUnreadBadge()</span>
+        }
+    </button>
+
+    @if (_isOpen)
+    {
+        <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
+        <section class="inbox-menu" aria-label="Центр уведомлений" @onclick:stopPropagation="true">
+            <header class="inbox-menu__header">
+                <div>
+                    <span>GPlanner</span>
+                    <h2>Уведомления</h2>
+                </div>
+                @if (_messages.Any(x => x.ReadAtUtc is null))
+                {
+                    <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">Прочитать все</button>
+                }
+            </header>
+
+            @if (_isLoading)
+            {
+                <div class="inbox-menu__state" role="status">Загружаем…</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="inbox-menu__state inbox-menu__state--error" role="alert">
+                    <span>@_error</span>
+                    <button type="button" @onclick="LoadAsync">Повторить</button>
+                </div>
+            }
+            else if (_messages.Count == 0)
+            {
+                <div class="inbox-menu__state">
+                    <span class="material-symbols-rounded" aria-hidden="true">notifications_none</span>
+                    <span>Новых сообщений нет</span>
+                </div>
+            }
+            else
+            {
+                <div class="inbox-menu__list" role="list">
+                    @foreach (var message in _messages)
+                    {
+                        <button class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)"
+                                type="button"
+                                role="listitem"
+                                @onclick="() => OpenMessageAsync(message)">
+                            <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
+                            <span>@GetTypeLabel(message.Type)</span>
+                            @if (message.ReadAtUtc is null)
+                            {
+                                <span class="inbox-menu__dot" aria-label="Не прочитано"></span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@if (_selected is not null)
+{
+    <div class="inbox-message-scrim" role="presentation" @onclick="CloseMessage">
+        <section class="inbox-message" role="dialog" aria-modal="true" aria-labelledby="inbox-message-title" @onclick:stopPropagation="true">
+            <div class="inbox-message__meta">
+                <span>@GetTypeLabel(_selected.Type)</span>
+                <button type="button" aria-label="Закрыть сообщение" @onclick="CloseMessage">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </div>
+            <h2 id="inbox-message-title">@_selected.Title</h2>
+            <p class="inbox-message__date">@FormatDate(_selected.CreatedAtUtc)</p>
+            @if (!string.IsNullOrWhiteSpace(_selected.SupportTicketNumber))
+            {
+                <p class="inbox-message__ticket">Обращение @_selected.SupportTicketNumber</p>
+            }
+            <p class="inbox-message__body">@_selected.Body</p>
+        </section>
+    </div>
+}
+
+@code {
+    private List<InboxMessageResponse> _messages = [];
+    private InboxMessageResponse? _selected;
+    private bool _isOpen;
+    private bool _isLoading;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        InboxState.Changed += OnInboxChanged;
+        await InboxState.RefreshAsync();
+    }
+
+    private async Task ToggleAsync()
+    {
+        _isOpen = !_isOpen;
+        if (_isOpen)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _error = null;
+        var result = await InboxApi.GetMessagesAsync();
+        if (result.Value is null)
+            _error = result.Errors.FirstOrDefault() ?? "Не удалось загрузить уведомления.";
+        else
+        {
+            _messages = result.Value.Messages.ToList();
+            InboxState.SetUnreadCount(result.Value.UnreadCount);
+        }
+        _isLoading = false;
+    }
+
+    private async Task OpenMessageAsync(InboxMessageResponse message)
+    {
+        _selected = message;
+        if (message.ReadAtUtc is not null)
+            return;
+
+        var result = await InboxApi.MarkReadAsync(message.Id);
+        if (result.Value is null)
+            return;
+
+        var readAt = DateTime.UtcNow;
+        _messages = _messages.Select(x => x.Id == message.Id ? x with { ReadAtUtc = readAt } : x).ToList();
+        _selected = _selected with { ReadAtUtc = readAt };
+        InboxState.SetUnreadCount(result.Value.UnreadCount);
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        var result = await InboxApi.MarkAllReadAsync();
+        if (result.Value is null)
+            return;
+
+        var readAt = DateTime.UtcNow;
+        _messages = _messages.Select(x => x.ReadAtUtc is null ? x with { ReadAtUtc = readAt } : x).ToList();
+        InboxState.SetUnreadCount(result.Value.UnreadCount);
+    }
+
+    private void Close() => _isOpen = false;
+    private void CloseMessage() => _selected = null;
+    private void OnInboxChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private string GetUnreadBadge() => InboxState.UnreadCount > 99 ? "99+" : InboxState.UnreadCount.ToString();
+    private string GetUnreadLabel() => $"{InboxState.UnreadCount} непрочитанных уведомлений";
+    private static string GetIcon(string type) => type switch { "SupportReply" => "support_agent", "News" => "campaign", "Update" => "new_releases", _ => "info" };
+    private static string GetTypeLabel(string type) => type switch { "SupportReply" => "Техподдержка", "News" => "Новости", "Update" => "Обновление", _ => "Системное сообщение" };
+    private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
+
+    public void Dispose() => InboxState.Changed -= OnInboxChanged;
+}

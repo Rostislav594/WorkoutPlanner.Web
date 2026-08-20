@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WorkoutPlanner.Web.Data;
 
@@ -10,9 +11,11 @@ using WorkoutPlanner.Web.Data;
 namespace WorkoutPlanner.Web.Migrations
 {
     [DbContext(typeof(WorkoutDbContext))]
-    partial class WorkoutDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260820114626_AddSupportTickets")]
+    partial class AddSupportTickets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
@@ -412,60 +415,6 @@ namespace WorkoutPlanner.Web.Migrations
                     b.HasIndex("ExerciseId");
 
                     b.ToTable("ExerciseTemplateSets");
-                });
-
-            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxMessage", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Body")
-                        .IsRequired()
-                        .HasMaxLength(8000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Preview")
-                        .HasMaxLength(400)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("ReadAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long?>("SupportTicketId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("TelegramMessageId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SupportTicketId");
-
-                    b.HasIndex("TelegramMessageId")
-                        .IsUnique()
-                        .HasFilter("[TelegramMessageId] IS NOT NULL");
-
-                    b.HasIndex("UserId", "ReadAtUtc", "CreatedAtUtc");
-
-                    b.ToTable("InboxMessages");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.MobileSession", b =>
@@ -897,22 +846,6 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Navigation("Exercise");
                 });
 
-            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxMessage", b =>
-                {
-                    b.HasOne("WorkoutPlanner.Web.Models.SupportTicket", "SupportTicket")
-                        .WithMany("InboxMessages")
-                        .HasForeignKey("SupportTicketId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SupportTicket");
-                });
-
             modelBuilder.Entity("WorkoutPlanner.Web.Models.MobileSession", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
@@ -983,11 +916,6 @@ namespace WorkoutPlanner.Web.Migrations
             modelBuilder.Entity("WorkoutPlanner.Web.Models.Muscle", b =>
                 {
                     b.Navigation("SecondaryMuscleLinks");
-                });
-
-            modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportTicket", b =>
-                {
-                    b.Navigation("InboxMessages");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.TrainingPlan", b =>

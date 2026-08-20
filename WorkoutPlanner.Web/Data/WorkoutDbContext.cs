@@ -57,6 +57,12 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<MobileSession> MobileSessions =>
         Set<MobileSession>();
 
+    public DbSet<SupportTicket> SupportTickets =>
+        Set<SupportTicket>();
+
+    public DbSet<InboxMessage> InboxMessages =>
+        Set<InboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -98,6 +104,57 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<MobileSession>()
             .Property(x => x.DeviceName)
             .HasMaxLength(120);
+
+        modelBuilder.Entity<SupportTicket>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SupportTicket>()
+            .HasIndex(x => x.TicketNumber)
+            .IsUnique();
+
+        modelBuilder.Entity<SupportTicket>()
+            .HasIndex(x => x.UserId);
+
+        modelBuilder.Entity<SupportTicket>()
+            .HasIndex(x => x.CreatedAtUtc);
+
+        modelBuilder.Entity<SupportTicket>()
+            .Property(x => x.Status)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<SupportTicket>()
+            .Property(x => x.TelegramDeliveryStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<InboxMessage>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<InboxMessage>()
+            .HasOne(x => x.SupportTicket)
+            .WithMany(x => x.InboxMessages)
+            .HasForeignKey(x => x.SupportTicketId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<InboxMessage>()
+            .HasIndex(x => new { x.UserId, x.ReadAtUtc, x.CreatedAtUtc });
+
+        modelBuilder.Entity<InboxMessage>()
+            .HasIndex(x => x.TelegramMessageId)
+            .IsUnique()
+            .HasFilter("[TelegramMessageId] IS NOT NULL");
+
+        modelBuilder.Entity<InboxMessage>()
+            .Property(x => x.Type)
+            .HasConversion<string>()
+            .HasMaxLength(30);
 
         modelBuilder.Entity<Exercise>()
             .HasOne(x => x.ExerciseDefinition)

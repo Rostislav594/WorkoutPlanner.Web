@@ -36,8 +36,11 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.IOnboardingApiClient, Api.OnboardingApiClient>();
 		builder.Services.AddSingleton<Api.IExercisePhotoApiClient,
 			Api.ExercisePhotoApiClient>();
+		builder.Services.AddSingleton<Api.ISupportApiClient, Api.SupportApiClient>();
+		builder.Services.AddSingleton<Api.IInboxApiClient, Api.InboxApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
 		builder.Services.AddSingleton<Notifications.NotificationNavigationService>();
+		builder.Services.AddSingleton<Notifications.InboxNotificationState>();
 		builder.Services.AddSingleton<Notifications.ILocalNotificationPlatform,
 			Notifications.PlatformLocalNotificationService>();
 		builder.Services.AddSingleton<Notifications.ILocalWorkoutReminderService,

@@ -65,7 +65,14 @@ public sealed class AccountDeletionService
             .Select(x => x.Details)
             .ToListAsync(cancellationToken);
 
+        var supportScreenshotPaths = await _db.SupportTickets
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.ScreenshotPath != null)
+            .Select(x => x.ScreenshotPath!)
+            .ToListAsync(cancellationToken);
+
         photoPaths.AddRange(GetHistoryPhotoPaths(historyDetails));
+        photoPaths.AddRange(supportScreenshotPaths);
         photoPaths = photoPaths.Distinct(StringComparer.Ordinal).ToList();
 
         await using var transaction =
@@ -159,6 +166,22 @@ public sealed class AccountDeletionService
 
                 if (string.IsNullOrWhiteSpace(fileName))
                     continue;
+
+                if (string.Equals(
+                        photoPath,
+                        $"/SupportScreenshots/{fileName}",
+                        StringComparison.Ordinal))
+                {
+                    StageIfExists(
+                        Path.Combine(
+                            _environment.ContentRootPath,
+                            "App_Data",
+                            "SupportScreenshots",
+                            fileName),
+                        stagingDirectory,
+                        stagedFiles);
+                    continue;
+                }
 
                 StageIfExists(
                     Path.Combine(

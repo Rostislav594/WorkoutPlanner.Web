@@ -8,8 +8,13 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using WorkoutPlanner.Api.Contracts;
+using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
+using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Support;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
 
@@ -41,6 +46,10 @@ public sealed class MobileApiTests
         Assert.Contains("/api/v1/onboarding", document, StringComparison.Ordinal);
         Assert.Contains(
             "/api/v1/exercises/{exerciseId}/photo",
+            document,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "/api/v1/support/tickets",
             document,
             StringComparison.Ordinal);
     }
@@ -171,6 +180,202 @@ public sealed class MobileApiTests
             "/api/v1/profile");
         Assert.NotNull(firstProfileAgain);
         Assert.Equal("Mobile", firstProfileAgain.FirstName);
+    }
+
+    [Fact]
+    public async Task SupportApi_ValidatesAndPersistsTicket_WhenTelegramFails()
+    {
+        var notification = new FailingSupportNotificationService();
+        using var factory = new GymPlannerApiFactory(
+            supportNotification: notification);
+        using var anonymous = CreateClient(factory);
+        using (var anonymousContent = CreateSupportContent(
+                   "The application closes after saving a workout."))
+        using (var anonymousResponse = await anonymous.PostAsync(
+                   "/api/v1/support/tickets",
+                   anonymousContent))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymousResponse.StatusCode);
+        }
+
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("support@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(
+            client,
+            (await LoginAsync(
+                client,
+                "support@example.test",
+                "password1",
+                "Support test")).AccessToken);
+
+        using (var emptyContent = CreateSupportContent("   "))
+        using (var emptyResponse = await client.PostAsync(
+                   "/api/v1/support/tickets",
+                   emptyContent))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, emptyResponse.StatusCode);
+        }
+
+        using (var longContent = CreateSupportContent(new string('x', 2001)))
+        using (var longResponse = await client.PostAsync(
+                   "/api/v1/support/tickets",
+                   longContent))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, longResponse.StatusCode);
+        }
+
+        using (var invalidImageContent = CreateSupportContent(
+                   "This request contains an invalid screenshot.",
+                   [0x01, 0x02, 0x03],
+                   "image/png"))
+        using (var invalidImageResponse = await client.PostAsync(
+                   "/api/v1/support/tickets",
+                   invalidImageContent))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, invalidImageResponse.StatusCode);
+        }
+
+        const string message =
+            "  The application closes after saving a completed workout.  ";
+        using var validContent = CreateSupportContent(
+            message,
+            appVersion: "1.0.0",
+            platform: "Android",
+            osVersion: "16",
+            deviceModel: "Test Phone");
+        using var response = await client.PostAsync(
+            "/api/v1/support/tickets",
+            validContent);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content
+            .ReadFromJsonAsync<SupportTicketResponse>();
+        Assert.NotNull(created);
+        Assert.Matches(@"^GP-\d{8}-\d{6}$", created.TicketNumber);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbFactory = scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var ticket = await db.SupportTickets.SingleAsync();
+        var userId = await db.Users
+            .Where(x => x.Email == "support@example.test")
+            .Select(x => x.Id)
+            .SingleAsync();
+        Assert.Equal(userId, ticket.UserId);
+        Assert.Equal(message.Trim(), ticket.Message);
+        Assert.Equal(SupportTicketStatus.New, ticket.Status);
+        Assert.Equal(SupportDeliveryStatus.Failed, ticket.TelegramDeliveryStatus);
+        Assert.Equal("Android", ticket.Platform);
+        Assert.Equal(1, notification.CallCount);
+        Assert.Equal(ticket.TicketNumber, notification.LastTicketNumber);
+    }
+
+    [Fact]
+    public async Task SupportApi_ValidatesScreenshotSize_AndStoresSafeImage()
+    {
+        var notification = new FailingSupportNotificationService();
+        using var factory = new GymPlannerApiFactory(
+            supportNotification: notification);
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("support-image@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(
+            client,
+            (await LoginAsync(
+                client,
+                "support-image@example.test",
+                "password1",
+                "Support image test")).AccessToken);
+
+        using (var oversizedContent = CreateSupportContent(
+                   "This screenshot is too large and must be rejected.",
+                   new byte[SupportScreenshotStorage.MaxScreenshotSize + 1],
+                   "image/png"))
+        using (var oversizedResponse = await client.PostAsync(
+                   "/api/v1/support/tickets",
+                   oversizedContent))
+        {
+            Assert.Equal(
+                HttpStatusCode.RequestEntityTooLarge,
+                oversizedResponse.StatusCode);
+        }
+
+        byte[] validPng =
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        using var validContent = CreateSupportContent(
+            "The screen becomes blank after opening workout history.",
+            validPng,
+            "image/png");
+        using var validResponse = await client.PostAsync(
+            "/api/v1/support/tickets",
+            validContent);
+        Assert.Equal(HttpStatusCode.Created, validResponse.StatusCode);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbFactory = scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var screenshotPath = await db.SupportTickets
+            .Select(x => x.ScreenshotPath)
+            .SingleAsync();
+        Assert.NotNull(screenshotPath);
+        Assert.StartsWith(
+            "/SupportScreenshots/",
+            screenshotPath,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "client-name",
+            screenshotPath,
+            StringComparison.Ordinal);
+
+        var environment = scope.ServiceProvider
+            .GetRequiredService<IWebHostEnvironment>();
+        var physicalPath = Path.Combine(
+            environment.ContentRootPath,
+            "App_Data",
+            "SupportScreenshots",
+            Path.GetFileName(screenshotPath));
+        Assert.True(File.Exists(physicalPath));
+        File.Delete(physicalPath);
+    }
+
+    [Fact]
+    public async Task SupportApi_SucceedsWithoutTelegramConfiguration()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("support-disabled@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(
+            client,
+            (await LoginAsync(
+                client,
+                "support-disabled@example.test",
+                "password1",
+                "Support disabled test")).AccessToken);
+
+        using var content = CreateSupportContent(
+            "The support request must remain saved without Telegram.");
+        using var response = await client.PostAsync(
+            "/api/v1/support/tickets",
+            content);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbFactory = scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var ticket = await db.SupportTickets.SingleAsync();
+        Assert.Equal(
+            SupportDeliveryStatus.Disabled,
+            ticket.TelegramDeliveryStatus);
     }
 
     [Fact]
@@ -1267,6 +1472,105 @@ public sealed class MobileApiTests
         return content;
     }
 
+    [Fact]
+    public async Task TelegramReply_CreatesUserInboxMessage_AndCanBeRead()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("inbox@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var tokens = await LoginAsync(client, "inbox@example.test", "password1", "Inbox phone");
+        SetBearer(client, tokens.AccessToken);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var userId = await db.Users.Where(x => x.Email == "inbox@example.test").Select(x => x.Id).SingleAsync();
+            db.SupportTickets.Add(new SupportTicket
+            {
+                UserId = userId,
+                TicketNumber = "GP-20260820-000001",
+                Message = "Не работает вход в приложение.",
+                CreatedAtUtc = DateTime.UtcNow,
+                UpdatedAtUtc = DateTime.UtcNow,
+                TelegramMessageId = 501
+            });
+            await db.SaveChangesAsync();
+        }
+
+        const string payload = "{\"update_id\":1,\"message\":{\"message_id\":502,\"date\":1787220000,\"chat\":{\"id\":1198730360},\"text\":\"Мы проверили проблему. Попробуйте обновить приложение.\",\"reply_to_message\":{\"message_id\":501}}}";
+        using var webhook = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/integrations/telegram/support-webhook")
+        {
+            Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json")
+        };
+        webhook.Headers.Add("X-Telegram-Bot-Api-Secret-Token", "test-webhook-secret");
+        using var delivered = await client.SendAsync(webhook);
+        Assert.Equal(HttpStatusCode.OK, delivered.StatusCode);
+
+        using var duplicate = new HttpRequestMessage(
+            HttpMethod.Post,
+            "/integrations/telegram/support-webhook")
+        {
+            Content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json")
+        };
+        duplicate.Headers.Add("X-Telegram-Bot-Api-Secret-Token", "test-webhook-secret");
+        using var duplicateDelivered = await client.SendAsync(duplicate);
+        Assert.Equal(HttpStatusCode.OK, duplicateDelivered.StatusCode);
+
+        var inbox = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.NotNull(inbox);
+        var message = Assert.Single(inbox.Messages);
+        Assert.Equal("SupportReply", message.Type);
+        Assert.Equal("GP-20260820-000001", message.SupportTicketNumber);
+        Assert.Equal(1, inbox.UnreadCount);
+
+        using var markedRead = await client.PostAsync($"/api/v1/inbox/messages/{message.Id}/read", null);
+        Assert.Equal(HttpStatusCode.OK, markedRead.StatusCode);
+        var count = await markedRead.Content.ReadFromJsonAsync<InboxUnreadCountResponse>();
+        Assert.NotNull(count);
+        Assert.Equal(0, count.UnreadCount);
+    }
+
+    private static MultipartFormDataContent CreateSupportContent(
+        string message,
+        byte[]? screenshot = null,
+        string contentType = "image/png",
+        string? appVersion = null,
+        string? platform = null,
+        string? osVersion = null,
+        string? deviceModel = null)
+    {
+        var content = new MultipartFormDataContent
+        {
+            { new StringContent(message), "message" }
+        };
+        AddOptional(content, "appVersion", appVersion);
+        AddOptional(content, "platform", platform);
+        AddOptional(content, "osVersion", osVersion);
+        AddOptional(content, "deviceModel", deviceModel);
+        if (screenshot is not null)
+        {
+            var file = new ByteArrayContent(screenshot);
+            file.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            content.Add(file, "screenshot", "client-name.png");
+        }
+        return content;
+    }
+
+    private static void AddOptional(
+        MultipartFormDataContent content,
+        string name,
+        string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            content.Add(new StringContent(value), name);
+    }
+
     private sealed class GymPlannerApiFactory : WebApplicationFactory<Program>
     {
         private readonly string _environmentName;
@@ -1275,9 +1579,14 @@ public sealed class MobileApiTests
             "GymPlanner.Tests",
             $"api-{Guid.NewGuid():N}.db");
 
-        public GymPlannerApiFactory(string environmentName = "Testing")
+        private readonly ISupportNotificationService? _supportNotification;
+
+        public GymPlannerApiFactory(
+            string environmentName = "Testing",
+            ISupportNotificationService? supportNotification = null)
         {
             _environmentName = environmentName;
+            _supportNotification = supportNotification;
         }
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -1288,14 +1597,20 @@ public sealed class MobileApiTests
             {
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:WorkoutDatabase"] =
-                        $"Data Source={_databasePath}"
+                    ["ConnectionStrings:WorkoutDatabase"] = $"Data Source={_databasePath}",
+                    ["TelegramSupport:ChatId"] = "1198730360",
+                    ["TelegramSupport:WebhookSecret"] = "test-webhook-secret"
                 });
             });
             builder.ConfigureServices(services =>
             {
                 services.AddDataProtection()
                     .UseEphemeralDataProtectionProvider();
+                if (_supportNotification is not null)
+                {
+                    services.RemoveAll<ISupportNotificationService>();
+                    services.AddSingleton(_supportNotification);
+                }
             });
         }
 
@@ -1312,6 +1627,24 @@ public sealed class MobileApiTests
         {
             if (File.Exists(path))
                 File.Delete(path);
+        }
+    }
+
+    private sealed class FailingSupportNotificationService :
+        ISupportNotificationService
+    {
+        public int CallCount { get; private set; }
+
+        public string? LastTicketNumber { get; private set; }
+
+        public Task<SupportNotificationResult> NotifyTicketCreatedAsync(
+            SupportTicketNotification notification,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            LastTicketNumber = notification.TicketNumber;
+            return Task.FromResult(SupportNotificationResult.Failed);
         }
     }
 }

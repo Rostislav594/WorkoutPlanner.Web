@@ -2,8 +2,10 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using WorkoutPlanner.Web.Components;
 using WorkoutPlanner.Web.Components.Onboarding;
 using WorkoutPlanner.Web.Api;
@@ -14,6 +16,7 @@ using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Onboarding;
+using WorkoutPlanner.Web.Services.Support;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +49,23 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(
+        SupportApiEndpoints.RateLimitPolicyName,
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            context.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            context.Connection.RemoteIpAddress?.ToString() ??
+            "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
     {
@@ -97,6 +117,12 @@ builder.Services.AddScoped<AppGuidePracticeService>();
 builder.Services.AddScoped<IOnboardingService, AppGuideService>();
 builder.Services.AddScoped<IOnboardingStateService, OnboardingStateService>();
 builder.Services.AddScoped<IAppGuideCompletionStore, IdentityAppGuideCompletionStore>();
+builder.Services.Configure<TelegramSupportOptions>(
+    builder.Configuration.GetSection(TelegramSupportOptions.SectionName));
+builder.Services.AddSingleton<ISupportScreenshotStorage, SupportScreenshotStorage>();
+builder.Services.AddSingleton<ISupportNotificationService, TelegramSupportNotificationService>();
+builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
+builder.Services.AddScoped<IInboxService, InboxService>();
 
 
 // Add services to the container.
@@ -128,19 +154,14 @@ app.UseWhen(
         "/not-found",
         createScopeForStatusCodePages: true));
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseWhen(
-        context => !context.Request.Path.StartsWithSegments("/api"),
-        web => web.UseHttpsRedirection());
-}
-else
+if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.UseAntiforgery();
 
@@ -241,6 +262,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapGymPlannerApi();
+app.MapTelegramSupportWebhook();
 
 if (app.Environment.IsDevelopment())
 {

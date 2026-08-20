@@ -1,12 +1,16 @@
 @page "/profile"
 @attribute [Authorize]
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.Extensions.Logging
 @using WorkoutPlanner.Api.Contracts
 @inject IProfileApiClient ProfileClient
+@inject ISupportApiClient SupportClient
+@inject IMobilePhotoPicker PhotoPicker
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
+@inject ILogger<Profile> Logger
 
-<section class="profile-page" aria-busy="@_isLoading">
+<section class="profile-page" aria-busy="@_isLoading" aria-label="Профиль">
     @if (_isLoading)
     {
         <div class="profile-state" role="status">
@@ -23,173 +27,277 @@
     }
     else
     {
-        <div class="profile-shell">
-            <main class="profile-main">
-                @if (_tab == ProfileTab.Details)
-                {
-                    <section class="profile-panel">
-                        <header class="profile-heading">
-                            <p class="profile-kicker">Профиль пользователя</p>
-                            <h1>@(_profile?.HasProfile == true ? FullName : "Настройка профиля")</h1>
-                            <p>@(_profile?.Email ?? Authentication.CurrentEmail)</p>
-                        </header>
+        <header class="profile-title-row">
+            <div>
+                <p class="profile-eyebrow">Аккаунт</p>
+                <h1 id="profile-title">Профиль</h1>
+            </div>
+            <span class="profile-title-icon material-symbols-rounded" aria-hidden="true">tune</span>
+        </header>
 
-                        @if (!string.IsNullOrWhiteSpace(_message))
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <div class="profile-success" role="status">@_message</div>
+        }
+        @if (_operationErrors.Count > 0 && _dialog == ProfileDialog.None && !_confirmDeletion)
+        {
+            <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
+        }
+
+        <article class="profile-identity-card">
+            <div class="profile-avatar" aria-label="Аватар пользователя">@ProfileInitials</div>
+            <div class="profile-identity-copy">
+                <h2>@DisplayName</h2>
+                <p>@DisplayEmail</p>
+            </div>
+            <button class="profile-edit-action" type="button" @onclick="OpenEditDialog">
+                <span class="material-symbols-rounded" aria-hidden="true">edit</span>
+                <span>Редактировать профиль</span>
+            </button>
+        </article>
+
+        <div class="profile-sections">
+            @foreach (var section in ProfileSections)
+            {
+                <section class="settings-section" aria-labelledby="@section.Id">
+                    <h2 id="@section.Id">@section.Title</h2>
+                    <div class="settings-group">
+                        @foreach (var item in section.Items)
                         {
-                            <div class="profile-success" role="status">@_message</div>
-                        }
-                        @if (_operationErrors.Count > 0)
-                        {
-                            <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
-                        }
-
-                        <EditForm Model="_profileInput" OnValidSubmit="SaveProfileAsync">
-                            <DataAnnotationsValidator />
-                            <ValidationSummary class="validation-summary" />
-
-                            <div class="profile-form-grid">
-                                <div class="field">
-                                    <label for="profile-email">Email</label>
-                                    <input id="profile-email" class="auth-input" value="@(_profile?.Email ?? Authentication.CurrentEmail)" readonly />
-                                </div>
-                                <div class="field">
-                                    <label for="profile-first-name">Имя</label>
-                                    <InputText id="profile-first-name" class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" />
-                                    <ValidationMessage For="@(() => _profileInput.FirstName)" />
-                                </div>
-                                <div class="field">
-                                    <label for="profile-last-name">Фамилия</label>
-                                    <InputText id="profile-last-name" class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" />
-                                    <ValidationMessage For="@(() => _profileInput.LastName)" />
-                                </div>
-                                <div class="field">
-                                    <label for="profile-birth-date">Дата рождения</label>
-                                    <InputDate id="profile-birth-date" class="auth-input" @bind-Value="_profileInput.BirthDate" />
-                                    <ValidationMessage For="@(() => _profileInput.BirthDate)" />
-                                </div>
-                                <div class="field">
-                                    <label for="profile-gender">Пол</label>
-                                    <InputSelect id="profile-gender" class="auth-input" @bind-Value="_profileInput.Gender">
-                                        <option value="">Выберите</option>
-                                        <option value="Мужской">Мужской</option>
-                                        <option value="Женский">Женский</option>
-                                        <option value="Не указывать">Не указывать</option>
-                                    </InputSelect>
-                                    <ValidationMessage For="@(() => _profileInput.Gender)" />
-                                </div>
-                            </div>
-
-                            <button class="profile-primary-action" type="submit" disabled="@_isSaving">
-                                @(_isSaving ? "Сохраняем…" : "Сохранить изменения")
-                            </button>
-                        </EditForm>
-
-                        <hr class="profile-divider" />
-
-                        <div class="profile-danger-zone">
-
-                            <button class="profile-danger-action" type="button" @onclick="() => _confirmDeletion = true">Удалить аккаунт</button>
-                        </div>
-                    </section>
-                }
-                else if (_tab == ProfileTab.Security)
-                {
-                    <section class="profile-panel profile-actions-panel">
-                        <header class="profile-heading">
-                            <p class="profile-kicker">Безопасность</p>
-                            <h1>Настройки безопасности</h1>
-                        </header>
-
-                        @if (_operationErrors.Count > 0)
-                        {
-                            <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
-                        }
-
-                        <div class="settings-section">
-                            <h2>Смена пароля</h2>
-                            <EditForm Model="_passwordInput" OnValidSubmit="ChangePasswordAsync">
-                                <DataAnnotationsValidator />
-                                <ValidationSummary class="validation-summary" />
-
-                                <div class="profile-form-grid password-grid">
-                                    <div class="field">
-                                        <label for="current-password">Текущий пароль</label>
-                                        <InputText id="current-password" class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" />
-                                    </div>
-                                    <div class="field">
-                                        <label for="new-password">Новый пароль</label>
-                                        <InputText id="new-password" class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" />
-                                    </div>
-                                    <div class="field">
-                                        <label for="confirm-password">Подтверждение нового пароля</label>
-                                        <InputText id="confirm-password" class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" />
-                                    </div>
-                                </div>
-
-                                <button class="profile-secondary-action password-submit" type="submit" disabled="@_isSecurityBusy">
-                                    @(_isSecurityBusy ? "Выполняем…" : "Изменить пароль")
+                            @if (item.Action is { } action)
+                            {
+                                <button class="@RowClass(item)" type="button" @onclick="() => HandleActionAsync(action)">
+                                    <span class="settings-icon material-symbols-rounded" aria-hidden="true">@item.Icon</span>
+                                    <span class="settings-label">@item.Label</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Value))
+                                    {
+                                        <span class="@ValueClass(item)">@item.Value</span>
+                                    }
+                                    @if (item.ShowChevron)
+                                    {
+                                        <span class="settings-chevron material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                                    }
                                 </button>
-                            </EditForm>
-                        </div>
-                    </section>
-                }
-                else
-                {
-                    <section class="profile-panel">
-                        <header class="profile-heading">
-                            <p class="profile-kicker">Обучение</p>
-                            <h1>Настройки тренировок</h1>
-                            <p>Интерактивное знакомство с планами, календарём, историей и прогрессом.</p>
-                        </header>
-
-                        <div class="training-card">
-                            <span class="training-icon material-symbols-rounded" aria-hidden="true">school</span>
-                            <div>
-                                <h2>Знакомство с GymPlanner</h2>
-                                <p>Пройдите мобильную экскурсию повторно или продолжите с сохранённого шага.</p>
-                            </div>
-                            <a class="profile-secondary-action" href="/onboarding">Открыть обучение</a>
-                        </div>
-                    </section>
-                }
-            </main>
-
-            <aside class="profile-sidebar" aria-label="Разделы профиля">
-                <button class="@TabClass(ProfileTab.Details)" type="button" @onclick="() => SelectTab(ProfileTab.Details)">
-                    <span class="material-symbols-rounded" aria-hidden="true">person</span>
-                    <span>Профиль</span>
-                </button>
-                <button class="@TabClass(ProfileTab.Security)" type="button" @onclick="() => SelectTab(ProfileTab.Security)">
-                    <span class="material-symbols-rounded" aria-hidden="true">shield</span>
-                    <span>Настройки безопасности</span>
-                </button>
-                <button class="@TabClass(ProfileTab.Training)" type="button" @onclick="() => SelectTab(ProfileTab.Training)">
-                    <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-                    <span>Настройки тренировок</span>
-                </button>
-            </aside>
+                            }
+                            else
+                            {
+                                <div class="@RowClass(item)" aria-label="@($"{item.Label}. Раздел пока не настроен.")">
+                                    <span class="settings-icon material-symbols-rounded" aria-hidden="true">@item.Icon</span>
+                                    <span class="settings-label">@item.Label</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Value))
+                                    {
+                                        <span class="@ValueClass(item)">@item.Value</span>
+                                    }
+                                    @if (item.ShowChevron)
+                                    {
+                                        <span class="settings-chevron material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </section>
+            }
         </div>
     }
 </section>
 
-@if (_confirmDeletion)
+@if (_dialog == ProfileDialog.EditProfile)
 {
-    <div class="modal-overlay" @onclick="CloseDeleteDialog">
-        <section class="modal-window delete-modal"
-                 role="alertdialog"
-                 aria-modal="true"
-                 aria-labelledby="delete-account-title"
-                 @onclick:stopPropagation="true">
-            <span class="delete-icon material-symbols-rounded" aria-hidden="true">warning</span>
-            <h2 id="delete-account-title">Удаление аккаунта</h2>
-            <p>Вы действительно хотите удалить аккаунт?</p>
-            <p class="warning-copy">Будут удалены профиль, планы, история тренировок, прогресс, фотографии и все пользовательские данные.</p>
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-profile-title" @onclick:stopPropagation="true">
+            <header class="dialog-header">
+                <div>
+                    <p class="profile-eyebrow">Личные данные</p>
+                    <h2 id="edit-profile-title">Редактировать профиль</h2>
+                </div>
+                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSaving" @onclick="CloseDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
 
             @if (_operationErrors.Count > 0)
             {
                 <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
             }
 
+            <EditForm Model="_profileInput" OnValidSubmit="SaveProfileAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+                <div class="profile-form-grid">
+                    <div class="field">
+                        <label for="profile-email">Email</label>
+                        <input id="profile-email" class="auth-input" value="@DisplayEmail" readonly />
+                    </div>
+                    <div class="field">
+                        <label for="profile-first-name">Имя</label>
+                        <InputText id="profile-first-name" class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" />
+                        <ValidationMessage For="@(() => _profileInput.FirstName)" />
+                    </div>
+                    <div class="field">
+                        <label for="profile-last-name">Фамилия</label>
+                        <InputText id="profile-last-name" class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" />
+                        <ValidationMessage For="@(() => _profileInput.LastName)" />
+                    </div>
+                    <div class="field">
+                        <label for="profile-birth-date">Дата рождения</label>
+                        <InputDate id="profile-birth-date" class="auth-input" @bind-Value="_profileInput.BirthDate" />
+                        <ValidationMessage For="@(() => _profileInput.BirthDate)" />
+                    </div>
+                    <div class="field">
+                        <label for="profile-gender">Пол</label>
+                        <InputSelect id="profile-gender" class="auth-input" @bind-Value="_profileInput.Gender">
+                            <option value="">Выберите</option>
+                            <option value="Мужской">Мужской</option>
+                            <option value="Женский">Женский</option>
+                            <option value="Не указывать">Не указывать</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => _profileInput.Gender)" />
+                    </div>
+                </div>
+                <button class="profile-primary-action" type="submit" disabled="@_isSaving">
+                    @(_isSaving ? "Сохраняем…" : "Сохранить изменения")
+                </button>
+            </EditForm>
+        </section>
+    </div>
+}
+
+@if (_dialog == ProfileDialog.ChangePassword)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="change-password-title" @onclick:stopPropagation="true">
+            <header class="dialog-header">
+                <div>
+                    <p class="profile-eyebrow">Безопасность</p>
+                    <h2 id="change-password-title">Изменить пароль</h2>
+                </div>
+                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSecurityBusy" @onclick="CloseDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            @if (_operationErrors.Count > 0)
+            {
+                <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
+            }
+
+            <EditForm Model="_passwordInput" OnValidSubmit="ChangePasswordAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+                <div class="profile-form-grid">
+                    <div class="field">
+                        <label for="current-password">Текущий пароль</label>
+                        <InputText id="current-password" class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" />
+                    </div>
+                    <div class="field">
+                        <label for="new-password">Новый пароль</label>
+                        <InputText id="new-password" class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" />
+                    </div>
+                    <div class="field">
+                        <label for="confirm-password">Подтверждение нового пароля</label>
+                        <InputText id="confirm-password" class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" />
+                    </div>
+                </div>
+                <button class="profile-primary-action" type="submit" disabled="@_isSecurityBusy">
+                    @(_isSecurityBusy ? "Выполняем…" : "Изменить пароль")
+                </button>
+            </EditForm>
+        </section>
+    </div>
+}
+
+@if (_dialog == ProfileDialog.ReportProblem)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <section class="modal-window profile-dialog support-dialog" role="dialog" aria-modal="true" aria-labelledby="report-problem-title" @onclick:stopPropagation="true">
+            <header class="dialog-header">
+                <div>
+                    <p class="profile-eyebrow">Помощь и поддержка</p>
+                    <h2 id="report-problem-title">Сообщить о проблеме</h2>
+                </div>
+                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSupportBusy" @onclick="CloseDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+
+            @if (_supportErrors.Count > 0)
+            {
+                <div class="auth-error operation-error" role="alert">@string.Join(" ", _supportErrors)</div>
+            }
+
+            <div class="support-field">
+                <label for="support-message">Что произошло?</label>
+                <textarea id="support-message"
+                          maxlength="2000"
+                          placeholder="Опишите, что произошло..."
+                          aria-describedby="support-message-hint support-privacy-note"
+                          @bind="_supportMessage"
+                          @bind:event="oninput"></textarea>
+                <div class="support-field-meta">
+                    <span id="support-message-hint">Минимум 10 символов</span>
+                    <span>@_supportMessage.Length / 2000</span>
+                </div>
+            </div>
+
+            @if (_supportScreenshot is null)
+            {
+                <button class="support-attachment-button" type="button" disabled="@_isSupportBusy" @onclick="PickSupportScreenshotAsync">
+                    <span class="material-symbols-rounded" aria-hidden="true">add_photo_alternate</span>
+                    <span>Добавить скриншот</span>
+                    <small>JPG, PNG или WebP · до 5 МБ</small>
+                </button>
+            }
+            else
+            {
+                <div class="support-attachment-preview">
+                    <img src="@SupportScreenshotDataUri" alt="Прикреплённый скриншот" />
+                    <div>
+                        <strong>Скриншот прикреплён</strong>
+                        <span>@_supportScreenshot.FileName</span>
+                    </div>
+                    <button type="button" aria-label="Удалить скриншот" disabled="@_isSupportBusy" @onclick="RemoveSupportScreenshot">
+                        <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                    </button>
+                </div>
+            }
+
+            <p id="support-privacy-note" class="support-privacy-note">
+                <span class="material-symbols-rounded" aria-hidden="true">shield</span>
+                <span>Не указывайте пароль и другие конфиденциальные данные.</span>
+            </p>
+
+            <div class="support-dialog-actions">
+                <button class="profile-secondary-action" type="button" disabled="@_isSupportBusy" @onclick="CloseDialog">Отмена</button>
+                <button class="profile-primary-action support-submit" type="button" disabled="@(_isSupportBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportTicketAsync">
+                    @if (_isSupportBusy)
+                    {
+                        <span class="loading-spinner loading-spinner--small" aria-hidden="true"></span>
+                        <span>Отправляем…</span>
+                    }
+                    else
+                    {
+                        <span class="material-symbols-rounded" aria-hidden="true">send</span>
+                        <span>Отправить</span>
+                    }
+                </button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_confirmDeletion)
+{
+    <div class="modal-overlay" @onclick="CloseDeleteDialog">
+        <section class="modal-window delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title" @onclick:stopPropagation="true">
+            <span class="delete-icon material-symbols-rounded" aria-hidden="true">warning</span>
+            <h2 id="delete-account-title">Удаление аккаунта</h2>
+            <p>Вы действительно хотите удалить аккаунт?</p>
+            <p class="warning-copy">Будут удалены профиль, планы, история тренировок, прогресс, фотографии и все пользовательские данные.</p>
+            @if (_operationErrors.Count > 0)
+            {
+                <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
+            }
             <div class="dialog-actions">
                 <button class="profile-secondary-action" type="button" disabled="@_isSecurityBusy" @onclick="CloseDeleteDialog">Отмена</button>
                 <button class="profile-danger-action" type="button" disabled="@_isSecurityBusy" @onclick="DeleteAccountAsync">
@@ -201,18 +309,51 @@
 }
 
 @code {
+    private static readonly IReadOnlyList<ProfileSection> ProfileSections =
+    [
+        new("personal-data", "Личные данные", [new("badge", "Личная информация"), new("mail", "Email")]),
+        new("training", "Тренировки", [new("scale", "Единицы измерения", "кг"), new("timer", "Таймеры отдыха"), new("exercise", "Настройки тренировок")]),
+        new("devices", "Устройства", [new("devices", "Подключённые устройства"), new("watch", "Samsung Galaxy Watch", "Подключено", ShowChevron: false, IsStatus: true)]),
+        new("application", "Приложение", [new("notifications", "Уведомления"), new("palette", "Внешний вид"), new("language", "Язык", "Русский")]),
+        new("data", "Данные", [new("database", "Мои данные"), new("download", "Экспорт данных"), new("sync", "Синхронизация")]),
+        new("security", "Безопасность", [new("password", "Изменить пароль", Action: ProfileAction.ChangePassword), new("devices_other", "Активные сеансы")]),
+        new("support", "Поддержка", [new("help", "Помощь"), new("bug_report", "Сообщить о проблеме", Action: ProfileAction.ReportProblem), new("lightbulb", "Предложить идею")]),
+        new("about", "О приложении", [new("info", "О GPlanner"), new("privacy_tip", "Политика конфиденциальности"), new("tag", "Версия", "1.0.0", ShowChevron: false), new("logout", "Выйти из аккаунта", Action: ProfileAction.Logout, IsStandalone: true)]),
+        new("danger-zone", "Опасная зона", [new("delete_forever", "Удалить аккаунт", ShowChevron: false, Action: ProfileAction.DeleteAccount, IsDanger: true)])
+    ];
+
     private readonly ProfileInput _profileInput = new();
     private readonly PasswordInput _passwordInput = new();
     private readonly List<string> _loadErrors = [];
     private readonly List<string> _operationErrors = [];
+    private readonly List<string> _supportErrors = [];
     private ProfileResponse? _profile;
-    private ProfileTab _tab;
+    private PickedPhoto? _supportScreenshot;
+    private ProfileDialog _dialog;
     private bool _isLoading = true;
     private bool _isSaving;
     private bool _isSecurityBusy;
+    private bool _isSupportBusy;
     private bool _confirmDeletion;
     private string? _message;
+    private string _supportMessage = string.Empty;
     private string FullName => $"{_profileInput.FirstName} {_profileInput.LastName}".Trim();
+    private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? "Пользователь GPlanner" : FullName;
+    private string DisplayEmail => _profile?.Email ?? Authentication.CurrentEmail ?? string.Empty;
+    private string? SupportScreenshotDataUri => _supportScreenshot is null
+        ? null
+        : $"data:{_supportScreenshot.ContentType};base64,{Convert.ToBase64String(_supportScreenshot.Content)}";
+    private string ProfileInitials
+    {
+        get
+        {
+            var initials = new[] { _profileInput.FirstName, _profileInput.LastName }
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => char.ToUpperInvariant(value.Trim()[0]));
+            var result = string.Concat(initials);
+            return string.IsNullOrWhiteSpace(result) ? "GP" : result;
+        }
+    }
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -241,11 +382,15 @@
         ClearOperationState();
         try
         {
-            var result = await ProfileClient.SaveAsync(new(
-                _profileInput.FirstName, _profileInput.LastName,
-                _profileInput.BirthDate, _profileInput.Gender));
-            if (!result.Succeeded) _operationErrors.AddRange(result.Errors);
-            else { _profile = result.Value; _message = "Профиль сохранён."; }
+            var result = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender));
+            if (!result.Succeeded)
+                _operationErrors.AddRange(result.Errors);
+            else
+            {
+                _profile = result.Value;
+                _message = "Профиль сохранён.";
+                _dialog = ProfileDialog.None;
+            }
         }
         finally { _isSaving = false; }
     }
@@ -257,13 +402,121 @@
         ClearOperationState();
         try
         {
-            var result = await ProfileClient.ChangePasswordAsync(new(
-                _passwordInput.CurrentPassword, _passwordInput.NewPassword));
+            var result = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword));
             if (!result.Succeeded) { _operationErrors.AddRange(result.Errors); return; }
             await Authentication.ClearAsync();
             Navigation.NavigateTo("/account/login", replace: true);
         }
         finally { _isSecurityBusy = false; }
+    }
+
+    private async Task HandleActionAsync(ProfileAction action)
+    {
+        ClearOperationState();
+        switch (action)
+        {
+            case ProfileAction.ChangePassword:
+                _dialog = ProfileDialog.ChangePassword;
+                break;
+            case ProfileAction.ReportProblem:
+                _supportErrors.Clear();
+                _dialog = ProfileDialog.ReportProblem;
+                break;
+            case ProfileAction.Logout:
+                await LogoutAsync();
+                break;
+            case ProfileAction.DeleteAccount:
+                _confirmDeletion = true;
+                break;
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        if (_isSecurityBusy) return;
+        _isSecurityBusy = true;
+        try
+        {
+            var result = await Authentication.LogoutAsync();
+            if (!result.Succeeded) { _operationErrors.AddRange(result.Errors); return; }
+            Navigation.NavigateTo("/account/login", replace: true);
+        }
+        finally { _isSecurityBusy = false; }
+    }
+
+    private async Task PickSupportScreenshotAsync()
+    {
+        if (_isSupportBusy) return;
+        _supportErrors.Clear();
+        var result = await PhotoPicker.PickAsync(MobilePhotoSource.Library);
+        if (result.Succeeded)
+            _supportScreenshot = result.Photo;
+        else if (!result.Cancelled)
+            _supportErrors.AddRange(result.Errors);
+    }
+
+    private void RemoveSupportScreenshot()
+    {
+        if (_isSupportBusy) return;
+        _supportScreenshot = null;
+    }
+
+    private async Task SubmitSupportTicketAsync()
+    {
+        if (_isSupportBusy) return;
+        _supportErrors.Clear();
+        var message = _supportMessage.Trim();
+        if (message.Length < 10)
+        {
+            _supportErrors.Add("Опишите проблему хотя бы в 10 символах.");
+            return;
+        }
+
+        _isSupportBusy = true;
+        try
+        {
+            var result = await SupportClient.CreateAsync(
+                message,
+                _supportScreenshot,
+                GetSupportDeviceContext());
+            if (!result.Succeeded)
+            {
+                _supportErrors.AddRange(result.Errors);
+                return;
+            }
+
+            var ticketNumber = result.Value!.TicketNumber;
+            ResetSupportDraft();
+            _dialog = ProfileDialog.None;
+            _message = $"Сообщение отправлено в техническую поддержку. Номер обращения: {ticketNumber}.";
+        }
+        finally
+        {
+            _isSupportBusy = false;
+        }
+    }
+
+    private SupportDeviceContext GetSupportDeviceContext()
+    {
+        try
+        {
+            var deviceModel = string.Join(
+                " ",
+                new[] { DeviceInfo.Current.Manufacturer, DeviceInfo.Current.Model }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+            return new SupportDeviceContext(
+                AppInfo.Current.VersionString,
+                DeviceInfo.Current.Platform.ToString(),
+                DeviceInfo.Current.VersionString,
+                deviceModel);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogDebug(
+                exception,
+                "Device context is unavailable for a support ticket.");
+            return new SupportDeviceContext(null, null, null, null);
+        }
     }
 
     private async Task DeleteAccountAsync() => await EndAccountSessionAsync(ProfileClient.DeleteAccountAsync);
@@ -283,11 +536,26 @@
         finally { _isSecurityBusy = false; }
     }
 
-    private void SelectTab(ProfileTab tab)
+    private void OpenEditDialog()
     {
-        _tab = tab;
-        _confirmDeletion = false;
         ClearOperationState();
+        _dialog = ProfileDialog.EditProfile;
+    }
+
+    private void CloseDialog()
+    {
+        if (_isSaving || _isSecurityBusy || _isSupportBusy) return;
+        if (_dialog == ProfileDialog.ReportProblem)
+            ResetSupportDraft();
+        _dialog = ProfileDialog.None;
+        _operationErrors.Clear();
+    }
+
+    private void ResetSupportDraft()
+    {
+        _supportMessage = string.Empty;
+        _supportScreenshot = null;
+        _supportErrors.Clear();
     }
 
     private void CloseDeleteDialog()
@@ -298,7 +566,8 @@
     }
 
     private void ClearOperationState() { _operationErrors.Clear(); _message = null; }
-    private string TabClass(ProfileTab tab) => $"profile-tab {(_tab == tab ? "active" : string.Empty)}";
+    private static string RowClass(ProfileItem item) => $"settings-row{(item.IsDanger ? " settings-row--danger" : string.Empty)}{(item.IsStandalone ? " settings-row--standalone" : string.Empty)}";
+    private static string ValueClass(ProfileItem item) => item.IsStatus ? "settings-value settings-value--status" : "settings-value";
 
     private sealed class ProfileInput
     {
@@ -315,5 +584,8 @@
         [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")] public string ConfirmPassword { get; set; } = string.Empty;
     }
 
-    private enum ProfileTab { Details, Security, Training }
+    private sealed record ProfileSection(string Id, string Title, IReadOnlyList<ProfileItem> Items);
+    private sealed record ProfileItem(string Icon, string Label, string? Value = null, bool ShowChevron = true, ProfileAction? Action = null, bool IsStatus = false, bool IsStandalone = false, bool IsDanger = false);
+    private enum ProfileAction { ChangePassword, ReportProblem, Logout, DeleteAccount }
+    private enum ProfileDialog { None, EditProfile, ChangePassword, ReportProblem }
 }
