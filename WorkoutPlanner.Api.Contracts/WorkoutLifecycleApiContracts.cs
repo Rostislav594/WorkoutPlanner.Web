@@ -5,7 +5,11 @@ public sealed record ScheduleWorkoutRequest(DateTime Date, int TrainingPlanId);
 public sealed record MoveWorkoutRequest(DateTime Date);
 public sealed record TodayWorkoutApiResponse(WorkoutDayApiResponse Day, TrainingPlanApiResponse TrainingPlan);
 public sealed record WorkoutHistoryApiResponse(int Id, string WorkoutName, DateTime Date, string Summary, bool SnapshotAvailable, IReadOnlyList<WorkoutHistoryExerciseApiResponse> Exercises);
-public sealed record WorkoutHistoryExerciseApiResponse(string Name, string Status, IReadOnlyList<ExerciseSetApiResponse> Sets);
+public sealed record WorkoutHistoryExerciseApiResponse(
+    string Name,
+    string Status,
+    IReadOnlyList<ExerciseSetApiResponse> Sets,
+    int? SupersetGroupId = null);
 public sealed record CompleteFreeWorkoutRequest(
     bool SaveAsTemplate,
     string? TemplateName,

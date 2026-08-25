@@ -24,8 +24,6 @@
     @Body
 </div>
 
-<WorkoutPlanner.Web.Components.Onboarding.AppGuide @rendermode='InteractiveServer' />
-
 @code {
     string CurrentPagePath =>
         Navigation.ToBaseRelativePath(Navigation.Uri);
@@ -38,7 +36,14 @@
 
     bool ShowHomeButton =>
         !string.IsNullOrWhiteSpace(CurrentPagePath) &&
-        !IsAccountPage;
+        !IsAccountPage &&
+        !IsFirstLaunchFlowPage;
+
+    bool IsFirstLaunchFlowPage =>
+        CurrentPagePath.Equals("profile/setup", StringComparison.OrdinalIgnoreCase) ||
+        CurrentPagePath.Equals("creator-intro", StringComparison.OrdinalIgnoreCase) ||
+        CurrentPagePath.Equals("welcome-guide", StringComparison.OrdinalIgnoreCase) ||
+        CurrentPagePath.Equals("firstlaunch", StringComparison.OrdinalIgnoreCase);
 
     bool IsProgressDetailsPage =>
         CurrentPagePath.Equals("progress/workouts", StringComparison.OrdinalIgnoreCase) ||

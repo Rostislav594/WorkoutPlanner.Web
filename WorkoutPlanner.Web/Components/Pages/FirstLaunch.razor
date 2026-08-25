@@ -1,41 +1,40 @@
-﻿@page "/firstlaunch"
+@page "/firstlaunch"
 @rendermode InteractiveServer
-
+@attribute [Authorize]
+@inject WorkoutPlanner.Web.Application.Abstractions.IWelcomeGuideStateService WelcomeGuideState
 @inject NavigationManager Navigation
 
-<div class="welcome-screen">
-    <div class="welcome-content @(isLeaving ? "welcome-leaving" : "")">
+<FinalWelcome IsBusy="_isBusy" ErrorMessage="@_error" OnCompleted="CompleteAsync" />
 
-        <div class="welcome-title">
-            Добро пожаловать в
-        </div>
+@code {
+    private bool _isBusy;
+    private string? _error;
 
-        <div class="welcome-logo">
-            <span class="gym">Gym</span><span class="planner">Planner</span>
-        </div>
-
-    </div>
-</div>
-
-@code
-{
-    private bool isLeaving;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender)
+        if (await WelcomeGuideState.IsCompletedAsync())
+            Navigation.NavigateTo("/", replace: true);
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (_isBusy)
             return;
 
-        // Экран полностью появился
-        await Task.Delay(6000);
-
-        // Запускаем исчезновение
-        isLeaving = true;
-        StateHasChanged();
-
-        // Ждем завершения анимации
-        await Task.Delay(800);
-
-        Navigation.NavigateTo("/");
+        _isBusy = true;
+        _error = null;
+        try
+        {
+            await WelcomeGuideState.CompleteAsync();
+            Navigation.NavigateTo("/", replace: true);
+        }
+        catch
+        {
+            _error = "Не удалось сохранить завершение знакомства. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 }

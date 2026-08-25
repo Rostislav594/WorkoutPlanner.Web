@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using WorkoutPlanner.Web.Components;
-using WorkoutPlanner.Web.Components.Onboarding;
 using WorkoutPlanner.Web.Api;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
@@ -15,8 +14,8 @@ using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Auth;
-using WorkoutPlanner.Web.Services.Onboarding;
 using WorkoutPlanner.Web.Services.Support;
+using WorkoutPlanner.Web.Services.WelcomeGuide;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,12 +110,8 @@ builder.Services.AddScoped<IWorkoutDayService, WorkoutDayService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IExerciseDefinitionService, ExerciseDefinitionService>();
 builder.Services.AddScoped<ExerciseIndexService>();
-builder.Services.AddScoped<AppGuideCatalog>();
-builder.Services.AddSingleton<CharacterAssetCatalog>();
-builder.Services.AddScoped<AppGuidePracticeService>();
-builder.Services.AddScoped<IOnboardingService, AppGuideService>();
-builder.Services.AddScoped<IOnboardingStateService, OnboardingStateService>();
-builder.Services.AddScoped<IAppGuideCompletionStore, IdentityAppGuideCompletionStore>();
+builder.Services.AddScoped<IWelcomeGuideCompletionStore, IdentityWelcomeGuideCompletionStore>();
+builder.Services.AddScoped<IWelcomeGuideStateService, WelcomeGuideStateService>();
 builder.Services.Configure<TelegramSupportOptions>(
     builder.Configuration.GetSection(TelegramSupportOptions.SectionName));
 builder.Services.AddSingleton<ISupportScreenshotStorage, SupportScreenshotStorage>();

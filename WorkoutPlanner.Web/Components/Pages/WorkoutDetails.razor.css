@@ -9,6 +9,8 @@
     margin-bottom: 24px;
 }
 
+.workout-utility-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+
 .workout-title-card {
     padding: clamp(24px, 5vw, 38px);
     border: 1px solid var(--color-border, #333);

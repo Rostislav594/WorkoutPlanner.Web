@@ -10,6 +10,13 @@
     text-align: center;
 }
 
+.page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
 .calendar-header h1 {
     margin: 0;
     font-size: var(--text-page-title);

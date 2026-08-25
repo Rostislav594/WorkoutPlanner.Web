@@ -9,9 +9,10 @@
 @inject IWorkoutDayService WorkoutDayService
 
 <div class="page-content calendar-page">
-    <h1 style="text-align:center;">
-       Календарь
-    </h1>
+    <div class="page-title-row">
+        <h1>Календарь</h1>
+        <HelpButton Topic="HelpContentCatalog.CalendarWeb" />
+    </div>
 
     @if (SelectedCalendarDay != null)
 {
@@ -157,7 +158,7 @@
 }
     <hr />
 
-    <div class="month-header" data-guide="calendar-overview">
+    <div class="month-header">
 
         <button class="month-button"
                 @onclick="PreviousMonth">

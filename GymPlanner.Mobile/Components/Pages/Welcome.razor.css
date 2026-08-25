@@ -1,0 +1,3 @@
+.welcome-guide-page { min-height: calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom))); display: grid; place-items: center; padding: max(.5rem,env(safe-area-inset-top)) .5rem max(.5rem,env(safe-area-inset-bottom)); }
+.welcome-guide-state { color: var(--color-text-muted); }
+.auth-error { width: min(100%,68rem); margin-bottom: .75rem; }

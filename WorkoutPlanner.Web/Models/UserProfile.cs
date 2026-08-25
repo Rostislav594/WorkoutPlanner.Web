@@ -23,6 +23,10 @@ public class UserProfile
     [MaxLength(30)]
     public string Gender { get; set; } = string.Empty;
 
+    public int RestBetweenSetsSeconds { get; set; } = 90;
+
+    public int RestBetweenExercisesSeconds { get; set; } = 120;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

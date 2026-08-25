@@ -32,7 +32,7 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
             using var response = await client.GetAsync(url, cancellationToken);
             return await ReadAsync<T>(response, cancellationToken);
         }
-        catch (HttpRequestException)
+        catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
         {
             return ApiResult<T>.Failure("Нет соединения с сервером.");
         }
@@ -47,12 +47,18 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
             using var response = await client.PostAsync(url, null, cancellationToken);
             return await ReadAsync<InboxUnreadCountResponse>(response, cancellationToken);
         }
-        catch (HttpRequestException)
+        catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
         {
             return ApiResult<InboxUnreadCountResponse>.Failure(
                 "Нет соединения с сервером.");
         }
     }
+
+    private static bool ShouldConvertToConnectionFailure(
+        Exception exception,
+        CancellationToken cancellationToken) =>
+        exception is not OperationCanceledException ||
+        !cancellationToken.IsCancellationRequested;
 
     private static async Task<ApiResult<T>> ReadAsync<T>(
         HttpResponseMessage response,

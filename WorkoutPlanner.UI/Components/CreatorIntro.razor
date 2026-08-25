@@ -1,0 +1,142 @@
+@implements IDisposable
+
+<section class="creator-intro" aria-labelledby="creator-intro-message">
+    <div class="creator-intro__content">
+        <div id="creator-intro-message" class="creator-intro__message" aria-label="Обращение от создателя GPlanner">
+            @for (var index = 0; index < CreatorMessage.Length; index++)
+            {
+                if (!string.IsNullOrEmpty(_visibleParagraphs[index]))
+                {
+                    <p>@((MarkupString)FormatParagraph(_visibleParagraphs[index]))</p>
+                }
+            }
+
+            @if (_isComplete)
+            {
+                <p class="creator-intro__signature">— Создатель <strong>GPlanner</strong></p>
+            }
+        </div>
+
+        @if (_isComplete)
+        {
+            <button class="creator-intro__button" type="button" disabled="@IsBusy" @onclick="CompleteAsync"
+                    aria-label="Продолжить" title="Продолжить">
+                <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span>
+            </button>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+
+    private static readonly string[] CreatorMessage =
+    [
+        "Я создавал GPlanner как приложение, которым самому хотелось бы пользоваться на каждой тренировке.",
+        "Без лишнего шума. Только тренировки, прогресс и инструменты, которые действительно помогают в зале.",
+        "Я сам много лет занимаюсь в зале, и именно этот опыт во многом стал причиной появления GPlanner.",
+        "Но это приложение не создано для того, чтобы учить вас тренироваться, навязывать определённые программы, техники или методики.",
+        "Как раз наоборот.",
+        "За годы тренировок я понял, насколько разными могут быть цели, привычки и подходы к тренировочному процессу. Поэтому мне хотелось создать инструмент, которым будет удобно пользоваться независимо от вашего опыта и выбранного подхода — будь вы новичком или тренируетесь уже много лет.",
+        "У каждого свой путь, свои цели и своё понимание тренировочного процесса.",
+        "Задача GPlanner — не менять их и не говорить вам, как нужно тренироваться, а дать удобные инструменты для того, чтобы вы могли тренироваться так, как удобно именно вам.",
+        "При этом я хочу, чтобы GPlanner развивался не только благодаря моим собственным идеям.",
+        "Если вам чего-то не хватает, что-то можно сделать удобнее или у вас появилась идея новой функции — расскажите об этом.",
+        "Я буду читать ваши предложения, рассматривать их и, если они действительно смогут сделать приложение лучше, постепенно воплощать их в GPlanner.",
+        "Мне хочется, чтобы со временем приложение становилось лучше вместе с людьми, которые им пользуются.",
+        "Потому что в конечном итоге GPlanner создаётся для людей, которые действительно тренируются."
+    ];
+
+    private static readonly string[] MistypedFragments =
+    [
+        "саздвал", "лшиний", "занимвюась", "плриожение", "наооборт",
+        "тренировочнго", "целиь", "инструмнты", "развиваься", "удобнне",
+        "воплощат", "ползьуются", "трениурются"
+    ];
+
+    private readonly CancellationTokenSource _disposeCts = new();
+    private readonly string[] _visibleParagraphs = new string[CreatorMessage.Length];
+    private bool _animationStarted;
+    private bool _isComplete;
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_animationStarted)
+        {
+            _animationStarted = true;
+            _ = TypeMessageAsync();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task TypeMessageAsync()
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), _disposeCts.Token);
+
+            for (var paragraphIndex = 0; paragraphIndex < CreatorMessage.Length; paragraphIndex++)
+            {
+                if (_isComplete)
+                    return;
+
+                var paragraph = CreatorMessage[paragraphIndex];
+                var typoIndex = GetTypoIndex(paragraph);
+
+                for (var characterIndex = 0; characterIndex < paragraph.Length; characterIndex++)
+                {
+                    if (_isComplete)
+                        return;
+
+                    if (characterIndex == typoIndex)
+                    {
+                        var mistake = MistypedFragments[paragraphIndex];
+                        _visibleParagraphs[paragraphIndex] += mistake;
+                        await RenderAfterDelayAsync(700);
+                        for (var mistakeCharacterIndex = mistake.Length - 1; mistakeCharacterIndex >= 0; mistakeCharacterIndex--)
+                        {
+                            _visibleParagraphs[paragraphIndex] = _visibleParagraphs[paragraphIndex][..^1];
+                            await RenderAfterDelayAsync(75);
+                        }
+
+                        await RenderAfterDelayAsync(160);
+                    }
+
+                    _visibleParagraphs[paragraphIndex] += paragraph[characterIndex];
+                    await RenderAfterDelayAsync(characterIndex % 11 == 0 ? 18 : 8);
+                }
+
+                await RenderAfterDelayAsync(190);
+            }
+
+            _isComplete = true;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested) { }
+    }
+
+    private async Task RenderAfterDelayAsync(int milliseconds)
+    {
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(milliseconds, _disposeCts.Token);
+    }
+
+    private static int GetTypoIndex(string paragraph)
+    {
+        var index = paragraph.IndexOf(' ', StringComparison.Ordinal);
+        return index >= 0 && index + 1 < paragraph.Length ? index + 1 : -1;
+    }
+
+    private static string FormatParagraph(string text) => System.Net.WebUtility.HtmlEncode(text)
+        .Replace("GPlanner", "<strong>GPlanner</strong>", StringComparison.Ordinal);
+
+    private Task CompleteAsync() => IsBusy ? Task.CompletedTask : OnCompleted.InvokeAsync();
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

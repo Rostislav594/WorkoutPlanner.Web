@@ -18,6 +18,7 @@ public sealed class WorkoutHistoryExercise
 {
     public string Name { get; set; } = string.Empty;
     public ExerciseStatus Status { get; set; }
+    public int? SupersetGroupId { get; set; }
     public List<WorkoutHistorySet> Sets { get; set; } = [];
     public List<string> Photos { get; set; } = [];
     public string StatusText => Status switch
@@ -31,7 +32,7 @@ public sealed class WorkoutHistoryExercise
     };
     public string StatusColor => Status switch
     {
-        ExerciseStatus.Easy => "#28a745",
+        ExerciseStatus.Easy => "#78f6c7",
         ExerciseStatus.Medium => "#ffc107",
         ExerciseStatus.Hard => "#fd7e14",
         ExerciseStatus.Max => "#dc3545",

@@ -1,0 +1,15 @@
+@page "/welcome-guide"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject WorkoutPlanner.Web.Application.Abstractions.IWelcomeGuideStateService WelcomeGuideState
+@inject NavigationManager Navigation
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (await WelcomeGuideState.IsCompletedAsync())
+            Navigation.NavigateTo("/", replace: true);
+        else
+            Navigation.NavigateTo("/firstlaunch", replace: true);
+    }
+}

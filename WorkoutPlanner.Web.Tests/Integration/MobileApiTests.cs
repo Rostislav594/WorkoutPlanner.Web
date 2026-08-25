@@ -43,7 +43,7 @@ public sealed class MobileApiTests
             "/api/v1/progress/workouts/{trainingPlanId}",
             document,
             StringComparison.Ordinal);
-        Assert.Contains("/api/v1/onboarding", document, StringComparison.Ordinal);
+        Assert.Contains("/api/v1/welcome-guide", document, StringComparison.Ordinal);
         Assert.Contains(
             "/api/v1/exercises/{exerciseId}/photo",
             document,
@@ -144,6 +144,24 @@ public sealed class MobileApiTests
         Assert.NotNull(savedProfile);
         Assert.True(savedProfile.HasProfile);
         Assert.Equal("Mobile", savedProfile.FirstName);
+        Assert.Equal(90, savedProfile.RestBetweenSetsSeconds);
+        Assert.Equal(120, savedProfile.RestBetweenExercisesSeconds);
+
+        using var restTimerUpdate = await client.PutAsJsonAsync(
+            "/api/v1/profile/rest-timers",
+            new UpdateRestTimerSettingsRequest(75, 150));
+        Assert.Equal(HttpStatusCode.OK, restTimerUpdate.StatusCode);
+        var restTimerSettings = await restTimerUpdate.Content
+            .ReadFromJsonAsync<RestTimerSettingsResponse>();
+        Assert.NotNull(restTimerSettings);
+        Assert.Equal(75, restTimerSettings.RestBetweenSetsSeconds);
+        Assert.Equal(150, restTimerSettings.RestBetweenExercisesSeconds);
+
+        var profileWithTimers = await client.GetFromJsonAsync<ProfileResponse>(
+            "/api/v1/profile");
+        Assert.NotNull(profileWithTimers);
+        Assert.Equal(75, profileWithTimers.RestBetweenSetsSeconds);
+        Assert.Equal(150, profileWithTimers.RestBetweenExercisesSeconds);
 
         using var refresh = await client.PostAsJsonAsync(
             "/api/v1/auth/refresh",
@@ -559,12 +577,12 @@ public sealed class MobileApiTests
     }
 
     [Fact]
-    public async Task OnboardingApi_PersistsValidatedState_PerAuthenticatedUser()
+    public async Task WelcomeGuideApi_PersistsCompletion_PerAuthenticatedUser()
     {
         using var factory = new GymPlannerApiFactory();
         using var firstUser = CreateClient(factory);
         using var secondUser = CreateClient(factory);
-        using var anonymousState = await firstUser.GetAsync("/api/v1/onboarding");
+        using var anonymousState = await firstUser.GetAsync("/api/v1/welcome-guide");
         Assert.Equal(HttpStatusCode.Unauthorized, anonymousState.StatusCode);
 
         using var firstRegistration = await firstUser.PostAsJsonAsync(
@@ -590,52 +608,29 @@ public sealed class MobileApiTests
                 "password1",
                 "Guide B")).AccessToken);
 
-        var initial = await firstUser.GetFromJsonAsync<OnboardingStateApiResponse>(
-            "/api/v1/onboarding");
+        var initial = await firstUser.GetFromJsonAsync<WelcomeGuideStateApiResponse>(
+            "/api/v1/welcome-guide");
         Assert.NotNull(initial);
         Assert.False(initial.IsCompleted);
-        Assert.Null(initial.StepId);
-
-        using var invalidStep = await firstUser.PutAsJsonAsync(
-            "/api/v1/onboarding/progress",
-            new SaveOnboardingProgressRequest("client-invented-step", null));
-        Assert.Equal(HttpStatusCode.BadRequest, invalidStep.StatusCode);
-
-        using var saveProgress = await firstUser.PutAsJsonAsync(
-            "/api/v1/onboarding/progress",
-            new SaveOnboardingProgressRequest(
-                "navigation-calendar-overview",
-                "guided"));
-        Assert.Equal(HttpStatusCode.OK, saveProgress.StatusCode);
-        var saved = await saveProgress.Content
-            .ReadFromJsonAsync<OnboardingStateApiResponse>();
-        Assert.NotNull(saved);
-        Assert.False(saved.IsCompleted);
-        Assert.Equal("navigation-calendar-overview", saved.StepId);
-        Assert.Equal("guided", saved.Outcome);
-        Assert.NotNull(saved.UpdatedAtUtc);
 
         var secondState = await secondUser.GetFromJsonAsync<
-            OnboardingStateApiResponse>("/api/v1/onboarding");
+            WelcomeGuideStateApiResponse>("/api/v1/welcome-guide");
         Assert.NotNull(secondState);
         Assert.False(secondState.IsCompleted);
-        Assert.Null(secondState.StepId);
 
-        using var complete = await firstUser.PostAsJsonAsync(
-            "/api/v1/onboarding/complete",
-            new CompleteOnboardingRequest(null));
+        using var complete = await firstUser.PostAsync(
+            "/api/v1/welcome-guide",
+            content: null);
         Assert.Equal(HttpStatusCode.OK, complete.StatusCode);
         var completed = await complete.Content
-            .ReadFromJsonAsync<OnboardingStateApiResponse>();
+            .ReadFromJsonAsync<WelcomeGuideStateApiResponse>();
         Assert.NotNull(completed);
         Assert.True(completed.IsCompleted);
-        Assert.Null(completed.StepId);
-        Assert.Equal("guided", completed.Outcome);
 
-        using var updateCompleted = await firstUser.PutAsJsonAsync(
-            "/api/v1/onboarding/progress",
-            new SaveOnboardingProgressRequest("navigation-welcome", null));
-        Assert.Equal(HttpStatusCode.Conflict, updateCompleted.StatusCode);
+        var persisted = await firstUser.GetFromJsonAsync<WelcomeGuideStateApiResponse>(
+            "/api/v1/welcome-guide");
+        Assert.NotNull(persisted);
+        Assert.True(persisted.IsCompleted);
 
         await using (var scope = factory.Services.CreateAsyncScope())
         {
@@ -656,14 +651,6 @@ public sealed class MobileApiTests
                 x.UserId == secondUserId));
         }
 
-        using var reset = await firstUser.DeleteAsync("/api/v1/onboarding");
-        Assert.Equal(HttpStatusCode.OK, reset.StatusCode);
-        var resetState = await reset.Content
-            .ReadFromJsonAsync<OnboardingStateApiResponse>();
-        Assert.NotNull(resetState);
-        Assert.False(resetState.IsCompleted);
-        Assert.Null(resetState.StepId);
-        Assert.Null(resetState.Outcome);
     }
 
     [Fact]
@@ -1084,9 +1071,25 @@ public sealed class MobileApiTests
                 x.Id == historyOnly.History.Id && x.UserId == userId));
         }
 
+        const int supersetGroupId = 17;
+        var firstSupersetExercise = exercise with { SupersetGroupId = supersetGroupId };
+        var secondSupersetExercise = new SaveExerciseRequest(
+            $"{definition.Name} 2",
+            2,
+            "Medium",
+            definition.Id,
+            [
+                new SaveExerciseSetRequest(1, 12, 20, true),
+                new SaveExerciseSetRequest(2, 10, 30, true)
+            ],
+            supersetGroupId);
+
         using var templateResponse = await client.PostAsJsonAsync(
             "/api/v1/workouts/free/complete",
-            new CompleteFreeWorkoutRequest(true, "Шаблон из свободной", [exercise]));
+            new CompleteFreeWorkoutRequest(
+                true,
+                "Шаблон из свободной",
+                [firstSupersetExercise, secondSupersetExercise]));
         Assert.Equal(HttpStatusCode.Created, templateResponse.StatusCode);
         var templateResult = await templateResponse.Content
             .ReadFromJsonAsync<CompleteFreeWorkoutResponse>();
@@ -1094,7 +1097,12 @@ public sealed class MobileApiTests
         Assert.NotNull(templateResult.TrainingPlanId);
         Assert.Equal("Шаблон из свободной", templateResult.History.WorkoutName);
         Assert.Equal("Hard", templateResult.History.Exercises[0].Status);
-        Assert.All(templateResult.History.Exercises[0].Sets, x => Assert.True(x.Completed));
+        Assert.Equal(2, templateResult.History.Exercises.Count);
+        Assert.All(templateResult.History.Exercises, item =>
+        {
+            Assert.Equal(supersetGroupId, item.SupersetGroupId);
+            Assert.All(item.Sets, set => Assert.True(set.Completed));
+        });
 
         await using (var scope = factory.Services.CreateAsyncScope())
         {
@@ -1108,12 +1116,16 @@ public sealed class MobileApiTests
                 .SingleAsync(x =>
                     x.Id == templateResult.TrainingPlanId &&
                     x.UserId == userId);
-            var storedExercise = Assert.Single(storedTemplate.Exercises);
-            Assert.Equal(WorkoutPlanner.Web.Models.ExerciseStatus.NotCompleted, storedExercise.Status);
-            Assert.All(storedExercise.Sets, x => Assert.False(x.Completed));
+            Assert.Equal(2, storedTemplate.Exercises.Count);
+            Assert.All(storedTemplate.Exercises, storedExercise =>
+            {
+                Assert.Equal(supersetGroupId, storedExercise.SupersetGroupId);
+                Assert.Equal(WorkoutPlanner.Web.Models.ExerciseStatus.NotCompleted, storedExercise.Status);
+                Assert.All(storedExercise.Sets, set => Assert.False(set.Completed));
+            });
             Assert.Equal(daysBefore, await db.WorkoutDays.CountAsync(x => x.UserId == userId));
             Assert.Equal(workoutProgressBefore + 1, await db.ProgressSnapshots.CountAsync(x => x.UserId == userId));
-            Assert.Equal(exerciseProgressBefore + 1, await db.ExerciseProgressSnapshots.CountAsync(x => x.UserId == userId));
+            Assert.Equal(exerciseProgressBefore + 2, await db.ExerciseProgressSnapshots.CountAsync(x => x.UserId == userId));
         }
 
         var progress = await client.GetFromJsonAsync<WorkoutProgressApiResponse>(

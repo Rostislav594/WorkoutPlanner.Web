@@ -48,6 +48,27 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
         }
     }
 
+    public async Task<ApiResult<RestTimerSettingsResponse>> SaveRestTimerSettingsAsync(
+        UpdateRestTimerSettingsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PutAsJsonAsync("api/v1/profile/rest-timers", request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+
+            var settings = await response.Content.ReadFromJsonAsync<RestTimerSettingsResponse>(cancellationToken);
+            return settings is null
+                ? ApiResult<RestTimerSettingsResponse>.Failure("Сервер вернул пустые настройки таймера.")
+                : ApiResult<RestTimerSettingsResponse>.Success(settings);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<RestTimerSettingsResponse>.Failure("Нет соединения с сервером.");
+        }
+    }
+
     public Task<ApiResult> ChangePasswordAsync(
         ChangePasswordApiRequest request,
         CancellationToken cancellationToken = default) =>

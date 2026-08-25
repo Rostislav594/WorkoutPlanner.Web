@@ -20,6 +20,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSingleton<Navigation.MobileBackNavigationService>();
 		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();
+		builder.Services.AddSingleton<Lifecycle.FreeWorkoutDraftStore>();
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
 			Authentication.SecureMobileTokenStore>();
@@ -33,7 +34,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.IWorkoutLifecycleApiClient,
 			Api.WorkoutLifecycleApiClient>();
 		builder.Services.AddSingleton<Api.IProgressApiClient, Api.ProgressApiClient>();
-		builder.Services.AddSingleton<Api.IOnboardingApiClient, Api.OnboardingApiClient>();
+		builder.Services.AddSingleton<Api.IWelcomeGuideApiClient, Api.WelcomeGuideApiClient>();
 		builder.Services.AddSingleton<Api.IExercisePhotoApiClient,
 			Api.ExercisePhotoApiClient>();
 		builder.Services.AddSingleton<Api.ISupportApiClient, Api.SupportApiClient>();

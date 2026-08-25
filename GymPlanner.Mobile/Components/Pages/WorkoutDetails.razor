@@ -6,10 +6,13 @@
 @inject IMobilePhotoPicker PhotoPicker
 
 <section class="workout-details-page" aria-busy="@_loading">
-    <a class="back-link" href="/workouts">
-        <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-        К шаблонам
-    </a>
+    <div class="workout-utility-row">
+        <a class="back-link" href="/workouts">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+            К шаблонам
+        </a>
+        <HelpButton Topic="HelpContentCatalog.Workouts" />
+    </div>
 
     <header class="workout-header">
         <div class="workout-title-card">
@@ -47,6 +50,13 @@
                 <span aria-hidden="true">＋</span>
                 Добавить упражнение
             </button>
+            @if (SupersetCandidates.Count >= 2)
+            {
+                <button class="secondary-button create-superset-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="OpenSupersetDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                    Создать суперсет
+                </button>
+            }
         </div>
 
         @if (_operationErrors.Count > 0)
@@ -64,28 +74,121 @@
         else
         {
             <div class="exercise-list">
-                @foreach (var exercise in _plan.Exercises)
+                @foreach (var group in ExerciseGroups)
                 {
-                    <article class="exercise-card">
+                    @if (group.IsSuperset)
+                    {
+                        <article class="exercise-card template-superset-card edit-hold-target"
+                                 tabindex="0"
+                                 aria-label="Суперсет @string.Join(" и ", group.Exercises.Select(x => x.Name)). Удерживайте карточку, чтобы открыть меню суперсета."
+                                 @onpointerdown="() => BeginSupersetHold(group)"
+                                 @onpointerup="CancelSupersetHold"
+                                 @onpointercancel="CancelSupersetHold"
+                                 @onpointerleave="CancelSupersetHold"
+                                 @oncontextmenu="() => ShowSupersetActions(group)"
+                                 @oncontextmenu:preventDefault="true"
+                                 @onkeydown="eventArgs => HandleSupersetKeyDown(eventArgs, group)">
+                            <header class="template-superset-heading">
+                                <div class="template-superset-label">
+                                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                                    <span>Суперсет</span>
+                                </div>
+                                <div class="template-superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.Name))">
+                                    @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
+                                    {
+                                        var exercise = group.Exercises[exerciseIndex];
+                                        if (exerciseIndex > 0)
+                                        {
+                                            <span class="template-superset-name-separator" aria-hidden="true">/</span>
+                                        }
+                                        <span class="template-superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">@exercise.Name</span>
+                                    }
+                                </div>
+                            </header>
+
+                            <div class="exercise-card-body template-superset-body">
+                                <div class="exercise-sets template-superset-rounds" aria-label="Подходы суперсета">
+                                    @foreach (var roundNumber in GetSupersetRoundNumbers(group))
+                                    {
+                                        <section class="template-superset-round" aria-label="Круг @roundNumber">
+                                            @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
+                                            {
+                                                var exercise = group.Exercises[exerciseIndex];
+                                                var set = exercise.Sets.FirstOrDefault(candidate => candidate.SetNumber == roundNumber);
+                                                if (set is null)
+                                                    continue;
+
+                                                <div class="exercise-set-row template-superset-set @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" @onpointerdown:stopPropagation="true">
+                                                    <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
+                                                            type="button"
+                                                            disabled="@_busy"
+                                                            title="@(set.IsWarmup ? "Разминочный подход. Нажмите, чтобы сделать рабочим" : "Рабочий подход. Нажмите, чтобы сделать разминочным")"
+                                                            aria-label="@(set.IsWarmup ? $"{exercise.Name}, подход {set.SetNumber}: разминочный. Сделать рабочим" : $"{exercise.Name}, подход {set.SetNumber}: рабочий. Сделать разминочным")"
+                                                            aria-pressed="@set.IsWarmup"
+                                                            @onclick="() => ToggleSetKindAsync(exercise, set)">@set.SetNumber</button>
+                                                    <span class="set-name">@exercise.Name · @(set.IsWarmup ? "разминочный" : "рабочий")</span>
+                                                    <span class="set-value">@set.Weight кг × @set.Repetitions</span>
+                                                </div>
+                                            }
+                                        </section>
+                                    }
+                                </div>
+
+                                <div class="template-superset-photos">
+                                    @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
+                                    {
+                                        var exercise = group.Exercises[exerciseIndex];
+                                        <div class="exercise-photo-panel template-superset-photo">
+                                            <span class="template-superset-photo-name">@exercise.Name</span>
+                                            <button class="exercise-photo-button"
+                                                    type="button"
+                                                    @onpointerdown:stopPropagation="true"
+                                                    aria-haspopup="dialog"
+                                                    aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
+                                                    @onclick="() => OpenPhotoAsync(exercise)">
+                                                @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
+                                                {
+                                                    <img class="exercise-photo-thumb" src="@thumbnail" alt="Фото упражнения @exercise.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="exercise-photo-placeholder">
+                                                        <span class="material-symbols-rounded" aria-hidden="true">@(exercise.HasPhoto ? "image" : "photo_camera")</span>
+                                                    </span>
+                                                }
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    }
+                    else
+                    {
+                    @foreach (var exercise in group.Exercises)
+                    {
+                    <article class="exercise-card edit-hold-target"
+                             tabindex="0"
+                             aria-label="@($"Упражнение {exercise.Name}. Удерживайте карточку, чтобы открыть настройки.")"
+                             @onpointerdown="() => BeginExerciseHold(exercise)"
+                             @onpointerup="CancelExerciseHold"
+                             @onpointercancel="CancelExerciseHold"
+                             @onpointerleave="CancelExerciseHold"
+                             @oncontextmenu="() => ShowExerciseActions(exercise)"
+                             @oncontextmenu:preventDefault="true"
+                             @onkeydown="eventArgs => HandleExerciseKeyDown(eventArgs, exercise)">
                         <header class="exercise-card-header">
                             <div>
                                 <h2>@exercise.Name</h2>
                                 <span>@exercise.Sets.Count подходов</span>
                             </div>
-                            <button class="card-menu-button"
-                                    type="button"
-                                    aria-label="Настроить упражнение @exercise.Name"
-                                    aria-haspopup="dialog"
-                                    @onclick="() => OpenActions(exercise)">
-                                <span class="material-symbols-rounded" aria-hidden="true">more_horiz</span>
-                            </button>
                         </header>
 
                         <div class="exercise-card-body">
                             <div class="exercise-sets" aria-label="Подходы упражнения @exercise.Name">
                                 @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                                 {
-                                    <div class="exercise-set-row">
+                                    <div class="exercise-set-row" @onpointerdown:stopPropagation="true">
                                         <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                                 type="button"
                                                 disabled="@_busy"
@@ -102,6 +205,7 @@
                             <div class="exercise-photo-panel">
                                 <button class="exercise-photo-button"
                                         type="button"
+                                        @onpointerdown:stopPropagation="true"
                                         aria-haspopup="dialog"
                                         aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
                                         @onclick="() => OpenPhotoAsync(exercise)">
@@ -118,17 +222,11 @@
                                         </span>
                                     }
                                 </button>
-                                <button class="photo-open-button"
-                                        type="button"
-                                        aria-haspopup="dialog"
-                                        aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
-                                        @onclick="() => OpenPhotoAsync(exercise)">
-                                    <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                                    <span>@(exercise.HasPhoto ? "Открыть фото" : "Добавить фото")</span>
-                                </button>
                             </div>
                         </div>
                     </article>
+                    }
+                    }
                 }
             </div>
         }
@@ -331,6 +429,89 @@
     </div>
 }
 
+@if (_showSupersetDialog && _plan is not null)
+{
+    <div class="modal-overlay" @onclick="CloseSupersetDialog">
+        <section class="modal-window superset-window" role="dialog" aria-modal="true" aria-labelledby="template-superset-title" @onclick:stopPropagation="true">
+            <div class="modal-heading">
+                <div>
+                    <span>Шаблон тренировки</span>
+                    <h2 id="template-superset-title">Создать суперсет</h2>
+                </div>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" disabled="@_busy" @onclick="CloseSupersetDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p class="superset-hint">Выберите два упражнения из шаблона.</p>
+                <div class="superset-options">
+                    @foreach (var exercise in _plan.Exercises)
+                    {
+                        var unavailable = exercise.SupersetGroupId is not null;
+                        <button class="superset-option @(_supersetSelection.Contains(exercise.Id) ? "selected" : null)"
+                                type="button"
+                                disabled="@unavailable"
+                                aria-pressed="@_supersetSelection.Contains(exercise.Id)"
+                                @onclick="() => ToggleSupersetExercise(exercise.Id)">@exercise.Name</button>
+                    }
+                </div>
+            </div>
+            <div class="modal-actions modal-footer">
+                <button class="primary-button" type="button" disabled="@(_busy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">
+                    @(_busy ? "Сохраняем…" : "Создать")
+                </button>
+                <button class="secondary-button" type="button" disabled="@_busy" @onclick="CloseSupersetDialog">Отмена</button>
+            </div>
+        </section>
+    </div>
+}
+
+@if (_supersetActionGroup is { } supersetActionGroup)
+{
+    <div class="modal-overlay" @onclick="() => CloseSupersetActions()">
+        <section class="modal-window action-modal"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="template-superset-action-title"
+                 @onclick:stopPropagation="true">
+            <div class="modal-heading">
+                <div>
+                    <span>Управление суперсетом</span>
+                    <h2 id="template-superset-action-title">@string.Join(" / ", supersetActionGroup.Exercises.Select(x => x.Name))</h2>
+                </div>
+                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="() => CloseSupersetActions()"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+            </div>
+            @if (_supersetDeleteConfirmation)
+            {
+                <div class="modal-body delete-confirmation">
+                    <p>Удалить оба упражнения из шаблона?</p>
+                </div>
+                <div class="modal-actions modal-footer">
+                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelSupersetDelete">Отмена</button>
+                    <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">Удалить супер-сет</button>
+                </div>
+            }
+            else
+            {
+                <div class="modal-body">
+                    <div class="exercise-action-list">
+                        <button class="modal-action-button" type="button" disabled="@_busy" @onclick="() => SeparateSupersetAsync(supersetActionGroup)">
+                            <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
+                            <span>Разъединить супер-сет</span>
+                        </button>
+                        <button class="modal-action-button danger-action" type="button" disabled="@_busy" @onclick="RequestSupersetDelete">
+                            <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            <span>Удалить супер-сет</span>
+                        </button>
+                        <button class="modal-action-button cancel-action" type="button" disabled="@_busy" @onclick="() => CloseSupersetActions()">
+                            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                            <span>Отмена</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </section>
+    </div>
+}
+
 @code {
     [Parameter] public int Id { get; set; }
     private TrainingPlanApiResponse? _plan;
@@ -339,11 +520,25 @@
     private readonly List<string> _photoErrors = [];
     private readonly Dictionary<int, string> _photoThumbnails = [];
     private ExerciseDraft _draft = ExerciseDraft.Create();
-    private bool _loading = true, _busy, _showEditor;
+    private bool _loading = true, _busy, _showEditor, _showSupersetDialog;
     private bool _photoBusy, _confirmPhotoDelete;
     private int? _editingId, _deleteExerciseId;
     private ExerciseApiResponse? _actionExercise, _photoExercise;
     private string? _photoDataUri;
+    private readonly HashSet<int> _supersetSelection = [];
+    private CancellationTokenSource? _exerciseHoldCts;
+    private ExerciseGroup? _supersetActionGroup;
+    private CancellationTokenSource? _supersetHoldCts;
+    private bool _supersetDeleteConfirmation;
+    private IReadOnlyList<ExerciseGroup> ExerciseGroups => (_plan?.Exercises ?? [])
+        .GroupBy(x => x.SupersetGroupId is { } groupId ? $"superset:{groupId}" : $"exercise:{x.Id}")
+        .Select(group => new ExerciseGroup(
+            group.Key.StartsWith("superset:", StringComparison.Ordinal) && group.Count() > 1,
+            group.ToList()))
+        .ToList();
+
+    private IReadOnlyList<ExerciseApiResponse> SupersetCandidates =>
+        (_plan?.Exercises ?? []).Where(exercise => exercise.SupersetGroupId is null).ToList();
     protected override Task OnParametersSetAsync() => LoadAsync();
 
     private async Task LoadAsync()
@@ -374,10 +569,225 @@
     private void BeginCreate() { _editingId = null; _draft = ExerciseDraft.Create(); _editorErrors.Clear(); _showEditor = true; }
     private void BeginEdit(ExerciseApiResponse exercise) { _actionExercise = null; _editingId = exercise.Id; _draft = ExerciseDraft.From(exercise); _editorErrors.Clear(); _showEditor = true; }
     private void CloseEditor() { if (_busy) return; _showEditor = false; _editingId = null; }
-    private void OpenActions(ExerciseApiResponse exercise) { _actionExercise = exercise; _deleteExerciseId = null; }
-    private void CloseActions() { if (_busy) return; _actionExercise = null; _deleteExerciseId = null; }
+    private async Task BeginExerciseHold(ExerciseApiResponse exercise)
+    {
+        CancelExerciseHold();
+        _exerciseHoldCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(550, _exerciseHoldCts.Token);
+            ShowExerciseActions(exercise);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void CancelExerciseHold()
+    {
+        _exerciseHoldCts?.Cancel();
+        _exerciseHoldCts?.Dispose();
+        _exerciseHoldCts = null;
+    }
+
+    private void ShowExerciseActions(ExerciseApiResponse exercise)
+    {
+        CancelExerciseHold();
+        _actionExercise = exercise;
+        _deleteExerciseId = null;
+    }
+
+    private void CloseActions() { if (_busy) return; CancelExerciseHold(); _actionExercise = null; _deleteExerciseId = null; }
     private void RequestDelete(int id) => _deleteExerciseId = id;
     private void CancelDelete() => _deleteExerciseId = null;
+
+    private void HandleExerciseKeyDown(KeyboardEventArgs eventArgs, ExerciseApiResponse exercise)
+    {
+        if (eventArgs.Key is "Enter" or " ")
+            ShowExerciseActions(exercise);
+        else if (eventArgs.Key == "Escape")
+            CloseActions();
+    }
+
+    private async Task BeginSupersetHold(ExerciseGroup group)
+    {
+        CancelSupersetHold();
+        _supersetHoldCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(550, _supersetHoldCts.Token);
+            ShowSupersetActions(group);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void CancelSupersetHold()
+    {
+        _supersetHoldCts?.Cancel();
+        _supersetHoldCts?.Dispose();
+        _supersetHoldCts = null;
+    }
+
+    private void ShowSupersetActions(ExerciseGroup group)
+    {
+        CancelSupersetHold();
+        _supersetActionGroup = group;
+        _supersetDeleteConfirmation = false;
+    }
+
+    private void CloseSupersetActions(bool force = false)
+    {
+        if (_busy && !force)
+            return;
+
+        CancelSupersetHold();
+        _supersetActionGroup = null;
+        _supersetDeleteConfirmation = false;
+    }
+
+    private void HandleSupersetKeyDown(KeyboardEventArgs eventArgs, ExerciseGroup group)
+    {
+        if (eventArgs.Key is "Enter" or " ")
+            ShowSupersetActions(group);
+        else if (eventArgs.Key == "Escape")
+            CloseSupersetActions(force: true);
+    }
+
+    private void RequestSupersetDelete() => _supersetDeleteConfirmation = true;
+    private void CancelSupersetDelete() => _supersetDeleteConfirmation = false;
+
+    private void OpenSupersetDialog()
+    {
+        _supersetSelection.Clear();
+        _showSupersetDialog = true;
+    }
+
+    private void CloseSupersetDialog()
+    {
+        if (_busy) return;
+        _showSupersetDialog = false;
+        _supersetSelection.Clear();
+    }
+
+    private void ToggleSupersetExercise(int id)
+    {
+        if (_plan?.Exercises.FirstOrDefault(exercise => exercise.Id == id)?.SupersetGroupId is not null)
+            return;
+
+        if (!_supersetSelection.Remove(id) && _supersetSelection.Count < 2)
+            _supersetSelection.Add(id);
+    }
+
+    private async Task CreateSupersetAsync()
+    {
+        if (_busy || _plan is null || _supersetSelection.Count != 2 ||
+            _supersetSelection.Any(id => _plan.Exercises.FirstOrDefault(exercise => exercise.Id == id)?.SupersetGroupId is not null))
+            return;
+
+        _busy = true;
+        _operationErrors.Clear();
+        try
+        {
+            var groupId = (_plan.Exercises.Max(x => x.SupersetGroupId) ?? 0) + 1;
+            foreach (var exercise in _plan.Exercises.Where(x => _supersetSelection.Contains(x.Id)).ToList())
+            {
+                var request = new SaveExerciseRequest(
+                    exercise.Name,
+                    exercise.SetsCount,
+                    exercise.Status,
+                    exercise.ExerciseDefinitionId,
+                    exercise.Sets
+                        .OrderBy(x => x.SetNumber)
+                        .Select(x => new SaveExerciseSetRequest(
+                            x.SetNumber,
+                            x.Repetitions,
+                            x.Weight,
+                            x.Completed,
+                            x.IsWarmup))
+                        .ToArray(),
+                    groupId);
+                var result = await WorkoutClient.UpdateExerciseAsync(exercise.Id, request);
+                if (!result.Succeeded)
+                {
+                    _operationErrors.AddRange(result.Errors);
+                    return;
+                }
+
+                ReplaceExercise(result.Value!);
+            }
+
+            _showSupersetDialog = false;
+            _supersetSelection.Clear();
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task SeparateSupersetAsync(ExerciseGroup group)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _operationErrors.Clear();
+        try
+        {
+            foreach (var exercise in group.Exercises)
+            {
+                var request = new SaveExerciseRequest(
+                    exercise.Name,
+                    exercise.SetsCount,
+                    exercise.Status,
+                    exercise.ExerciseDefinitionId,
+                    exercise.Sets
+                        .OrderBy(x => x.SetNumber)
+                        .Select(x => new SaveExerciseSetRequest(x.SetNumber, x.Repetitions, x.Weight, x.Completed, x.IsWarmup))
+                        .ToArray(),
+                    null);
+                var result = await WorkoutClient.UpdateExerciseAsync(exercise.Id, request);
+                if (!result.Succeeded)
+                {
+                    _operationErrors.AddRange(result.Errors);
+                    return;
+                }
+
+                ReplaceExercise(result.Value!);
+            }
+
+            CloseSupersetActions(force: true);
+        }
+        finally { _busy = false; }
+    }
+
+    private async Task DeleteSupersetAsync(ExerciseGroup group)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _operationErrors.Clear();
+        try
+        {
+            foreach (var exercise in group.Exercises)
+            {
+                var result = await WorkoutClient.DeleteExerciseAsync(exercise.Id);
+                if (!result.Succeeded)
+                {
+                    _operationErrors.AddRange(result.Errors);
+                    return;
+                }
+            }
+
+            var ids = group.Exercises.Select(exercise => exercise.Id).ToHashSet();
+            _plan = _plan! with { Exercises = _plan.Exercises.Where(exercise => !ids.Contains(exercise.Id)).ToArray() };
+            _photoThumbnails.Keys.Where(ids.Contains).ToList().ForEach(id => _photoThumbnails.Remove(id));
+            CloseSupersetActions();
+        }
+        finally { _busy = false; }
+    }
 
     private async Task OpenPhotoAsync(ExerciseApiResponse exercise)
     {
@@ -529,6 +939,14 @@
         var items = _plan!.Exercises.ToList(); var index = items.FindIndex(x => x.Id == exercise.Id); if (index < 0) items.Add(exercise); else items[index] = exercise; _plan = _plan with { Exercises = items };
     }
 
+    private static IReadOnlyList<int> GetSupersetRoundNumbers(ExerciseGroup group) =>
+        group.Exercises
+            .SelectMany(exercise => exercise.Sets)
+            .Select(set => set.SetNumber)
+            .Distinct()
+            .OrderBy(setNumber => setNumber)
+            .ToList();
+
     private sealed class ExerciseDraft
     {
         public string Name { get; set; } = string.Empty; public string Status { get; set; } = "NotCompleted"; public int? DefinitionId { get; set; } public int? SupersetGroupId { get; set; } public int SetsCount => Sets.Count; public List<SetDraft> Sets { get; } = [];
@@ -541,4 +959,8 @@
     {
         public int SetNumber { get; set; } = setNumber; public int Repetitions { get; set; } = repetitions; public double Weight { get; set; } = weight; public bool Completed { get; set; } = completed; public bool IsWarmup { get; set; } = isWarmup;
     }
+
+    private sealed record ExerciseGroup(
+        bool IsSuperset,
+        IReadOnlyList<ExerciseApiResponse> Exercises);
 }

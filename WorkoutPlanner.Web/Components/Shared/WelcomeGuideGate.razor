@@ -1,0 +1,50 @@
+@rendermode InteractiveServer
+@inject WorkoutPlanner.Web.Application.Abstractions.IWelcomeGuideStateService WelcomeGuideState
+@inject WorkoutPlanner.Web.Application.Abstractions.IProfileService ProfileService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@implements IDisposable
+
+@code {
+    private bool _checking;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            Navigation.LocationChanged += OnLocationChanged;
+
+        await CheckWelcomeGuideAsync();
+    }
+
+    private async Task CheckWelcomeGuideAsync()
+    {
+        if (_checking)
+            return;
+
+        _checking = true;
+        try
+        {
+            var route = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authenticationState.User.Identity?.IsAuthenticated != true ||
+                route.StartsWith("account/", StringComparison.OrdinalIgnoreCase) ||
+                route is "profile/setup" or "firstlaunch" or "welcome-guide" ||
+                !await ProfileService.CurrentUserHasProfileAsync() ||
+                await WelcomeGuideState.IsCompletedAsync())
+            {
+                return;
+            }
+
+            Navigation.NavigateTo("/welcome-guide", replace: true);
+        }
+        finally
+        {
+            _checking = false;
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(CheckWelcomeGuideAsync);
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

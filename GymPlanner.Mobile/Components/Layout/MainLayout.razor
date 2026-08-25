@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject MobileAuthenticationService Authentication
+@inject IWelcomeGuideApiClient WelcomeGuide
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 
@@ -72,6 +73,7 @@
 
 @code {
     private bool _isLoggingOut;
+    private bool _checkingWelcomeGuide;
     private string? _logoutError;
     private string CurrentPageKey =>
         Navigation.ToBaseRelativePath(Navigation.Uri);
@@ -79,7 +81,8 @@
         Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
     private bool HidesApplicationNavigation =>
         string.Equals(CurrentRoute, "profile/setup", StringComparison.OrdinalIgnoreCase) ||
-        string.Equals(CurrentRoute, "firstlaunch", StringComparison.OrdinalIgnoreCase);
+        string.Equals(CurrentRoute, "firstlaunch", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(CurrentRoute, "welcome-guide", StringComparison.OrdinalIgnoreCase);
     private string CurrentRoute => Navigation.ToBaseRelativePath(Navigation.Uri)
         .Split('?', '#')[0]
         .Trim('/');
@@ -91,13 +94,48 @@
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs args) =>
-        _ = InvokeAsync(StateHasChanged);
+        _ = InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            await CheckWelcomeGuideAsync();
+        });
 
-    protected override Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && NotificationNavigation.ConsumePendingRoute() is { } route)
+        if (!firstRender)
+            return;
+
+        if (NotificationNavigation.ConsumePendingRoute() is { } route)
+        {
             Navigation.NavigateTo(route);
-        return Task.CompletedTask;
+            return;
+        }
+
+        await Authentication.InitializeAsync();
+        await CheckWelcomeGuideAsync();
+    }
+
+    private async Task CheckWelcomeGuideAsync()
+    {
+        if (_checkingWelcomeGuide ||
+            !Authentication.IsAuthenticated ||
+            CurrentRoute.StartsWith("account/", StringComparison.OrdinalIgnoreCase) ||
+            HidesApplicationNavigation)
+        {
+            return;
+        }
+
+        _checkingWelcomeGuide = true;
+        try
+        {
+            var state = await WelcomeGuide.GetStateAsync();
+            if (state.Succeeded && state.Value is { IsCompleted: false })
+                Navigation.NavigateTo("/firstlaunch", replace: true);
+        }
+        finally
+        {
+            _checkingWelcomeGuide = false;
+        }
     }
 
     private void OpenNotificationRoute(string route) =>

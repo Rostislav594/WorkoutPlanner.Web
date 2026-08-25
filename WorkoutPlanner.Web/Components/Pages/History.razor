@@ -7,21 +7,19 @@
 @using System.Text.Json
 
 @inject IHistoryService HistoryService
-@inject IOnboardingService Guide
 
 <div class="page-content">
-    <h1 style="text-align:center;" data-guide="workout-journal">
-    История  
- </h1>
+    <div class="page-title-row">
+        <h1>История</h1>
+        <HelpButton Topic="HelpContentCatalog.History" />
+    </div>
 
     @if (HistoryItems.Count == 0)
     {
         <div class="history-empty">
-
             <img src="images/history-empty.png"
                  class="history-empty-image"
                  alt="История пуста" />
-
         </div>
     }
 else
@@ -29,8 +27,7 @@ else
     @foreach (var item in HistoryItems)
     {
         <div class="history-card"
-             data-guide="@(IsTutorialHistory(item) ? "practice-history-card" : null)"
-             @onclick="() => OpenHistoryAsync(item)">
+             @onclick="() => OpenHistory(item)">
 
             <div class="history-title">
                 @item.WorkoutName
@@ -134,12 +131,6 @@ else
 
     WorkoutHistory? SelectedHistory;
 
-    int? TutorialHistoryId => HistoryItems
-        .FirstOrDefault(x =>
-            x.WorkoutName ==
-            WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName)
-        ?.Id;
-
     protected override async Task OnInitializedAsync()
     {
         await LoadHistory();
@@ -152,17 +143,10 @@ else
                 .GetHistoryAsync();
     }
 
-    async Task OpenHistoryAsync(
-        WorkoutHistory history)
+    void OpenHistory(WorkoutHistory history)
     {
         SelectedHistory = history;
-
-        if (IsTutorialHistory(history))
-            await Guide.NotifyActionAsync("practice-history-opened");
     }
-
-    bool IsTutorialHistory(WorkoutHistory history) =>
-        TutorialHistoryId == history.Id;
 
     void CloseWindow()
     {

@@ -1,0 +1,93 @@
+<section class="welcome-guide" aria-labelledby="welcome-guide-title">
+    <div class="welcome-guide__visual" aria-hidden="true" @key="_slideIndex">
+        <div class="welcome-guide__visual-art welcome-guide__visual-art--@CurrentSlide.Visual.ToString().ToLowerInvariant()">
+            @switch (CurrentSlide.Visual)
+            {
+                case WelcomeGuideVisual.Orientation:
+                    <div class="welcome-guide__route-card">
+                        <span class="material-symbols-rounded">fitness_center</span>
+                        <i></i><i></i><i></i>
+                    </div>
+                    break;
+                case WelcomeGuideVisual.ContextualHelp:
+                    <div class="welcome-guide__help-demo">
+                        <span class="welcome-guide__help-symbol">?</span>
+                        <div class="welcome-guide__mini-sheet">
+                            <b></b><i></i><i></i><i></i>
+                        </div>
+                    </div>
+                    break;
+                case WelcomeGuideVisual.Support:
+                    <div class="welcome-guide__support-map">
+                        <span class="material-symbols-rounded">person</span>
+                        <i></i>
+                        <span class="material-symbols-rounded">support_agent</span>
+                        <i></i>
+                        <span class="material-symbols-rounded">forum</span>
+                    </div>
+                    break;
+                default:
+                    <div class="welcome-guide__finish-mark">
+                        <span class="material-symbols-rounded">north_east</span>
+                    </div>
+                    break;
+            }
+        </div>
+    </div>
+
+    <div class="welcome-guide__content" aria-live="polite">
+        <p class="welcome-guide__eyebrow">Короткое знакомство · @(_slideIndex + 1)/@Slides.Count</p>
+        <h1 id="welcome-guide-title">@CurrentSlide.Title</h1>
+        <p class="welcome-guide__message">@CurrentSlide.Message</p>
+
+        <div class="welcome-guide__dots" aria-label="Кадр @(_slideIndex + 1) из @Slides.Count">
+            @for (var index = 0; index < Slides.Count; index++)
+            {
+                var slideIndex = index;
+                <button type="button"
+                        class="@(index == _slideIndex ? "is-active" : null)"
+                        aria-label="Открыть кадр @(index + 1)"
+                        aria-current="@(index == _slideIndex ? "step" : null)"
+                        disabled="@IsBusy"
+                        @onclick="() => OpenSlide(slideIndex)"></button>
+            }
+        </div>
+
+        <div class="welcome-guide__actions">
+            <button class="welcome-guide__secondary" type="button" disabled="@(_slideIndex == 0 || IsBusy)" @onclick="Previous">Назад</button>
+            <button class="welcome-guide__primary" type="button" disabled="@IsBusy" @onclick="NextAsync">
+                @(IsBusy ? "Открываем…" : _slideIndex == Slides.Count - 1 ? "Продолжить" : "Далее")
+            </button>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<WelcomeGuideSlide> Slides { get; set; } = [];
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+
+    private int _slideIndex;
+    private WelcomeGuideSlide CurrentSlide => Slides.Count == 0
+        ? new("Знакомство", string.Empty, WelcomeGuideVisual.Orientation)
+        : Slides[Math.Clamp(_slideIndex, 0, Slides.Count - 1)];
+
+    private void OpenSlide(int index) => _slideIndex = Math.Clamp(index, 0, Math.Max(0, Slides.Count - 1));
+
+    private void Previous()
+    {
+        if (_slideIndex > 0)
+            _slideIndex--;
+    }
+
+    private async Task NextAsync()
+    {
+        if (IsBusy || Slides.Count == 0)
+            return;
+
+        if (_slideIndex < Slides.Count - 1)
+            _slideIndex++;
+        else
+            await OnCompleted.InvokeAsync();
+    }
+}

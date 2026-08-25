@@ -9,13 +9,12 @@
 @inject IExerciseDefinitionService ExerciseDefinitionService
 @inject IExercisePhotoService ExercisePhotoService
 @inject ILogger<WorkoutDetails> Logger
-@inject IOnboardingService Guide
 
 
 
 <section class="workout-details-page" aria-busy="@IsLoading">
+<div class="workout-utility-row"><HelpButton Topic="HelpContentCatalog.Workouts" /></div>
 <div class="workout-header">
-
     <div class="workout-title-card">
 
         <h1>
@@ -50,7 +49,6 @@ else
 {
     <div class="workout-toolbar">
         <button class="finish-button add-exercise-button"
-                data-guide="exercise-add"
                 type="button"
                 @onclick="OpenAddWindow">
             <span aria-hidden="true">＋</span>
@@ -62,17 +60,15 @@ else
 {
     @foreach (var exercise in Exercises)
     {
-        <article class="exercise-card"
-                 data-guide="@(IsTutorialExercise(exercise) ? "practice-exercise-card" : null)">
+        <article class="exercise-card">
 
             <div class="exercise-card-header">
                 <h2>@exercise.Name</h2>
                 <button class="card-menu-button"
-                        data-guide="@(IsTutorialExercise(exercise) ? "practice-exercise-menu" : null)"
                         type="button"
                         disabled="@IsPhotoBusy(exercise.Id)"
                         aria-label="Настроить упражнение @exercise.Name"
-                        @onclick="() => SelectExerciseAsync(exercise)">
+                        @onclick="() => SelectExercise(exercise)">
                     <span aria-hidden="true">⋯</span>
                 </button>
             </div>
@@ -214,9 +210,8 @@ else
 
             <div class="exercise-action-list">
                 <button class="modal-action-button"
-                        data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-edit-action" : null)"
                         type="button"
-                        @onclick="EditExerciseAsync">
+                        @onclick="EditExercise">
                     <span class="material-symbols-rounded" aria-hidden="true">edit</span>
                     <span>Изменить параметры</span>
                 </button>
@@ -258,7 +253,6 @@ else
 
             <label for="edit-sets-count">Количество подходов</label>
             <input id="edit-sets-count"
-                   data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-set-count" : null)"
                    type="number" min="1" max="10" @bind="EditSetsCount" />
 
             @foreach (var set in EditSets.OrderBy(x => x.SetNumber))
@@ -270,7 +264,6 @@ else
                     <label for="@($"edit-weight-{set.SetNumber}")">Вес, кг</label>
 
                     <input id="@($"edit-weight-{set.SetNumber}")"
-                           data-guide="@(IsTutorialExercise(SelectedExercise) && set.SetNumber == 1 ? "practice-set-weight" : null)"
                            type="number"
                            min="0"
                            step="0.5"
@@ -295,7 +288,6 @@ else
 
             <div class="modal-actions">
                 <button class="finish-button"
-                        data-guide="@(IsTutorialExercise(SelectedExercise) ? "practice-save-exercise" : null)"
                         type="button" disabled="@IsSavingExercise" @onclick="SaveExercise">
                     @(IsSavingExercise ? "Сохраняем…" : "Сохранить")
                 </button>
@@ -522,12 +514,9 @@ else
         }
     }
 
-    async Task SelectExerciseAsync(Exercise exercise)
+    void SelectExercise(Exercise exercise)
     {
         SelectedExercise = exercise;
-
-        if (IsTutorialExercise(exercise))
-            await Guide.NotifyActionAsync("exercise-menu-opened");
     }
 
     async Task DeleteExercise()
@@ -593,12 +582,10 @@ else
         }
     }
 
-    async Task EditExerciseAsync()
+    void EditExercise()
     {
         if (SelectedExercise == null)
             return;
-
-        var isTutorialExercise = IsTutorialExercise(SelectedExercise);
 
         EditName = SelectedExercise.Name;
 
@@ -616,9 +603,6 @@ else
         SyncEditSets();
 
         IsEditing = true;
-
-        if (isTutorialExercise)
-            await Guide.NotifyActionAsync("exercise-edit-opened");
     }
 
     void SyncEditSets()
@@ -707,8 +691,6 @@ else
         }
 
         IsSavingExercise = true;
-        var savingTutorialExercise = IsTutorialExercise(SelectedExercise);
-
         try
         {
             SelectedExercise.Name = EditName.Trim();
@@ -731,8 +713,6 @@ else
             EditSets.Clear();
             SelectedExercise = null;
 
-            if (savingTutorialExercise)
-                await Guide.NotifyActionAsync("exercise-saved");
         }
         catch (Exception exception)
         {
@@ -744,13 +724,6 @@ else
             IsSavingExercise = false;
         }
     }
-
-    private bool IsTutorialExercise(Exercise? exercise) =>
-        exercise is not null &&
-        CurrentPlan?.WorkoutName ==
-            WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName &&
-        exercise.Name ==
-            WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialExerciseName;
 
     void CancelEditing()
     {

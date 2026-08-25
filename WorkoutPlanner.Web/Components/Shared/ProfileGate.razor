@@ -38,8 +38,9 @@
         {
             var hasProfile = await UserProfileService.CurrentUserHasProfileAsync();
             var isSetupPage = path.Equals("profile/setup", StringComparison.OrdinalIgnoreCase);
+            var isCreatorIntroPage = path.Equals("creator-intro", StringComparison.OrdinalIgnoreCase);
 
-            if (!hasProfile && !isSetupPage)
+            if (!hasProfile && !isSetupPage && !isCreatorIntroPage)
             {
                 Navigation.NavigateTo("/profile/setup");
                 return;

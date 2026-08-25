@@ -1,0 +1,43 @@
+<button class="context-help-button"
+        type="button"
+        aria-label="Открыть помощь: @Topic.Title"
+        aria-haspopup="dialog"
+        aria-expanded="@_isOpen"
+        aria-controls="context-help-dialog"
+        @ref="_opener"
+        @onclick="Open">
+    <svg class="context-help-button__symbol" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8.7 8.4a3.55 3.55 0 0 1 6.85 1.3c0 2.45-3.1 2.7-3.55 4.55M12 18.1h.01" />
+    </svg>
+</button>
+
+@if (_isOpen)
+{
+    <HelpDialog Topic="Topic" OnClose="CloseAsync" />
+}
+
+@code {
+    [Parameter, EditorRequired] public HelpTopic Topic { get; set; } = null!;
+
+    private ElementReference _opener;
+    private bool _isOpen;
+    private bool _restoreFocus;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_restoreFocus)
+            return;
+
+        _restoreFocus = false;
+        await _opener.FocusAsync();
+    }
+
+    private void Open() => _isOpen = true;
+
+    private Task CloseAsync()
+    {
+        _isOpen = false;
+        _restoreFocus = true;
+        return Task.CompletedTask;
+    }
+}

@@ -31,9 +31,15 @@
   by a dependency-free SVG component from the shared Razor Class Library. The
   client can clear server-owned analytical scopes after confirmation but cannot
   submit scores or trigger automatic progression.
-- Mobile onboarding is a resumable navigation tour backed by the protected
-  onboarding state API. Its coach card and character are local RCL assets; the
-  MAUI client does not copy the Web spotlight JavaScript or server circuit.
+- After the native splash, Mobile shows the shared Creator Intro once per
+  installation, before authentication initialization, and stores that local
+  acknowledgement in platform preferences. Registration and profile setup then
+  lead to the four-slide Welcome Guide followed by the legacy final welcome
+  screen. Only completion of the authenticated part of that flow is stored
+  through the protected `/api/v1/welcome-guide` endpoint; slide progress and
+  user actions are not tracked. The shared contextual-help button is a plain
+  `?` shortcut and opens the current page's guide as a mobile sheet without
+  navigating away or changing page state.
 - Exercise photos use the MAUI system gallery or camera, validate the 5 MB and
   JPG/PNG/WebP boundary before upload, and travel only through the protected
   multipart API. Viewing and deletion also use the bearer-authenticated client;
@@ -42,8 +48,9 @@
   explicit permission request. Taps open only an allowlisted workout route and
   still pass through mobile authentication. Remote push remains a documented
   contract boundary with no provider SDK, endpoint, or repository secret.
-- Shared character images and Material Symbols are packaged as local RCL static
-  assets. Neither MAUI nor the Web shell depends on a font or icon CDN at
+- Welcome Guide illustrations and Material Symbols are packaged as
+  local RCL assets or code-native SVG/CSS. Neither MAUI nor the Web shell
+  depends on a character asset, external image service, font CDN or icon CDN at
   runtime.
 - The Android system Back action uses a root-level bounded in-app route history
   across both authenticated and account layouts, and falls through to the

@@ -1,5 +1,11 @@
 # Migration verification status
 
+## Welcome Guide and contextual help refactor — 2026-08-21
+
+- `dotnet build GymPlanner.Mobile/GymPlanner.Mobile.csproj -f net10.0-android -t:Compile --no-restore` completed with 0 warnings and 0 errors.
+- `dotnet test WorkoutPlanner.Web.Tests/WorkoutPlanner.Web.Tests.csproj --no-restore` passed all 24 tests with no skips, including per-user Welcome Guide completion.
+- The Web Welcome Guide, contextual-help button, desktop dialog, and 390 px mobile sheet were inspected against a temporary database. The four-slide flow, first-launch redirect, responsive layout, scrolling, touch targets, and accessible names were checked without modifying the repository database.
+
 ## Verified in the current environment
 
 - `dotnet build WorkoutPlanner.Web.slnx -c Release --no-restore -m:1
@@ -10,7 +16,7 @@
 - `dotnet ef migrations has-pending-model-changes` reports that the current EF
   model matches the latest migration.
 - The automated test suite covers per-user starter plans, ownership isolation,
-  per-set weights, immutable history, atomic completion, progress, onboarding,
+  per-set weights, immutable history, atomic completion, progress, Welcome Guide,
   protected photos, token revocation, and transactional account deletion.
 - `dotnet list WorkoutPlanner.Web.slnx package --vulnerable --include-transitive`
   reported no known vulnerable direct or transitive packages from NuGet.org on

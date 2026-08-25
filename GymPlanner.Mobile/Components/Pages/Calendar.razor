@@ -6,10 +6,14 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IWorkoutLifecycleApiClient LifecycleClient
 @inject ILocalWorkoutReminderService ReminderService
+@inject FreeWorkoutDraftStore FreeWorkoutDraftStore
 
 <section class="calendar-page" aria-busy="@_isLoading">
     <header class="calendar-header">
-        <h1>Календарь</h1>
+        <div class="page-title-row">
+            <h1>Календарь</h1>
+            <HelpButton Topic="HelpContentCatalog.Calendar" />
+        </div>
         <div class="header-line" aria-hidden="true"></div>
     </header>
 
@@ -143,6 +147,13 @@
 
             @if (_selectedDate.Value.Date >= DateTime.Today)
             {
+                @if (IsTodayBlockedByFreeWorkout)
+                {
+                    <div class="past-day-hint" role="status">
+                        <span class="material-symbols-rounded" aria-hidden="true">block</span>
+                        <p>Сначала завершите или удалите свободную тренировку на сегодня.</p>
+                    </div>
+                }
                 <section class="workout-picker" aria-labelledby="workout-picker-title">
                     <h3 id="workout-picker-title">Назначить тренировку</h3>
                     @if (_plans.Count == 0)
@@ -156,7 +167,7 @@
                             {
                                 <button class="workout-picker-card @(_selectedPlanId == plan.Id ? "selected-plan" : null)"
                                         type="button"
-                                        disabled="@_isBusy"
+                                        disabled="@(_isBusy || IsTodayBlockedByFreeWorkout)"
                                         aria-pressed="@(_selectedPlanId == plan.Id)"
                                         @onclick="() => _selectedPlanId = plan.Id">
                                     <span class="workout-picker-name">@plan.WorkoutName</span>
@@ -181,7 +192,7 @@
             <div class="dialog-actions">
                 @if (_selectedDate.Value.Date >= DateTime.Today)
                 {
-                    <button class="primary-button" type="button" disabled="@(_isBusy || _selectedPlanId == 0)" @onclick="ScheduleAsync">
+                    <button class="primary-button" type="button" disabled="@(_isBusy || _selectedPlanId == 0 || IsTodayBlockedByFreeWorkout)" @onclick="ScheduleAsync">
                         @(_isBusy ? "Сохраняем…" : "Назначить")
                     </button>
                 }
@@ -209,6 +220,8 @@
     private LocalWorkoutReminder? _scheduledReminder;
     private bool _isLoading = true;
     private bool _isBusy;
+    private bool IsTodayBlockedByFreeWorkout =>
+        _selectedDate?.Date == DateTime.Today && FreeWorkoutDraftStore.HasActiveDraft;
 
     private string MonthTitle => _currentMonth.ToString("MMMM yyyy", RussianCulture);
 
@@ -323,6 +336,13 @@
     {
         if (_isBusy || _selectedDate is null || _selectedPlanId == 0)
             return;
+
+        if (IsTodayBlockedByFreeWorkout)
+        {
+            _dialogErrors.Clear();
+            _dialogErrors.Add("Сначала завершите или удалите свободную тренировку на сегодня.");
+            return;
+        }
 
         _isBusy = true;
         _dialogErrors.Clear();

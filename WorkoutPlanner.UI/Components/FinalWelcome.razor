@@ -1,0 +1,71 @@
+@implements IDisposable
+
+<section class="final-welcome" aria-label="Добро пожаловать в GymPlanner">
+    <div class="final-welcome__content @(_isLeaving ? "final-welcome__content--leaving" : null)" role="status">
+        <p>Добро пожаловать в</p>
+        <strong>GymPlanner</strong>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="final-welcome__error" role="alert">
+            <span>@ErrorMessage</span>
+            <button class="primary-button" type="button" disabled="@IsBusy" @onclick="CompleteAsync">ПОВТОРИТЬ</button>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+
+    private readonly CancellationTokenSource _disposeCts = new();
+    private bool _isLeaving;
+    private bool _completionStarted;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try
+        {
+            await Task.Delay(3600, _disposeCts.Token);
+            _isLeaving = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(800, _disposeCts.Token);
+            await CompleteAsync();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+    }
+
+    private async Task CompleteAsync()
+    {
+        if (_completionStarted || IsBusy)
+            return;
+
+        _completionStarted = true;
+        try
+        {
+            await OnCompleted.InvokeAsync();
+        }
+        finally
+        {
+            _completionStarted = false;
+            if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                _isLeaving = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

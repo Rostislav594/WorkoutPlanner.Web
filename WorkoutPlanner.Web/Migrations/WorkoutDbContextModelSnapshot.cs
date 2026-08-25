@@ -709,6 +709,12 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasMaxLength(80)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("RestBetweenExercisesSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RestBetweenSetsSeconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 

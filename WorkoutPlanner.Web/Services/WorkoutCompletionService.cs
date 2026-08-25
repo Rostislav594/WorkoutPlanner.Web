@@ -277,6 +277,7 @@ public sealed class WorkoutCompletionService(
         {
             Name = exercise.Name.Trim(),
             Status = exercise.Status,
+            SupersetGroupId = exercise.SupersetGroupId,
             Sets = exercise.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(x => new WorkoutHistorySet
@@ -352,6 +353,7 @@ public sealed class WorkoutCompletionService(
         {
             Name = exercise.Name,
             Status = (ExerciseStatus)exercise.Status,
+            SupersetGroupId = exercise.SupersetGroupId,
             Sets = exercise.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(x => new WorkoutHistorySet

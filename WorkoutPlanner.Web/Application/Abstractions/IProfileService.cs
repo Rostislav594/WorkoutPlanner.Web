@@ -14,6 +14,9 @@ public interface IProfileService
     Task<bool> UpdateCurrentProfileAsync(
         ProfileUpdateRequest request,
         CancellationToken cancellationToken = default);
+    Task<bool> UpdateRestTimerSettingsAsync(
+        RestTimerSettingsUpdateRequest request,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IAccountService

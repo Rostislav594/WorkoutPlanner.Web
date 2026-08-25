@@ -7,7 +7,10 @@
 
 <section class="history-page" aria-busy="@_isLoading">
     <header class="history-page-header">
-        <h1>История</h1>
+        <div class="page-title-row">
+            <h1>История</h1>
+            <HelpButton Topic="HelpContentCatalog.History" />
+        </div>
         <div class="header-line" aria-hidden="true"></div>
     </header>
 
@@ -32,9 +35,11 @@
     else if (_history.Count == 0)
     {
         <div class="history-empty">
-            <img class="history-empty-image"
-                 src="_content/WorkoutPlanner.UI/images/history-empty.png"
-                 alt="Пустая папка истории тренировок" />
+            <div class="history-empty-visual" aria-hidden="true">
+                <span class="material-symbols-rounded">history_toggle_off</span>
+            </div>
+            <h2>История пока пуста</h2>
+            <p>Завершённые тренировки и их результаты появятся здесь.</p>
             @if (_errors.Count > 0)
             {
                 <button class="secondary-button retry-button" type="button" @onclick="LoadAsync">Повторить</button>
@@ -104,38 +109,98 @@
             else
             {
                 <div class="history-exercises">
-                    @foreach (var exercise in _selected.Exercises)
+                    @foreach (var group in SelectedExerciseGroups)
                     {
-                        <article class="history-exercise">
-                            <div class="exercise-heading">
-                                <div>
-                                    <span class="exercise-index">Упражнение</span>
-                                    <h3>@exercise.Name</h3>
-                                </div>
-                                <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@GetStatusText(exercise.Status)</span>
-                            </div>
-                            <div class="history-sets">
-                                @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
-                                {
-                                    <div class="history-set">
-                                        <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
-                                            <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
-                                        </span>
-                                        <span class="history-set-label">
-                                            <span>Подход @set.SetNumber</span>
-                                            <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
-                                                @(set.IsWarmup ? "Разминочный" : "Рабочий")
-                                            </span>
-                                        </span>
-                                        <strong>
-                                            <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
-                                            <span aria-hidden="true">×</span>
-                                            <span>@set.Repetitions</span>
-                                        </strong>
+                        @if (group.IsSuperset)
+                        {
+                            var supersetStatus = GetSupersetStatus(group);
+                            <article class="history-exercise history-superset" aria-label="Суперсет @string.Join(" и ", group.Exercises.Select(x => x.Name))">
+                                <header class="history-superset-heading">
+                                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                                    <div class="history-superset-title">
+                                        <span class="history-superset-kicker">Суперсет</span>
+                                        <div class="history-superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.Name))">
+                                            @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
+                                            {
+                                                var exercise = group.Exercises[exerciseIndex];
+                                                if (exerciseIndex > 0)
+                                                {
+                                                    <span class="history-superset-name-separator" aria-hidden="true">/</span>
+                                                }
+                                                <span class="history-superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">@exercise.Name</span>
+                                            }
+                                        </div>
                                     </div>
-                                }
-                            </div>
-                        </article>
+                                    <span class="status-badge status-@supersetStatus.ToLowerInvariant()">@GetStatusText(supersetStatus)</span>
+                                </header>
+
+                                <div class="history-sets history-superset-rounds">
+                                    @foreach (var roundNumber in GetSupersetRoundNumbers(group))
+                                    {
+                                        <section class="history-superset-round" aria-label="Круг @roundNumber">
+                                            @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
+                                            {
+                                                var exercise = group.Exercises[exerciseIndex];
+                                                var set = exercise.Sets.FirstOrDefault(candidate => candidate.SetNumber == roundNumber);
+                                                if (set is null)
+                                                    continue;
+
+                                                <div class="history-set history-superset-set @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">
+                                                    <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
+                                                        <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
+                                                    </span>
+                                                    <span class="history-set-label">
+                                                        <span class="history-superset-exercise-name">@exercise.Name · подход @set.SetNumber</span>
+                                                        <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
+                                                            @(set.IsWarmup ? "Разминочный" : "Рабочий")
+                                                        </span>
+                                                    </span>
+                                                    <strong>
+                                                        <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
+                                                        <span aria-hidden="true">×</span>
+                                                        <span>@set.Repetitions</span>
+                                                    </strong>
+                                                </div>
+                                            }
+                                        </section>
+                                    }
+                                </div>
+                            </article>
+                        }
+                        else
+                        {
+                            var exercise = group.Exercises[0];
+                            <article class="history-exercise">
+                                <div class="exercise-heading">
+                                    <div>
+                                        <span class="exercise-index">Упражнение</span>
+                                        <h3>@exercise.Name</h3>
+                                    </div>
+                                    <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@GetStatusText(exercise.Status)</span>
+                                </div>
+                                <div class="history-sets">
+                                    @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
+                                    {
+                                        <div class="history-set">
+                                            <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
+                                                <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
+                                            </span>
+                                            <span class="history-set-label">
+                                                <span>Подход @set.SetNumber</span>
+                                                <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
+                                                    @(set.IsWarmup ? "Разминочный" : "Рабочий")
+                                                </span>
+                                            </span>
+                                            <strong>
+                                                <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
+                                                <span aria-hidden="true">×</span>
+                                                <span>@set.Repetitions</span>
+                                            </strong>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
                     }
                 </div>
             }
@@ -178,6 +243,16 @@
     private bool _isLoading = true;
     private bool _isBusy;
     private bool _confirmDelete;
+    private IReadOnlyList<HistoryExerciseGroup> SelectedExerciseGroups =>
+        (_selected?.Exercises ?? [])
+            .Select((exercise, index) => new { Exercise = exercise, Index = index })
+            .GroupBy(item => item.Exercise.SupersetGroupId is { } groupId
+                ? $"superset:{groupId}"
+                : $"exercise:{item.Index}")
+            .Select(group => new HistoryExerciseGroup(
+                group.Key.StartsWith("superset:", StringComparison.Ordinal) && group.Count() > 1,
+                group.Select(item => item.Exercise).ToList()))
+            .ToList();
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -268,6 +343,20 @@
         _ => "Не оценено"
     };
 
+    private static IReadOnlyList<int> GetSupersetRoundNumbers(HistoryExerciseGroup group) =>
+        group.Exercises
+            .SelectMany(exercise => exercise.Sets)
+            .Select(set => set.SetNumber)
+            .Distinct()
+            .OrderBy(setNumber => setNumber)
+            .ToList();
+
+    private static string GetSupersetStatus(HistoryExerciseGroup group)
+    {
+        var status = group.Exercises[0].Status;
+        return group.Exercises.All(exercise => exercise.Status == status) ? status : "NotCompleted";
+    }
+
     private static string GetExerciseCountLabel(int count)
     {
         var remainder100 = count % 100;
@@ -287,4 +376,8 @@
         _disposeCts.Cancel();
         _disposeCts.Dispose();
     }
+
+    private sealed record HistoryExerciseGroup(
+        bool IsSuperset,
+        IReadOnlyList<WorkoutHistoryExerciseApiResponse> Exercises);
 }

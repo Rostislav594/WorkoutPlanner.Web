@@ -34,7 +34,9 @@ public sealed class UserProfileService : IProfileService
             FirstName = profile.FirstName,
             LastName = profile.LastName,
             BirthDate = profile.BirthDate,
-            Gender = profile.Gender
+            Gender = profile.Gender,
+            RestBetweenSetsSeconds = profile.RestBetweenSetsSeconds,
+            RestBetweenExercisesSeconds = profile.RestBetweenExercisesSeconds
         };
     }
 
@@ -77,6 +79,23 @@ public sealed class UserProfileService : IProfileService
         profile.LastName = request.LastName.Trim();
         profile.BirthDate = request.BirthDate;
         profile.Gender = request.Gender;
+        profile.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UpdateRestTimerSettingsAsync(
+        RestTimerSettingsUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var profile = await db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+        if (profile is null)
+            return false;
+
+        profile.RestBetweenSetsSeconds = request.RestBetweenSetsSeconds;
+        profile.RestBetweenExercisesSeconds = request.RestBetweenExercisesSeconds;
         profile.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return true;

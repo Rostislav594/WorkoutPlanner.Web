@@ -39,8 +39,37 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Authentication.InitializeAsync();
-        _startupReady = true;
+        await InitializeApplicationAsync();
+    }
+
+    private async Task InitializeApplicationAsync()
+    {
+        using var startupTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(8));
+        try
+        {
+            await Authentication.InitializeAsync(startupTimeout.Token);
+        }
+        catch (OperationCanceledException) when (startupTimeout.IsCancellationRequested)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                "Mobile authentication initialization timed out; continuing in offline mode.");
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"Mobile authentication initialization failed: {exception.Message}");
+        }
+        finally
+        {
+            _startupReady = true;
+            await InvokeAsync(StateHasChanged);
+
+            if (!Authentication.IsAuthenticated &&
+                string.IsNullOrWhiteSpace(Navigation.ToBaseRelativePath(Navigation.Uri)))
+            {
+                Navigation.NavigateTo("/account/register", replace: true);
+            }
+        }
     }
 
     private void LocationChanged(object? sender, LocationChangedEventArgs args)

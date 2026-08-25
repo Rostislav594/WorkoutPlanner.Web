@@ -68,6 +68,43 @@ Treat the existing codebase as the source of truth. Inspect current models, serv
 - Do not introduce a new color system or component library for a single feature.
 - New controls must have coherent hover, focus, active, disabled, validation, and loading states where relevant.
 
+## UI/UX Pro Max design workflow
+
+The project-local `ui-ux-pro-max` skill is the default design authority for this repository.
+
+Skill location:
+
+- `.agents/skills/ui-ux-pro-max/SKILL.md`
+
+Mandatory activation rules:
+
+- For every task, question, review, proposal, or code change that involves UI, UX, visual design, layout, styling, component appearance, typography, colors, spacing, hierarchy, responsiveness, interaction states, animation, accessibility, information architecture, or user-facing screen composition, read and apply `.agents/skills/ui-ux-pro-max/SKILL.md` before proposing or implementing a solution.
+- Do not skip the skill because a design change appears small or local. Even minor visual adjustments, CSS changes, new controls, card changes, modal changes, navigation changes, responsive behavior, or screen refinements count as UI/UX work.
+- When the user asks for design ideas or alternatives, use the skill to generate and evaluate the options before recommending one.
+- When the user asks to implement a design change, use the skill both during the design decision and again as a review checklist before considering the task complete.
+- When reviewing an existing screen or component, use the skill to evaluate hierarchy, consistency, usability, accessibility, responsive behavior, interaction states, and visual polish.
+- For tasks that are purely backend, persistence, infrastructure, migration, or non-user-facing logic changes, the skill is not required unless the change also affects the user experience.
+
+Priority and conflict rules:
+
+- Explicit user instructions are the highest priority.
+- The existing GymPlanner visual language, current product behavior, and repository conventions remain the source of truth.
+- `ui-ux-pro-max` should improve and validate decisions within those constraints; it must not silently replace the existing design system, introduce a new visual direction, or redesign unrelated parts of the application.
+- If the user explicitly requests an exact visual match, preserve that requested design and use the skill for implementation quality, consistency, accessibility, and responsive validation rather than creative reinterpretation.
+- Reuse existing CSS variables, components, patterns, and tokens whenever they already satisfy the design requirement.
+- Do not add a new UI framework, component library, font package, icon package, or design dependency solely because the skill suggests one unless the user explicitly approves it or the repository already uses it.
+
+Required workflow for UI/UX tasks:
+
+1. Inspect the relevant existing page, component, CSS, shared layout, and nearby design patterns.
+2. Read `.agents/skills/ui-ux-pro-max/SKILL.md` and apply the relevant workflow and guidance.
+3. Identify the existing design constraints that must be preserved.
+4. Form the design decision before editing code; for meaningful redesigns, compare viable alternatives rather than choosing the first idea.
+5. Implement the smallest coherent change that satisfies both the request and the established product language.
+6. Verify responsive behavior and all relevant hover, focus, active, disabled, loading, validation, empty, and error states.
+7. Perform a final UI/UX review using `ui-ux-pro-max` guidance and correct issues that fall within the requested scope.
+8. In the final response, state that `ui-ux-pro-max` was used and summarize any important design decision it influenced.
+
 ## Debugging workflow
 
 When fixing a bug:

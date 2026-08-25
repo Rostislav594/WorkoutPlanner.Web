@@ -11,7 +11,7 @@
 .history-empty-title {
     font-size: 2.2rem;
     font-weight: 700;
-    color: var(--color-text)fff;
+    color: var(--color-text);
     margin-bottom: 12px;
 }
 
@@ -27,4 +27,14 @@
     height: auto;
     user-select: none;
     pointer-events: none;
+}
+.page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.page-title-row h1 {
+    margin: 0;
 }

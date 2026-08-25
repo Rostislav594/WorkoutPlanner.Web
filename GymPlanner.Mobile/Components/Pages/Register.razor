@@ -5,6 +5,12 @@
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
 
+@if (_showCreatorIntro)
+{
+    <CreatorIntro IsBusy="@_isBusy" OnCompleted="ShowFinalWelcomeAsync" />
+}
+else
+{
 <section class="auth-card" aria-labelledby="register-title">
     <div class="auth-brand">
         <img src="_content/WorkoutPlanner.UI/images/Emblem.png" alt="GPlanner" />
@@ -49,11 +55,13 @@
 
     <p class="auth-footer">Уже есть аккаунт? <a href="/account/login">Войти</a></p>
 </section>
+}
 
 @code {
     private readonly RegisterInput _input = new();
     private readonly List<string> _errors = [];
     private bool _isBusy;
+    private bool _showCreatorIntro;
 
     private async Task RegisterAsync()
     {
@@ -74,12 +82,22 @@
                 return;
             }
 
-            Navigation.NavigateTo("/profile/setup", replace: true);
+            _showCreatorIntro = true;
         }
         finally
         {
             _isBusy = false;
         }
+    }
+
+    private Task ShowFinalWelcomeAsync()
+    {
+        if (_isBusy)
+            return Task.CompletedTask;
+
+        _isBusy = true;
+        Navigation.NavigateTo("/profile/setup", replace: true);
+        return Task.CompletedTask;
     }
 
     private sealed class RegisterInput

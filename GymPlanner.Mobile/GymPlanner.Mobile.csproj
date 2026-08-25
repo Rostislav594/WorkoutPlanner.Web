@@ -34,10 +34,15 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-        <!-- Physical Android devices supported by the app are arm64. Keeping the
-             device Debug package single-RID avoids partially assembled universal
-             APKs being picked up by incremental deployment. -->
+        <!-- Redmi/device Debug builds must be complete, directly installable APKs.
+             A single RID keeps the package arm64-only, and embedding assemblies
+             disables Fast Deployment's split app/runtime payload. Keeping the
+             output in the TFM directory also prevents an obsolete incomplete APK
+             beside the current RID-specific package from being installed by mistake. -->
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(RuntimeIdentifiers)' == ''">android-arm64</RuntimeIdentifier>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <AndroidPackageFormats>apk</AndroidPackageFormats>
+        <AndroidCreatePackagePerAbi>false</AndroidCreatePackagePerAbi>
         <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     </PropertyGroup>
 

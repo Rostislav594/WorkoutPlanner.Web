@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WorkoutPlanner.Web.Models;
 
@@ -28,7 +28,7 @@ public class WorkoutHistoryExercise
     public string StatusColor =>
         Status switch
         {
-            ExerciseStatus.Easy => "#28a745",
+            ExerciseStatus.Easy => "#78f6c7",
             ExerciseStatus.Medium => "#ffc107",
             ExerciseStatus.Hard => "#fd7e14",
             ExerciseStatus.Max => "#dc3545",

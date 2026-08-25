@@ -13,15 +13,15 @@
 @inject IWorkoutDayService WorkoutDayService
 @inject IJSRuntime JS
 @inject IProgressService ProgressService
-@inject IOnboardingService Guide
 
 <div class="page-content">
 
     <div class="today-header">
 
-        <h1 class="today-title">
-            Сегодня
-        </h1>
+        <div class="page-title-row">
+            <h1 class="today-title">Сегодня</h1>
+            <HelpButton Topic="HelpContentCatalog.TodayWeb" />
+        </div>
 
         <div class="today-date">
             @DateTime.Now.ToString("dd MMMM, dddd")
@@ -89,7 +89,6 @@
                         <label>
 
                              <input type="checkbox"
-                                   data-guide="@(IsFirstTutorialSet(exercise, set) ? "practice-first-set" : null)"
                                    checked="@set.Completed"
                                    @onchange="async e => await SetCompleted(set, (bool)e.Value!)" />
 
@@ -116,9 +115,8 @@
                         })
                     </span>
 
-                    <button class="status-button"
-                            data-guide="@(IsFirstTutorialExercise(exercise) ? "practice-status-button" : null)"
-                            @onclick="() => OpenStatusWindowAsync(exercise)">
+                    <button class="status-button" @onclick="() => OpenStatusWindow(exercise)"
+                            >
                         ⚡
                     </button>
 
@@ -127,9 +125,7 @@
             </div>
         }
 
-        <button class="finish-button"
-                data-guide="@(IsTutorialWorkout ? "practice-finish-workout" : null)"
-                @onclick="FinishWorkout">
+        <button class="finish-button" @onclick="FinishWorkout">
             Завершить тренировку
         </button>
     }
@@ -145,7 +141,6 @@
                 <h3>Оцените выполнение</h3>
 
                     <div class="status-option"
-                         data-guide="@(IsFirstTutorialExercise(StatusExercise) ? "practice-status-option" : null)"
                          style="cursor:pointer"
                          @onclick="() => SetStatus(ExerciseStatus.Easy)">
 
@@ -296,12 +291,9 @@
         }
     }
 
-    async Task OpenStatusWindowAsync(Exercise exercise)
+    void OpenStatusWindow(Exercise exercise)
     {
         StatusExercise = exercise;
-
-        if (IsFirstTutorialExercise(exercise))
-            await Guide.NotifyActionAsync("practice-status-opened");
     }
 
     void CloseStatusWindow()
@@ -314,16 +306,12 @@
         if (StatusExercise == null)
             return;
 
-        var isTutorialExercise = IsFirstTutorialExercise(StatusExercise);
-
         StatusExercise.Status = status;
 
         await ExerciseService.UpdateExerciseAsync(StatusExercise);
 
         StatusExercise = null;
 
-        if (isTutorialExercise)
-            await Guide.NotifyActionAsync("practice-status-selected");
     }
 
     async Task FinishWorkout()
@@ -388,8 +376,6 @@
 
         ShowWorkoutCompleted = true;
 
-        if (IsTutorialWorkout)
-            await Guide.NotifyActionAsync("practice-workout-finished");
     }
     void CloseCompletedWindow()
     {
@@ -409,8 +395,6 @@
         var exercise = Exercises.First(x => x.Sets.Contains(set));
         await ExerciseService.UpdateExerciseAsync(exercise);
 
-        if (value && IsFirstTutorialSet(set))
-            await Guide.NotifyActionAsync("practice-set-completed");
     }
 
     void CloseWarning()
@@ -426,23 +410,4 @@
             ? 0
             : CompletedExercises * 100.0 / Exercises.Count;
 
-    bool IsTutorialWorkout =>
-        TodayWorkout?.WorkoutName ==
-        WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName;
-
-    bool IsFirstTutorialExercise(Exercise? exercise) =>
-        IsTutorialWorkout &&
-        exercise is not null &&
-        Exercises.Count > 0 &&
-        exercise.Id == Exercises[0].Id;
-
-    bool IsFirstTutorialSet(Exercise exercise, ExerciseTemplateSet set) =>
-        IsFirstTutorialExercise(exercise) && IsFirstTutorialSet(set);
-
-    bool IsFirstTutorialSet(ExerciseTemplateSet set) =>
-        IsTutorialWorkout &&
-        Exercises.Count > 0 &&
-        Exercises[0].Sets
-            .OrderBy(x => x.SetNumber)
-            .FirstOrDefault()?.Id == set.Id;
 }

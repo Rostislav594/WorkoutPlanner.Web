@@ -6,10 +6,10 @@
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @inject ITrainingPlanService TrainingPlanService
-@inject IOnboardingService Guide
 
-<div class="workouts-header" data-guide="workout-templates">
+<div class="workouts-header">
     <h1>Шаблоны тренировок</h1>
+    <HelpButton Topic="HelpContentCatalog.Workouts" />
 </div>
 
 @if (!string.IsNullOrWhiteSpace(FormError))
@@ -34,8 +34,7 @@ else
         @foreach (var workout in TrainingPlans)
         {
             <div class="workout-card"
-                 data-guide="@GetWorkoutGuideTarget(workout)"
-                 @onclick="() => OpenWorkoutAsync(workout)">
+                 @onclick="() => OpenWorkout(workout)">
 
                 <button class="card-menu-button workout-card-menu"
                         title="Настройки"
@@ -76,7 +75,6 @@ else
 
 <div class="workouts-footer">
     <button class="finish-button add-template-button"
-            data-guide="add-workout-template"
             @onclick="OpenCreateDialog">
         + Добавить шаблон
     </button>
@@ -187,27 +185,10 @@ else
                 .GetTrainingPlansAsync();
     }
 
-    private async Task OpenWorkoutAsync(TrainingPlan workout)
+    private void OpenWorkout(TrainingPlan workout)
     {
-        if (IsTutorialPlan(workout))
-            await Guide.NotifyActionAsync("tutorial-plan-opened");
-
         Navigation.NavigateTo($"/workout/{workout.Id}");
     }
-
-    private string? GetWorkoutGuideTarget(TrainingPlan workout)
-    {
-        if (IsTutorialPlan(workout))
-            return "tutorial-workout-card";
-
-        return workout.Id == TrainingPlans[0].Id
-            ? "workout-template-card"
-            : null;
-    }
-
-    private static bool IsTutorialPlan(TrainingPlan workout) =>
-        workout.WorkoutName ==
-        WorkoutPlanner.Web.Services.Onboarding.AppGuidePracticeService.TutorialWorkoutName;
 
     private void OpenCreateDialog()
     {

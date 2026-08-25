@@ -1,5 +1,12 @@
 .progress-title {
-    text-align: center;
+    margin: 0;
+}
+
+.page-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     margin-bottom: 45px;
 }
 

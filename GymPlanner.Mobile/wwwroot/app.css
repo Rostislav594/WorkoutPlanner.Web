@@ -26,6 +26,14 @@
     --color-warning: #e8c879;
     --color-warning-surface: #40391f;
     --color-warning-text: #f1db8f;
+    /* Compatibility aliases used by the welcome/superset work kept on this branch. */
+    --color-info: #267c78;
+    --color-orange: var(--color-accent);
+    --color-orange-hover: var(--color-accent-hover);
+    --color-orange-pressed: #df6510;
+    --color-on-orange: #fff;
+    --color-orange-soft: var(--color-accent-soft);
+    --color-orange-border: rgba(255, 122, 26, .72);
     --color-chart-purple: #a855f7;
     --color-chart-blue: #60a5fa;
     --color-overlay: rgba(0, 0, 0, .78);
@@ -88,6 +96,24 @@ body,
     color: var(--color-text);
     font-family: var(--font-body);
 }
+
+body .page-title-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 8px;
+}
+
+body .page-title-row > h1 {
+    grid-column: 2;
+    justify-self: center;
+    min-width: 0;
+    margin-inline: 0;
+    text-align: center;
+}
+
+body .page-title-row > .context-help-button { grid-column: 3; justify-self: end; }
 
 html {
     height: 100%;

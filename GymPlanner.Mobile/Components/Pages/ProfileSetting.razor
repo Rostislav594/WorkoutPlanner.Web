@@ -1,0 +1,116 @@
+@page "/profile/{Section}"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.Extensions.Logging
+@using WorkoutPlanner.Api.Contracts
+@inject IProfileApiClient ProfileClient
+@inject ISupportApiClient SupportClient
+@inject IMobilePhotoPicker PhotoPicker
+@inject MobileAuthenticationService Authentication
+@inject NavigationManager Navigation
+@inject ILogger<ProfileSetting> Logger
+
+<section class="profile-setting-page" aria-busy="@_isLoading">
+    <header class="setting-header">
+        <a class="back-button" href="/profile" aria-label="Вернуться в профиль">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        </a>
+        <div>
+            <p class="setting-eyebrow">Профиль</p>
+            <h1>@Setting.Title</h1>
+        </div>
+    </header>
+
+    @if (_isLoading)
+    {
+        <div class="setting-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>Загружаем…</span></div>
+    }
+    else if (_errors.Count > 0)
+    {
+        <div class="auth-error" role="alert">@string.Join(" ", _errors)</div>
+    }
+    else if (!Setting.IsAvailable)
+    {
+        <article class="setting-card setting-card--placeholder">
+            <span class="setting-icon material-symbols-rounded" aria-hidden="true">@Setting.Icon</span>
+            <span class="setting-soon" role="status">Скоро</span>
+            <h2>@Setting.Title</h2>
+            <p>@Setting.Description</p>
+            <a class="setting-secondary-action" href="/profile">Вернуться в профиль</a>
+        </article>
+    }
+    else if (Section == "personal-information")
+    {
+        <EditForm class="setting-card" Model="_profileInput" OnValidSubmit="SaveProfileAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+            <p class="setting-description">Обновите личные данные, которые используются в вашем профиле.</p>
+            <div class="setting-form-grid">
+                <label>Имя <InputText class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" /></label>
+                <label>Фамилия <InputText class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" /></label>
+                <label>Дата рождения <InputDate class="auth-input" @bind-Value="_profileInput.BirthDate" /></label>
+                <label>Пол <InputSelect class="auth-input" @bind-Value="_profileInput.Gender"><option value="">Выберите</option><option>Мужской</option><option>Женский</option><option>Не указывать</option></InputSelect></label>
+            </div>
+            <button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Сохраняем…" : "Сохранить изменения")</button>
+        </EditForm>
+    }
+    else if (Section == "email")
+    {
+        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">mail</span><h2>Email</h2><p class="setting-value">@_profile?.Email</p><p class="setting-description">Адрес используется для входа в аккаунт. Изменение email пока недоступно.</p></article>
+    }
+    else if (Section == "rest-timers")
+    {
+        <div class="setting-card">
+            <p class="setting-description">Эти значения станут временем по умолчанию для всех таймеров отдыха.</p>
+            <div class="setting-form-grid"><label>Между подходами, сек.<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" /></label><label>Между упражнениями, сек.<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" /></label></div>
+            <button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="SaveRestTimersAsync">@(_isBusy ? "Сохраняем…" : "Применить ко всем таймерам")</button>
+        </div>
+    }
+    else if (Section == "change-password")
+    {
+        <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>Текущий пароль <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>Новый пароль <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>Подтверждение нового пароля <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Выполняем…" : "Изменить пароль")</button></EditForm>
+    }
+    else if (Section == "report-problem")
+    {
+        <div class="setting-card"><label class="support-field">Что произошло?<textarea maxlength="2000" placeholder="Опишите, что произошло..." @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">Минимум 10 символов. Не указывайте пароль или другие конфиденциальные данные.</p><button class="setting-secondary-action" type="button" disabled="@_isBusy" @onclick="PickScreenshotAsync">Добавить скриншот</button>@if (_screenshot is not null) { <p class="setting-description">Прикреплён файл: @_screenshot.FileName</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? "Отправляем…" : "Отправить")</button></div>
+    }
+    else if (Section == "logout")
+    {
+        <article class="setting-card"><p class="setting-description">Вы выйдете из аккаунта на этом устройстве.</p><button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="LogoutAsync">Выйти из аккаунта</button></article>
+    }
+    else if (Section == "delete-account")
+    {
+        <article class="setting-card setting-card--danger"><span class="setting-icon material-symbols-rounded" aria-hidden="true">warning</span><h2>Удаление аккаунта</h2><p>Будут удалены профиль, планы, история тренировок и все пользовательские данные.</p>@if (!_deleteConfirmed) { <button class="setting-danger-action" type="button" @onclick="() => _deleteConfirmed = true">Продолжить</button> } else { <p class="delete-confirmation">Это действие нельзя отменить.</p><button class="setting-danger-action" type="button" disabled="@_isBusy" @onclick="DeleteAccountAsync">@(_isBusy ? "Удаляем…" : "Удалить навсегда")</button> }</article>
+    }
+</section>
+
+@code {
+    [Parameter] public string Section { get; set; } = string.Empty;
+    private readonly List<string> _errors = [];
+    private readonly ProfileInput _profileInput = new();
+    private readonly PasswordInput _passwordInput = new();
+    private ProfileResponse? _profile;
+    private PickedPhoto? _screenshot;
+    private bool _isLoading = true;
+    private bool _isBusy;
+    private bool _deleteConfirmed;
+    private string _supportMessage = string.Empty;
+    private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting) ? setting : new("Настройка не найдена", "help", "Вернитесь в профиль и выберите нужный раздел.", false);
+    private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
+        ["personal-information"] = new("Личная информация", "badge", "", true), ["email"] = new("Email", "mail", "", true), ["rest-timers"] = new("Таймеры отдыха", "timer", "", true), ["change-password"] = new("Изменить пароль", "password", "", true), ["report-problem"] = new("Сообщить о проблеме", "bug_report", "", true), ["logout"] = new("Выйти из аккаунта", "logout", "", true), ["delete-account"] = new("Удалить аккаунт", "delete_forever", "", true),
+        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["devices"] = new("Подключённые устройства", "devices", "Управление подключёнными устройствами скоро будет доступно здесь.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "Выбор языка скоро будет доступен здесь.", false), ["my-data"] = new("Мои данные", "database", "Просмотр данных профиля скоро будет доступен здесь.", false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Настройки синхронизации скоро будут доступны здесь.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "Сбор предложений скоро будет доступен здесь.", false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
+    protected override async Task OnInitializedAsync() { if (!Setting.IsAvailable) { _isLoading = false; return; } var result = await ProfileClient.GetAsync(); if (!result.Succeeded) _errors.AddRange(result.Errors); else { _profile = result.Value; _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; } _isLoading = false; }
+    private int _restBetweenSetsSeconds = 90; private int _restBetweenExercisesSeconds = 120;
+    private async Task SaveProfileAsync() { await RunAsync(async () => { var r = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
+    private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add("Укажите время от 5 секунд до 60 минут."); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
+    private async Task ChangePasswordAsync() { await RunAsync(async () => { var r = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword)); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
+    private async Task PickScreenshotAsync() { var r = await PhotoPicker.PickAsync(MobilePhotoSource.Library); if (r.Succeeded) _screenshot = r.Photo; else if (!r.Cancelled) _errors.AddRange(r.Errors); }
+    private async Task SubmitSupportAsync() { await RunAsync(async () => { var r = await SupportClient.CreateAsync(_supportMessage.Trim(), _screenshot, GetDeviceContext()); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
+    private async Task LogoutAsync() { await RunAsync(async () => { var r = await Authentication.LogoutAsync(); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/account/login", replace: true); }); }
+    private async Task DeleteAccountAsync() { await RunAsync(async () => { var r = await ProfileClient.DeleteAccountAsync(); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
+    private async Task RunAsync(Func<Task> action) { if (_isBusy) return; _isBusy = true; _errors.Clear(); try { await action(); } finally { _isBusy = false; } }
+    private SupportDeviceContext GetDeviceContext() { try { return new(AppInfo.Current.VersionString, DeviceInfo.Current.Platform.ToString(), DeviceInfo.Current.VersionString, $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}".Trim()); } catch (Exception exception) { Logger.LogDebug(exception, "Device context is unavailable for a support ticket."); return new(null, null, null, null); } }
+    private sealed class ProfileInput { [Required, MaxLength(80)] public string FirstName { get; set; } = string.Empty; [Required, MaxLength(80)] public string LastName { get; set; } = string.Empty; [Required] public DateTime? BirthDate { get; set; } [Required] public string Gender { get; set; } = string.Empty; }
+    private sealed class PasswordInput { [Required] public string CurrentPassword { get; set; } = string.Empty; [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty; [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")] public string ConfirmPassword { get; set; } = string.Empty; }
+    private sealed record ProfileSettingInfo(string Title, string Icon, string Description, bool IsAvailable);
+}

@@ -396,7 +396,8 @@ public static class WorkoutLifecycleApiEndpoints
                                         set.Weight,
                                         set.Completed,
                                         set.IsWarmup))
-                                    .ToList()))
+                                    .ToList(),
+                                x.SupersetGroupId))
                         .ToList());
             }
         }

@@ -1,0 +1,15 @@
+.creator-intro { box-sizing: border-box; width: 100vw; min-height: 100dvh; margin-inline: calc(50% - 50vw); padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); background: #000; color: var(--color-text, #f5f5f5); }
+.creator-intro__content { width: min(100%, 52rem); min-height: calc(100dvh - 2rem); margin-inline: auto; display: flex; flex-direction: column; gap: clamp(1rem, 3vh, 2rem); }
+.creator-intro__message { padding: clamp(.5rem, 2vw, 1.5rem) clamp(.35rem, 1.25vw, 1rem); }
+.creator-intro__message p { margin: 0; color: color-mix(in srgb, var(--color-text, #f5f5f5) 94%, transparent); font-size: clamp(.95rem, 2.15vw, 1.22rem); font-style: italic; font-weight: 500; letter-spacing: .012em; line-height: 1.62; }
+.creator-intro__message p + p { margin-top: clamp(.85rem, 2vw, 1.2rem); }
+.creator-intro__message strong { color: var(--color-accent, #9dbe42); font-style: normal; font-weight: 850; }
+.creator-intro__signature { margin-top: clamp(1.25rem, 3vw, 1.8rem) !important; color: var(--color-accent, #9dbe42) !important; font-size: clamp(.8rem, 1.9vw, 1rem) !important; font-style: normal !important; font-weight: 850 !important; letter-spacing: .055em !important; }
+.creator-intro__button { width: 3.5rem; height: 3.5rem; display: grid; place-items: center; align-self: center; margin-top: auto; border: 1px solid color-mix(in srgb, var(--color-accent, #9dbe42) 72%, transparent); border-radius: 50%; background: var(--color-accent, #9dbe42); color: #060806; box-shadow: 0 .5rem 1.5rem color-mix(in srgb, var(--color-accent, #9dbe42) 22%, transparent); animation: creator-button-in .35s ease forwards; }
+.creator-intro__button .material-symbols-rounded { font-size: 1.55rem; font-weight: 700; }
+.creator-intro__button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-.08rem); }
+.creator-intro__button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.creator-intro__button:disabled { opacity: .55; cursor: wait; }
+@keyframes creator-button-in { from { opacity: 0; transform: translateY(.4rem); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 620px) { .creator-intro__message p { font-size: clamp(.9rem, 3.8vw, 1.05rem); line-height: 1.58; } }
+@media (max-height: 560px) and (orientation: landscape) { .creator-intro { padding-block: max(.5rem, env(safe-area-inset-top)) max(.5rem, env(safe-area-inset-bottom)); } .creator-intro__message p { font-size: clamp(.78rem, 2.3vh, .94rem); line-height: 1.45; } .creator-intro__message p + p { margin-top: .55rem; } .creator-intro__button { width: 2.8rem; height: 2.8rem; } }

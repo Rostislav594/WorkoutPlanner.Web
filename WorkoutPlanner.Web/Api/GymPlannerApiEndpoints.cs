@@ -61,6 +61,15 @@ public static class GymPlannerApiEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .ProducesProblem(StatusCodes.Status409Conflict);
 
+        api.MapPut("/profile/rest-timers", UpdateRestTimerSettingsAsync)
+            .WithTags("Profile")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName)
+            .Produces<RestTimerSettingsResponse>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
         var account = api.MapGroup("/account")
             .WithTags("Account")
             .RequireAuthorization(MobileApiAuthorization.PolicyName);
@@ -85,7 +94,7 @@ public static class GymPlannerApiEndpoints
         api.MapWorkoutApiEndpoints();
         api.MapWorkoutLifecycleApiEndpoints();
         api.MapProgressApiEndpoints();
-        api.MapOnboardingApiEndpoints();
+        api.MapWelcomeGuideApiEndpoints();
         api.MapExercisePhotoApiEndpoints();
         api.MapSupportApiEndpoints();
         api.MapInboxApiEndpoints();
@@ -362,7 +371,34 @@ public static class GymPlannerApiEndpoints
             profile?.LastName ?? string.Empty,
             profile?.BirthDate,
             profile?.Gender ?? string.Empty,
-            profile is not null);
+            profile is not null,
+            profile?.RestBetweenSetsSeconds ?? 90,
+            profile?.RestBetweenExercisesSeconds ?? 120);
+
+    private static async Task<IResult> UpdateRestTimerSettingsAsync(
+        UpdateRestTimerSettingsRequest request,
+        IProfileService profileService,
+        CancellationToken cancellationToken)
+    {
+        if (request.RestBetweenSetsSeconds is < 5 or > 3600 ||
+            request.RestBetweenExercisesSeconds is < 5 or > 3600)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.RestBetweenSetsSeconds)] = ["Rest duration must be between 5 seconds and 60 minutes."],
+                [nameof(request.RestBetweenExercisesSeconds)] = ["Rest duration must be between 5 seconds and 60 minutes."]
+            });
+        }
+
+        var succeeded = await profileService.UpdateRestTimerSettingsAsync(
+            new(request.RestBetweenSetsSeconds, request.RestBetweenExercisesSeconds), cancellationToken);
+        if (!succeeded)
+            return Results.Problem(title: "Profile was not found.", statusCode: StatusCodes.Status409Conflict);
+
+        return Results.Ok(new RestTimerSettingsResponse(
+            request.RestBetweenSetsSeconds,
+            request.RestBetweenExercisesSeconds));
+    }
 
     private static Dictionary<string, string[]> ValidateCredentials(
         string? email,

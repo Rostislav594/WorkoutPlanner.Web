@@ -1,0 +1,28 @@
+@page "/welcome-guide"
+@attribute [Authorize]
+@implements IDisposable
+@inject IWelcomeGuideApiClient WelcomeGuideClient
+@inject NavigationManager Navigation
+
+@code {
+    private readonly CancellationTokenSource _disposeCts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await WelcomeGuideClient.GetStateAsync(_disposeCts.Token);
+            if (result.Succeeded && result.Value!.IsCompleted)
+                Navigation.NavigateTo("/", replace: true);
+            else
+                Navigation.NavigateTo("/firstlaunch", replace: true);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested) { }
+    }
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

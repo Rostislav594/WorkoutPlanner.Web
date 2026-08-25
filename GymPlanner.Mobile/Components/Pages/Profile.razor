@@ -28,11 +28,8 @@
     else
     {
         <header class="profile-title-row">
-            <div>
-                <p class="profile-eyebrow">Аккаунт</p>
-                <h1 id="profile-title">Профиль</h1>
-            </div>
-            <span class="profile-title-icon material-symbols-rounded" aria-hidden="true">tune</span>
+            <h1 id="profile-title">Профиль</h1>
+            <HelpButton Topic="HelpContentCatalog.Profile" />
         </header>
 
         @if (!string.IsNullOrWhiteSpace(_message))
@@ -50,34 +47,33 @@
                 <h2>@DisplayName</h2>
                 <p>@DisplayEmail</p>
             </div>
-            <button class="profile-edit-action" type="button" @onclick="OpenEditDialog">
+            <a class="profile-edit-action" href="/profile/personal-information">
                 <span class="material-symbols-rounded" aria-hidden="true">edit</span>
                 <span>Редактировать профиль</span>
-            </button>
+            </a>
         </article>
 
         <div class="profile-sections">
             @foreach (var section in ProfileSections)
             {
-                <section class="settings-section" aria-labelledby="@section.Id">
-                    <h2 id="@section.Id">@section.Title</h2>
+                <section class="settings-section" aria-label="@section.Title">
                     <div class="settings-group">
                         @foreach (var item in section.Items)
                         {
-                            @if (item.Action is { } action)
+                            @if (IsAvailable(item))
                             {
-                                <button class="@RowClass(item)" type="button" @onclick="() => HandleActionAsync(action)">
-                                    <span class="settings-icon material-symbols-rounded" aria-hidden="true">@item.Icon</span>
-                                    <span class="settings-label">@item.Label</span>
-                                    @if (!string.IsNullOrWhiteSpace(item.Value))
-                                    {
-                                        <span class="@ValueClass(item)">@item.Value</span>
-                                    }
-                                    @if (item.ShowChevron)
-                                    {
-                                        <span class="settings-chevron material-symbols-rounded" aria-hidden="true">chevron_right</span>
-                                    }
-                                </button>
+                            <a class="@RowClass(item)" href="@item.Route">
+                                <span class="settings-icon material-symbols-rounded" aria-hidden="true">@item.Icon</span>
+                                <span class="settings-label">@item.Label</span>
+                                @if (!string.IsNullOrWhiteSpace(item.Value))
+                                {
+                                    <span class="@ValueClass(item)">@item.Value</span>
+                                }
+                                @if (item.ShowChevron)
+                                {
+                                    <span class="settings-chevron material-symbols-rounded" aria-hidden="true">chevron_right</span>
+                                }
+                            </a>
                             }
                             else
                             {
@@ -207,6 +203,41 @@
     </div>
 }
 
+@if (_dialog == ProfileDialog.RestTimers)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timers-title" @onclick:stopPropagation="true">
+            <header class="dialog-header">
+                <div>
+                    <p class="profile-eyebrow">Тренировки</p>
+                    <h2 id="rest-timers-title">Таймеры отдыха</h2>
+                </div>
+                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSaving" @onclick="CloseDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                </button>
+            </header>
+            <p class="timer-settings-hint">Эти значения станут временем по умолчанию для всех таймеров отдыха.</p>
+            @if (_operationErrors.Count > 0)
+            {
+                <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
+            }
+            <div class="profile-form-grid">
+                <label class="field" for="rest-between-sets">
+                    <span>Между подходами, сек.</span>
+                    <input id="rest-between-sets" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" />
+                </label>
+                <label class="field" for="rest-between-exercises">
+                    <span>Между упражнениями, сек.</span>
+                    <input id="rest-between-exercises" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" />
+                </label>
+            </div>
+            <button class="profile-primary-action" type="button" disabled="@_isSaving" @onclick="SaveRestTimersAsync">
+                @(_isSaving ? "Сохраняем…" : "Применить ко всем таймерам")
+            </button>
+        </section>
+    </div>
+}
+
 @if (_dialog == ProfileDialog.ReportProblem)
 {
     <div class="modal-overlay" @onclick="CloseDialog">
@@ -289,10 +320,10 @@
 @if (_confirmDeletion)
 {
     <div class="modal-overlay" @onclick="CloseDeleteDialog">
-        <section class="modal-window delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title" @onclick:stopPropagation="true">
+        <section class="modal-window delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title" aria-describedby="delete-account-description" @onclick:stopPropagation="true">
             <span class="delete-icon material-symbols-rounded" aria-hidden="true">warning</span>
             <h2 id="delete-account-title">Удаление аккаунта</h2>
-            <p>Вы действительно хотите удалить аккаунт?</p>
+            <p id="delete-account-description">Вы действительно хотите удалить аккаунт?</p>
             <p class="warning-copy">Будут удалены профиль, планы, история тренировок, прогресс, фотографии и все пользовательские данные.</p>
             @if (_operationErrors.Count > 0)
             {
@@ -309,17 +340,17 @@
 }
 
 @code {
-    private static readonly IReadOnlyList<ProfileSection> ProfileSections =
+    private IReadOnlyList<ProfileSection> ProfileSections =>
     [
-        new("personal-data", "Личные данные", [new("badge", "Личная информация"), new("mail", "Email")]),
-        new("training", "Тренировки", [new("scale", "Единицы измерения", "кг"), new("timer", "Таймеры отдыха"), new("exercise", "Настройки тренировок")]),
-        new("devices", "Устройства", [new("devices", "Подключённые устройства"), new("watch", "Samsung Galaxy Watch", "Подключено", ShowChevron: false, IsStatus: true)]),
-        new("application", "Приложение", [new("notifications", "Уведомления"), new("palette", "Внешний вид"), new("language", "Язык", "Русский")]),
-        new("data", "Данные", [new("database", "Мои данные"), new("download", "Экспорт данных"), new("sync", "Синхронизация")]),
-        new("security", "Безопасность", [new("password", "Изменить пароль", Action: ProfileAction.ChangePassword), new("devices_other", "Активные сеансы")]),
-        new("support", "Поддержка", [new("help", "Помощь"), new("bug_report", "Сообщить о проблеме", Action: ProfileAction.ReportProblem), new("lightbulb", "Предложить идею")]),
-        new("about", "О приложении", [new("info", "О GPlanner"), new("privacy_tip", "Политика конфиденциальности"), new("tag", "Версия", "1.0.0", ShowChevron: false), new("logout", "Выйти из аккаунта", Action: ProfileAction.Logout, IsStandalone: true)]),
-        new("danger-zone", "Опасная зона", [new("delete_forever", "Удалить аккаунт", ShowChevron: false, Action: ProfileAction.DeleteAccount, IsDanger: true)])
+        new("personal-data", "Личные данные", [new("badge", "Личная информация", "/profile/personal-information"), new("mail", "Email", "/profile/email")]),
+        new("training", "Тренировки", [new("scale", "Единицы измерения", "/profile/units", "кг"), new("timer", "Таймеры отдыха", "/profile/rest-timers", RestTimersSummary), new("exercise", "Настройки тренировок", "/profile/workout-settings")]),
+        new("devices", "Устройства", [new("devices", "Подключённые устройства", "/profile/devices"), new("watch", "Samsung Galaxy Watch", "/profile/devices", "Подключено", ShowChevron: false, IsStatus: true)]),
+        new("application", "Приложение", [new("notifications", "Уведомления", "/profile/notifications"), new("palette", "Внешний вид", "/profile/appearance"), new("language", "Язык", "/profile/language", "Русский")]),
+        new("data", "Данные", [new("database", "Мои данные", "/profile/my-data"), new("download", "Экспорт данных", "/profile/export"), new("sync", "Синхронизация", "/profile/sync")]),
+        new("security", "Безопасность", [new("password", "Изменить пароль", "/profile/change-password"), new("devices_other", "Активные сеансы", "/profile/sessions")]),
+        new("support", "Поддержка", [new("help", "Помощь", "/profile/help"), new("bug_report", "Сообщить о проблеме", "/profile/report-problem"), new("lightbulb", "Предложить идею", "/profile/suggest-idea")]),
+        new("about", "О приложении", [new("info", "О GPlanner", "/profile/about"), new("privacy_tip", "Политика конфиденциальности", "/profile/privacy"), new("tag", "Версия", "/profile/about", "1.0.0", ShowChevron: false), new("logout", "Выйти из аккаунта", "/profile/logout", IsStandalone: true)]),
+        new("danger-zone", "Опасная зона", [new("delete_forever", "Удалить аккаунт", "/profile/delete-account", ShowChevron: false, IsDanger: true)])
     ];
 
     private readonly ProfileInput _profileInput = new();
@@ -337,9 +368,12 @@
     private bool _confirmDeletion;
     private string? _message;
     private string _supportMessage = string.Empty;
+    private int _restBetweenSetsSeconds = 90;
+    private int _restBetweenExercisesSeconds = 120;
     private string FullName => $"{_profileInput.FirstName} {_profileInput.LastName}".Trim();
     private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? "Пользователь GPlanner" : FullName;
     private string DisplayEmail => _profile?.Email ?? Authentication.CurrentEmail ?? string.Empty;
+    private string RestTimersSummary => $"Подходы {FormatDuration(_restBetweenSetsSeconds)} · упражнения {FormatDuration(_restBetweenExercisesSeconds)}";
     private string? SupportScreenshotDataUri => _supportScreenshot is null
         ? null
         : $"data:{_supportScreenshot.ContentType};base64,{Convert.ToBase64String(_supportScreenshot.Content)}";
@@ -371,6 +405,8 @@
             _profileInput.LastName = _profile.LastName;
             _profileInput.BirthDate = _profile.BirthDate;
             _profileInput.Gender = _profile.Gender;
+            _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds;
+            _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds;
         }
         _isLoading = false;
     }
@@ -410,6 +446,37 @@
         finally { _isSecurityBusy = false; }
     }
 
+    private async Task SaveRestTimersAsync()
+    {
+        if (_isSaving) return;
+        if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600)
+        {
+            _operationErrors.Clear();
+            _operationErrors.Add("Укажите время от 5 секунд до 60 минут.");
+            return;
+        }
+
+        _isSaving = true;
+        ClearOperationState();
+        try
+        {
+            var result = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds));
+            if (!result.Succeeded)
+            {
+                _operationErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _restBetweenSetsSeconds = result.Value!.RestBetweenSetsSeconds;
+            _restBetweenExercisesSeconds = result.Value.RestBetweenExercisesSeconds;
+            if (_profile is not null)
+                _profile = _profile with { RestBetweenSetsSeconds = _restBetweenSetsSeconds, RestBetweenExercisesSeconds = _restBetweenExercisesSeconds };
+            _message = "Настройки таймеров отдыха применены ко всем таймерам.";
+            _dialog = ProfileDialog.None;
+        }
+        finally { _isSaving = false; }
+    }
+
     private async Task HandleActionAsync(ProfileAction action)
     {
         ClearOperationState();
@@ -417,6 +484,9 @@
         {
             case ProfileAction.ChangePassword:
                 _dialog = ProfileDialog.ChangePassword;
+                break;
+            case ProfileAction.RestTimers:
+                _dialog = ProfileDialog.RestTimers;
                 break;
             case ProfileAction.ReportProblem:
                 _supportErrors.Clear();
@@ -566,8 +636,17 @@
     }
 
     private void ClearOperationState() { _operationErrors.Clear(); _message = null; }
+    private static string FormatDuration(int seconds) => $"{seconds / 60}:{seconds % 60:D2}";
     private static string RowClass(ProfileItem item) => $"settings-row{(item.IsDanger ? " settings-row--danger" : string.Empty)}{(item.IsStandalone ? " settings-row--standalone" : string.Empty)}";
     private static string ValueClass(ProfileItem item) => item.IsStatus ? "settings-value settings-value--status" : "settings-value";
+    private static bool IsAvailable(ProfileItem item) => item.Route is
+        "/profile/personal-information" or
+        "/profile/email" or
+        "/profile/rest-timers" or
+        "/profile/change-password" or
+        "/profile/report-problem" or
+        "/profile/logout" or
+        "/profile/delete-account";
 
     private sealed class ProfileInput
     {
@@ -585,7 +664,7 @@
     }
 
     private sealed record ProfileSection(string Id, string Title, IReadOnlyList<ProfileItem> Items);
-    private sealed record ProfileItem(string Icon, string Label, string? Value = null, bool ShowChevron = true, ProfileAction? Action = null, bool IsStatus = false, bool IsStandalone = false, bool IsDanger = false);
-    private enum ProfileAction { ChangePassword, ReportProblem, Logout, DeleteAccount }
-    private enum ProfileDialog { None, EditProfile, ChangePassword, ReportProblem }
+    private sealed record ProfileItem(string Icon, string Label, string Route, string? Value = null, bool ShowChevron = true, ProfileAction? Action = null, bool IsStatus = false, bool IsStandalone = false, bool IsDanger = false, bool IsAvailable = true);
+    private enum ProfileAction { ChangePassword, RestTimers, ReportProblem, Logout, DeleteAccount }
+    private enum ProfileDialog { None, EditProfile, ChangePassword, RestTimers, ReportProblem }
 }
