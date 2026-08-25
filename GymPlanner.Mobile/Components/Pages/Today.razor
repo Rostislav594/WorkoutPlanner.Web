@@ -30,13 +30,10 @@
             }
             else if (!_isLoading)
             {
-                <div class="workout-progress-indicator" aria-label="Выполнено @ProgressPercent.ToString("0") процентов тренировки">
-                    <div class="workout-progress-indicator__text">
-                        <span>Прогресс тренировки</span>
-                        <strong>@ProgressPercent.ToString("0")%</strong>
-                    </div>
-                    <div class="workout-progress-indicator__track" aria-hidden="true">
-                        <span style="width: @ProgressPercent%"></span>
+                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%" aria-label="Свободная тренировка. Выполнено @ProgressPercent.ToString("0") процентов тренировки">
+                    <div class="workout-progress-indicator__content">
+                        <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
+                        <span>Свободная тренировка</span>
                     </div>
                 </div>
             }
@@ -48,14 +45,7 @@
             }
         </div>
 
-        @if (_isFreeWorkout)
-        {
-            <div class="workout-chip free-workout-chip">
-                <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
-                <span>Свободная тренировка</span>
-            </div>
-        }
-        else if (_workout is not null)
+        @if (!_isFreeWorkout && _workout is not null)
         {
             <div class="workout-chip">
                 <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
@@ -717,7 +707,6 @@
                 <p>Удалить оба упражнения из этой тренировки?</p>
                 <div class="edit-workout-actions">
                     <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">Удалить супер-сет</button>
-                    <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CancelSupersetDelete">Отмена</button>
                 </div>
             }
             else
@@ -1745,7 +1734,7 @@
             _exercises.RemoveAll(exercise => ids.Contains(exercise.Id));
             if (_isFreeWorkout)
                 PersistFreeWorkout();
-            CloseSupersetActions();
+            CloseSupersetActions(force: true);
         }
         finally
         {

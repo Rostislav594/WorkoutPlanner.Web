@@ -16,8 +16,8 @@
 .today-header-actions {
     grid-column: 1 / -1;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: center;
     gap: 8px;
 }
 
@@ -262,48 +262,53 @@
     width: min(100%, 290px);
     min-height: 48px;
     display: grid;
-    gap: 8px;
-    padding: 9px 13px;
-    border: 1px solid rgba(255, 122, 26, .72);
+    padding: 4px;
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(255, 122, 26, .22), rgba(255, 122, 26, .08));
-    box-shadow: 0 8px 24px rgba(255, 122, 26, .12);
+    background: conic-gradient(from -90deg, color-mix(in srgb, var(--color-accent) 78%, white) var(--workout-progress), rgba(255, 255, 255, .18) 0);
+    box-shadow: 0 6px 18px rgba(255, 122, 26, .1);
+    transition: --workout-progress .45s ease-out;
 }
 
-.workout-progress-indicator__text {
+@property --workout-progress {
+    syntax: '<percentage>';
+    inherits: false;
+    initial-value: 0%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .workout-progress-indicator { transition: none; }
+}
+
+.workout-progress-indicator__content {
+    min-width: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    color: var(--color-text-muted);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.workout-progress-indicator__text strong {
-    color: var(--color-accent);
-    font-size: 16px;
-}
-
-.workout-progress-indicator__track {
-    height: 6px;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: calc(var(--radius-md) - 4px);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-weight: 800;
+    white-space: nowrap;
     overflow: hidden;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, .14);
 }
 
-.workout-progress-indicator__track span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-accent);
-    transition: width .2s ease;
+.workout-progress-indicator__content .material-symbols-rounded {
+    flex: 0 0 auto;
+    color: var(--color-accent);
+    font-size: 24px;
 }
 
 .superset-button {
     min-height: 44px;
     padding-inline: 14px;
+    order: -1;
+    align-self: flex-end;
 }
+
+.free-workout-button,
+.workout-progress-indicator { align-self: center; }
 
 .secondary-button {
     border: 1px solid var(--color-border-strong);
@@ -353,7 +358,7 @@
     display: grid;
     gap: 12px;
     border: 2px solid var(--color-orange-border);
-    background: linear-gradient(145deg, var(--color-orange-soft), var(--color-surface) 38%);
+    background: var(--color-surface);
 }
 
 .superset-header {
@@ -420,7 +425,7 @@
 
 .set-row.superset-set-row {
     border: 1px solid currentColor;
-    background: color-mix(in srgb, currentColor 7%, var(--color-bg-elevated));
+    background: var(--color-bg-elevated);
 }
 
 .superset-set-row .set-value-control,

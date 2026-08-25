@@ -6,11 +6,17 @@
 }
 
 .workouts-header {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 12px;
     padding: 8px 0 4px;
+}
+
+.workouts-header > .context-help-button {
+    position: fixed;
+    right: 0;
 }
 
 .workouts-header h1 {
@@ -153,9 +159,12 @@
 }
 
 .context-menu {
-    position: absolute;
+    position: fixed;
     z-index: 91;
-    width: min(220px, calc(100vw - 48px));
+    top: 50%;
+    left: 50%;
+    width: min(240px, calc(100vw - 32px));
+    transform: translate(-50%, -50%);
     overflow: hidden;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-md);
@@ -164,8 +173,8 @@
 }
 
 .workout-template-menu {
-    top: 52px;
-    right: 10px;
+    top: 50%;
+    right: auto;
 }
 
 .context-item {
@@ -424,10 +433,11 @@
 @media (max-width: 599px) {
     .workout-template-menu {
         position: fixed;
-        right: max(12px, env(safe-area-inset-right));
-        bottom: calc(92px + env(safe-area-inset-bottom));
-        left: max(12px, env(safe-area-inset-left));
-        width: auto;
+        top: 50%;
+        right: auto;
+        left: 50%;
+        width: min(240px, calc(100vw - 32px));
+        transform: translate(-50%, -50%);
     }
 }
 

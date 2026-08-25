@@ -41,7 +41,22 @@
 
 .help-dialog__header p { margin: 0; color: var(--color-accent); font-size: .72rem; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
 .help-dialog__header h2 { margin: .3rem 0 0; font-size: clamp(1.55rem, 4vw, 2.25rem); }
-.help-dialog__header button { display: grid; width: 44px; min-width: 44px; height: 44px; place-items: center; padding: 0; border: 1px solid var(--color-border-strong, #46505c); border-radius: 50%; background: var(--color-surface, #111419); color: var(--color-text, #fff); font-size: 1.65rem; }
+.help-dialog__header button {
+    box-sizing: border-box;
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border-strong, #46505c);
+    border-radius: 12px;
+    background: var(--color-surface, #111419);
+    color: var(--color-text, #fff);
+}
+.help-dialog__header button .material-symbols-rounded { color: #fff; font-family: "Material Symbols Rounded"; font-size: 24px; font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24; line-height: 1; }
 
 .help-dialog__intro {
     display: grid;

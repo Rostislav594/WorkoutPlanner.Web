@@ -9,12 +9,12 @@
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--color-text-muted);
+    color: #fff;
     cursor: pointer;
 }
 
 .context-help-button:hover,
-.context-help-button[aria-expanded="true"] { color: var(--color-accent); }
+.context-help-button[aria-expanded="true"] { color: #fff; opacity: .82; }
 
 .context-help-button:focus-visible {
     outline: 3px solid var(--color-accent);
@@ -24,11 +24,13 @@
 .context-help-button__symbol {
     width: 26px;
     height: 26px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-family: "Material Symbols Rounded";
+    font-size: 26px;
+    font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+    line-height: 1;
 }
 
 @media (forced-colors: active) {

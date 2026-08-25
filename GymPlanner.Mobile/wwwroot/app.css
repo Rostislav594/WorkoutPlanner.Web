@@ -98,22 +98,70 @@ body,
 }
 
 body .page-title-row {
+    position: relative;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+}
+
+body .page-title-row > h1 {
+    position: relative;
+    z-index: 0;
+    min-width: 0;
+    margin-inline: 0;
+    text-align: center;
+}
+
+body .page-title-row > .context-help-button {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+
+/* Keep page titles centered without letting back/help controls shift them. */
+body .page-heading {
+    position: relative;
     display: grid;
     grid-template-columns: 48px minmax(0, 1fr) 48px;
     align-items: center;
     gap: 8px;
 }
 
-body .page-title-row > h1 {
-    grid-column: 2;
+body .page-heading > h1 {
+    grid-column: 1 / -1;
+    grid-row: 1;
     justify-self: center;
-    min-width: 0;
     margin-inline: 0;
     text-align: center;
 }
 
-body .page-title-row > .context-help-button { grid-column: 3; justify-self: end; }
+body .page-heading > .back-button { grid-column: 1; }
+body .page-heading > .context-help-button {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+}
+
+body .notebook-header,
+body .setting-header {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 12px;
+}
+
+body .notebook-header > div,
+body .setting-header > div {
+    grid-column: 2;
+    text-align: center;
+}
+
+body .notebook-header > .back-button,
+body .setting-header > .back-button { grid-column: 1; }
 
 html {
     height: 100%;
