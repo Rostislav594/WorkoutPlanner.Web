@@ -481,6 +481,20 @@ button:disabled {
     opacity: .52 !important;
 }
 
+/* Secondary windows share one centered presentation across the app. */
+body .modal-overlay {
+    align-items: center;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+body .modal-window {
+    width: min(100%, 520px);
+    max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    border-bottom: var(--border-subtle);
+    border-radius: var(--radius-lg);
+}
+
 @media (prefers-reduced-motion: reduce) {
     button,
     a:is(

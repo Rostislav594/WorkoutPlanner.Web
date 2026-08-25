@@ -99,7 +99,7 @@ else
                 else
                 {
                     <div class="exercise-photo-placeholder" aria-hidden="true">
-                        <span class="material-symbols-rounded">photo_camera</span>
+                        <span class="material-symbols-rounded">add_a_photo</span>
                     </div>
                 }
 
@@ -221,10 +221,6 @@ else
                     <span>@(IsDeletingExercise ? "Удаляем…" : "Удалить упражнение")</span>
                 </button>
 
-                <button class="modal-action-button cancel-action" type="button" @onclick="CloseMenu">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                    <span>Отмена</span>
-                </button>
             </div>
 
         </div>
@@ -233,7 +229,7 @@ else
 }
 @if (IsEditing)
 {
-    <div class="modal-overlay">
+    <div class="modal-overlay" @onclick="CancelEditing">
 
         <div class="modal-window form-modal"
              role="dialog"
@@ -292,9 +288,6 @@ else
                     @(IsSavingExercise ? "Сохраняем…" : "Сохранить")
                 </button>
 
-                <button class="secondary-button" type="button" disabled="@IsSavingExercise" @onclick="CancelEditing">
-                    Отмена
-                </button>
             </div>
 
         </div>
@@ -303,7 +296,7 @@ else
 }
 @if (IsAdding)
 {
-    <div class="modal-overlay">
+    <div class="modal-overlay" @onclick="CloseAddWindow">
 
         <div class="modal-window form-modal"
              role="dialog"
@@ -375,9 +368,6 @@ else
                     @(IsCreatingExercise ? "Добавляем…" : "Добавить")
                 </button>
 
-                <button class="secondary-button" type="button" disabled="@IsCreatingExercise" @onclick="CloseAddWindow">
-                    Отмена
-                </button>
             </div>
 
         </div>

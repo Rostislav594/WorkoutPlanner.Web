@@ -117,9 +117,9 @@ public static class ProgressApiEndpoints
             return Results.NotFound();
 
         var normalizedName = exerciseName!.Trim();
-        var knownExercises = await progress.GetWorkoutExercisesAsync(
-            plan.WorkoutName,
-            cancellationToken);
+        var knownExercises = plan.Exercises
+            .Select(exercise => exercise.Name)
+            .ToList();
         if (!knownExercises.Contains(normalizedName, StringComparer.Ordinal))
             return Results.NotFound();
 

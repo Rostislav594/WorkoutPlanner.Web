@@ -299,7 +299,6 @@
             </p>
 
             <div class="support-dialog-actions">
-                <button class="profile-secondary-action" type="button" disabled="@_isSupportBusy" @onclick="CloseDialog">Отмена</button>
                 <button class="profile-primary-action support-submit" type="button" disabled="@(_isSupportBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportTicketAsync">
                     @if (_isSupportBusy)
                     {

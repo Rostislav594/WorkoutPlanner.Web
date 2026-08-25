@@ -258,6 +258,48 @@
     opacity: .58;
 }
 
+.workout-progress-indicator {
+    width: min(100%, 290px);
+    min-height: 48px;
+    display: grid;
+    gap: 8px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255, 122, 26, .72);
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(255, 122, 26, .22), rgba(255, 122, 26, .08));
+    box-shadow: 0 8px 24px rgba(255, 122, 26, .12);
+}
+
+.workout-progress-indicator__text {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.workout-progress-indicator__text strong {
+    color: var(--color-accent);
+    font-size: 16px;
+}
+
+.workout-progress-indicator__track {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+}
+
+.workout-progress-indicator__track span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--color-accent);
+    transition: width .2s ease;
+}
+
 .superset-button {
     min-height: 44px;
     padding-inline: 14px;
@@ -272,46 +314,6 @@
 .secondary-button:focus-visible:not(:disabled) {
     border-color: var(--color-accent);
     background: var(--color-surface-hover);
-}
-
-.progress-section {
-    margin-bottom: 16px;
-    padding: 16px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-card);
-}
-
-.progress-text {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 10px;
-    color: var(--color-text-muted);
-    font-size: 14px;
-}
-
-.progress-text strong {
-    flex: 0 0 auto;
-    color: var(--color-accent);
-    font-size: 16px;
-}
-
-.progress-track {
-    height: 8px;
-    overflow: hidden;
-    border-radius: 999px;
-    background: var(--color-surface-hover);
-}
-
-.progress-track span {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: var(--color-success);
-    transition: width .2s ease;
 }
 
 .exercise-list {
@@ -388,7 +390,8 @@
 }
 
 .superset-name {
-    display: inline;
+    display: inline-flex;
+    align-items: center;
     padding: 0;
     color: currentColor;
     font-size: 18px;
@@ -404,10 +407,7 @@
 
 .superset-card-body {
     min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(108px, 34%);
-    align-items: start;
-    gap: 12px;
+    display: block;
 }
 
 .superset-round {
@@ -502,9 +502,37 @@
 .exercise-header {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 5px 10px;
-    margin-bottom: 9px;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.exercise-symbol {
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 50%;
+    background: var(--color-bg-elevated);
+    color: var(--color-accent);
+    font-size: 28px;
+}
+
+.exercise-symbol--compact {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
+    display: inline-grid;
+    margin-right: 5px;
+    font-size: 16px;
+    vertical-align: middle;
+}
+
+.exercise-heading-copy {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
 }
 
 .exercise-header h2 {
@@ -573,10 +601,19 @@
 
 .exercise-card-body {
     min-width: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(108px, 34%);
-    align-items: start;
-    gap: 12px;
+    display: block;
+}
+
+.photo-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.photo-menu-button .material-symbols-rounded {
+    color: var(--color-accent);
+    font-size: 21px;
 }
 
 .exercise-photo-panel {
@@ -1211,6 +1248,12 @@
     box-shadow: 0 0 30px rgba(63, 185, 80, .25);
 }
 
+/* Dialogs stay centered so secondary actions remain easy to reach on every phone size. */
+@media (max-width: 599px) {
+    .modal-overlay { align-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+    .modal-window { max-height: calc(100dvh - 32px); border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+}
+
 .workout-completed-window h2 {
     margin: 0;
     font-size: var(--text-section-title);
@@ -1245,16 +1288,6 @@
 
     .exercise-card {
         padding: 9px;
-    }
-
-    .exercise-card-body {
-        grid-template-columns: minmax(0, 1fr) 96px;
-        gap: 8px;
-    }
-
-    .superset-card-body {
-        grid-template-columns: minmax(0, 1fr) 96px;
-        gap: 8px;
     }
 
     .photo-open-button > span:last-child {
@@ -1296,22 +1329,11 @@
 }
 
 @media (max-width: 340px) {
-    .exercise-card-body,
-    .superset-card-body {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .exercise-photo-panel:not(.superset-photo) {
-        grid-template-columns: 96px minmax(0, 1fr);
-        align-items: stretch;
-    }
-
-    .superset-photos {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .exercise-photo-button {
-        height: 96px;
+    .exercise-symbol {
+        width: 44px;
+        height: 44px;
+        flex-basis: 44px;
+        font-size: 25px;
     }
 }
 

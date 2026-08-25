@@ -28,6 +28,18 @@
                     <span>Свободная тренировка</span>
                 </button>
             }
+            else if (!_isLoading)
+            {
+                <div class="workout-progress-indicator" aria-label="Выполнено @ProgressPercent.ToString("0") процентов тренировки">
+                    <div class="workout-progress-indicator__text">
+                        <span>Прогресс тренировки</span>
+                        <strong>@ProgressPercent.ToString("0")%</strong>
+                    </div>
+                    <div class="workout-progress-indicator__track" aria-hidden="true">
+                        <span style="width: @ProgressPercent%"></span>
+                    </div>
+                </div>
+            }
             @if (SupersetCandidates.Count >= 2)
             {
                 <button class="secondary-button superset-button" type="button" disabled="@_isBusy" @onclick="OpenSupersetDialog">
@@ -84,16 +96,6 @@
     }
     else
     {
-        <section class="progress-section" aria-label="Прогресс тренировки">
-            <div class="progress-text">
-                <span>Выполнено @CompletedSets из @TotalSets подходов</span>
-                <strong>@ProgressPercent.ToString("0")%</strong>
-            </div>
-            <div class="progress-track" aria-label="Выполнено @ProgressPercent.ToString("0") процентов">
-                <span style="width: @ProgressPercent%"></span>
-            </div>
-        </section>
-
         @if (_exercises.Count == 0)
         {
             <div class="page-state">
@@ -187,31 +189,6 @@
                                 }
                             </div>
 
-                            <div class="superset-photos">
-                                @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
-                                {
-                                    var exercise = group.Exercises[exerciseIndex];
-                                    <div class="exercise-photo-panel superset-photo">
-                                        <span class="superset-photo-name">@exercise.Name</span>
-                                         <button class="exercise-photo-button"
-                                                 type="button"
-                                                 @onpointerdown:stopPropagation="true"
-                                                aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
-                                                @onclick="() => OpenPhotoAsync(exercise)">
-                                            @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
-                                            {
-                                                <img class="exercise-photo-thumb" src="@thumbnail" alt="Фото упражнения @exercise.Name" />
-                                            }
-                                            else
-                                            {
-                                                <span class="exercise-photo-placeholder">
-                                                    <span class="material-symbols-rounded" aria-hidden="true">@(exercise.HasPhoto ? "image" : "photo_camera")</span>
-                                                </span>
-                                            }
-                                        </button>
-                                    </div>
-                                }
-                            </div>
                         </div>
 
                         <footer class="exercise-footer superset-footer">
@@ -255,24 +232,26 @@
                             @oncontextmenu="() => ShowEditWorkoutAction(exercise.Id)"
                             @oncontextmenu:preventDefault="true"
                             @onkeydown="eventArgs => HandleExerciseKeyDown(eventArgs, exercise.Id)">
-                        <h2>@exercise.DisplayName</h2>
-                        @if (exercise.IsConfigured)
-                        {
-                        <div class="set-kind-summary" aria-label="Типы подходов">
-                            @if (exercise.Sets.Any(x => x.IsWarmup))
+                        <div class="exercise-heading-copy">
+                            <h2>@exercise.DisplayName</h2>
+                            @if (exercise.IsConfigured)
                             {
-                                <span class="set-kind-label warmup">
-                                    Разминочные: @exercise.Sets.Count(x => x.IsWarmup)
-                                </span>
-                            }
-                            @if (exercise.Sets.Any(x => !x.IsWarmup))
-                            {
-                                <span class="set-kind-label working">
-                                    Рабочие: @exercise.Sets.Count(x => !x.IsWarmup)
-                                </span>
+                            <div class="set-kind-summary" aria-label="Типы подходов">
+                                @if (exercise.Sets.Any(x => x.IsWarmup))
+                                {
+                                    <span class="set-kind-label warmup">
+                                        Разминочные: @exercise.Sets.Count(x => x.IsWarmup)
+                                    </span>
+                                }
+                                @if (exercise.Sets.Any(x => !x.IsWarmup))
+                                {
+                                    <span class="set-kind-label working">
+                                        Рабочие: @exercise.Sets.Count(x => !x.IsWarmup)
+                                    </span>
+                                }
+                            </div>
                             }
                         </div>
-                        }
                     </header>
 
                     @if (!exercise.IsConfigured)
@@ -289,7 +268,6 @@
                              @oncontextmenu="() => ShowEditWorkoutAction(exercise.Id)"
                              @oncontextmenu:preventDefault="true"
                              @onkeydown="eventArgs => HandleExerciseKeyDown(eventArgs, exercise.Id)">
-                            <span class="material-symbols-rounded" aria-hidden="true">touch_app</span>
                              <span>Нажмите на карточку и выберите «Изменить тренировку»</span>
                         </div>
                     }
@@ -338,25 +316,6 @@
                             }
                         </div>
 
-                        <div class="exercise-photo-panel">
-                            <button class="exercise-photo-button"
-                                    type="button"
-                                    aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
-                                    @onclick="() => OpenPhotoAsync(exercise)">
-                                @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
-                                {
-                                    <img class="exercise-photo-thumb" src="@thumbnail" alt="Фото упражнения @exercise.Name" />
-                                }
-                                else
-                                {
-                                    <span class="exercise-photo-placeholder">
-                                        <span class="material-symbols-rounded" aria-hidden="true">
-                                            @(exercise.HasPhoto ? "image" : "photo_camera")
-                                        </span>
-                                    </span>
-                                }
-                            </button>
-                        </div>
                     </div>
 
                     <footer class="exercise-footer">
@@ -511,7 +470,6 @@
                     }
                 }
 
-                <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="ClosePhoto">Закрыть</button>
             </div>
         </section>
     </div>
@@ -542,6 +500,13 @@
                 Вес, повторения и типы подходов настраиваются в редакторе тренировки.
             </p>
             <div class="edit-workout-actions">
+                @if (editActionExercise.IsConfigured)
+                {
+                    <button class="secondary-button photo-menu-button" type="button" @onclick="() => OpenPhotoFromExerciseMenuAsync(editActionExercise)">
+                        <span class="material-symbols-rounded" aria-hidden="true">@(editActionExercise.HasPhoto ? "image" : "add_a_photo")</span>
+                        <span>@(editActionExercise.HasPhoto ? "Открыть фото" : "Добавить фото")</span>
+                    </button>
+                }
                 @if (_isFreeWorkout)
                 {
                     <button class="edit-workout-button" type="button" @onclick="BeginFreeExerciseEdit">
@@ -558,9 +523,6 @@
                         Изменить тренировку
                     </a>
                 }
-                <button class="secondary-button" type="button" @onclick="CloseEditWorkoutAction">
-                    Отмена
-                </button>
             </div>
         </section>
     </div>
@@ -635,9 +597,6 @@
             <div class="editor-actions">
                 <button class="edit-workout-button" type="button" @onclick="SaveFreeExerciseEdit">
                     Сохранить
-                </button>
-                <button class="secondary-button" type="button" @onclick="CloseFreeExerciseEditor">
-                    Отмена
                 </button>
             </div>
         </section>
@@ -765,9 +724,15 @@
             {
                 <p>Выберите действие для объединённой карточки.</p>
                 <div class="edit-workout-actions">
+                    @foreach (var exercise in supersetActionGroup.Exercises.Where(x => x.IsConfigured))
+                    {
+                        <button class="secondary-button photo-menu-button" type="button" disabled="@_isBusy" @onclick="() => OpenPhotoFromSupersetMenuAsync(exercise)">
+                            <span class="material-symbols-rounded" aria-hidden="true">@(exercise.HasPhoto ? "image" : "add_a_photo")</span>
+                            <span>@(exercise.HasPhoto ? "Открыть фото" : "Добавить фото"): @exercise.DisplayName</span>
+                        </button>
+                    }
                     <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="() => SeparateSupersetAsync(supersetActionGroup)">Разъединить супер-сет</button>
                     <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="RequestSupersetDelete">Удалить супер-сет</button>
-                    <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="() => CloseSupersetActions()">Отмена</button>
                 </div>
             }
         </section>
@@ -942,6 +907,18 @@
 
     private void RequestCloseEditWorkoutAction() =>
         _ = InvokeAsync(CloseEditWorkoutAction);
+
+    private async Task OpenPhotoFromExerciseMenuAsync(ExerciseDraft exercise)
+    {
+        CloseEditWorkoutAction();
+        await OpenPhotoAsync(exercise);
+    }
+
+    private async Task OpenPhotoFromSupersetMenuAsync(ExerciseDraft exercise)
+    {
+        CloseSupersetActions(force: true);
+        await OpenPhotoAsync(exercise);
+    }
 
     private void BeginFreeExerciseEdit()
     {
@@ -1202,7 +1179,7 @@
             }
 
             var savedDraft = FreeWorkoutDraftStore.Load();
-            if (savedDraft is { IsActive: true })
+            if (savedDraft is { IsActive: true } && savedDraft.Exercises.Count > 0)
             {
                 _isFreeWorkout = true;
                 _workout = null;
@@ -1213,6 +1190,9 @@
                     : _exercises.Min(exercise => exercise.Id) - 1;
                 return;
             }
+
+            if (savedDraft is { IsActive: true })
+                FreeWorkoutDraftStore.Clear();
 
             _isFreeWorkout = false;
 
@@ -1232,7 +1212,6 @@
             {
                 _exercises.AddRange(_workout.TrainingPlan.Exercises
                     .Select(ExerciseDraft.From));
-                await LoadPhotoThumbnailsAsync(_exercises);
             }
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -1351,7 +1330,14 @@
     {
         var completed = args.Value is bool value && value;
         set.Completed = completed;
-        if (completed && HasFollowingSet(exercise, set))
+        if (!completed)
+        {
+            if (HasFollowingSet(exercise, set))
+                ResetRestTimer(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets));
+            else if (HasFollowingExercise(exercise))
+                ResetRestTimer(GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises));
+        }
+        else if (HasFollowingSet(exercise, set))
         {
             StartRestTimer(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets));
         }
@@ -1367,7 +1353,15 @@
     {
         var completed = args.Value is bool value && value;
         set.Completed = completed;
-        if (!completed || !IsSupersetRoundCompleted(group, set.SetNumber))
+        if (!completed)
+        {
+            ResetRestTimer(GetRestTimer(group.Exercises[0].Id, set.SetNumber, RestTimerKind.BetweenSets));
+            ResetRestTimer(GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises));
+            await Task.CompletedTask;
+            return;
+        }
+
+        if (!IsSupersetRoundCompleted(group, set.SetNumber))
         {
             await Task.CompletedTask;
             return;
@@ -1470,6 +1464,13 @@
         timer.RemainingSeconds = timer.DurationSeconds;
         timer.EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(timer.RemainingSeconds);
         timer.IsRunning = true;
+    }
+
+    private static void ResetRestTimer(RestTimerState timer)
+    {
+        timer.IsRunning = false;
+        timer.EndsAtUtc = null;
+        timer.RemainingSeconds = timer.DurationSeconds;
     }
 
     private void PauseSelectedRestTimer()
@@ -1793,6 +1794,13 @@
     {
         if (!_isFreeWorkout)
             return;
+
+        if (_exercises.Count == 0)
+        {
+            _isFreeWorkout = false;
+            FreeWorkoutDraftStore.Clear();
+            return;
+        }
 
         FreeWorkoutDraftStore.Save(new FreeWorkoutDraft(
             true,

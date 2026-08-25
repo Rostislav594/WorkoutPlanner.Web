@@ -142,13 +142,12 @@
             else if (!_isLoadingProgress)
             {
                 <div class="modal-empty">
-                    <span class="material-symbols-rounded" aria-hidden="true">show_chart</span>
+                    <span class="material-symbols-rounded" aria-hidden="true">insights</span>
                     <h3>Данных пока нет</h3>
                     <p>Завершите тренировку, чтобы здесь появилась динамика упражнения.</p>
                 </div>
             }
 
-            <button class="secondary-action modal-action" type="button" disabled="@_isLoadingProgress" @onclick="CloseExerciseProgress">Закрыть</button>
         </section>
     </div>
 }

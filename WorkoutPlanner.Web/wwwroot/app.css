@@ -1926,6 +1926,11 @@ select:disabled,
     transform: none !important;
 }
 
+button:not(:disabled):active,
+a:not([aria-disabled="true"]):active {
+    filter: brightness(.9);
+}
+
 .finish-button {
     background: var(--color-success);
 }
