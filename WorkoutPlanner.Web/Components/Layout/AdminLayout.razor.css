@@ -1,0 +1,548 @@
+.admin-skip-link {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 3000;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--color-accent);
+    color: #111;
+    font-weight: 800;
+    text-decoration: none;
+    transform: translateY(-160%);
+}
+
+.admin-skip-link:focus {
+    transform: translateY(0);
+}
+
+.admin-shell {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr);
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.admin-navigation {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 16px 18px;
+    border-right: var(--border-subtle);
+    background: var(--color-bg-elevated);
+}
+
+.admin-navigation__brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    min-height: 64px;
+    padding: 10px 12px;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.admin-navigation__brand > .material-symbols-rounded {
+    color: var(--color-accent);
+    font-size: 36px;
+}
+
+.admin-navigation__brand strong,
+.admin-navigation__brand small {
+    display: block;
+}
+
+.admin-navigation__brand strong {
+    font-size: 20px;
+    letter-spacing: .01em;
+}
+
+.admin-navigation__brand small {
+    margin-top: 2px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.admin-navigation__links {
+    display: grid;
+    gap: 6px;
+    margin-top: 30px;
+}
+
+.admin-navigation__links ::deep a,
+.admin-navigation__footer a {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui);
+}
+
+.admin-navigation__links ::deep a:hover,
+.admin-navigation__links ::deep a:focus-visible,
+.admin-navigation__footer a:hover,
+.admin-navigation__footer a:focus-visible {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-hover);
+    color: var(--color-text);
+}
+
+.admin-navigation__links ::deep a.active {
+    border-color: rgba(255, 122, 26, .32);
+    background: var(--color-accent-soft);
+    color: var(--color-text);
+}
+
+.admin-navigation__links ::deep a.active > .material-symbols-rounded {
+    color: var(--color-accent);
+}
+
+.admin-navigation__links ::deep .material-symbols-rounded,
+.admin-navigation__footer .material-symbols-rounded {
+    font-size: 22px;
+}
+
+.admin-navigation__footer {
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: var(--border-subtle);
+}
+
+.admin-shell__main {
+    min-width: 0;
+    outline: none;
+}
+
+.admin-shell__main ::deep .admin-page {
+    width: min(1540px, 100%);
+    min-height: 100%;
+    margin-inline: auto;
+    padding: 38px clamp(24px, 4vw, 64px) 64px;
+}
+
+.admin-shell__main ::deep .admin-panel {
+    min-width: 0;
+    padding: 24px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-card);
+}
+
+.admin-shell__main ::deep .admin-panel__heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.admin-shell__main ::deep .admin-panel__heading h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.admin-shell__main ::deep .admin-panel__heading p {
+    margin: 5px 0 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.admin-shell__main ::deep .admin-toolbar {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 28px 0 20px;
+    padding: 18px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+}
+
+.admin-shell__main ::deep .admin-field {
+    min-width: min(280px, 100%);
+    flex: 1 1 280px;
+}
+
+.admin-shell__main ::deep .admin-field--compact {
+    min-width: min(210px, 100%);
+    flex: 0 1 240px;
+}
+
+.admin-shell__main ::deep .admin-field label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+    font-weight: 750;
+}
+
+.admin-shell__main ::deep .admin-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 13px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    font: inherit;
+}
+
+.admin-shell__main ::deep textarea.admin-input {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.55;
+}
+
+.admin-shell__main ::deep .admin-button,
+.admin-shell__main ::deep a.admin-button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 18px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.admin-shell__main ::deep .admin-button--primary {
+    background: var(--color-success);
+}
+
+.admin-shell__main ::deep .admin-button--secondary {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-hover);
+}
+
+.admin-shell__main ::deep .admin-button--danger {
+    background: var(--color-danger-action);
+}
+
+.admin-shell__main ::deep .admin-button .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.admin-shell__main ::deep .admin-state {
+    min-height: 210px;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 10px;
+    margin-top: 28px;
+    padding: 30px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-raised);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.admin-shell__main ::deep .admin-state > .material-symbols-rounded {
+    color: var(--color-text-subtle);
+    font-size: 42px;
+}
+
+.admin-shell__main ::deep .admin-state h2,
+.admin-shell__main ::deep .admin-state p {
+    margin: 0;
+}
+
+.admin-shell__main ::deep .admin-state h2 {
+    color: var(--color-text);
+    font-size: 20px;
+}
+
+.admin-shell__main ::deep .admin-state .admin-button {
+    margin-top: 8px;
+}
+
+.admin-shell__main ::deep .admin-table-wrap {
+    overflow-x: auto;
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-card);
+}
+
+.admin-shell__main ::deep .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.admin-shell__main ::deep .admin-table th,
+.admin-shell__main ::deep .admin-table td {
+    padding: 15px 16px;
+    border-bottom: var(--border-subtle);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.admin-shell__main ::deep .admin-table th {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-shell__main ::deep .admin-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.admin-shell__main ::deep .admin-table tbody tr:hover {
+    background: var(--color-surface-hover);
+}
+
+.admin-shell__main ::deep .admin-table a {
+    color: var(--color-text);
+    font-weight: 750;
+    text-decoration-color: var(--color-border-strong);
+    text-underline-offset: 3px;
+}
+
+.admin-shell__main ::deep .admin-table__primary,
+.admin-shell__main ::deep .admin-table__secondary {
+    display: block;
+}
+
+.admin-shell__main ::deep .admin-table__secondary {
+    max-width: 320px;
+    margin-top: 3px;
+    overflow: hidden;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-shell__main ::deep .admin-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 28px;
+    padding: 3px 10px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.admin-shell__main ::deep .admin-status::before {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    content: "";
+}
+
+.admin-shell__main ::deep .admin-status--success {
+    border-color: rgba(63, 185, 80, .35);
+    background: var(--color-success-soft);
+    color: #8ee39d;
+}
+
+.admin-shell__main ::deep .admin-status--warning {
+    border-color: rgba(232, 200, 121, .32);
+    background: rgba(232, 200, 121, .1);
+    color: var(--color-warning);
+}
+
+.admin-shell__main ::deep .admin-status--danger {
+    border-color: rgba(248, 81, 73, .36);
+    background: rgba(248, 81, 73, .11);
+    color: var(--color-danger-soft);
+}
+
+.admin-shell__main ::deep .admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 18px;
+    color: var(--color-text-muted);
+    font-size: 14px;
+}
+
+.admin-shell__main ::deep .admin-pagination__buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-shell__main ::deep .admin-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.admin-shell__main ::deep .admin-back-link:hover,
+.admin-shell__main ::deep .admin-back-link:focus-visible {
+    color: var(--color-text);
+}
+
+.admin-shell__main ::deep .admin-back-link .material-symbols-rounded {
+    font-size: 20px;
+}
+
+.admin-shell__main ::deep .admin-alert {
+    margin: 18px 0;
+    padding: 13px 15px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+}
+
+.admin-shell__main ::deep .admin-alert--error {
+    border-color: rgba(248, 81, 73, .4);
+    background: rgba(248, 81, 73, .12);
+    color: var(--color-danger-soft);
+}
+
+.admin-shell__main ::deep .admin-alert--success {
+    border-color: rgba(63, 185, 80, .4);
+    background: var(--color-success-soft);
+    color: #adf0bd;
+}
+
+@media (max-width: 900px) {
+    .admin-shell {
+        display: block;
+    }
+
+    .admin-navigation {
+        position: relative;
+        height: auto;
+        padding: 12px 16px;
+        border-right: 0;
+        border-bottom: var(--border-subtle);
+    }
+
+    .admin-navigation__brand {
+        min-height: 54px;
+        padding: 4px 6px 10px;
+    }
+
+    .admin-navigation__brand > .material-symbols-rounded {
+        font-size: 30px;
+    }
+
+    .admin-navigation__links {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+        padding-bottom: 2px;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .admin-navigation__links ::deep a {
+        flex: 0 0 auto;
+        padding-inline: 12px;
+    }
+
+    .admin-navigation__footer {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .admin-navigation__footer a {
+        width: 44px;
+        min-height: 44px;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .admin-navigation__footer a span:last-child {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    .admin-shell__main ::deep .admin-page {
+        padding: 30px 20px 52px;
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-navigation__links ::deep a {
+        min-width: 48px;
+        justify-content: center;
+    }
+
+    .admin-navigation__links ::deep a > span:last-child {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+
+    .admin-shell__main ::deep .admin-page {
+        padding-inline: 16px;
+    }
+
+    .admin-shell__main ::deep .admin-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 14px;
+    }
+
+    .admin-shell__main ::deep .admin-field,
+    .admin-shell__main ::deep .admin-field--compact {
+        width: 100%;
+        min-width: 0;
+        flex-basis: auto;
+    }
+
+    .admin-shell__main ::deep .admin-toolbar .admin-button {
+        width: 100%;
+    }
+
+    .admin-shell__main ::deep .admin-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-shell__main ::deep .admin-pagination__buttons .admin-button {
+        flex: 1;
+    }
+}

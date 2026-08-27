@@ -1,0 +1,60 @@
+@page "/notifications/{Kind}/{Id:long}"
+@layout MainLayout
+@inject IInboxApiClient InboxApi
+@inject NavigationManager Navigation
+
+<PageTitle>Уведомление</PageTitle>
+
+@if (_loading)
+{
+    <p class="page-state" role="status">Загружаем уведомление…</p>
+}
+else if (_message is null)
+{
+    <section class="page-state" role="alert">
+        <h1>Уведомление не найдено</h1>
+        <button class="secondary-button" type="button" @onclick="GoBack">Назад</button>
+    </section>
+}
+else
+{
+    <article class="notification-page">
+        <header class="notification-page__header">
+            <span class="notification-page__type">@GetTypeLabel(_message.Type)</span>
+            <button class="notification-page__close" type="button" aria-label="Закрыть уведомление" @onclick="GoBack">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+        </header>
+        <section class="notification-page__content" aria-labelledby="inbox-message-title">
+            <h1 id="inbox-message-title">@_message.Title</h1>
+            <p class="notification-page__date">@FormatDate(_message.CreatedAtUtc)</p>
+            @if (!string.IsNullOrWhiteSpace(_message.ImagePath))
+            {
+                <img class="notification-page__image" src="@_message.ImagePath" alt="Иллюстрация к публикации «@_message.Title»" />
+            }
+            @if (!string.IsNullOrWhiteSpace(_message.SupportTicketNumber))
+            {
+                <p class="notification-page__ticket">Обращение @_message.SupportTicketNumber</p>
+            }
+            <p class="notification-page__body">@_message.Body</p>
+        </section>
+    </article>
+}
+
+@code {
+    [Parameter] public string Kind { get; set; } = "message";
+    [Parameter] public long Id { get; set; }
+    private InboxMessageResponse? _message;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await InboxApi.GetMessagesAsync();
+        _message = result.Value?.Messages.FirstOrDefault(x => x.Id == Id && x.IsPublication == string.Equals(Kind, "publication", StringComparison.OrdinalIgnoreCase));
+        _loading = false;
+    }
+
+    private void GoBack() => Navigation.NavigateTo("/");
+    private static string GetTypeLabel(string type) => type switch { "SupportReply" => "Техподдержка", "News" => "Новости", "Update" => "Обновление", _ => "Системное сообщение" };
+    private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
+}

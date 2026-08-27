@@ -2,6 +2,8 @@
 @attribute [AllowAnonymous]
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+@inject WorkoutPlanner.Web.Services.Activity.UserActivityService UserActivity
 @inject NavigationManager Navigation
 
 <div class="auth-page">
@@ -65,14 +67,6 @@
 
         </EditForm>
 
-        <div class="auth-footer">
-
-            <a href="/account/register">
-                Создать аккаунт
-            </a>
-
-        </div>
-
     </div>
 
 </div>
@@ -98,6 +92,13 @@
 
         if (result.Succeeded)
         {
+            var user = await UserManager.FindByEmailAsync(InputModel.Email.Trim());
+            if (user is not null)
+            {
+                await UserActivity.RecordSeenAsync(
+                    user.Id,
+                    WorkoutPlanner.Web.Services.Activity.UserActivityMetadata.Web);
+            }
             Navigation.NavigateTo(GetReturnUrl(), forceLoad: true);
             return;
         }

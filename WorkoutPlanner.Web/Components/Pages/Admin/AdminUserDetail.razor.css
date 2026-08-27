@@ -1,0 +1,7 @@
+.admin-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 28px; }
+.admin-definition-list { display: grid; gap: 0; margin: 0; }
+.admin-definition-list div { display: grid; grid-template-columns: minmax(150px, .7fr) minmax(0, 1.3fr); gap: 18px; padding: 13px 0; border-top: var(--border-subtle); }
+.admin-definition-list dt { color: var(--color-text-muted); font-weight: 700; }
+.admin-definition-list dd { min-width: 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
+@media (max-width: 1000px) { .admin-detail-grid { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .admin-definition-list div { grid-template-columns: 1fr; gap: 4px; } .admin-definition-list dd { text-align: left; } }

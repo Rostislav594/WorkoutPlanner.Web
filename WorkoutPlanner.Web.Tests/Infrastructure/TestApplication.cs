@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Services;
+using WorkoutPlanner.Web.Services.Activity;
+using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Support;
 
 namespace WorkoutPlanner.Web.Tests.Infrastructure;
 
@@ -78,6 +82,7 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddDbContextFactory<WorkoutDbContext>((provider, options) =>
             options.UseSqlite(provider.GetRequiredService<SqliteConnection>()));
         services.AddIdentityCore<IdentityUser>()
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<WorkoutDbContext>();
         services.AddScoped<CurrentUserService>();
         services.AddScoped<AccountDeletionService>();
@@ -89,6 +94,12 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddScoped<WorkoutCompletionService>();
         services.AddScoped<ExerciseIndexService>();
         services.AddScoped<ProgressService>();
+        services.Configure<UserActivityOptions>(_ => { });
+        services.AddSingleton<WorkoutPlanner.Web.Application.Abstractions.ISupportScreenshotStorage, SupportScreenshotStorage>();
+        services.AddGymPlannerAdminOperations(new ConfigurationBuilder().Build());
+        services.AddScoped<WorkoutPlanner.Web.Application.Abstractions.IInboxService, InboxService>();
+        services.AddScoped<WorkoutPlanner.Web.Application.Abstractions.IAdminPublicationService, AdminPublicationService>();
+        services.AddSingleton<WorkoutPlanner.Web.Application.Abstractions.IInboxPublicationImageStorage, PublicationImageStorage>();
 
         var serviceProvider = services.BuildServiceProvider();
 

@@ -89,6 +89,13 @@ public sealed class SupportTicketService(
             db.SupportTickets.Add(ticket);
             await db.SaveChangesAsync(cancellationToken);
             ticket.TicketNumber = $"GP-{now:yyyyMMdd}-{ticket.Id:D6}";
+            db.SupportMessages.Add(new SupportMessage
+            {
+                SupportTicketId = ticket.Id,
+                SenderType = SupportMessageSenderType.User,
+                Message = ticket.Message,
+                CreatedAtUtc = ticket.CreatedAtUtc
+            });
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
         }

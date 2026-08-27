@@ -230,6 +230,44 @@ namespace WorkoutPlanner.Web.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.AdminAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AdminUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TargetId")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("AdminUserId", "CreatedAtUtc");
+
+                    b.ToTable("AdminAuditLogs");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.AppSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -428,6 +466,9 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Preview")
                         .HasMaxLength(400)
                         .HasColumnType("TEXT");
@@ -466,6 +507,77 @@ namespace WorkoutPlanner.Web.Migrations
                     b.HasIndex("UserId", "ReadAtUtc", "CreatedAtUtc");
 
                     b.ToTable("InboxMessages");
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxPublication", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ImagePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Preview")
+                        .HasMaxLength(400)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("SendPushNotification")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PublishedAtUtc");
+
+                    b.ToTable("InboxPublications");
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxPublicationRead", b =>
+                {
+                    b.Property<long>("PublicationId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("PublicationId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("InboxPublicationReads");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.MobileSession", b =>
@@ -542,6 +654,35 @@ namespace WorkoutPlanner.Web.Migrations
                     b.ToTable("ProgressSnapshots");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SenderType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("SupportTicketId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SupportTicketId", "CreatedAtUtc");
+
+                    b.ToTable("SupportMessages");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportTicket", b =>
                 {
                     b.Property<long>("Id")
@@ -608,6 +749,8 @@ namespace WorkoutPlanner.Web.Migrations
                         .IsUnique();
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("Status", "UpdatedAtUtc");
 
                     b.ToTable("SupportTickets");
                 });
@@ -680,6 +823,40 @@ namespace WorkoutPlanner.Web.Migrations
                     b.HasIndex("TrainingSessionId");
 
                     b.ToTable("TrainingSessionExercises");
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.UserActivity", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AppVersion")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceModel")
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSeenAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OsVersion")
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Platform")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RegisteredAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("LastSeenAtUtc");
+
+                    b.ToTable("UserActivities");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.UserProfile", b =>
@@ -778,6 +955,8 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Date");
 
                     b.ToTable("WorkoutHistory");
                 });
@@ -919,6 +1098,31 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Navigation("SupportTicket");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxPublication", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxPublicationRead", b =>
+                {
+                    b.HasOne("WorkoutPlanner.Web.Models.InboxPublication", "Publication")
+                        .WithMany("Reads")
+                        .HasForeignKey("PublicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Publication");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.MobileSession", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
@@ -926,6 +1130,17 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportMessage", b =>
+                {
+                    b.HasOne("WorkoutPlanner.Web.Models.SupportTicket", "SupportTicket")
+                        .WithMany("Messages")
+                        .HasForeignKey("SupportTicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SupportTicket");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportTicket", b =>
@@ -967,6 +1182,15 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Navigation("TrainingSession");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.UserActivity", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithOne()
+                        .HasForeignKey("WorkoutPlanner.Web.Models.UserActivity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.UserProfile", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
@@ -986,6 +1210,11 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Navigation("SecondaryMuscles");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.InboxPublication", b =>
+                {
+                    b.Navigation("Reads");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.Muscle", b =>
                 {
                     b.Navigation("SecondaryMuscleLinks");
@@ -994,6 +1223,8 @@ namespace WorkoutPlanner.Web.Migrations
             modelBuilder.Entity("WorkoutPlanner.Web.Models.SupportTicket", b =>
                 {
                     b.Navigation("InboxMessages");
+
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.TrainingPlan", b =>

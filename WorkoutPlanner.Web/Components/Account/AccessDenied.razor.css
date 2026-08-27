@@ -1,0 +1,54 @@
+.access-denied-page {
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.access-denied-page section {
+    width: min(520px, 100%);
+    padding: 48px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-raised);
+    text-align: center;
+}
+
+.access-denied-page .material-symbols-rounded {
+    color: var(--color-accent);
+    font-size: 52px;
+}
+
+.access-denied-page h1 {
+    margin: 16px 0 10px;
+}
+
+.access-denied-page p {
+    margin: 0 0 24px;
+    color: var(--color-text-muted);
+}
+
+.access-denied-page a {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 22px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.access-denied-page a:hover,
+.access-denied-page a:focus-visible {
+    border-color: var(--color-accent);
+    outline: none;
+}
+
+@media (max-width: 600px) {
+    .access-denied-page { padding: 20px; }
+    .access-denied-page section { padding: 36px 24px; }
+}

@@ -268,7 +268,7 @@
 
 .template-superset-name-actions .card-menu-button .material-symbols-rounded { font-size: 22px; }
 
-.superset-tone-a { color: #e2b23d; }
+.superset-tone-a { color: var(--color-orange); }
 .superset-tone-b { color: var(--color-success); }
 
 .template-superset-round {

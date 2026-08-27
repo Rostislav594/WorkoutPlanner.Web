@@ -19,6 +19,20 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         CancellationToken cancellationToken = default) =>
         PostAsync($"api/v1/inbox/messages/{messageId}/read", cancellationToken);
 
+    public Task<ApiResult<InboxUnreadCountResponse>> MarkPublicationReadAsync(
+        long publicationId,
+        CancellationToken cancellationToken = default) =>
+        PostAsync($"api/v1/inbox/publications/{publicationId}/read", cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> DeleteMessageAsync(long messageId, CancellationToken cancellationToken = default) =>
+        DeleteAsync($"api/v1/inbox/messages/{messageId}", cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> DeletePublicationAsync(long publicationId, CancellationToken cancellationToken = default) =>
+        DeleteAsync($"api/v1/inbox/publications/{publicationId}", cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> DeleteAllAsync(CancellationToken cancellationToken = default) =>
+        DeleteAsync("api/v1/inbox/messages", cancellationToken);
+
     public Task<ApiResult<InboxUnreadCountResponse>> MarkAllReadAsync(
         CancellationToken cancellationToken = default) =>
         PostAsync("api/v1/inbox/messages/read-all", cancellationToken);
@@ -51,6 +65,19 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         {
             return ApiResult<InboxUnreadCountResponse>.Failure(
                 "Нет соединения с сервером.");
+        }
+    }
+
+    private async Task<ApiResult<InboxUnreadCountResponse>> DeleteAsync(string url, CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await client.DeleteAsync(url, cancellationToken);
+            return await ReadAsync<InboxUnreadCountResponse>(response, cancellationToken);
+        }
+        catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
+        {
+            return ApiResult<InboxUnreadCountResponse>.Failure("Нет соединения с сервером.");
         }
     }
 

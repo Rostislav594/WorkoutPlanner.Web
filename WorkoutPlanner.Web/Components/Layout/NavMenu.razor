@@ -36,6 +36,11 @@
                 <a class="menu-auth-link" href="/profile" @onclick="CloseMenu">
                     Профиль
                 </a>
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <a class="menu-auth-link" href="/admin" @onclick="CloseMenu">
+                        Admin Panel
+                    </a>
+                </AuthorizeView>
             </nav>
 
             <div class="side-menu-footer">

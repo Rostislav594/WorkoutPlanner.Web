@@ -10,6 +10,8 @@ public sealed class AuthenticatedHttpMessageHandler(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
+        AddActivityMetadata(request);
+
         var accessToken = await authentication.GetValidAccessTokenAsync(
             cancellationToken);
         if (!string.IsNullOrWhiteSpace(accessToken))
@@ -23,5 +25,34 @@ public sealed class AuthenticatedHttpMessageHandler(
             await authentication.ClearAsync(cancellationToken);
 
         return response;
+    }
+
+    private static void AddActivityMetadata(HttpRequestMessage request)
+    {
+        AddHeader(
+            request,
+            "X-GPlanner-Platform",
+            Microsoft.Maui.Devices.DeviceInfo.Current.Platform.ToString());
+        AddHeader(
+            request,
+            "X-GPlanner-App-Version",
+            Microsoft.Maui.ApplicationModel.AppInfo.Current.VersionString);
+        AddHeader(
+            request,
+            "X-GPlanner-OS-Version",
+            Microsoft.Maui.Devices.DeviceInfo.Current.VersionString);
+        AddHeader(
+            request,
+            "X-GPlanner-Device-Model",
+            Microsoft.Maui.Devices.DeviceInfo.Current.Model);
+    }
+
+    private static void AddHeader(
+        HttpRequestMessage request,
+        string name,
+        string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && !request.Headers.Contains(name))
+            request.Headers.TryAddWithoutValidation(name, value);
     }
 }

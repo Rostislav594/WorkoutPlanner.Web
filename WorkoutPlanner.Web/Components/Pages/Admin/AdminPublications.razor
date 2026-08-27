@@ -1,0 +1,163 @@
+@page "/admin/publications"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Models
+@inject IAdminPublicationService Publications
+
+<PageTitle>Публикации — GPlanner Admin</PageTitle>
+
+<div class="admin-publications">
+    <header class="admin-publications__heading">
+        <a href="/admin">← Панель управления</a>
+        <p>GPlanner Admin</p>
+        <h1>Публикации</h1>
+        <span>Создавайте сообщения, которые появятся в центре уведомлений пользователей.</span>
+    </header>
+
+    <div class="admin-publications__layout">
+        <section class="admin-panel admin-editor" aria-labelledby="new-publication-title">
+            <div class="admin-panel__heading">
+                <div>
+                    <span>Редактор</span>
+                    <h2 id="new-publication-title">Новая публикация</h2>
+                </div>
+                <small>Поля со звёздочкой обязательны</small>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <div class="admin-alert admin-alert--error" role="alert">@_error</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_success))
+            {
+                <div class="admin-alert admin-alert--success" role="status">@_success</div>
+            }
+            <EditForm Model="_form" OnValidSubmit="PublishAsync" FormName="admin-publication">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="admin-validation" />
+                <div class="admin-field-grid">
+                    <div class="admin-field">
+                        <label for="publication-type">Тип</label>
+                        <InputSelect id="publication-type" class="admin-input" @bind-Value="_form.Type">
+                            <option value="News">Новость</option><option value="Update">Обновление</option><option value="System">Системное</option>
+                        </InputSelect>
+                    </div>
+                    <div class="admin-field">
+                        <label for="publication-date">Дата публикации</label>
+                        <input id="publication-date" class="admin-input" type="datetime-local" @bind="_publishedLocal" />
+                    </div>
+                </div>
+                <div class="admin-field">
+                    <div class="admin-field__label-row">
+                        <label for="publication-title">Заголовок *</label>
+                        <span>@_form.Title.Length / 160</span>
+                    </div>
+                    <input id="publication-title" class="admin-input" maxlength="160" placeholder="Коротко сформулируйте тему публикации" @bind="_form.Title" @bind:event="oninput" />
+                    <ValidationMessage For="() => _form.Title" />
+                </div>
+                <div class="admin-field">
+                    <div class="admin-field__label-row">
+                        <label for="publication-body">Текст *</label>
+                        <span>@_form.Body.Length / 8000</span>
+                    </div>
+                    <textarea id="publication-body" class="admin-input admin-textarea" maxlength="8000" placeholder="Напишите сообщение, которое увидят пользователи…" @bind="_form.Body" @bind:event="oninput"></textarea>
+                    <ValidationMessage For="() => _form.Body" />
+                </div>
+                <div class="admin-field">
+                    <label for="publication-image">Изображение <span>(необязательно)</span></label>
+                    <InputFile id="publication-image" class="admin-file" OnChange="SelectImageAsync" accept="image/jpeg,image/png,image/webp" />
+                    <small>JPEG, PNG или WebP, до 5 МБ.</small>
+                </div>
+                <div class="admin-actions">
+                    <button class="admin-button admin-button--secondary" type="button" @onclick="TogglePreview">@(_showPreview ? "Скрыть предпросмотр" : "Предпросмотр")</button>
+                    <button class="admin-button admin-button--primary" type="submit" disabled="@_isSaving">@(_isSaving ? "Публикуем…" : "Опубликовать")</button>
+                </div>
+            </EditForm>
+        </section>
+
+        <aside class="admin-sidebar">
+            @if (_showPreview)
+            {
+                <section class="admin-panel admin-preview" aria-labelledby="preview-title">
+                    <div class="admin-preview__meta">
+                        <span>@TypeLabel(_form.Type)</span>
+                        <time>@_publishedLocal.ToString("dd.MM.yyyy, HH:mm")</time>
+                    </div>
+                    <h2 id="preview-title">@(string.IsNullOrWhiteSpace(_form.Title) ? "Заголовок публикации" : _form.Title)</h2>
+                    @if (!string.IsNullOrWhiteSpace(_previewImageDataUrl))
+                    {
+                        <img class="admin-preview__image" src="@_previewImageDataUrl" alt="Предпросмотр изображения публикации" />
+                    }
+                    <p>@(string.IsNullOrWhiteSpace(_form.Body) ? "Текст публикации появится здесь." : _form.Body)</p>
+                </section>
+            }
+
+            <section class="admin-panel admin-recent" aria-labelledby="recent-title">
+                <div class="admin-panel__heading">
+                    <div><span>История</span><h2 id="recent-title">Последние публикации</h2></div>
+                    <small>@_recent.Count</small>
+                </div>
+                @if (_recent.Count == 0) { <p class="admin-empty">Публикаций пока нет.</p> }
+                else
+                {
+                    <div class="admin-publication-list">
+                        @foreach (var item in _recent)
+                        {
+                            <article><div><strong>@item.Title</strong><span>@TypeLabel(item.Type)</span></div><time datetime="@item.PublishedAtUtc.ToString("O")">@item.PublishedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time><small>@(item.PublishedAtUtc <= DateTime.UtcNow ? "Опубликовано" : "Запланировано")</small></article>
+                        }
+                    </div>
+                }
+            </section>
+        </aside>
+    </div>
+</div>
+
+@code {
+    private readonly FormModel _form = new();
+    private readonly List<AdminPublicationItem> _recent = [];
+    private IBrowserFile? _image;
+    private DateTime _publishedLocal = DateTime.Now;
+    private bool _showPreview = true;
+    private bool _isSaving;
+    private string? _error;
+    private string? _success;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    private string? _previewImageDataUrl;
+    private async Task SelectImageAsync(InputFileChangeEventArgs args)
+    {
+        _image = args.File;
+        _previewImageDataUrl = null;
+        if (_image is null) return;
+        await using var stream = _image.OpenReadStream(5 * 1024 * 1024);
+        await using var buffer = new MemoryStream();
+        await stream.CopyToAsync(buffer);
+        _previewImageDataUrl = $"data:{_image.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
+    }
+    private void TogglePreview() => _showPreview = !_showPreview;
+    private async Task ReloadAsync() { _recent.Clear(); _recent.AddRange(await Publications.GetRecentAsync()); }
+    private async Task PublishAsync()
+    {
+        if (_isSaving) return;
+        _isSaving = true; _error = null; _success = null;
+        try
+        {
+            PhotoUpload? upload = null;
+            if (_image is not null) upload = new PhotoUpload(_image.OpenReadStream(5 * 1024 * 1024), _image.ContentType, _image.Size);
+            await Publications.CreateAsync(new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload));
+            _success = "Публикация сохранена.";
+            _form.Title = string.Empty; _form.Body = string.Empty; _image = null; _previewImageDataUrl = null;
+            await ReloadAsync();
+        }
+        catch (Exception exception) when (exception is InvalidDataException or IOException) { _error = exception.Message; }
+        finally { _isSaving = false; }
+    }
+    private static string TypeLabel(InboxMessageType type) => type switch { InboxMessageType.News => "Новость", InboxMessageType.Update => "Обновление", _ => "Системное сообщение" };
+    private sealed class FormModel
+    {
+        public InboxMessageType Type { get; set; } = InboxMessageType.News;
+        [Required(ErrorMessage = "Введите заголовок."), StringLength(160, ErrorMessage = "Не больше 160 символов.")] public string Title { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Введите текст."), StringLength(8000, ErrorMessage = "Не больше 8000 символов.")] public string Body { get; set; } = string.Empty;
+    }
+}

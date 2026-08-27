@@ -1,0 +1,49 @@
+@page "/admin/support/{TicketId:long}"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Models
+@inject IAdminSupportService Support
+
+<PageTitle>Support ticket — GPlanner Admin</PageTitle>
+
+<div class="admin-page">
+    <a class="admin-back-link" href="/admin/support"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>Support</a>
+    <AdminPageHeader Title="@(_ticket?.TicketNumber ?? "Обращение")" Description="История переписки и диагностический контекст пользователя." />
+    @if (_isLoading) { <section class="admin-state" role="status"><h2>Загружаем обращение</h2></section> }
+    else if (_ticket is null) { <section class="admin-state" role="alert"><h2>Обращение не найдено</h2><p>@_error</p></section> }
+    else
+    {
+        @if (_feedback is not null) { <div class="admin-alert @(_feedbackIsError ? "admin-alert--error" : "admin-alert--success")" role="@(_feedbackIsError ? "alert" : "status")">@_feedback</div> }
+        <div class="support-detail-layout">
+            <section class="support-conversation admin-panel" aria-labelledby="conversation-title">
+                <div class="admin-panel__heading"><div><h2 id="conversation-title">История сообщений</h2><p>@_ticket.Messages.Count сообщений</p></div><span class="admin-status @AdminSupport.StatusClass(_ticket.Status)">@AdminSupport.StatusLabel(_ticket.Status)</span></div>
+                <div class="support-messages">
+                    @foreach (var message in _ticket.Messages)
+                    {
+                        <article class="support-message support-message--@(message.SenderType == SupportMessageSenderType.Support ? "support" : "user")"><header><strong>@(message.SenderType == SupportMessageSenderType.Support ? "Поддержка" : _ticket.DisplayName)</strong><time datetime="@message.CreatedAtUtc.ToString("O")">@message.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time></header><p>@message.Message</p></article>
+                    }
+                </div>
+                <div class="support-reply">
+                    <label for="support-reply">Ответ пользователю</label>
+                    <textarea id="support-reply" class="admin-input" maxlength="8000" @bind="_reply" @bind:event="oninput" placeholder="Ответ появится в существующем Inbox пользователя"></textarea>
+                    <div class="support-reply__actions"><div class="admin-field admin-field--compact"><label for="reply-status">Статус после отправки</label><select id="reply-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(status)</option> }</select></div><button class="admin-button admin-button--primary" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_reply))" @onclick="ReplyAsync">@(_isSaving ? "Отправляем…" : "Отправить в Inbox")</button></div>
+                </div>
+            </section>
+            <aside class="support-context">
+                <section class="admin-panel"><div class="admin-panel__heading"><div><h2>Пользователь</h2><p>@_ticket.Email</p></div></div><dl class="support-facts"><div><dt>Имя</dt><dd>@_ticket.DisplayName</dd></div><div><dt>UserId</dt><dd>@_ticket.UserId</dd></div><div><dt>Создано</dt><dd>@_ticket.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</dd></div><div><dt>GPlanner</dt><dd>@(_ticket.AppVersion ?? "—")</dd></div><div><dt>Платформа</dt><dd>@(_ticket.Platform ?? "—")</dd></div><div><dt>ОС</dt><dd>@(_ticket.OsVersion ?? "—")</dd></div><div><dt>Устройство</dt><dd>@(_ticket.DeviceModel ?? "—")</dd></div></dl></section>
+                @if (_ticket.HasScreenshot) { <section class="admin-panel support-screenshot"><h2>Скриншот</h2><img src="@($"/admin/support/tickets/{_ticket.Id}/screenshot")" alt="Скриншот пользователя к обращению @_ticket.TicketNumber" /></section> }
+                <section class="admin-panel"><label for="ticket-status">Изменить статус</label><select id="ticket-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(status)</option> }</select><button class="admin-button admin-button--secondary support-status-button" disabled="@_isSaving" @onclick="ChangeStatusAsync">Сохранить статус</button></section>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public long TicketId { get; set; }
+    private AdminSupportTicketDetail? _ticket; private string _reply = string.Empty; private SupportTicketStatus _selectedStatus = SupportTicketStatus.WaitingForUser; private bool _isLoading = true; private bool _isSaving; private string? _error = "Проверьте номер обращения."; private string? _feedback; private bool _feedbackIsError;
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    private async Task LoadAsync() { _isLoading = true; try { _ticket = await Support.GetAsync(TicketId); if (_ticket is not null) _selectedStatus = _ticket.Status; } catch { _error = "Обращение временно недоступно."; } finally { _isLoading = false; } }
+    private async Task ReplyAsync() { if (_isSaving || string.IsNullOrWhiteSpace(_reply)) return; _isSaving = true; _feedback = null; try { if (!await Support.ReplyAsync(TicketId, new(_reply, _selectedStatus))) throw new InvalidOperationException(); _reply = string.Empty; _feedback = "Ответ сохранён и отправлен в Inbox пользователя."; _feedbackIsError = false; await LoadAsync(); } catch { _feedback = "Не удалось отправить ответ. Повторите попытку."; _feedbackIsError = true; } finally { _isSaving = false; } }
+    private async Task ChangeStatusAsync() { if (_isSaving) return; _isSaving = true; _feedback = null; try { if (!await Support.ChangeStatusAsync(TicketId, _selectedStatus)) throw new InvalidOperationException(); _feedback = "Статус обращения обновлён."; _feedbackIsError = false; await LoadAsync(); } catch { _feedback = "Не удалось обновить статус."; _feedbackIsError = true; } finally { _isSaving = false; } }
+}

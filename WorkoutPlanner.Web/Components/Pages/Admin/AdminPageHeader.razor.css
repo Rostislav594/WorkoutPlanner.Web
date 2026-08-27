@@ -1,0 +1,50 @@
+.admin-page-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 28px;
+}
+
+.admin-page-header p {
+    margin: 0 0 7px;
+    color: var(--color-accent);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.admin-page-header h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.08;
+}
+
+.admin-page-header span {
+    display: block;
+    max-width: 760px;
+    margin-top: 9px;
+    color: var(--color-text-muted);
+    line-height: 1.55;
+}
+
+.admin-page-header__actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+@media (max-width: 720px) {
+    .admin-page-header {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .admin-page-header__actions {
+        justify-content: flex-start;
+    }
+}

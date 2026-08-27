@@ -1,0 +1,21 @@
+<article class="metric-card metric-card--@Tone @(Featured ? "metric-card--featured" : null)">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <span class="metric-card__icon material-symbols-rounded" aria-hidden="true">@Icon</span>
+    }
+    <strong>@Value</strong>
+    <span>@Label</span>
+    @if (!string.IsNullOrWhiteSpace(Note))
+    {
+        <small>@Note</small>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public object? Value { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public string? Note { get; set; }
+    [Parameter] public string Tone { get; set; } = "default";
+    [Parameter] public bool Featured { get; set; }
+}

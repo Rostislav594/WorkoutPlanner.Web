@@ -7,6 +7,7 @@ using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Services.Activity;
 
 namespace WorkoutPlanner.Web.Api;
 
@@ -105,6 +106,8 @@ public static class GymPlannerApiEndpoints
     private static async Task<IResult> RegisterAsync(
         MobileRegisterRequest request,
         UserManager<IdentityUser> userManager,
+        UserActivityService activities,
+        TimeProvider timeProvider,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -125,6 +128,10 @@ public static class GymPlannerApiEndpoints
 
         try
         {
+            await activities.EnsureRegisteredAsync(
+                user.Id,
+                timeProvider.GetUtcNow().UtcDateTime,
+                cancellationToken);
         }
         catch (Exception exception)
         {
@@ -157,6 +164,8 @@ public static class GymPlannerApiEndpoints
         SignInManager<IdentityUser> signInManager,
         UserManager<IdentityUser> userManager,
         MobileSessionService mobileSessions,
+        UserActivityService activities,
+        HttpRequest httpRequest,
         IOptionsMonitor<BearerTokenOptions> bearerTokenOptions,
         TimeProvider timeProvider,
         CancellationToken cancellationToken)
@@ -195,6 +204,10 @@ public static class GymPlannerApiEndpoints
             user.Id,
             request.DeviceName,
             expiresAtUtc,
+            cancellationToken);
+        await activities.RecordSeenAsync(
+            user.Id,
+            UserActivityMetadata.FromHeaders(httpRequest.Headers),
             cancellationToken);
         var principal = await signInManager.CreateUserPrincipalAsync(user);
         MobileSessionService.AddSessionClaim(principal, session.Id);

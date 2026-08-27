@@ -134,7 +134,45 @@ Use the solution and project files that actually exist in the repository. Typica
 - `dotnet build`
 - `dotnet test`
 
-Run the narrowest useful checks first, then broader checks when the change warrants them. If a command cannot run because of environment limitations, state exactly what was not verified.
+Run the narrowest useful checks first, then broader checks when the change warrants them.
+
+### Mandatory device verification
+
+After every code or UI change, Codex must personally verify the result on the target device before considering the task complete. A successful build or test run alone is not sufficient when the changed behavior can be exercised on the device.
+
+Required behavior:
+
+- Connect to the configured target device using the project's existing deployment/debugging workflow.
+- Build and deploy the affected application to that device when deployment is required for verification.
+- Launch the application and personally exercise the exact user-facing flow or behavior that was changed.
+- Confirm that the requested result is visible and functional on the device, not merely present in source code.
+- For UI/UX changes, visually inspect the affected screen on the device and verify layout, spacing, typography, states, responsiveness, clipping/overflow, and touch interaction where relevant.
+- For behavioral changes, execute the relevant interaction end to end and confirm the expected state/data transition.
+- Re-check closely related flows when the change could reasonably affect them.
+- Do not claim that a task is verified merely because compilation, automated tests, logs, or static code inspection succeeded.
+- If the target device is unavailable, disconnected, unauthorized, unsupported, or otherwise cannot be used from the current environment, explicitly state that device verification was not completed, explain the blocker, and do not represent the task as fully device-verified.
+
+If a command, deployment step, or device check cannot run because of environment limitations, state exactly what was not verified.
+
+### Mandatory final cleanup and rebuild
+
+Before considering any task complete and before writing the final response, Codex must perform a final environment cleanup and a clean rebuild of the solution.
+
+Required sequence:
+
+1. Finish all implementation, tests, debugging, deployment, and device verification that require running application or development processes.
+2. Stop every background process that Codex started for the task and that is no longer required, including application instances, `dotnet watch`, development servers, test runners, log streams, temporary tunnels, helper scripts, or similar task-specific processes.
+3. Do not terminate unrelated user, IDE, system, emulator, device, or third-party processes that Codex did not start unless the user explicitly requests it.
+4. Confirm that Codex-started background processes from the task are no longer running.
+5. Run a clean against the actual solution file used by the repository, for example `dotnet clean <solution-file>`.
+6. Rebuild the same solution from the cleaned state, for example `dotnet build <solution-file>`.
+7. Treat the final clean rebuild as mandatory verification. If the clean or rebuild fails, investigate and fix failures caused by the task when possible; otherwise explicitly report the blocker and do not describe the task as fully complete.
+8. Do not leave a development server, watcher, test runner, log stream, or other Codex-started background process running after the task is finished unless the user explicitly asks for it to remain running.
+
+The final response must state:
+- that Codex-started background processes were stopped, or identify any process intentionally left running at the user's request;
+- the solution file that was cleaned and rebuilt;
+- the result of the final clean rebuild.
 
 ## Git safety
 
@@ -152,5 +190,9 @@ A task is complete only when:
 - The solution is consistent with current architecture and styling.
 - Persistence and migrations are correct when data changes.
 - Relevant build/tests/checks were run or limitations were disclosed.
+- All Codex-started background processes that are no longer required were stopped before final completion.
+- The actual solution was cleaned and successfully rebuilt from the cleaned state, or any blocker was explicitly disclosed and the task was not described as fully complete.
+- The result was deployed to and personally verified on the configured target device whenever the environment allowed device access.
+- If device verification was impossible, the blocker and the exact unverified behavior were explicitly disclosed; the task must not be described as fully device-verified.
 - No unrelated functionality was intentionally changed.
-- The final response lists changed files, verification performed, and any remaining risk.
+- The final response lists changed files, build/test verification, device verification performed, final process cleanup, clean/rebuild result, and any remaining risk.

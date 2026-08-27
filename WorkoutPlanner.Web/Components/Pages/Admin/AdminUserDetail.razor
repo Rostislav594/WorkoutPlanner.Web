@@ -1,0 +1,50 @@
+@page "/admin/users/{UserId}"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAdminUserService Users
+
+<PageTitle>User — GPlanner Admin</PageTitle>
+
+<div class="admin-page">
+    <a class="admin-back-link" href="/admin/users"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>Users</a>
+    <AdminPageHeader Title="Карточка пользователя" Description="Read-only диагностика. Пароли, токены, cookies и другие секреты не отображаются." />
+
+    @if (_isLoading) { <section class="admin-state" role="status"><h2>Загружаем пользователя</h2></section> }
+    else if (_user is null) { <section class="admin-state" role="alert"><h2>Пользователь не найден</h2><p>@_error</p></section> }
+    else
+    {
+        <section class="admin-detail-grid">
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@_user.DisplayName</h2><p>@_user.Email</p></div><span class="admin-status @StatusClass(_user.ActivityStatus)">@_user.ActivityStatus</span></div>
+                <dl class="admin-definition-list">
+                    <div><dt>UserId</dt><dd>@_user.UserId</dd></div>
+                    <div><dt>Регистрация</dt><dd>@FormatDate(_user.RegisteredAtUtc)</dd></div>
+                    <div><dt>Последняя активность</dt><dd>@FormatDate(_user.LastSeenAtUtc)</dd></div>
+                    <div><dt>Платформа</dt><dd>@(_user.Platform ?? "Нет данных")</dd></div>
+                    <div><dt>Версия GPlanner</dt><dd>@(_user.AppVersion ?? "Нет данных")</dd></div>
+                    <div><dt>ОС</dt><dd>@(_user.OsVersion ?? "Нет данных")</dd></div>
+                    <div><dt>Устройство</dt><dd>@(_user.DeviceModel ?? "Нет данных")</dd></div>
+                </dl>
+            </article>
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>Диагностика</h2><p>Без доступа к содержимому аккаунта.</p></div></div>
+                <dl class="admin-definition-list">
+                    <div><dt>Завершённые тренировки</dt><dd>@_user.WorkoutCount</dd></div>
+                    <div><dt>Обращения поддержки</dt><dd>@_user.SupportTicketCount</dd></div>
+                    <div><dt>Активные Mobile-сессии</dt><dd>@_user.ActiveMobileSessionCount</dd></div>
+                    <div><dt>Email подтверждён</dt><dd>@YesNo(_user.EmailConfirmed)</dd></div>
+                    <div><dt>2FA</dt><dd>@YesNo(_user.TwoFactorEnabled)</dd></div>
+                    <div><dt>Блокировка до</dt><dd>@(_user.LockoutEnd?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? "Нет")</dd></div>
+                </dl>
+            </article>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public string UserId { get; set; } = string.Empty;
+    private WorkoutPlanner.Web.Application.Contracts.AdminUserDetail? _user; private bool _isLoading = true; private string _error = "Проверьте UserId.";
+    protected override async Task OnParametersSetAsync() { _isLoading = true; try { _user = await Users.GetAsync(UserId); } catch { _error = "Данные временно недоступны."; } finally { _isLoading = false; } }
+    private static string FormatDate(DateTime? value) => value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? "Нет данных";
+    private static string YesNo(bool value) => value ? "Да" : "Нет";
+    private static string StatusClass(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "admin-status--success", AdminUserActivityStatus.Dormant => "admin-status--warning", AdminUserActivityStatus.Inactive => "admin-status--danger", _ => string.Empty };
+}

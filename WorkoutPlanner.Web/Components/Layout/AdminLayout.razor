@@ -1,0 +1,49 @@
+@inherits LayoutComponentBase
+
+<a class="admin-skip-link" href="#admin-main">К содержимому</a>
+
+<div class="admin-shell">
+    <aside class="admin-navigation">
+        <a class="admin-navigation__brand" href="/admin" aria-label="GPlanner Admin — главная">
+            <span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>
+            <span>
+                <strong>GPlanner</strong>
+                <small>Admin Panel</small>
+            </span>
+        </a>
+
+        <nav class="admin-navigation__links" aria-label="Разделы администрирования">
+            <NavLink href="/admin" Match="NavLinkMatch.All">
+                <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+                <span>Dashboard</span>
+            </NavLink>
+            <NavLink href="/admin/users">
+                <span class="material-symbols-rounded" aria-hidden="true">group</span>
+                <span>Users</span>
+            </NavLink>
+            <NavLink href="/admin/support">
+                <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+                <span>Support</span>
+            </NavLink>
+            <NavLink href="/admin/publications">
+                <span class="material-symbols-rounded" aria-hidden="true">campaign</span>
+                <span>Publications</span>
+            </NavLink>
+            <NavLink href="/admin/system">
+                <span class="material-symbols-rounded" aria-hidden="true">monitor_heart</span>
+                <span>System</span>
+            </NavLink>
+        </nav>
+
+        <div class="admin-navigation__footer">
+            <a href="/account/logout">
+                <span class="material-symbols-rounded" aria-hidden="true">logout</span>
+                <span>Выйти</span>
+            </a>
+        </div>
+    </aside>
+
+    <main id="admin-main" class="admin-shell__main" tabindex="-1">
+        @Body
+    </main>
+</div>

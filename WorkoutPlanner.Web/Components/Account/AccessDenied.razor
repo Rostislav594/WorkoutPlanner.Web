@@ -1,0 +1,13 @@
+@page "/account/access-denied"
+@attribute [AllowAnonymous]
+
+<PageTitle>Доступ запрещён — GPlanner Admin</PageTitle>
+
+<main class="access-denied-page" role="alert">
+    <section>
+        <span class="material-symbols-rounded" aria-hidden="true">lock</span>
+        <h1>Доступ запрещён</h1>
+        <p>Для этого раздела требуется роль администратора.</p>
+        <a href="/account/logout">Выйти</a>
+    </section>
+</main>

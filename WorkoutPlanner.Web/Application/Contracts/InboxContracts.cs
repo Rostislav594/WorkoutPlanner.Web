@@ -10,7 +10,9 @@ public sealed record InboxMessageItem(
     string Body,
     DateTime CreatedAtUtc,
     DateTime? ReadAtUtc,
-    string? SupportTicketNumber);
+    string? SupportTicketNumber,
+    bool IsPublication = false,
+    string? ImagePath = null);
 
 public sealed record InboxPage(
     IReadOnlyList<InboxMessageItem> Messages,

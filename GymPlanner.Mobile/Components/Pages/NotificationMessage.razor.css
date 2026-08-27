@@ -1,0 +1,76 @@
+.notification-page {
+    width: min(100%, 760px);
+    min-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    margin: 0 auto;
+    padding: 16px clamp(16px, 4vw, 32px) calc(32px + env(safe-area-inset-bottom));
+}
+
+.notification-page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.notification-page__type,
+.notification-page__date {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.notification-page__close {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+.notification-page__close:hover,
+.notification-page__close:focus-visible,
+.notification-page__close:active {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-hover);
+}
+
+.notification-page__content {
+    min-width: 0;
+    padding: clamp(20px, 5vw, 36px);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-card);
+}
+
+.notification-page h1 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: clamp(26px, 7vw, 42px);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+}
+
+.notification-page__date { margin: 12px 0 0; }
+.notification-page__ticket { display: inline-block; margin: 20px 0 0; padding: 6px 10px; border-radius: 999px; background: var(--color-accent-soft); color: var(--color-accent-hover); font-size: 13px; font-weight: 700; }
+.notification-page__body { max-width: 68ch; margin: 24px 0 0; color: var(--color-text); font-size: clamp(16px, 2.5vw, 18px); line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
+.notification-page__image { display: block; width: auto; max-width: 100%; height: auto; margin: 24px auto 0; border-radius: var(--radius-lg); object-fit: contain; }
+
+@media (max-width: 420px) {
+    .notification-page { padding-inline: 12px; }
+    .notification-page__content { padding: 20px 16px; border-radius: var(--radius-lg); }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    .notification-page { padding-top: 10px; }
+    .notification-page__header { margin-bottom: 12px; }
+}

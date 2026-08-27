@@ -1,0 +1,9 @@
+.system-checked { margin: 26px 0 14px; color: var(--color-text-muted); font-size: 13px; }
+.system-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.system-card__heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.system-card__heading > .material-symbols-rounded { color: var(--color-text-muted); font-size: 28px; }
+.system-card h2, .system-card p { margin: 0; }
+.system-card h2 { font-size: 18px; }
+.system-card p { margin-top: 14px; color: var(--color-text-muted); line-height: 1.55; }
+@media (max-width: 800px) { .system-grid { grid-template-columns: 1fr; } }
+@media (max-width: 460px) { .system-card__heading { grid-template-columns: auto 1fr; } .system-card__heading .admin-status { grid-column: 1 / -1; justify-self: start; } }

@@ -30,6 +30,8 @@ public sealed class InboxMessage
 
     public DateTime? ReadAtUtc { get; set; }
 
+    public DateTime? DeletedAtUtc { get; set; }
+
     public long? TelegramMessageId { get; set; }
 }
 

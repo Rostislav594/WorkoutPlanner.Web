@@ -63,6 +63,15 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<InboxMessage> InboxMessages =>
         Set<InboxMessage>();
 
+    public DbSet<InboxPublication> InboxPublications => Set<InboxPublication>();
+    public DbSet<InboxPublicationRead> InboxPublicationReads => Set<InboxPublicationRead>();
+
+    public DbSet<SupportMessage> SupportMessages => Set<SupportMessage>();
+
+    public DbSet<UserActivity> UserActivities => Set<UserActivity>();
+
+    public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -122,6 +131,12 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             .HasIndex(x => x.CreatedAtUtc);
 
         modelBuilder.Entity<SupportTicket>()
+            .HasIndex(x => new { x.Status, x.UpdatedAtUtc });
+
+        modelBuilder.Entity<WorkoutHistory>()
+            .HasIndex(x => x.Date);
+
+        modelBuilder.Entity<SupportTicket>()
             .Property(x => x.Status)
             .HasConversion<string>()
             .HasMaxLength(30);
@@ -130,6 +145,35 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             .Property(x => x.TelegramDeliveryStatus)
             .HasConversion<string>()
             .HasMaxLength(20);
+
+        modelBuilder.Entity<SupportMessage>()
+            .HasOne(x => x.SupportTicket)
+            .WithMany(x => x.Messages)
+            .HasForeignKey(x => x.SupportTicketId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SupportMessage>()
+            .HasIndex(x => new { x.SupportTicketId, x.CreatedAtUtc });
+
+        modelBuilder.Entity<SupportMessage>()
+            .Property(x => x.SenderType)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<UserActivity>()
+            .HasOne<IdentityUser>()
+            .WithOne()
+            .HasForeignKey<UserActivity>(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserActivity>()
+            .HasIndex(x => x.LastSeenAtUtc);
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasIndex(x => x.CreatedAtUtc);
+
+        modelBuilder.Entity<AdminAuditLog>()
+            .HasIndex(x => new { x.AdminUserId, x.CreatedAtUtc });
 
         modelBuilder.Entity<InboxMessage>()
             .HasOne<IdentityUser>()
@@ -155,6 +199,16 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             .Property(x => x.Type)
             .HasConversion<string>()
             .HasMaxLength(30);
+
+        modelBuilder.Entity<InboxPublication>()
+            .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.SetNull);
+        modelBuilder.Entity<InboxPublication>().HasIndex(x => x.PublishedAtUtc);
+        modelBuilder.Entity<InboxPublication>().Property(x => x.Type).HasConversion<string>().HasMaxLength(30);
+        modelBuilder.Entity<InboxPublicationRead>().HasKey(x => new { x.PublicationId, x.UserId });
+        modelBuilder.Entity<InboxPublicationRead>().HasOne(x => x.Publication).WithMany(x => x.Reads)
+            .HasForeignKey(x => x.PublicationId).OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<InboxPublicationRead>().HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Exercise>()
             .HasOne(x => x.ExerciseDefinition)

@@ -41,6 +41,8 @@ public sealed class SupportTicket
 
     public ICollection<InboxMessage> InboxMessages { get; } = [];
 
+    public ICollection<SupportMessage> Messages { get; } = [];
+
     public SupportDeliveryStatus TelegramDeliveryStatus { get; set; } =
         SupportDeliveryStatus.Pending;
 }

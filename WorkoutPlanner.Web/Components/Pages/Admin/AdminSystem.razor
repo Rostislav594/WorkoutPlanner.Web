@@ -1,0 +1,34 @@
+@page "/admin/system"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAdminSystemHealthService SystemHealth
+
+<PageTitle>System — GPlanner Admin</PageTitle>
+
+<div class="admin-page">
+    <AdminPageHeader Title="System" Description="Безопасная базовая диагностика серверных компонентов без раскрытия конфигурации и секретов.">
+        <Actions><button class="admin-button admin-button--secondary" disabled="@_isLoading" @onclick="LoadAsync"><span class="material-symbols-rounded" aria-hidden="true">refresh</span>Обновить</button></Actions>
+    </AdminPageHeader>
+
+    @if (_isLoading) { <section class="admin-state" role="status"><h2>Проверяем систему</h2></section> }
+    else if (_snapshot is null) { <section class="admin-state" role="alert"><h2>Диагностика недоступна</h2><p>@_error</p><button class="admin-button admin-button--secondary" @onclick="LoadAsync">Повторить</button></section> }
+    else
+    {
+        <p class="system-checked">Проверено @_snapshot.CheckedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm:ss")</p>
+        <section class="system-grid" aria-label="Состояние компонентов">
+            @foreach (var component in _snapshot.Components)
+            {
+                <article class="admin-panel system-card"><div class="system-card__heading"><span class="material-symbols-rounded" aria-hidden="true">@Icon(component.Status)</span><h2>@component.Component</h2><span class="admin-status @StatusClass(component.Status)">@component.Status</span></div><p>@component.Summary</p></article>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private AdminSystemHealthSnapshot? _snapshot; private bool _isLoading = true; private string _error = "Повторите проверку позже.";
+    protected override Task OnInitializedAsync() => LoadAsync();
+    private async Task LoadAsync() { _isLoading = true; _snapshot = null; try { _snapshot = await SystemHealth.GetAsync(); } catch { _error = "Не удалось получить состояние компонентов."; } finally { _isLoading = false; } }
+    private static string Icon(AdminSystemHealthStatus status) => status switch { AdminSystemHealthStatus.Healthy => "check_circle", AdminSystemHealthStatus.Warning => "warning", _ => "error" };
+    private static string StatusClass(AdminSystemHealthStatus status) => status switch { AdminSystemHealthStatus.Healthy => "admin-status--success", AdminSystemHealthStatus.Warning => "admin-status--warning", _ => "admin-status--danger" };
+}

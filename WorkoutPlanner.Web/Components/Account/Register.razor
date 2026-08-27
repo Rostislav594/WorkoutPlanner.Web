@@ -5,6 +5,8 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject WorkoutPlanner.Web.Application.Abstractions.IStarterPlanService StarterPlanService
 @inject ILoggerFactory LoggerFactory
+@inject WorkoutPlanner.Web.Services.Activity.UserActivityService UserActivity
+@inject TimeProvider TimeProvider
 @inject NavigationManager Navigation
 
 <div class="auth-page">
@@ -139,6 +141,9 @@
 
         try
         {
+            await UserActivity.EnsureRegisteredAsync(
+                user.Id,
+                TimeProvider.GetUtcNow().UtcDateTime);
             await StarterPlanService.CreateForUserAsync(user.Id);
         }
         catch (Exception exception)

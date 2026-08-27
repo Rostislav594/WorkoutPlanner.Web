@@ -14,6 +14,14 @@ public interface IInboxService
 
     Task<bool> MarkReadAsync(long messageId, CancellationToken cancellationToken = default);
 
+    Task<bool> MarkPublicationReadAsync(long publicationId, CancellationToken cancellationToken = default);
+
+    Task<bool> DeleteMessageAsync(long messageId, CancellationToken cancellationToken = default);
+
+    Task<bool> DeletePublicationAsync(long publicationId, CancellationToken cancellationToken = default);
+
+    Task DeleteAllAsync(CancellationToken cancellationToken = default);
+
     Task MarkAllReadAsync(CancellationToken cancellationToken = default);
 
     Task<bool> CreateSupportReplyFromTelegramAsync(

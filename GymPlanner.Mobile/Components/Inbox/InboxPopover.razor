@@ -1,6 +1,7 @@
 @implements IDisposable
 @inject IInboxApiClient InboxApi
 @inject InboxNotificationState InboxState
+@inject NavigationManager Navigation
 
 <div class="inbox-popover">
     <button class="inbox-trigger"
@@ -18,16 +19,23 @@
     @if (_isOpen)
     {
         <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
-        <section class="inbox-menu" aria-label="Центр уведомлений" @onclick:stopPropagation="true">
+        <section class="inbox-menu" aria-label="Центр уведомлений"
+                 @onclick:stopPropagation="true"
+                 @onpointerdown="BeginClearHistoryHold"
+                 @onpointerup="CancelClearHistoryHold"
+                 @onpointercancel="CancelClearHistoryHold"
+                 @onpointerleave="CancelClearHistoryHold">
             <header class="inbox-menu__header">
                 <div>
                     <span>GPlanner</span>
                     <h2>Уведомления</h2>
                 </div>
-                @if (_messages.Any(x => x.ReadAtUtc is null))
-                {
-                    <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">Прочитать все</button>
-                }
+                <div class="inbox-menu__header-actions">
+                    @if (_messages.Any(x => x.ReadAtUtc is null))
+                    {
+                        <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">Прочитать все</button>
+                    }
+                </div>
             </header>
 
             @if (_isLoading)
@@ -53,17 +61,19 @@
                 <div class="inbox-menu__list" role="list">
                     @foreach (var message in _messages)
                     {
-                        <button class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)"
-                                type="button"
-                                role="listitem"
-                                @onclick="() => OpenMessageAsync(message)">
-                            <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
-                            <span>@GetTypeLabel(message.Type)</span>
-                            @if (message.ReadAtUtc is null)
-                            {
-                                <span class="inbox-menu__dot" aria-label="Не прочитано"></span>
-                            }
-                        </button>
+                        <div class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)" role="listitem">
+                            <button class="inbox-menu__item-open" type="button" @onclick="() => OpenMessageAsync(message)">
+                                <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
+                                <span>@GetTypeLabel(message.Type)</span>
+                                @if (message.ReadAtUtc is null)
+                                {
+                                    <span class="inbox-menu__dot" aria-label="Не прочитано"></span>
+                                }
+                            </button>
+                            <button class="inbox-menu__delete" type="button" aria-label="Удалить сообщение" title="Удалить сообщение" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
+                                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                            </button>
+                        </div>
                     }
                 </div>
             }
@@ -71,33 +81,41 @@
     }
 </div>
 
-@if (_selected is not null)
+@if (_showClearHistoryConfirmation)
 {
-    <div class="inbox-message-scrim" role="presentation" @onclick="CloseMessage">
-        <section class="inbox-message" role="dialog" aria-modal="true" aria-labelledby="inbox-message-title" @onclick:stopPropagation="true">
-            <div class="inbox-message__meta">
-                <span>@GetTypeLabel(_selected.Type)</span>
-                <button type="button" aria-label="Закрыть сообщение" @onclick="CloseMessage">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
+    <div class="inbox-clear-overlay" @onclick="CancelClearHistory">
+        <section class="inbox-clear-dialog"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="inbox-clear-title"
+                 aria-describedby="inbox-clear-description"
+                 @onclick:stopPropagation="true">
+            <span class="material-symbols-rounded inbox-clear-dialog__icon" aria-hidden="true">delete_sweep</span>
+            <h2 id="inbox-clear-title">Очистить историю уведомлений?</h2>
+            <p id="inbox-clear-description">Все сообщения будут удалены без возможности восстановления.</p>
+            @if (!string.IsNullOrWhiteSpace(_clearHistoryError))
+            {
+                <p class="inbox-clear-dialog__error" role="alert">@_clearHistoryError</p>
+            }
+            <div class="inbox-clear-dialog__actions">
+                <button class="inbox-clear-dialog__cancel" type="button" disabled="@_isClearingHistory" @onclick="CancelClearHistory">Отмена</button>
+                <button class="inbox-clear-dialog__confirm" type="button" disabled="@_isClearingHistory" @onclick="DeleteAllAsync">
+                    @(_isClearingHistory ? "Удаляем…" : "Очистить")
                 </button>
             </div>
-            <h2 id="inbox-message-title">@_selected.Title</h2>
-            <p class="inbox-message__date">@FormatDate(_selected.CreatedAtUtc)</p>
-            @if (!string.IsNullOrWhiteSpace(_selected.SupportTicketNumber))
-            {
-                <p class="inbox-message__ticket">Обращение @_selected.SupportTicketNumber</p>
-            }
-            <p class="inbox-message__body">@_selected.Body</p>
         </section>
     </div>
 }
 
 @code {
     private List<InboxMessageResponse> _messages = [];
-    private InboxMessageResponse? _selected;
     private bool _isOpen;
     private bool _isLoading;
     private string? _error;
+    private CancellationTokenSource? _clearHistoryHoldCts;
+    private bool _showClearHistoryConfirmation;
+    private bool _isClearingHistory;
+    private string? _clearHistoryError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -129,18 +147,21 @@
 
     private async Task OpenMessageAsync(InboxMessageResponse message)
     {
-        _selected = message;
-        if (message.ReadAtUtc is not null)
-            return;
+        if (message.ReadAtUtc is null)
+        {
+            var result = message.IsPublication
+                ? await InboxApi.MarkPublicationReadAsync(message.Id)
+                : await InboxApi.MarkReadAsync(message.Id);
+            if (result.Value is not null)
+            {
+                var readAt = DateTime.UtcNow;
+                _messages = _messages.Select(x => x.Id == message.Id ? x with { ReadAtUtc = readAt } : x).ToList();
+                InboxState.SetUnreadCount(result.Value.UnreadCount);
+            }
+        }
 
-        var result = await InboxApi.MarkReadAsync(message.Id);
-        if (result.Value is null)
-            return;
-
-        var readAt = DateTime.UtcNow;
-        _messages = _messages.Select(x => x.Id == message.Id ? x with { ReadAtUtc = readAt } : x).ToList();
-        _selected = _selected with { ReadAtUtc = readAt };
-        InboxState.SetUnreadCount(result.Value.UnreadCount);
+        var kind = message.IsPublication ? "publication" : "message";
+        Navigation.NavigateTo($"/notifications/{kind}/{message.Id}");
     }
 
     private async Task MarkAllReadAsync()
@@ -154,8 +175,73 @@
         InboxState.SetUnreadCount(result.Value.UnreadCount);
     }
 
+    private async Task BeginClearHistoryHold()
+    {
+        if (_messages.Count == 0 || _showClearHistoryConfirmation)
+            return;
+
+        CancelClearHistoryHold();
+        _clearHistoryHoldCts = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(550, _clearHistoryHoldCts.Token);
+            _clearHistoryError = null;
+            _showClearHistoryConfirmation = true;
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void CancelClearHistory()
+    {
+        if (_isClearingHistory)
+            return;
+
+        _showClearHistoryConfirmation = false;
+        _clearHistoryError = null;
+    }
+
+    private void CancelClearHistoryHold()
+    {
+        _clearHistoryHoldCts?.Cancel();
+        _clearHistoryHoldCts?.Dispose();
+        _clearHistoryHoldCts = null;
+    }
+
+    private async Task DeleteMessageAsync(InboxMessageResponse message)
+    {
+        var result = message.IsPublication
+            ? await InboxApi.DeletePublicationAsync(message.Id)
+            : await InboxApi.DeleteMessageAsync(message.Id);
+        if (result.Value is null)
+        {
+            _error = result.Errors.FirstOrDefault() ?? "Не удалось удалить сообщение.";
+            return;
+        }
+        _messages.RemoveAll(x => x.Id == message.Id && x.IsPublication == message.IsPublication);
+        InboxState.SetUnreadCount(result.Value.UnreadCount);
+    }
+
+    private async Task DeleteAllAsync()
+    {
+        if (_isClearingHistory)
+            return;
+
+        _isClearingHistory = true;
+        _clearHistoryError = null;
+        var result = await InboxApi.DeleteAllAsync();
+        if (result.Value is null)
+        {
+            _clearHistoryError = result.Errors.FirstOrDefault() ?? "Не удалось удалить историю.";
+            _isClearingHistory = false;
+            return;
+        }
+        _messages.Clear();
+        InboxState.SetUnreadCount(result.Value.UnreadCount);
+        _showClearHistoryConfirmation = false;
+        _isClearingHistory = false;
+    }
+
     private void Close() => _isOpen = false;
-    private void CloseMessage() => _selected = null;
     private void OnInboxChanged() => _ = InvokeAsync(StateHasChanged);
 
     private string GetUnreadBadge() => InboxState.UnreadCount > 99 ? "99+" : InboxState.UnreadCount.ToString();
@@ -164,5 +250,9 @@
     private static string GetTypeLabel(string type) => type switch { "SupportReply" => "Техподдержка", "News" => "Новости", "Update" => "Обновление", _ => "Системное сообщение" };
     private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
 
-    public void Dispose() => InboxState.Changed -= OnInboxChanged;
+    public void Dispose()
+    {
+        CancelClearHistoryHold();
+        InboxState.Changed -= OnInboxChanged;
+    }
 }

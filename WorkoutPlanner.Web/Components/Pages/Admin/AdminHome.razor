@@ -1,0 +1,90 @@
+@page "/admin"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAdminDashboardService Dashboard
+
+<PageTitle>Dashboard — GPlanner Admin</PageTitle>
+
+<div class="admin-page admin-dashboard">
+    <AdminPageHeader Title="Dashboard"
+                     Description="Ключевые показатели продукта, активности и поддержки." />
+
+    @if (_isLoading)
+    {
+        <section class="admin-state" role="status" aria-live="polite">
+            <span class="material-symbols-rounded" aria-hidden="true">progress_activity</span>
+            <h2>Загружаем показатели</h2>
+            <p>Собираем актуальную серверную статистику.</p>
+        </section>
+    }
+    else if (_snapshot is null)
+    {
+        <section class="admin-state" role="alert">
+            <span class="material-symbols-rounded" aria-hidden="true">error</span>
+            <h2>Не удалось загрузить Dashboard</h2>
+            <p>@_error</p>
+            <button class="admin-button admin-button--secondary" type="button" @onclick="LoadAsync">Повторить</button>
+        </section>
+    }
+    else
+    {
+        <section class="dashboard-section" aria-labelledby="users-metrics-title">
+            <div class="dashboard-section__heading">
+                <div><h2 id="users-metrics-title">Пользователи</h2><p>Регистрации и фактическая активность.</p></div>
+                <a href="/admin/users">Открыть Users <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a>
+            </div>
+            <div class="metric-grid metric-grid--users">
+                <MetricCard Label="Всего пользователей" Value="@_snapshot.TotalUsers" Icon="group" Featured="true" />
+                <MetricCard Label="Новые за 24 часа" Value="@_snapshot.NewUsers24Hours" />
+                <MetricCard Label="Новые за 7 дней" Value="@_snapshot.NewUsers7Days" />
+                <MetricCard Label="Новые за 30 дней" Value="@_snapshot.NewUsers30Days" />
+                <MetricCard Label="Активные за 24 часа" Value="@_snapshot.ActiveUsers24Hours" Tone="success" />
+                <MetricCard Label="Активные за 7 дней" Value="@_snapshot.ActiveUsers7Days" Tone="success" />
+                <MetricCard Label="Активные за 30 дней" Value="@_snapshot.ActiveUsers30Days" Tone="success" />
+                <MetricCard Label="Неактивны более 30 дней" Value="@_snapshot.InactiveUsersOver30Days" Tone="muted" />
+            </div>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="product-metrics-title">
+            <div class="dashboard-section__heading"><div><h2 id="product-metrics-title">Продукт и поддержка</h2><p>Завершённые тренировки и очередь обращений.</p></div></div>
+            <div class="metric-grid">
+                <MetricCard Label="Тренировки за 24 часа" Value="@_snapshot.CompletedWorkouts24Hours" Icon="fitness_center" />
+                <MetricCard Label="Тренировки за 7 дней" Value="@_snapshot.CompletedWorkouts7Days" />
+                <MetricCard Label="Тренировки за 30 дней" Value="@_snapshot.CompletedWorkouts30Days" />
+                <MetricCard Label="Открытые обращения" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning" />
+                <MetricCard Label="Новые обращения" Value="@_snapshot.NewSupportTickets" Tone="warning" />
+                <MetricCard Label="Ошибки backend за 24 часа"
+                            Value="@(_snapshot.BackendErrors24Hours?.ToString() ?? "—")"
+                            Note="@(_snapshot.BackendErrors24Hours.HasValue ? null : "Метрика не подключена")"
+                            Tone="@(_snapshot.BackendErrors24Hours > 0 ? "danger" : "muted")" />
+            </div>
+        </section>
+    }
+</div>
+
+@code {
+    private AdminDashboardSnapshot? _snapshot;
+    private bool _isLoading = true;
+    private string _error = "Попробуйте ещё раз.";
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _snapshot = null;
+        try
+        {
+            _snapshot = await Dashboard.GetAsync();
+        }
+        catch
+        {
+            _error = "Серверная статистика временно недоступна.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

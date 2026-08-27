@@ -1,0 +1,89 @@
+@page "/admin/users"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAdminUserService Users
+
+<PageTitle>Users — GPlanner Admin</PageTitle>
+
+<div class="admin-page">
+    <AdminPageHeader Title="Users" Description="Пользователи, активность и диагностическая информация без секретов." />
+
+    <div class="admin-toolbar" role="search">
+        <div class="admin-field">
+            <label for="users-search">Имя, email или UserId</label>
+            <input id="users-search" class="admin-input" @bind="_search" @bind:event="oninput" placeholder="Поиск пользователей" />
+        </div>
+        <button class="admin-button admin-button--primary" type="button" @onclick="SearchAsync" disabled="@_isLoading">
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>Найти
+        </button>
+    </div>
+
+    @if (_isLoading)
+    {
+        <section class="admin-state" role="status"><h2>Загружаем пользователей</h2><p>Выполняется серверный запрос.</p></section>
+    }
+    else if (_error is not null)
+    {
+        <section class="admin-state" role="alert"><h2>Не удалось загрузить Users</h2><p>@_error</p><button class="admin-button admin-button--secondary" @onclick="LoadAsync">Повторить</button></section>
+    }
+    else if (_result is null || _result.Items.Count == 0)
+    {
+        <section class="admin-state"><h2>Пользователи не найдены</h2><p>Измените поисковый запрос или очистите фильтр.</p></section>
+    }
+    else
+    {
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr><th>Пользователь</th><th>Регистрация</th><th>Последняя активность</th><th>Статус</th><th>Клиент</th><th>Тренировки</th><th>Support</th></tr></thead>
+                <tbody>
+                    @foreach (var user in _result.Items)
+                    {
+                        <tr>
+                            <td><a href="@($"/admin/users/{Uri.EscapeDataString(user.UserId)}")"><span class="admin-table__primary">@user.DisplayName</span><span class="admin-table__secondary">@user.Email · @user.UserId</span></a></td>
+                            <td>@FormatDate(user.RegisteredAtUtc)</td>
+                            <td>@FormatDate(user.LastSeenAtUtc)</td>
+                            <td><span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(user.ActivityStatus)</span></td>
+                            <td><span class="admin-table__primary">@(user.Platform ?? "—")</span><span class="admin-table__secondary">@(user.AppVersion is null ? "версия неизвестна" : $"GPlanner {user.AppVersion}")</span></td>
+                            <td>@user.WorkoutCount</td>
+                            <td>@user.SupportTicketCount</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="admin-pagination">
+            <span>Всего: @_result.TotalCount · страница @_result.Page из @TotalPages</span>
+            <div class="admin-pagination__buttons">
+                <button class="admin-button admin-button--secondary" disabled="@(_page <= 1)" @onclick="PreviousAsync">Назад</button>
+                <button class="admin-button admin-button--secondary" disabled="@(_page >= TotalPages)" @onclick="NextAsync">Вперёд</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private const int PageSize = 25;
+    private AdminPagedResult<AdminUserListItem>? _result;
+    private string _search = string.Empty;
+    private string? _error;
+    private int _page = 1;
+    private bool _isLoading = true;
+    private int TotalPages => _result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+    private async Task SearchAsync() { _page = 1; await LoadAsync(); }
+    private async Task PreviousAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextAsync() { if (_page < TotalPages) { _page++; await LoadAsync(); } }
+    private async Task LoadAsync()
+    {
+        _isLoading = true; _error = null;
+        try { _result = await Users.GetPageAsync(new(_search, _page, PageSize)); }
+        catch { _error = "Список пользователей временно недоступен."; }
+        finally { _isLoading = false; }
+    }
+
+    private static string FormatDate(DateTime? value) => value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? "Нет данных";
+    private static string StatusLabel(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "Active", AdminUserActivityStatus.Dormant => "Dormant", AdminUserActivityStatus.Inactive => "Inactive", _ => "Never active" };
+    private static string StatusClass(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "admin-status--success", AdminUserActivityStatus.Dormant => "admin-status--warning", AdminUserActivityStatus.Inactive => "admin-status--danger", _ => string.Empty };
+}

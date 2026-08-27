@@ -3,7 +3,19 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
                 <NotAuthorized>
-                    <WorkoutPlanner.Web.Components.Account.RedirectToLogin />
+                    <AuthorizeView>
+                        <Authorized Context="authenticatedUser">
+                            <main class="access-denied" role="alert">
+                                <span class="material-symbols-rounded" aria-hidden="true">lock</span>
+                                <h1>Доступ запрещён</h1>
+                                <p>Для этого раздела требуется роль администратора.</p>
+                                <a href="/account/logout">Выйти</a>
+                            </main>
+                        </Authorized>
+                        <NotAuthorized Context="anonymousUser">
+                            <WorkoutPlanner.Web.Components.Account.RedirectToLogin />
+                        </NotAuthorized>
+                    </AuthorizeView>
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="routeData" Selector="h1" />

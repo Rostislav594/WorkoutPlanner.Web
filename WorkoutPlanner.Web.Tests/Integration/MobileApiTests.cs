@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,7 @@ using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Support;
 
 namespace WorkoutPlanner.Web.Tests.Integration;
@@ -287,6 +289,10 @@ public sealed class MobileApiTests
         Assert.Equal(SupportTicketStatus.New, ticket.Status);
         Assert.Equal(SupportDeliveryStatus.Failed, ticket.TelegramDeliveryStatus);
         Assert.Equal("Android", ticket.Platform);
+        var initialMessage = await db.SupportMessages.SingleAsync();
+        Assert.Equal(ticket.Id, initialMessage.SupportTicketId);
+        Assert.Equal(SupportMessageSenderType.User, initialMessage.SenderType);
+        Assert.Equal(message.Trim(), initialMessage.Message);
         Assert.Equal(1, notification.CallCount);
         Assert.Equal(ticket.TicketNumber, notification.LastTicketNumber);
     }
@@ -1534,6 +1540,18 @@ public sealed class MobileApiTests
         using var duplicateDelivered = await client.SendAsync(duplicate);
         Assert.Equal(HttpStatusCode.OK, duplicateDelivered.StatusCode);
 
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var supportMessage = await db.SupportMessages.SingleAsync();
+            Assert.Equal(SupportMessageSenderType.Support, supportMessage.SenderType);
+            Assert.Equal(
+                "Мы проверили проблему. Попробуйте обновить приложение.",
+                supportMessage.Message);
+        }
+
         var inbox = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
         Assert.NotNull(inbox);
         var message = Assert.Single(inbox.Messages);
@@ -1546,6 +1564,76 @@ public sealed class MobileApiTests
         var count = await markedRead.Content.ReadFromJsonAsync<InboxUnreadCountResponse>();
         Assert.NotNull(count);
         Assert.Equal(0, count.UnreadCount);
+
+        using var deleted = await client.DeleteAsync($"/api/v1/inbox/messages/{message.Id}");
+        Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
+        var afterDelete = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.NotNull(afterDelete);
+        Assert.Empty(afterDelete.Messages);
+    }
+
+    [Fact]
+    public async Task AdminPublicationsEndpoint_RejectsAnonymousAndUser_ButAllowsAdmin()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var anonymous = CreateClient(factory);
+        var request = new
+        {
+            Type = "News",
+            Title = "Новая функция",
+            Body = "В GPlanner появились таймеры отдыха.",
+            PublishedAtUtc = DateTime.UtcNow.AddMinutes(-1)
+        };
+        using var anonymousResponse = await anonymous.PostAsJsonAsync("/api/admin/publications", request);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousResponse.StatusCode);
+        using var anonymousRead = await anonymous.GetAsync("/api/admin/publications");
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousRead.StatusCode);
+
+        using var userClient = CreateClient(factory);
+        using var registration = await userClient.PostAsJsonAsync(
+            "/api/v1/auth/register", new MobileRegisterRequest("admin-role@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var userTokens = await LoginAsync(userClient, "admin-role@example.test", "password1", "User session");
+        SetBearer(userClient, userTokens.AccessToken);
+        using var forbidden = await userClient.PostAsJsonAsync("/api/admin/publications", request);
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        using var forbiddenRead = await userClient.GetAsync("/api/admin/publications");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenRead.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var user = await users.FindByEmailAsync("admin-role@example.test");
+            Assert.NotNull(user);
+            var result = await users.AddToRoleAsync(user, ApplicationRoles.Admin);
+            Assert.True(result.Succeeded, string.Join("; ", result.Errors.Select(x => x.Description)));
+        }
+
+        using var adminClient = CreateClient(factory);
+        var adminTokens = await LoginAsync(adminClient, "admin-role@example.test", "password1", "Admin session");
+        SetBearer(adminClient, adminTokens.AccessToken);
+        using var created = await adminClient.PostAsJsonAsync("/api/admin/publications", request);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        using var allowedRead = await adminClient.GetAsync("/api/admin/publications");
+        Assert.Equal(HttpStatusCode.OK, allowedRead.StatusCode);
+
+        var inbox = await adminClient.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.NotNull(inbox);
+        var publication = Assert.Single(inbox.Messages);
+        Assert.True(publication.IsPublication);
+        Assert.Equal(1, inbox.UnreadCount);
+        using var read = await adminClient.PostAsync($"/api/v1/inbox/publications/{publication.Id}/read", null);
+        Assert.Equal(HttpStatusCode.OK, read.StatusCode);
+        using var deleted = await adminClient.DeleteAsync($"/api/v1/inbox/publications/{publication.Id}");
+        Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
+        var afterDelete = await adminClient.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.NotNull(afterDelete);
+        Assert.Empty(afterDelete.Messages);
+
+        using var logout = await adminClient.PostAsync("/api/v1/auth/logout", null);
+        Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
+        using var revokedRead = await adminClient.GetAsync("/api/admin/publications");
+        Assert.Equal(HttpStatusCode.Forbidden, revokedRead.StatusCode);
     }
 
     private static MultipartFormDataContent CreateSupportContent(

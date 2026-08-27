@@ -13,6 +13,8 @@ using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services;
+using WorkoutPlanner.Web.Services.Activity;
+using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.WelcomeGuide;
@@ -37,6 +39,18 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy(
+        ApplicationRoles.AdminPolicy,
+        policy => policy.RequireAuthenticatedUser().RequireRole(ApplicationRoles.Admin));
+    options.AddPolicy(
+        ApplicationRoles.AdminApiPolicy,
+        policy =>
+        {
+            policy.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+            policy.RequireAuthenticatedUser();
+            policy.RequireRole(ApplicationRoles.Admin);
+            policy.AddRequirements(new MobileApiSessionRequirement());
+        });
     options.AddPolicy(
         MobileApiAuthorization.PolicyName,
         policy =>
@@ -74,8 +88,14 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.Password.RequireUppercase = false;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<WorkoutDbContext>()
     .AddDefaultTokenProviders();
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/access-denied";
+});
 builder.Services.Configure<BearerTokenOptions>(
     IdentityConstants.BearerScheme,
     options =>
@@ -118,6 +138,12 @@ builder.Services.AddSingleton<ISupportScreenshotStorage, SupportScreenshotStorag
 builder.Services.AddSingleton<ISupportNotificationService, TelegramSupportNotificationService>();
 builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
 builder.Services.AddScoped<IInboxService, InboxService>();
+builder.Services.Configure<UserActivityOptions>(
+    builder.Configuration.GetSection(UserActivityOptions.SectionName));
+builder.Services.AddScoped<UserActivityService>();
+builder.Services.AddScoped<IAdminPublicationService, AdminPublicationService>();
+builder.Services.AddSingleton<IInboxPublicationImageStorage, PublicationImageStorage>();
+builder.Services.AddGymPlannerAdminOperations(builder.Configuration);
 
 
 // Add services to the container.
@@ -156,6 +182,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<UserActivityMiddleware>();
 app.UseRateLimiter();
 
 app.UseAntiforgery();
@@ -253,10 +280,32 @@ app.MapGet(
     })
     .RequireAuthorization();
 
+app.MapGet(
+    "/PublicationImages/{fileName}",
+    async Task<IResult> (string fileName, WorkoutDbContext db, IWebHostEnvironment environment, TimeProvider clock) =>
+    {
+        var safeFileName = Path.GetFileName(fileName);
+        if (fileName != safeFileName) return Results.NotFound();
+        var imagePath = $"{PublicationImageStorage.PublicPrefix}{safeFileName}";
+        if (!await db.InboxPublications.AsNoTracking().AnyAsync(
+                x => x.ImagePath == imagePath && x.PublishedAtUtc <= clock.GetUtcNow().UtcDateTime))
+            return Results.NotFound();
+        var filePath = Path.Combine(environment.ContentRootPath, "App_Data", "PublicationImages", safeFileName);
+        if (!File.Exists(filePath)) return Results.NotFound();
+        var contentType = Path.GetExtension(safeFileName).ToLowerInvariant() switch
+        {
+            ".jpg" => "image/jpeg", ".png" => "image/png", ".webp" => "image/webp", _ => null
+        };
+        return contentType is null ? Results.NotFound() : Results.File(filePath, contentType);
+    })
+    .AllowAnonymous();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapGymPlannerApi();
+app.MapAdminPublicationApi();
+app.MapAdminOperationsApi();
 app.MapTelegramSupportWebhook();
 
 if (app.Environment.IsDevelopment())
@@ -277,6 +326,31 @@ using (var scope = app.Services.CreateScope())
     ExerciseSecondaryMuscleSeeder.Seed(db);
 
     LibraryValidator.Validate(db);
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    if (!await roleManager.RoleExistsAsync(ApplicationRoles.Admin))
+    {
+        var roleResult = await roleManager.CreateAsync(new IdentityRole(ApplicationRoles.Admin));
+        if (!roleResult.Succeeded)
+            throw new InvalidOperationException("Could not create the Admin role: " + string.Join(", ", roleResult.Errors.Select(x => x.Description)));
+    }
+
+    var grantAdminArgument = args.FirstOrDefault(x => x.StartsWith("--grant-admin=", StringComparison.OrdinalIgnoreCase));
+    if (grantAdminArgument is not null)
+    {
+        var email = grantAdminArgument["--grant-admin=".Length..].Trim();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = await userManager.FindByEmailAsync(email)
+            ?? throw new InvalidOperationException($"Existing user '{email}' was not found.");
+        if (!await userManager.IsInRoleAsync(user, ApplicationRoles.Admin))
+        {
+            var grantResult = await userManager.AddToRoleAsync(user, ApplicationRoles.Admin);
+            if (!grantResult.Succeeded)
+                throw new InvalidOperationException("Could not grant Admin: " + string.Join(", ", grantResult.Errors.Select(x => x.Description)));
+        }
+        app.Logger.LogInformation("Admin role granted to existing account {Email}. Sign in again to refresh claims.", email);
+        return;
+    }
 }
 
 app.Run();
