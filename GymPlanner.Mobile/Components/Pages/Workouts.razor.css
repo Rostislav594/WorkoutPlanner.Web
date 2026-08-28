@@ -14,11 +14,6 @@
     padding: 8px 0 4px;
 }
 
-.workouts-header > .context-help-button {
-    position: fixed;
-    right: 0;
-}
-
 .workouts-header h1 {
     margin: 0;
     color: var(--color-text);
