@@ -1,5 +1,6 @@
 using Foundation;
 using UserNotifications;
+using WorkoutPlanner.Api.Contracts;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -92,6 +93,24 @@ internal static class IosNotificationNavigation
             .GetService<NotificationNavigationService>()?
             .Open(route);
     }
+
+    public static void OpenPush(NSDictionary userInfo)
+    {
+        var type = userInfo[new NSString(PushNotificationPayloadKeys.Type)]?.ToString();
+        var inboxMessageId = userInfo[
+            new NSString(PushNotificationPayloadKeys.InboxMessageId)]?.ToString();
+        IPlatformApplication.Current?.Services
+            .GetService<NotificationNavigationService>()?
+            .OpenPush(type, inboxMessageId);
+    }
+
+    public static void RefreshInbox()
+    {
+        var inboxState = IPlatformApplication.Current?.Services
+            .GetService<InboxNotificationState>();
+        if (inboxState is not null)
+            _ = inboxState.RefreshAsync();
+    }
 }
 
 public sealed class WorkoutNotificationDelegate : UNUserNotificationCenterDelegate
@@ -103,15 +122,22 @@ public sealed class WorkoutNotificationDelegate : UNUserNotificationCenterDelega
     {
         var value = response.Notification.Request.Content.UserInfo[
             new NSString(IosNotificationNavigation.RouteKey)];
-        IosNotificationNavigation.Open(value?.ToString());
+        if (value is not null)
+            IosNotificationNavigation.Open(value.ToString());
+        else
+            IosNotificationNavigation.OpenPush(
+                response.Notification.Request.Content.UserInfo);
         completionHandler();
     }
 
     public override void WillPresentNotification(
         UNUserNotificationCenter center,
         UNNotification notification,
-        Action<UNNotificationPresentationOptions> completionHandler) =>
+        Action<UNNotificationPresentationOptions> completionHandler)
+    {
+        IosNotificationNavigation.RefreshInbox();
         completionHandler(
             UNNotificationPresentationOptions.Banner |
             UNNotificationPresentationOptions.Sound);
+    }
 }

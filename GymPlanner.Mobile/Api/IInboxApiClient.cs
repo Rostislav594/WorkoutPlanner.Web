@@ -7,6 +7,10 @@ public interface IInboxApiClient
     Task<ApiResult<InboxMessagesResponse>> GetMessagesAsync(
         CancellationToken cancellationToken = default);
 
+    Task<ApiResult<InboxMessageResponse>> GetMessageAsync(
+        long messageId,
+        CancellationToken cancellationToken = default);
+
     Task<ApiResult<InboxUnreadCountResponse>> GetUnreadCountAsync(
         CancellationToken cancellationToken = default);
 

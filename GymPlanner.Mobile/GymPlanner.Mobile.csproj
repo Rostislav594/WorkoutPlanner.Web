@@ -57,14 +57,13 @@
         <AndroidManifestOverlay Include="Platforms\Android\AndroidManifest.Debug.xml" />
     </ItemGroup>
 
-    <Target Name="ConfigureGymPlannerAndroidDebugApiReverse"
-            AfterTargets="Install"
-            DependsOnTargets="_ResolveMonoAndroidSdks;_AndroidAdbToolPath"
-            Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(AdbTarget)' != '' and '$(GymPlannerApiBaseAddress)' == ''">
+    <Target Name="ConfigureGymPlannerAndroidDebugApiReverse" AfterTargets="Install" DependsOnTargets="_ResolveMonoAndroidSdks;_AndroidAdbToolPath" Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(AdbTarget)' != '' and '$(GymPlannerApiBaseAddress)' == ''">
         <Exec Command="&quot;$(_AdbToolPath)&quot; $(AdbTarget) reverse tcp:5121 tcp:5121" />
     </Target>
 
     <ItemGroup>
+        <GoogleServicesJson Include="google-services.json"
+                           Condition="Exists('google-services.json')" />
         <!-- App Icon -->
         <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0F1115" />
 
@@ -92,6 +91,11 @@
         <ProjectReference Include="..\WorkoutPlanner.Api.Contracts\WorkoutPlanner.Api.Contracts.csproj" />
         <ProjectReference Include="..\WorkoutPlanner.Domain\WorkoutPlanner.Domain.csproj" />
         <ProjectReference Include="..\WorkoutPlanner.UI\WorkoutPlanner.UI.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+        <PackageReference Include="Xamarin.Firebase.Messaging" Version="125.1.1"
+                          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'" />
     </ItemGroup>
 
 </Project>

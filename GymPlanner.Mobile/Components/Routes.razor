@@ -3,6 +3,7 @@
 @inject NavigationManager Navigation
 @inject MobileBackNavigationService BackNavigation
 @inject MobileLifecycleService Lifecycle
+@inject NotificationNavigationService NotificationNavigation
 
 <AppSplash Ready="@_startupReady" />
 
@@ -63,6 +64,8 @@
         {
             _startupReady = true;
             await InvokeAsync(StateHasChanged);
+
+            NotificationNavigation.MarkReady();
 
             if (!Authentication.IsAuthenticated &&
                 string.IsNullOrWhiteSpace(Navigation.ToBaseRelativePath(Navigation.Uri)))

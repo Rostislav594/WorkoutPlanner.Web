@@ -1,9 +1,13 @@
+using System.Globalization;
+using WorkoutPlanner.Api.Contracts;
+
 namespace GymPlanner.Mobile.Notifications;
 
 public sealed class NotificationNavigationService
 {
     private readonly object _sync = new();
     private string? _pendingRoute;
+    private bool _isReady;
 
     public event Action<string>? RouteRequested;
 
@@ -16,10 +20,52 @@ public sealed class NotificationNavigationService
         lock (_sync)
         {
             handler = RouteRequested;
-            _pendingRoute = handler is null ? route : null;
+            if (!_isReady || handler is null)
+            {
+                _pendingRoute = route;
+                handler = null;
+            }
+            else
+            {
+                _pendingRoute = null;
+            }
         }
 
         handler?.Invoke(route);
+    }
+
+    public bool OpenPush(string? type, string? inboxMessageId)
+    {
+        if (!PushNotificationTypeSerializer.TryParsePayloadValue(type, out _) ||
+            !long.TryParse(
+                inboxMessageId,
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var messageId) ||
+            messageId <= 0)
+        {
+            return false;
+        }
+
+        Open($"/notifications/message/{messageId}");
+        return true;
+    }
+
+    public void MarkReady()
+    {
+        Action<string>? handler;
+        string? route;
+        lock (_sync)
+        {
+            _isReady = true;
+            handler = RouteRequested;
+            route = handler is null ? null : _pendingRoute;
+            if (route is not null)
+                _pendingRoute = null;
+        }
+
+        if (route is not null)
+            handler?.Invoke(route);
     }
 
     public string? ConsumePendingRoute()
@@ -32,9 +78,23 @@ public sealed class NotificationNavigationService
         }
     }
 
-    private static bool IsSafeRoute(string route) =>
-        Uri.TryCreate(route, UriKind.Relative, out _) &&
-        route.StartsWith("/workouts/", StringComparison.Ordinal) &&
-        int.TryParse(route["/workouts/".Length..], out var id) &&
-        id > 0;
+    private static bool IsSafeRoute(string route)
+    {
+        if (!Uri.TryCreate(route, UriKind.Relative, out _))
+            return false;
+
+        if (route.StartsWith("/workouts/", StringComparison.Ordinal) &&
+            int.TryParse(route["/workouts/".Length..], out var workoutId))
+        {
+            return workoutId > 0;
+        }
+
+        return route.StartsWith("/notifications/message/", StringComparison.Ordinal) &&
+            long.TryParse(
+                route["/notifications/message/".Length..],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out var messageId) &&
+            messageId > 0;
+    }
 }

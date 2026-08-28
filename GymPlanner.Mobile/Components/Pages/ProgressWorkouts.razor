@@ -53,33 +53,17 @@
                         </button>
                         <button class="card-menu-button"
                                 type="button"
-                                aria-label="Действия для тренировки @plan.WorkoutName"
-                                aria-expanded="@(_menuPlanId == plan.Id)"
+                                aria-label="Очистить историю тренировки @plan.WorkoutName"
                                 @onclick:stopPropagation="true"
-                                @onclick="() => ToggleMenu(plan.Id)">
+                                @onclick="() => AskToClear(plan)">
                             <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
                         </button>
                     </div>
-
-                    @if (_menuPlanId == plan.Id)
-                    {
-                        <div class="context-menu" role="menu">
-                            <button class="context-item" type="button" role="menuitem" @onclick="() => AskToClear(plan)">
-                                <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                                Очистить историю
-                            </button>
-                        </div>
-                    }
                 </article>
             }
         </div>
     }
 </section>
-
-@if (_menuPlanId is not null)
-{
-    <button class="context-menu-overlay" type="button" aria-label="Закрыть меню" @onclick="CloseMenu"></button>
-}
 
 @if (_selectedPlan is not null)
 {
@@ -170,7 +154,7 @@
 
 @if (_clearPlan is not null)
 {
-    <div class="modal-overlay" @onclick="CloseClearDialog">
+    <div class="modal-overlay top-layer" @onclick="CloseClearDialog">
         <section class="modal-window confirm-modal"
                  role="alertdialog"
                  aria-modal="true"
@@ -213,7 +197,6 @@
     private TrainingPlanApiResponse? _selectedPlan;
     private WorkoutProgressApiResponse? _selectedProgress;
     private TrainingPlanApiResponse? _clearPlan;
-    private int? _menuPlanId;
     private bool _isLoading = true;
     private bool _isLoadingProgress;
     private bool _isBusy;
@@ -258,7 +241,6 @@
         if (_isLoadingProgress)
             return;
 
-        _menuPlanId = null;
         _selectedPlan = plan;
         _selectedProgress = null;
         _progressErrors.Clear();
@@ -290,12 +272,8 @@
         _progressErrors.Clear();
     }
 
-    private void ToggleMenu(int planId) => _menuPlanId = _menuPlanId == planId ? null : planId;
-    private void CloseMenu() => _menuPlanId = null;
-
     private void AskToClear(TrainingPlanApiResponse plan)
     {
-        _menuPlanId = null;
         _clearPlan = plan;
         _dialogErrors.Clear();
     }

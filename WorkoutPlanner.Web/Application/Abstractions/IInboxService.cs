@@ -10,6 +10,10 @@ public interface IInboxService
 
     Task<InboxPage> GetCurrentAsync(CancellationToken cancellationToken = default);
 
+    Task<InboxMessageItem?> GetMessageAsync(
+        long messageId,
+        CancellationToken cancellationToken = default);
+
     Task<int> GetUnreadCountAsync(CancellationToken cancellationToken = default);
 
     Task<bool> MarkReadAsync(long messageId, CancellationToken cancellationToken = default);

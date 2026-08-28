@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
@@ -11,7 +12,9 @@ public sealed class AdminSupportService(
     IDbContextFactory<WorkoutDbContext> dbFactory,
     AdminAccessVerifier access,
     ISupportScreenshotStorage screenshots,
-    TimeProvider timeProvider) : IAdminSupportService
+    TimeProvider timeProvider,
+    IPushNotificationService pushNotifications,
+    ILogger<AdminSupportService> logger) : IAdminSupportService
 {
     public async Task<AdminPagedResult<AdminSupportListItem>> GetPageAsync(
         AdminSupportListQuery query,
@@ -190,7 +193,7 @@ public sealed class AdminSupportService(
         if (ticket is null)
             return false;
 
-        db.InboxMessages.Add(new InboxMessage
+        var inboxMessage = new InboxMessage
         {
             UserId = ticket.UserId,
             SupportTicketId = ticket.Id,
@@ -199,7 +202,8 @@ public sealed class AdminSupportService(
             Preview = CreatePreview(message),
             Body = message,
             CreatedAtUtc = now
-        });
+        };
+        db.InboxMessages.Add(inboxMessage);
         db.Set<SupportMessage>().Add(new SupportMessage
         {
             SupportTicketId = ticket.Id,
@@ -220,6 +224,21 @@ public sealed class AdminSupportService(
 
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await pushNotifications.NotifyInboxMessageAsync(
+                inboxMessage.UserId,
+                PushNotificationType.SupportReply,
+                inboxMessage.Id,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Could not send support reply notification for inbox message {InboxMessageId}.",
+                inboxMessage.Id);
+        }
         return true;
     }
 

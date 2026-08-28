@@ -72,6 +72,8 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
 
+    public DbSet<PushDeviceRegistration> PushDeviceRegistrations => Set<PushDeviceRegistration>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -174,6 +176,16 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
         modelBuilder.Entity<AdminAuditLog>()
             .HasIndex(x => new { x.AdminUserId, x.CreatedAtUtc });
+
+        modelBuilder.Entity<PushDeviceRegistration>()
+            .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<PushDeviceRegistration>()
+            .HasIndex(x => new { x.UserId, x.InstallationId }).IsUnique();
+        modelBuilder.Entity<PushDeviceRegistration>().HasIndex(x => x.PushToken);
+        modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.InstallationId).HasMaxLength(120);
+        modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.Platform).HasMaxLength(20);
+        modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.PushToken).HasMaxLength(4096);
 
         modelBuilder.Entity<InboxMessage>()
             .HasOne<IdentityUser>()

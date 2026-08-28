@@ -3,6 +3,7 @@ using Android.Content;
 using Android.OS;
 using Microsoft.Maui.ApplicationModel;
 using System.Text.Json;
+using WorkoutPlanner.Api.Contracts;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -102,6 +103,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
 internal static class AndroidNotificationSupport
 {
     public const string ChannelId = "workout-reminders";
+    public const string RemoteChannelId = "gplanner-notifications";
     public const string RouteExtra = "gymplanner.notification.route";
     private const string TitleExtra = "gymplanner.notification.title";
     private const string BodyExtra = "gymplanner.notification.body";
@@ -191,6 +193,26 @@ internal static class AndroidNotificationSupport
         manager.Notify(workoutDayId, notification);
     }
 
+    public static void ShowRemote(Context context, string title, string body, IReadOnlyDictionary<string, string> data)
+    {
+        var manager = context.GetSystemService(Context.NotificationService) as NotificationManager;
+        if (manager is null) return;
+        EnsureRemoteChannelManager(manager);
+        var messageId = data.TryGetValue(PushNotificationPayloadKeys.InboxMessageId, out var value) && int.TryParse(value, out var parsed) ? parsed : Random.Shared.Next(1, int.MaxValue);
+        var launchIntent = new Intent(context, typeof(MainActivity));
+        launchIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
+        foreach (var pair in data) launchIntent.PutExtra(pair.Key, pair.Value);
+        var pendingIntent = PendingIntent.GetActivity(context, messageId, launchIntent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
+        Notification.Builder builder = OperatingSystem.IsAndroidVersionAtLeast(26)
+            ? new Notification.Builder(context, RemoteChannelId)
+#pragma warning disable CS0618
+            : new Notification.Builder(context);
+#pragma warning restore CS0618
+        var notification = builder.SetContentTitle(title).SetContentText(body)
+            .SetSmallIcon(Android.Resource.Drawable.IcDialogInfo).SetAutoCancel(true).SetContentIntent(pendingIntent).Build();
+        manager.Notify(messageId, notification);
+    }
+
     private static void EnsureChannel(NotificationManager manager)
     {
         if (!OperatingSystem.IsAndroidVersionAtLeast(26))
@@ -204,6 +226,26 @@ internal static class AndroidNotificationSupport
             Description = "Локальные напоминания о запланированных тренировках"
         };
         manager.CreateNotificationChannel(channel);
+    }
+
+    public static void EnsureRemoteChannel(Context context)
+    {
+        if (!OperatingSystem.IsAndroidVersionAtLeast(26))
+            return;
+        (context.GetSystemService(Context.NotificationService) as NotificationManager)
+            ?.CreateNotificationChannel(new NotificationChannel(
+                RemoteChannelId,
+                "Уведомления GPlanner",
+                NotificationImportance.Default));
+    }
+
+    private static void EnsureRemoteChannelManager(NotificationManager manager)
+    {
+        if (OperatingSystem.IsAndroidVersionAtLeast(26))
+            manager.CreateNotificationChannel(new NotificationChannel(
+                RemoteChannelId,
+                "Уведомления GPlanner",
+                NotificationImportance.Default));
     }
 }
 

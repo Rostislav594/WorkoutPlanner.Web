@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using WorkoutPlanner.Web.Data;
+using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Activity;
 using WorkoutPlanner.Web.Services.Admin;
@@ -43,7 +44,8 @@ internal sealed class TestApplication : IAsyncDisposable
 
     public string WebRootPath { get; }
 
-    public static async Task<TestApplication> CreateAsync()
+    public static async Task<TestApplication> CreateAsync(
+        IPushNotificationService? pushNotificationService = null)
     {
         var contentRootPath = Path.Combine(
             Path.GetTempPath(),
@@ -85,6 +87,8 @@ internal sealed class TestApplication : IAsyncDisposable
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<WorkoutDbContext>();
         services.AddScoped<CurrentUserService>();
+        services.AddSingleton(
+            pushNotificationService ?? NoopPushNotificationService.Instance);
         services.AddScoped<AccountDeletionService>();
         services.AddScoped<StarterPlanService>();
         services.AddScoped<TrainingPlanService>();
@@ -152,6 +156,21 @@ internal sealed class TestApplication : IAsyncDisposable
         if (Directory.Exists(ContentRootPath))
         {
             Directory.Delete(ContentRootPath, recursive: true);
+        }
+    }
+
+    private sealed class NoopPushNotificationService : IPushNotificationService
+    {
+        public static NoopPushNotificationService Instance { get; } = new();
+
+        public Task NotifyInboxMessageAsync(
+            string userId,
+            WorkoutPlanner.Api.Contracts.PushNotificationType type,
+            long inboxMessageId,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
         }
     }
 }

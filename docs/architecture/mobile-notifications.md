@@ -33,10 +33,26 @@ the supported Android versions.
 
 ## Remote push foundation
 
-`RegisterPushDeviceRequest`, `PushDeviceRegistrationResponse`, and
-`IRemotePushRegistrationService` define the future boundary only. There is no
-Firebase, APNs, provider SDK, server endpoint, credential, entitlement, or fake
-production configuration in this stage.
+Remote Inbox notifications use a typed, privacy-preserving application boundary.
+Business services submit only a `PushNotificationType`, the owning user id, and
+the persisted `InboxMessage` id. A centralized template provider supplies the
+neutral title and body, while the technical payload is restricted to `type` and
+`inboxMessageId`. Inbox title, preview, body, ticket text, and account data are
+never accepted by this boundary and therefore cannot be copied into the payload.
+
+Support replies request Push only after the Inbox transaction has committed.
+Provider failures are logged without message content and cannot roll back the
+Inbox message. The default provider is intentionally disabled: there is still no
+Firebase/APNs SDK, credential, entitlement, device-token persistence, or fake
+production configuration in the repository.
+
+The MAUI notification router accepts the stable typed payload and only builds an
+allowlisted `/notifications/message/{positiveId}` route. Navigation received
+before authentication startup completes remains pending until the router is
+ready. The message page then loads the record through the authenticated,
+owner-scoped `GET /api/v1/inbox/messages/{id}` endpoint; missing, deleted, or
+foreign messages produce the normal unavailable state. The unread badge remains
+derived exclusively from Inbox API data.
 
 Before remote push is enabled:
 
@@ -47,8 +63,10 @@ Before remote push is enabled:
    state; never accept a user id in the request.
 3. Add authenticated register/update/delete endpoints with validation,
    ownership checks, rate limits, token rotation, and account-deletion cleanup.
-4. Implement the MAUI registration service, permission UX, token refresh, logout
-   unregister, deep-link allowlist, and foreground/background handlers.
-5. Add provider delivery workers with retry/idempotency, observability, expired
+4. Implement the MAUI registration service, permission UX, token refresh, and
+   logout unregister. The typed deep-link allowlist and platform tap extraction
+   are already present.
+5. Replace the disabled provider with delivery workers that include
+   retry/idempotency, observability, expired
    token cleanup, and integration tests that use a fake provider rather than
    production credentials.

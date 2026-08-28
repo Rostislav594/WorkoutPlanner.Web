@@ -100,8 +100,48 @@ public static class GymPlannerApiEndpoints
         api.MapSupportApiEndpoints();
         api.MapInboxApiEndpoints();
 
+        var push = api.MapGroup("/push/devices")
+            .WithTags("Push")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName);
+        push.MapPost("", RegisterPushDeviceAsync)
+            .Produces<PushDeviceRegistrationResponse>()
+            .ProducesValidationProblem();
+        push.MapDelete("/{installationId}", UnregisterPushDeviceAsync)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound);
+
         return api;
     }
+
+    private static async Task<IResult> RegisterPushDeviceAsync(
+        RegisterPushDeviceRequest request,
+        HttpContext context,
+        IPushDeviceRegistrationService devices,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.InstallationId) ||
+            string.IsNullOrWhiteSpace(request.Platform) ||
+            string.IsNullOrWhiteSpace(request.PushToken))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["request"] = ["InstallationId, Platform and PushToken are required."] });
+        try
+        {
+            var result = await devices.RegisterAsync(GetRequiredUserId(context.User), request, cancellationToken);
+            return Results.Ok(new PushDeviceRegistrationResponse(result.InstallationId, result.Platform, result.UpdatedAt));
+        }
+        catch (ArgumentException exception)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["request"] = [exception.Message] });
+        }
+    }
+
+    private static async Task<IResult> UnregisterPushDeviceAsync(
+        string installationId,
+        HttpContext context,
+        IPushDeviceRegistrationService devices,
+        CancellationToken cancellationToken) =>
+        await devices.UnregisterAsync(GetRequiredUserId(context.User), installationId, cancellationToken)
+            ? Results.NoContent()
+            : Results.NotFound();
 
     private static async Task<IResult> RegisterAsync(
         MobileRegisterRequest request,
@@ -267,8 +307,15 @@ public static class GymPlannerApiEndpoints
     private static async Task<IResult> LogoutAsync(
         HttpContext context,
         MobileSessionService mobileSessions,
+        IPushDeviceRegistrationService pushDevices,
         CancellationToken cancellationToken)
     {
+        if (context.Request.Headers.TryGetValue("X-GPlanner-Installation-Id", out var installationId) &&
+            !string.IsNullOrWhiteSpace(installationId))
+        {
+            await pushDevices.UnregisterAsync(
+                GetRequiredUserId(context.User), installationId.ToString(), cancellationToken);
+        }
         await mobileSessions.RevokeCurrentAsync(
             context.User,
             GetRequiredUserId(context.User),

@@ -16,6 +16,7 @@ using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Activity;
 using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Push;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.WelcomeGuide;
 
@@ -137,6 +138,21 @@ builder.Services.Configure<TelegramSupportOptions>(
 builder.Services.AddSingleton<ISupportScreenshotStorage, SupportScreenshotStorage>();
 builder.Services.AddSingleton<ISupportNotificationService, TelegramSupportNotificationService>();
 builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
+builder.Services.AddSingleton<IPushNotificationTemplateProvider,
+    PushNotificationTemplateProvider>();
+builder.Services.AddScoped<IPushDeviceRegistrationService, PushDeviceRegistrationService>();
+builder.Services.AddScoped<IPushDeviceStore>(sp => sp.GetRequiredService<PushDeviceRegistrationService>());
+builder.Services.AddScoped<IRemotePushProvider>(sp =>
+    sp.GetRequiredService<IConfiguration>().GetValue<bool>("Push:Enabled")
+        ? sp.GetRequiredService<FirebaseRemotePushProvider>()
+        : sp.GetRequiredService<DisabledRemotePushProvider>());
+builder.Services.AddScoped<DisabledRemotePushProvider>();
+if (builder.Configuration.GetValue<bool>("Push:Enabled"))
+{
+    builder.Services.AddFirebasePush(builder.Configuration);
+    builder.Services.AddScoped<FirebaseRemotePushProvider>();
+}
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<IInboxService, InboxService>();
 builder.Services.Configure<UserActivityOptions>(
     builder.Configuration.GetSection(UserActivityOptions.SectionName));

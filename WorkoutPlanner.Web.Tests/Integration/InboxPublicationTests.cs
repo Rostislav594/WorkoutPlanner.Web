@@ -130,6 +130,48 @@ public sealed class InboxPublicationTests
     }
 
     [Fact]
+    public async Task GetMessage_IsScopedToCurrentUser_AndExcludesDeletedMessages()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        await app.CreateUserAsync("message-owner");
+        await app.CreateUserAsync("other-user");
+        long messageId;
+        await using (var scope = app.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var message = new InboxMessage
+            {
+                UserId = "message-owner",
+                Type = InboxMessageType.SupportReply,
+                Title = "Ответ поддержки",
+                Body = "PRIVATE_SENTINEL_owner_only_body",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            db.InboxMessages.Add(message);
+            await db.SaveChangesAsync();
+            messageId = message.Id;
+        }
+
+        app.AuthenticationStateProvider.SetUser("other-user");
+        await using (var scope = app.CreateScope())
+        {
+            var inbox = scope.ServiceProvider.GetRequiredService<IInboxService>();
+            Assert.Null(await inbox.GetMessageAsync(messageId));
+        }
+
+        app.AuthenticationStateProvider.SetUser("message-owner");
+        await using (var scope = app.CreateScope())
+        {
+            var inbox = scope.ServiceProvider.GetRequiredService<IInboxService>();
+            var owned = await inbox.GetMessageAsync(messageId);
+            Assert.NotNull(owned);
+            Assert.Equal("PRIVATE_SENTINEL_owner_only_body", owned.Body);
+            Assert.True(await inbox.DeleteMessageAsync(messageId));
+            Assert.Null(await inbox.GetMessageAsync(messageId));
+        }
+    }
+
+    [Fact]
     public async Task DeleteAll_HidesPersonalAndGlobalMessagesOnlyForCurrentUser()
     {
         await using var app = await TestApplication.CreateAsync();

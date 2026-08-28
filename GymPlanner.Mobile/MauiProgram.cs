@@ -41,6 +41,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.IInboxApiClient, Api.InboxApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
 		builder.Services.AddSingleton<Notifications.NotificationNavigationService>();
+		builder.Services.AddSingleton<Notifications.IRemotePushRegistrationService,
+			Notifications.RemotePushRegistrationService>();
+		builder.Services.AddSingleton<Notifications.IRemotePushTokenProvider,
+			Notifications.UnavailableRemotePushTokenProvider>();
+#if ANDROID
+		builder.Services.AddSingleton<Notifications.IRemotePushTokenProvider,
+			Notifications.FirebasePushTokenProvider>();
+#endif
+		builder.Services.AddSingleton<Notifications.PushRegistrationCoordinator>();
 		builder.Services.AddSingleton<Notifications.InboxNotificationState>();
 		builder.Services.AddSingleton<Notifications.ILocalNotificationPlatform,
 			Notifications.PlatformLocalNotificationService>();

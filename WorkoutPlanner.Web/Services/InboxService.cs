@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
@@ -10,7 +11,9 @@ namespace WorkoutPlanner.Web.Services;
 public sealed class InboxService(
     IDbContextFactory<WorkoutDbContext> dbFactory,
     CurrentUserService currentUser,
-    TimeProvider timeProvider) : IInboxService
+    TimeProvider timeProvider,
+    IPushNotificationService pushNotifications,
+    ILogger<InboxService> logger) : IInboxService
 {
     public async Task PublishToUserAsync(
         InboxMessagePublication publication,
@@ -63,6 +66,28 @@ public sealed class InboxService(
         var messages = personalMessages.Concat(publications)
             .OrderByDescending(x => x.CreatedAtUtc).ToList();
         return new InboxPage(messages, messages.Count(x => x.ReadAtUtc is null));
+    }
+
+    public async Task<InboxMessageItem?> GetMessageAsync(
+        long messageId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.InboxMessages.AsNoTracking()
+            .Where(x => x.Id == messageId &&
+                        x.UserId == userId &&
+                        x.DeletedAtUtc == null)
+            .Select(x => new InboxMessageItem(
+                x.Id,
+                x.Type,
+                x.Title,
+                x.Preview,
+                x.Body,
+                x.CreatedAtUtc,
+                x.ReadAtUtc,
+                x.SupportTicket == null ? null : x.SupportTicket.TicketNumber))
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     public async Task<int> GetUnreadCountAsync(
@@ -228,7 +253,7 @@ public sealed class InboxService(
         if (ticket is null)
             return false;
 
-        db.InboxMessages.Add(new InboxMessage
+        var inboxMessage = new InboxMessage
         {
             UserId = ticket.UserId,
             SupportTicketId = ticket.Id,
@@ -238,7 +263,8 @@ public sealed class InboxService(
             Body = text,
             CreatedAtUtc = reply.CreatedAtUtc,
             TelegramMessageId = reply.TelegramMessageId
-        });
+        };
+        db.InboxMessages.Add(inboxMessage);
         db.SupportMessages.Add(new SupportMessage
         {
             SupportTicketId = ticket.Id,
@@ -249,7 +275,33 @@ public sealed class InboxService(
         ticket.Status = SupportTicketStatus.WaitingForUser;
         ticket.UpdatedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
         await db.SaveChangesAsync(cancellationToken);
+        await TryNotifySupportReplyAsync(
+            inboxMessage.UserId,
+            inboxMessage.Id,
+            cancellationToken);
         return true;
+    }
+
+    private async Task TryNotifySupportReplyAsync(
+        string userId,
+        long inboxMessageId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await pushNotifications.NotifyInboxMessageAsync(
+                userId,
+                PushNotificationType.SupportReply,
+                inboxMessageId,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Could not send support reply notification for inbox message {InboxMessageId}.",
+                inboxMessageId);
+        }
     }
 
     private static string CreatePreview(string text) =>

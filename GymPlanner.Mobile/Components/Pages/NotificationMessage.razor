@@ -1,6 +1,7 @@
 @page "/notifications/{Kind}/{Id:long}"
 @layout MainLayout
 @inject IInboxApiClient InboxApi
+@inject InboxNotificationState InboxState
 @inject NavigationManager Navigation
 
 <PageTitle>Уведомление</PageTitle>
@@ -49,8 +50,34 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await InboxApi.GetMessagesAsync();
-        _message = result.Value?.Messages.FirstOrDefault(x => x.Id == Id && x.IsPublication == string.Equals(Kind, "publication", StringComparison.OrdinalIgnoreCase));
+        if (Id <= 0)
+        {
+            _loading = false;
+            return;
+        }
+
+        if (string.Equals(Kind, "publication", StringComparison.OrdinalIgnoreCase))
+        {
+            var pageResult = await InboxApi.GetMessagesAsync();
+            _message = pageResult.Value?.Messages.FirstOrDefault(x => x.Id == Id && x.IsPublication);
+        }
+        else if (string.Equals(Kind, "message", StringComparison.OrdinalIgnoreCase))
+        {
+            var result = await InboxApi.GetMessageAsync(Id);
+            _message = result.Value;
+        }
+
+        if (_message is { ReadAtUtc: null })
+        {
+            var readResult = _message.IsPublication
+                ? await InboxApi.MarkPublicationReadAsync(Id)
+                : await InboxApi.MarkReadAsync(Id);
+            if (readResult.Value is not null)
+            {
+                _message = _message with { ReadAtUtc = DateTime.UtcNow };
+                InboxState.SetUnreadCount(readResult.Value.UnreadCount);
+            }
+        }
         _loading = false;
     }
 

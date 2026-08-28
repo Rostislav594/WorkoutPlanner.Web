@@ -10,6 +10,11 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         CancellationToken cancellationToken = default) =>
         GetAsync<InboxMessagesResponse>("api/v1/inbox/messages", cancellationToken);
 
+    public Task<ApiResult<InboxMessageResponse>> GetMessageAsync(
+        long messageId,
+        CancellationToken cancellationToken = default) =>
+        GetAsync<InboxMessageResponse>($"api/v1/inbox/messages/{messageId}", cancellationToken);
+
     public Task<ApiResult<InboxUnreadCountResponse>> GetUnreadCountAsync(
         CancellationToken cancellationToken = default) =>
         GetAsync<InboxUnreadCountResponse>("api/v1/inbox/unread-count", cancellationToken);

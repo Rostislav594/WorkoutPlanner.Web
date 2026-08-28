@@ -1573,6 +1573,76 @@ public sealed class MobileApiTests
     }
 
     [Fact]
+    public async Task InboxMessageEndpoint_ReturnsOnlyCurrentUsersMessage()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var ownerClient = CreateClient(factory);
+        using var otherClient = CreateClient(factory);
+
+        using var ownerRegistration = await ownerClient.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("inbox-owner@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, ownerRegistration.StatusCode);
+        using var otherRegistration = await otherClient.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("inbox-other@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, otherRegistration.StatusCode);
+
+        var ownerTokens = await LoginAsync(
+            ownerClient,
+            "inbox-owner@example.test",
+            "password1",
+            "Owner phone");
+        var otherTokens = await LoginAsync(
+            otherClient,
+            "inbox-other@example.test",
+            "password1",
+            "Other phone");
+        SetBearer(ownerClient, ownerTokens.AccessToken);
+        SetBearer(otherClient, otherTokens.AccessToken);
+
+        long messageId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var ownerId = await db.Users
+                .Where(x => x.Email == "inbox-owner@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var message = new InboxMessage
+            {
+                UserId = ownerId,
+                Type = InboxMessageType.SupportReply,
+                Title = "Ответ поддержки",
+                Body = "PRIVATE_SENTINEL_direct_message_owner_only",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            db.InboxMessages.Add(message);
+            await db.SaveChangesAsync();
+            messageId = message.Id;
+        }
+
+        using var forbiddenLookup = await otherClient.GetAsync(
+            $"/api/v1/inbox/messages/{messageId}");
+        Assert.Equal(HttpStatusCode.NotFound, forbiddenLookup.StatusCode);
+        Assert.DoesNotContain(
+            "PRIVATE_SENTINEL_direct_message_owner_only",
+            await forbiddenLookup.Content.ReadAsStringAsync(),
+            StringComparison.Ordinal);
+
+        using var ownerLookup = await ownerClient.GetAsync(
+            $"/api/v1/inbox/messages/{messageId}");
+        Assert.Equal(HttpStatusCode.OK, ownerLookup.StatusCode);
+        var ownedMessage = await ownerLookup.Content
+            .ReadFromJsonAsync<InboxMessageResponse>();
+        Assert.NotNull(ownedMessage);
+        Assert.Equal(messageId, ownedMessage.Id);
+        Assert.Equal("PRIVATE_SENTINEL_direct_message_owner_only", ownedMessage.Body);
+    }
+
+    [Fact]
     public async Task AdminPublicationsEndpoint_RejectsAnonymousAndUser_ButAllowsAdmin()
     {
         using var factory = new GymPlannerApiFactory();

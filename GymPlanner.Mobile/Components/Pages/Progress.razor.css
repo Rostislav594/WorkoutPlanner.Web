@@ -80,6 +80,60 @@
     transition: color var(--transition-ui), transform var(--transition-ui);
 }
 
+.progress-menu-icon-group {
+    display: flex;
+    width: 188px;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    fill: currentColor;
+    font-size: 0;
+}
+
+.progress-menu-icon--gym {
+    width: 80px;
+    height: 80px;
+}
+
+.progress-menu-icon-group svg,
+.progress-menu-icon-group .progress-figure {
+    width: 60px;
+    height: 60px;
+}
+
+.progress-figure {
+    display: block;
+    flex: 0 0 auto;
+    background: currentColor;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.progress-figure--overhead {
+    -webkit-mask-image: url('/images/progress-overhead.png');
+    mask-image: url('/images/progress-overhead.png');
+}
+
+.progress-figure--squat {
+    -webkit-mask-image: url('/images/progress-squat.png');
+    mask-image: url('/images/progress-squat.png');
+}
+
+.progress-figure--run {
+    -webkit-mask-image: url('/images/progress-run.png');
+    mask-image: url('/images/progress-run.png');
+}
+
+.progress-figure--dumbbells {
+    -webkit-mask-image: url('/images/progress-dumbbells.png');
+    mask-image: url('/images/progress-dumbbells.png');
+    transform: scale(1.12);
+}
+
 .progress-menu-card:hover .progress-menu-icon,
 .progress-menu-card:focus-visible .progress-menu-icon {
     transform: scale(1.04);

@@ -6,6 +6,7 @@ using Android.Views;
 using Android.Views.Animations;
 using GymPlanner.Mobile.Notifications;
 using System.Runtime.Versioning;
+using WorkoutPlanner.Api.Contracts;
 
 namespace GymPlanner.Mobile;
 
@@ -15,6 +16,7 @@ public class MainActivity : MauiAppCompatActivity
 	protected override void OnCreate(Bundle? savedInstanceState)
 	{
 		base.OnCreate(savedInstanceState);
+		AndroidNotificationSupport.EnsureRemoteChannel(this);
 
 		if (OperatingSystem.IsAndroidVersionAtLeast(31))
 			ConfigureSplashAnimation();
@@ -35,12 +37,17 @@ public class MainActivity : MauiAppCompatActivity
 	private static void OpenNotificationRoute(Android.Content.Intent? intent)
 	{
 		var route = intent?.GetStringExtra(AndroidNotificationSupport.RouteExtra);
-		if (string.IsNullOrWhiteSpace(route))
+		var navigation = IPlatformApplication.Current?.Services
+			.GetService<NotificationNavigationService>();
+		if (!string.IsNullOrWhiteSpace(route))
+		{
+			navigation?.Open(route);
 			return;
+		}
 
-		IPlatformApplication.Current?.Services
-			.GetService<NotificationNavigationService>()?
-			.Open(route);
+		navigation?.OpenPush(
+			intent?.GetStringExtra(PushNotificationPayloadKeys.Type),
+			intent?.GetStringExtra(PushNotificationPayloadKeys.InboxMessageId));
 	}
 
 	[SupportedOSPlatform("android31.0")]

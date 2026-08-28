@@ -29,6 +29,7 @@ public sealed class AuthenticatedHttpMessageHandler(
 
     private static void AddActivityMetadata(HttpRequestMessage request)
     {
+        AddHeader(request, "X-GPlanner-Installation-Id", Notifications.InstallationIdStore.Get());
         AddHeader(
             request,
             "X-GPlanner-Platform",

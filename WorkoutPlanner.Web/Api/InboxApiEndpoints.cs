@@ -14,6 +14,9 @@ public static class InboxApiEndpoints
 
         inbox.MapGet("/messages", GetMessagesAsync)
             .Produces<InboxMessagesResponse>();
+        inbox.MapGet("/messages/{messageId:long}", GetMessageAsync)
+            .Produces<InboxMessageResponse>()
+            .Produces(StatusCodes.Status404NotFound);
         inbox.MapGet("/unread-count", GetUnreadCountAsync)
             .Produces<InboxUnreadCountResponse>();
         inbox.MapPost("/messages/{messageId:long}/read", MarkReadAsync)
@@ -63,6 +66,27 @@ public static class InboxApiEndpoints
         CancellationToken cancellationToken) =>
         Results.Ok(new InboxUnreadCountResponse(
             await inbox.GetUnreadCountAsync(cancellationToken)));
+
+    private static async Task<IResult> GetMessageAsync(
+        long messageId,
+        IInboxService inbox,
+        CancellationToken cancellationToken)
+    {
+        var message = await inbox.GetMessageAsync(messageId, cancellationToken);
+        return message is null
+            ? Results.NotFound()
+            : Results.Ok(new InboxMessageResponse(
+                message.Id,
+                message.Type.ToString(),
+                message.Title,
+                message.Preview,
+                message.Body,
+                message.CreatedAtUtc,
+                message.ReadAtUtc,
+                message.SupportTicketNumber,
+                false,
+                null));
+    }
 
     private static async Task<IResult> MarkReadAsync(
         long messageId,

@@ -4,6 +4,7 @@
 @inject IWelcomeGuideApiClient WelcomeGuide
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
+@inject PushRegistrationCoordinator PushRegistration
 
 <div class="mobile-shell @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)">
     @if (!HidesApplicationNavigation)
@@ -111,7 +112,8 @@
             return;
         }
 
-        await Authentication.InitializeAsync();
+                await Authentication.InitializeAsync();
+                await PushRegistration.InitializeAsync();
         await CheckWelcomeGuideAsync();
     }
 
