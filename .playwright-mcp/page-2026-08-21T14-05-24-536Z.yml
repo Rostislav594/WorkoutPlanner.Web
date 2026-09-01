@@ -1,0 +1,14 @@
+- generic [ref=f1e29]:
+  - generic [ref=f1e30]:
+    - img "GPlanner" [ref=f1e31]
+    - heading "Вход" [level=1] [ref=f1e32]
+  - generic [ref=f1e34]:
+    - generic [ref=f1e35]:
+      - generic [ref=f1e36]: Email
+      - textbox [ref=f1e37]: codex-welcome-fix@example.test
+    - generic [ref=f1e38]:
+      - generic [ref=f1e39]: Пароль
+      - textbox [ref=f1e40]: Testpass123!
+    - button "Войти" [active] [ref=f1e41] [cursor=pointer]
+  - link "Создать аккаунт" [ref=f1e43] [cursor=pointer]:
+    - /url: /account/register

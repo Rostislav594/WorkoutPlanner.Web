@@ -1,0 +1,22 @@
+- generic [ref=f6e1]:
+  - navigation "Навигация страницы" [ref=f6e36]:
+    - link "На главную" [ref=f6e37] [cursor=pointer]:
+      - /url: ""
+  - generic [ref=f6e38]:
+    - 'button "Тест: 0" [ref=f6e39] [cursor=pointer]'
+    - region [ref=f6e54]:
+      - generic [ref=f6e41]:
+        - img "Томми обращает внимание на подсказку" [ref=f6e55]
+        - generic "Значок контекстной помощи" [ref=f6e56]: "?"
+      - generic [ref=f6e43]:
+        - paragraph [ref=f6e44]: Знакомство с GymPlanner
+        - heading "Помощь всегда рядом" [level=1] [ref=f6e57]
+        - paragraph [ref=f6e46]: Если что-то будет непонятно — ищи значок «?». Я оставил его на страницах, где может понадобиться помощь. Нажми на него, чтобы открыть короткое руководство по текущему разделу.
+        - generic "Кадр 2 из 4" [ref=f6e58]:
+          - button "Открыть кадр 1" [ref=f6e48] [cursor=pointer]
+          - button "Открыть кадр 2" [ref=f6e49] [cursor=pointer]
+          - button "Открыть кадр 3" [ref=f6e50] [cursor=pointer]
+          - button "Открыть кадр 4" [ref=f6e51] [cursor=pointer]
+        - generic [ref=f6e52]:
+          - button "Назад" [ref=f6e59] [cursor=pointer]
+          - button "Далее" [active] [ref=f6e53] [cursor=pointer]

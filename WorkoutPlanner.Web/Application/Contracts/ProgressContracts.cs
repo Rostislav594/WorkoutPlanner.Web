@@ -10,6 +10,6 @@ public sealed class ProgressSnapshot
 
 public sealed class ProgressChartPoint
 {
-    public string Label { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
     public decimal Percent { get; set; }
 }

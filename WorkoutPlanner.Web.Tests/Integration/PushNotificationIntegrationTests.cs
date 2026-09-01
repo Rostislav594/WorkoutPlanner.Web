@@ -12,6 +12,34 @@ namespace WorkoutPlanner.Web.Tests.Integration;
 public sealed class PushNotificationIntegrationTests
 {
     [Fact]
+    public async Task RegisteringSameInstallationForAnotherUser_DeactivatesPreviousOwner()
+    {
+        await using var app = await TestApplication.CreateAsync(new RecordingPushNotificationService());
+        var firstUser = await app.CreateUserAsync("push-owner-a");
+        var secondUser = await app.CreateUserAsync("push-owner-b");
+        const string installationId = "shared-installation";
+        await using (var scope = app.CreateScope())
+        {
+            var registration = scope.ServiceProvider
+                .GetRequiredService<IPushDeviceRegistrationService>();
+            await registration.RegisterAsync(
+                firstUser.Id,
+                new RegisterPushDeviceRequest(installationId, "android", "token-a"));
+            await registration.RegisterAsync(
+                secondUser.Id,
+                new RegisterPushDeviceRequest(installationId, "android", "token-b"));
+        }
+
+        await using (var scope = app.CreateScope())
+        {
+            var store = scope.ServiceProvider.GetRequiredService<IPushDeviceStore>();
+            Assert.Empty(await store.GetActiveTargetsAsync(firstUser.Id));
+            var secondTargets = Assert.Single(await store.GetActiveTargetsAsync(secondUser.Id));
+            Assert.Equal("token-b", secondTargets.PushToken);
+        }
+    }
+
+    [Fact]
     public async Task TelegramSupportReply_PersistsBeforePush_AndDuplicateDoesNotPushAgain()
     {
         var push = new RecordingPushNotificationService();

@@ -7,8 +7,9 @@
 
 .workouts-header {
     position: relative;
-    display: flex;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px;
+    justify-content: initial;
     align-items: center;
     gap: 12px;
     padding: 8px 0 4px;
@@ -19,7 +20,7 @@
     color: var(--color-text);
     font-size: var(--text-page-title);
     line-height: 1.08;
-    text-align: center;
+    text-align: left;
 }
 
 .workout-form-error,
@@ -146,53 +147,29 @@
     z-index: 12;
 }
 
-.context-menu-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    background: transparent;
+.workout-template-actions-modal {
+    width: min(100%, 420px);
 }
 
-.context-menu {
-    position: fixed;
-    z-index: 91;
-    top: 50%;
-    left: 50%;
-    width: min(240px, calc(100vw - 32px));
-    transform: translate(-50%, -50%);
-    overflow: hidden;
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-md);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-modal);
+.workout-template-actions-body {
+    display: grid;
+    gap: 18px;
 }
 
-.workout-template-menu {
-    top: 50%;
-    right: auto;
-}
-
-.context-item {
-    width: 100%;
-    min-height: var(--control-height);
-    padding: 11px 13px;
-    border: 0;
-    background: transparent;
-    color: var(--color-text);
-    font: inherit;
-    font-size: 15px;
+.workout-template-actions-body p {
+    margin: 0;
+    color: var(--color-text-muted);
     font-weight: 600;
-    text-align: left;
-    cursor: pointer;
+    overflow-wrap: anywhere;
 }
 
-.context-item:hover,
-.context-item:focus-visible {
-    background: var(--color-surface-hover);
+.workout-template-action-buttons {
+    display: grid;
+    gap: 10px;
 }
 
-.danger-context-item {
-    color: var(--color-danger-soft);
+.workout-template-action-buttons > button {
+    width: 100%;
 }
 
 .workouts-footer {
@@ -205,7 +182,6 @@
     padding-top: 36px;
 }
 
-.add-template-button,
 .primary-button,
 .secondary-button,
 .danger-button {
@@ -223,24 +199,11 @@
     transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease;
 }
 
-.add-template-button,
 .primary-button {
     border: 1px solid var(--color-success);
     background: var(--color-success);
 }
 
-.add-template-button {
-    width: min(320px, 100%);
-    font-size: 17px;
-}
-
-.add-template-button span {
-    font-size: 24px;
-    line-height: 1;
-}
-
-.add-template-button:hover:not(:disabled),
-.add-template-button:focus-visible:not(:disabled),
 .primary-button:hover:not(:disabled),
 .primary-button:focus-visible:not(:disabled) {
     border-color: var(--color-success-hover);
@@ -426,17 +389,6 @@
 }
 
 @media (max-width: 599px) {
-    .workout-template-menu {
-        position: fixed;
-        top: 50%;
-        right: auto;
-        left: 50%;
-        width: min(240px, calc(100vw - 32px));
-        transform: translate(-50%, -50%);
-    }
-}
-
-@media (max-width: 599px) {
     .modal-overlay { align-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
     .modal-window { max-height: calc(100dvh - 32px); border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg); }
 }
@@ -500,7 +452,6 @@
     }
 
     .workout-card,
-    .add-template-button,
     .primary-button,
     .secondary-button,
     .danger-button {

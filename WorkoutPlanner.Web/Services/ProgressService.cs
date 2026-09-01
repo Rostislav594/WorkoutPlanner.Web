@@ -10,6 +10,8 @@ namespace WorkoutPlanner.Web.Services;
 
 public sealed class ProgressService : IProgressService
 {
+    private const int VisibleChartDays = 30;
+
     private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;
     private readonly ExerciseIndexService _exerciseIndexService;
     private readonly CurrentUserService _currentUser;
@@ -94,8 +96,27 @@ public sealed class ProgressService : IProgressService
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<ProgressChartPoint>> GetWorkoutChartAsync(string workoutName, CancellationToken cancellationToken = default) =>
-        BuildChartPoints(await GetWorkoutProgressAsync(workoutName, cancellationToken));
+    public async Task<List<ProgressChartPoint>> GetWorkoutChartAsync(string workoutName, CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var query = db.ProgressSnapshots.AsNoTracking()
+            .Where(x => x.WorkoutName == workoutName && x.UserId == userId);
+        var baselineScore = await query
+            .OrderBy(x => x.Date)
+            .Select(x => (double?)x.Score)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (baselineScore is null)
+            return [];
+
+        var visibleFrom = DateTime.Today.AddDays(-(VisibleChartDays - 1));
+        var snapshots = await query
+            .Where(x => x.Date >= visibleFrom)
+            .OrderBy(x => x.Date)
+            .Select(x => new ScorePoint(x.Date, x.Score))
+            .ToListAsync(cancellationToken);
+        return BuildChartPoints(snapshots, baselineScore.Value);
+    }
 
     public async Task ClearAllProgressAsync(CancellationToken cancellationToken = default)
     {
@@ -126,12 +147,22 @@ public sealed class ProgressService : IProgressService
     {
         var userId = await _currentUser.GetRequiredUserIdAsync();
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
-        var snapshots = await db.ExerciseProgressSnapshots.AsNoTracking()
-            .Where(x => x.UserId == userId && x.WorkoutName == workoutName && x.ExerciseName == exerciseName)
+        var query = db.ExerciseProgressSnapshots.AsNoTracking()
+            .Where(x => x.UserId == userId && x.WorkoutName == workoutName && x.ExerciseName == exerciseName);
+        var baselineScore = await query
+            .OrderBy(x => x.Date)
+            .Select(x => (double?)x.Score)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (baselineScore is null)
+            return [];
+
+        var visibleFrom = DateTime.Today.AddDays(-(VisibleChartDays - 1));
+        var snapshots = await query
+            .Where(x => x.Date >= visibleFrom)
             .OrderBy(x => x.Date)
             .Select(x => new ScorePoint(x.Date, x.Score))
             .ToListAsync(cancellationToken);
-        return BuildChartPoints(snapshots);
+        return BuildChartPoints(snapshots, baselineScore.Value);
     }
 
     public async Task<List<string>> GetWorkoutExercisesAsync(string workoutName, CancellationToken cancellationToken = default)
@@ -158,19 +189,18 @@ public sealed class ProgressService : IProgressService
             .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
             .ToListAsync(cancellationToken);
 
-    private static List<ProgressChartPoint> BuildChartPoints(IReadOnlyList<ProgressSnapshot> snapshots) =>
-        BuildChartPoints(snapshots.Select(x => new ScorePoint(x.Date, x.Score)).ToList());
-
-    private static List<ProgressChartPoint> BuildChartPoints(IReadOnlyList<ScorePoint> snapshots)
+    private static List<ProgressChartPoint> BuildChartPoints(
+        IReadOnlyList<ScorePoint> snapshots,
+        double baselineScore)
     {
         if (snapshots.Count == 0)
             return [];
-        var firstScore = snapshots[0].Score;
+
         return snapshots.Select(snapshot => new ProgressChartPoint
         {
-            Label = snapshot.Date.ToString("dd.MM"),
+            Date = snapshot.Date,
             Percent = TrainingMetrics.CalculatePercentageChange(
-                firstScore,
+                baselineScore,
                 snapshot.Score)
         }).ToList();
     }

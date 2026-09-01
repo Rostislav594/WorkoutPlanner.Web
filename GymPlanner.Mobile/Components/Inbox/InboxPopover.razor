@@ -26,10 +26,7 @@
                  @onpointercancel="CancelClearHistoryHold"
                  @onpointerleave="CancelClearHistoryHold">
             <header class="inbox-menu__header">
-                <div>
-                    <span>GPlanner</span>
-                    <h2>Уведомления</h2>
-                </div>
+                <p class="inbox-menu__clear-hint">Удерживайте, чтобы очистить историю</p>
                 <div class="inbox-menu__header-actions">
                     @if (_messages.Any(x => x.ReadAtUtc is null))
                     {

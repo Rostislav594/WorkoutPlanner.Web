@@ -164,13 +164,13 @@
     List<WorkoutCardItem> WorkoutCards = new();
 
     ApexChartOptions<ProgressChartPoint> ChartOptions =
-        BuildChartOptions(0, 5);
+        ProgressChartOptionsFactory.Create(0, 5);
 
     const string ChartSeriesName = "Прогресс, %";
     const string SinglePointNote = "Пока есть только одна точка. Кривая появится после второй сохраненной тренировки.";
-    const string NoDataText = "Данных пока нет";
+    const string NoDataText = "Нет записей за последние 30 дней";
     const string CloseButtonText = "Закрыть";
-    const string ChartSubtitle = "Динамика роста тренировочного индекса";
+    const string ChartSubtitle = "Последние 30 дней · изменение относительно первой тренировки";
     const string DeleteButtonText = "Удалить";
     const string CancelButtonText = "Отмена";
 
@@ -190,29 +190,13 @@
         WorkoutHistory =
             await ProgressService.GetWorkoutProgressAsync(workoutName);
 
-        CurrentChartData.Clear();
+        CurrentChartData =
+            await ProgressService.GetWorkoutChartAsync(workoutName);
 
-        if (!WorkoutHistory.Any())
+        if (!CurrentChartData.Any())
         {
             ResetChartScale();
             return;
-        }
-
-        var baseScore = WorkoutHistory.First().Score;
-
-        foreach (var item in WorkoutHistory)
-        {
-            var percent =
-                baseScore <= 0
-                    ? 0
-                    : ((item.Score - baseScore) / baseScore) * 100;
-
-            CurrentChartData.Add(
-                new ProgressChartPoint
-                {
-                    Label = item.Date.ToString("dd.MM"),
-                    Percent = Math.Round((decimal)percent, 2)
-                });
         }
 
         UpdateChartScale();
@@ -305,7 +289,7 @@
             ChartAxisMax = 3;
         }
 
-        ChartOptions = BuildChartOptions(ChartAxisMin, ChartAxisMax);
+        ChartOptions = ProgressChartOptionsFactory.Create(ChartAxisMin, ChartAxisMax);
         ChartRenderKey++;
     }
 
@@ -313,95 +297,8 @@
     {
         ChartAxisMin = 0;
         ChartAxisMax = 5;
-        ChartOptions = BuildChartOptions(0, 5);
+        ChartOptions = ProgressChartOptionsFactory.Create(0, 5);
         ChartRenderKey++;
-    }
-
-    static ApexChartOptions<ProgressChartPoint> BuildChartOptions(
-        decimal min,
-        decimal max)
-    {
-        return new()
-        {
-            Chart = new Chart
-            {
-                Type = ChartType.Line,
-                Toolbar = new Toolbar { Show = false },
-                Zoom = new Zoom { Enabled = false }
-            },
-            Colors = new List<string> { "#3fb950" },
-            DataLabels = new DataLabels
-            {
-                Enabled = true,
-                OffsetY = -14,
-                Formatter = @"function(value) {
-                    if (value === null || value === undefined) {
-                        return '';
-                    }
-
-                    const rounded = Math.round(value * 100) / 100;
-                    const text = Number.isInteger(rounded)
-                        ? rounded.toFixed(0)
-                        : rounded.toString();
-
-                    return text + '%';
-                }",
-                Background = new DataLabelsBackground { Enabled = false },
-                Style = new DataLabelsStyle
-                {
-                    FontSize = "14px",
-                    FontWeight = "700",
-                    Colors = new List<string> { "#5cff6d" }
-                }
-            },
-            Stroke = new Stroke
-            {
-                Show = true,
-                Curve = Curve.Straight,
-                Width = 4
-            },
-            Fill = new Fill
-            {
-                Type = FillType.Solid,
-                Opacity = 1
-            },
-            Markers = new Markers
-            {
-                Size = 6,
-                StrokeWidth = 2,
-                StrokeColors = new List<string> { "#ffffff" }
-            },
-            Yaxis =
-            [
-                new()
-                {
-                    Min = (double)min,
-                    Max = (double)max,
-                    Labels = new YAxisLabels
-                    {
-                        Formatter = @"function(value) {
-                            return value + '%';
-                        }",
-                        Style = new AxisLabelStyle
-                        {
-                            Colors = new List<string> { "#d0d0d0" }
-                        }
-                    }
-                }
-            ],
-            Tooltip = new Tooltip { Enabled = false },
-            Xaxis = new XAxis
-            {
-                Labels = new XAxisLabels
-                {
-                    Style = new AxisLabelStyle
-                    {
-                        Colors = new List<string> { "#d0d0d0" }
-                    }
-                }
-            },
-            Grid = new Grid { BorderColor = "#202020" }
-        };
     }
 
     static decimal GetNiceAxisLimit(decimal value)

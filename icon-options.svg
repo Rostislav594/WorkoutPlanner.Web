@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1480" viewBox="0 0 1200 1480">
+  <rect width="1200" height="1480" fill="#10151c"/>
+  <style>
+    .title{font:700 42px Arial,sans-serif;fill:#f0f4f8}.subtitle{font:400 21px Arial,sans-serif;fill:#9da7b3}.variant{font:700 25px Arial,sans-serif;fill:#f0f4f8}.desc{font:400 18px Arial,sans-serif;fill:#9da7b3}.label{font:600 23px Arial,sans-serif;fill:#f0f4f8}.icon{font:700 42px Arial,sans-serif;fill:#82e28f}.small{font:400 15px Arial,sans-serif;fill:#75808d}.card{fill:#171e27;stroke:#303b48;stroke-width:2}.iconbox{fill:#202a35;stroke:#3b4a59;stroke-width:2}
+  </style>
+  <text x="70" y="80" class="title">Варианты иконок для раздела «Прогресс»</text>
+  <text x="70" y="120" class="subtitle">Сравнение пар для кнопок «Упражнения» и «Тренировки»</text>
+
+  <g transform="translate(70 165)"><rect class="card" width="1060" height="230" rx="22"/><text x="30" y="48" class="variant">Вариант 1 · Самый понятный</text><text x="30" y="80" class="desc">Тело и повторяющаяся тренировка</text>
+    <rect class="iconbox" x="30" y="105" width="430" height="95" rx="16"/><text x="65" y="167" class="icon">♙</text><text x="130" y="150" class="label">Упражнения</text><text x="130" y="178" class="small">accessibility_new</text>
+    <rect class="iconbox" x="500" y="105" width="500" height="95" rx="16"/><text x="535" y="167" class="icon">↻</text><text x="600" y="150" class="label">Тренировки</text><text x="600" y="178" class="small">event_repeat</text></g>
+
+  <g transform="translate(70 430)"><rect class="card" width="1060" height="230" rx="22"/><text x="30" y="48" class="variant">Вариант 2 · Спортивный</text><text x="30" y="80" class="desc">Движение и силовая тренировка</text>
+    <rect class="iconbox" x="30" y="105" width="430" height="95" rx="16"/><text x="65" y="167" class="icon">✦</text><text x="130" y="150" class="label">Упражнения</text><text x="130" y="178" class="small">sports_gymnastics</text>
+    <rect class="iconbox" x="500" y="105" width="500" height="95" rx="16"/><text x="535" y="167" class="icon">⚑</text><text x="600" y="150" class="label">Тренировки</text><text x="600" y="178" class="small">fitness_center</text></g>
+
+  <g transform="translate(70 695)"><rect class="card" width="1060" height="230" rx="22"/><text x="30" y="48" class="variant">Вариант 3 · Структурный</text><text x="30" y="80" class="desc">Упражнения как список, тренировки как календарь</text>
+    <rect class="iconbox" x="30" y="105" width="430" height="95" rx="16"/><text x="65" y="167" class="icon">☷</text><text x="130" y="150" class="label">Упражнения</text><text x="130" y="178" class="small">view_list</text>
+    <rect class="iconbox" x="500" y="105" width="500" height="95" rx="16"/><text x="535" y="167" class="icon">▣</text><text x="600" y="150" class="label">Тренировки</text><text x="600" y="178" class="small">calendar_month</text></g>
+
+  <g transform="translate(70 960)"><rect class="card" width="1060" height="230" rx="22"/><text x="30" y="48" class="variant">Вариант 4 · Через прогресс</text><text x="30" y="80" class="desc">Активность и измерение результата</text>
+    <rect class="iconbox" x="30" y="105" width="430" height="95" rx="16"/><text x="65" y="167" class="icon">➤</text><text x="130" y="150" class="label">Упражнения</text><text x="130" y="178" class="small">directions_run</text>
+    <rect class="iconbox" x="500" y="105" width="500" height="95" rx="16"/><text x="535" y="167" class="icon">⌁</text><text x="600" y="150" class="label">Тренировки</text><text x="600" y="178" class="small">insights</text></g>
+
+  <g transform="translate(70 1225)"><rect class="card" width="1060" height="230" rx="22"/><text x="30" y="48" class="variant">Вариант 5 · Минималистичный</text><text x="30" y="80" class="desc">Цель упражнения и запись тренировки</text>
+    <rect class="iconbox" x="30" y="105" width="430" height="95" rx="16"/><text x="65" y="167" class="icon">◎</text><text x="130" y="150" class="label">Упражнения</text><text x="130" y="178" class="small">target</text>
+    <rect class="iconbox" x="500" y="105" width="500" height="95" rx="16"/><text x="535" y="167" class="icon">▤</text><text x="600" y="150" class="label">Тренировки</text><text x="600" y="178" class="small">event_note</text></g>
+</svg>

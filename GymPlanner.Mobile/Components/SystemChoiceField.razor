@@ -1,0 +1,49 @@
+@inject ISystemChoicePicker ChoicePicker
+
+<button id="@Id"
+        class="system-choice-field @Class"
+        type="button"
+        disabled="@(Disabled || _isOpen)"
+        aria-label="@AriaLabel"
+        aria-haspopup="listbox"
+        aria-expanded="@_isOpen"
+        @onclick="OpenAsync">
+    <span class="system-choice-field__value @(HasSelection ? null : "system-choice-field__placeholder")">@DisplayText</span>
+    <span class="material-symbols-rounded system-choice-field__icon" aria-hidden="true">expand_more</span>
+</button>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<SystemChoiceOption> Options { get; set; } = [];
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Выберите";
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+
+    private bool _isOpen;
+    private SystemChoiceOption? SelectedOption =>
+        Options.FirstOrDefault(option => option.Value == Value);
+    private bool HasSelection => SelectedOption is not null;
+    private string DisplayText => SelectedOption?.Label ?? Placeholder;
+
+    private async Task OpenAsync()
+    {
+        if (_isOpen || Disabled)
+            return;
+
+        _isOpen = true;
+        try
+        {
+            var selectedValue = await ChoicePicker.PickAsync(Title, Options, Value);
+            if (selectedValue is not null && selectedValue != Value)
+                await ValueChanged.InvokeAsync(selectedValue);
+        }
+        finally
+        {
+            _isOpen = false;
+        }
+    }
+}

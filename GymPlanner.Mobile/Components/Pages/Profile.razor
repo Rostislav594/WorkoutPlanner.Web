@@ -142,12 +142,12 @@
                     </div>
                     <div class="field">
                         <label for="profile-gender">Пол</label>
-                        <InputSelect id="profile-gender" class="auth-input" @bind-Value="_profileInput.Gender">
-                            <option value="">Выберите</option>
-                            <option value="Мужской">Мужской</option>
-                            <option value="Женский">Женский</option>
-                            <option value="Не указывать">Не указывать</option>
-                        </InputSelect>
+                        <SystemChoiceField id="profile-gender"
+                                           class="auth-input"
+                                           Title="Пол"
+                                           Options="GenderOptions"
+                                           @bind-Value="_profileInput.Gender"
+                                           AriaLabel="Выбрать пол" />
                         <ValidationMessage For="@(() => _profileInput.Gender)" />
                     </div>
                 </div>
@@ -339,6 +339,13 @@
 }
 
 @code {
+    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    [
+        new("Мужской", "Мужской"),
+        new("Женский", "Женский"),
+        new("Не указывать", "Не указывать")
+    ];
+
     private IReadOnlyList<ProfileSection> ProfileSections =>
     [
         new("personal-data", "Личные данные", [new("badge", "Личная информация", "/profile/personal-information"), new("mail", "Email", "/profile/email")]),

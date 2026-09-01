@@ -130,16 +130,6 @@
     background: var(--color-danger);
 }
 
-.add-exercise-button {
-    width: min(320px, 100%);
-    font-size: 17px;
-}
-
-.add-exercise-button > span {
-    font-size: 24px;
-    line-height: 1;
-}
-
 .page-state,
 .empty-exercises {
     min-height: 230px;
@@ -206,7 +196,7 @@
 
 .exercise-card.template-superset-card {
     border: 2px solid var(--color-accent);
-    background: linear-gradient(145deg, var(--color-orange-soft), var(--color-surface) 38%);
+    background: var(--color-surface);
 }
 
 .template-superset-heading {
@@ -463,7 +453,7 @@
     font-size: 13px;
     font-weight: 800;
     cursor: pointer;
-    transition: border-color .18s ease, filter .18s ease, transform .18s ease;
+    transition: none;
 }
 
 .set-number.warmup {

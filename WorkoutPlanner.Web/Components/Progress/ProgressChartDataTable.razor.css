@@ -1,0 +1,48 @@
+.chart-data-details {
+    margin: .75rem 0 1rem;
+    color: #d0d0d0;
+}
+
+.chart-data-details summary {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    color: #9fdaa9;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.chart-data-details summary:focus-visible {
+    border-radius: .35rem;
+    outline: 2px solid #3fb950;
+    outline-offset: 3px;
+}
+
+.chart-data-scroll {
+    max-height: 15rem;
+    overflow: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+caption {
+    padding: .25rem 0 .6rem;
+    color: #aeb7c2;
+    text-align: left;
+}
+
+th,
+td {
+    padding: .55rem .65rem;
+    border-bottom: 1px solid #343b45;
+    text-align: left;
+}
+
+th:last-child,
+td:last-child {
+    text-align: right;
+}

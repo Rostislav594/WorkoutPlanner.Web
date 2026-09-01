@@ -1,0 +1,24 @@
+- generic [active] [ref=f4e1]:
+  - status "Загрузка приложения" [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - generic [ref=f4e4]: GPlanner
+      - generic [ref=f4e5]: Загрузка
+  - navigation "Навигация страницы" [ref=f4e10]:
+    - link "На главную" [ref=f4e11] [cursor=pointer]:
+      - /url: ""
+  - generic [ref=f4e12]:
+    - 'button "Тест: 0" [ref=f4e13] [cursor=pointer]'
+    - region [ref=f4e14]:
+      - img "Томми приветственно машет рукой" [ref=f4e16]
+      - generic [ref=f4e17]:
+        - paragraph [ref=f4e18]: Знакомство с GymPlanner
+        - heading "Привет! Я Томми" [level=1] [ref=f4e19]
+        - paragraph [ref=f4e20]: Рад приветствовать тебя в GymPlanner! Мне очень приятно, что ты присоединился к нашей спортивной команде. Давай быстро разберём самое главное, а дальше будем знакомиться по ходу дела.
+        - generic "Кадр 1 из 4" [ref=f4e21]:
+          - button "Открыть кадр 1" [ref=f4e22] [cursor=pointer]
+          - button "Открыть кадр 2" [ref=f4e23] [cursor=pointer]
+          - button "Открыть кадр 3" [ref=f4e24] [cursor=pointer]
+          - button "Открыть кадр 4" [ref=f4e25] [cursor=pointer]
+        - generic [ref=f4e26]:
+          - button "Назад" [disabled]
+          - button "Далее" [ref=f4e27] [cursor=pointer]

@@ -2,7 +2,7 @@
 
 public class ProgressChartPoint
 {
-    public string Label { get; set; } = "";
+    public DateTime Date { get; set; }
 
     public decimal Percent { get; set; }
 }

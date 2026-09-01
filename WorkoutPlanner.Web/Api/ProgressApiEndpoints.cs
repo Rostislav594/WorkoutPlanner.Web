@@ -197,7 +197,7 @@ public static class ProgressApiEndpoints
 
     private static ProgressChartPointApiResponse ToResponse(
         ProgressChartPoint point) =>
-        new(point.Label, point.Percent);
+        new(point.Date, point.Percent);
 
     private static Dictionary<string, string[]> ValidateExerciseName(
         string? exerciseName)

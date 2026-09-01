@@ -21,6 +21,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Navigation.MobileBackNavigationService>();
 		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();
 		builder.Services.AddSingleton<Lifecycle.FreeWorkoutDraftStore>();
+		builder.Services.AddSingleton<Orientation.IScreenOrientationService,
+			Orientation.ScreenOrientationService>();
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
 			Authentication.SecureMobileTokenStore>();
@@ -40,6 +42,8 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Api.ISupportApiClient, Api.SupportApiClient>();
 		builder.Services.AddSingleton<Api.IInboxApiClient, Api.InboxApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
+		builder.Services.AddSingleton<SystemControls.ISystemChoicePicker,
+			SystemControls.MauiSystemChoicePicker>();
 		builder.Services.AddSingleton<Notifications.NotificationNavigationService>();
 		builder.Services.AddSingleton<Notifications.IRemotePushRegistrationService,
 			Notifications.RemotePushRegistrationService>();

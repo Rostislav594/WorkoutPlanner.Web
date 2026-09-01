@@ -714,21 +714,28 @@ public sealed class MobileApiTests
                 {
                     UserId = firstUserId,
                     WorkoutName = firstPlan.WorkoutName,
-                    Date = new DateTime(2026, 1, 1),
+                    Date = DateTime.Today.AddDays(-40),
                     Score = 100
                 },
                 new WorkoutPlanner.Web.Models.ProgressSnapshot
                 {
                     UserId = firstUserId,
                     WorkoutName = firstPlan.WorkoutName,
-                    Date = new DateTime(2026, 1, 2),
+                    Date = DateTime.Today.AddDays(-20),
                     Score = 150
+                },
+                new WorkoutPlanner.Web.Models.ProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    Date = DateTime.Today.AddDays(-1),
+                    Score = 200
                 },
                 new WorkoutPlanner.Web.Models.ProgressSnapshot
                 {
                     UserId = secondUserId,
                     WorkoutName = firstPlan.WorkoutName,
-                    Date = new DateTime(2026, 1, 1),
+                    Date = DateTime.Today.AddDays(-1),
                     Score = 999
                 });
             db.ExerciseProgressSnapshots.AddRange(
@@ -737,7 +744,7 @@ public sealed class MobileApiTests
                     UserId = firstUserId,
                     WorkoutName = firstPlan.WorkoutName,
                     ExerciseName = "Bench press",
-                    Date = new DateTime(2026, 1, 1),
+                    Date = DateTime.Today.AddDays(-40),
                     Score = 10
                 },
                 new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
@@ -745,15 +752,23 @@ public sealed class MobileApiTests
                     UserId = firstUserId,
                     WorkoutName = firstPlan.WorkoutName,
                     ExerciseName = "Bench press",
-                    Date = new DateTime(2026, 1, 2),
+                    Date = DateTime.Today.AddDays(-20),
                     Score = 20
+                },
+                new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
+                {
+                    UserId = firstUserId,
+                    WorkoutName = firstPlan.WorkoutName,
+                    ExerciseName = "Bench press",
+                    Date = DateTime.Today.AddDays(-1),
+                    Score = 30
                 },
                 new WorkoutPlanner.Web.Models.ExerciseProgressSnapshot
                 {
                     UserId = secondUserId,
                     WorkoutName = firstPlan.WorkoutName,
                     ExerciseName = "Private exercise",
-                    Date = new DateTime(2026, 1, 1),
+                    Date = DateTime.Today.AddDays(-1),
                     Score = 999
                 });
             await db.SaveChangesAsync();
@@ -763,8 +778,11 @@ public sealed class MobileApiTests
             WorkoutProgressApiResponse>(
                 $"/api/v1/progress/workouts/{firstPlan.Id}");
         Assert.NotNull(workoutProgress);
-        Assert.Equal([100d, 150d], workoutProgress.Snapshots.Select(x => x.Score));
-        Assert.Equal([0m, 50m], workoutProgress.Chart.Select(x => x.Percent));
+        Assert.Equal([100d, 150d, 200d], workoutProgress.Snapshots.Select(x => x.Score));
+        Assert.Equal([50m, 100m], workoutProgress.Chart.Select(x => x.Percent));
+        Assert.Equal(
+            [DateTime.Today.AddDays(-20), DateTime.Today.AddDays(-1)],
+            workoutProgress.Chart.Select(x => x.Date.Date));
 
         var exerciseNames = await firstUser.GetFromJsonAsync<List<string>>(
             $"/api/v1/progress/workouts/{firstPlan.Id}/exercises");
@@ -775,7 +793,7 @@ public sealed class MobileApiTests
                 $"/api/v1/progress/workouts/{firstPlan.Id}/exercises/chart" +
                 "?exerciseName=Bench%20press");
         Assert.NotNull(exerciseProgress);
-        Assert.Equal([0m, 100m], exerciseProgress.Chart.Select(x => x.Percent));
+        Assert.Equal([100m, 200m], exerciseProgress.Chart.Select(x => x.Percent));
 
         using var foreignRead = await secondUser.GetAsync(
             $"/api/v1/progress/workouts/{firstPlan.Id}");

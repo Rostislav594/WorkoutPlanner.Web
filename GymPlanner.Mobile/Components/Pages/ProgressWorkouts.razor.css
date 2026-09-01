@@ -580,7 +580,16 @@
 
     .modal-window {
         max-height: calc(100dvh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
-        padding-top: 14px;
+        padding: 12px max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    .progress-modal .modal-heading {
+        margin-bottom: 10px;
+    }
+
+    .progress-modal .modal-heading p {
+        margin-top: 3px;
+        font-size: .8rem;
     }
 }
 

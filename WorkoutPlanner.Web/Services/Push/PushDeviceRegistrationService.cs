@@ -22,6 +22,20 @@ public sealed class PushDeviceRegistrationService(
         Validate(request);
         var now = timeProvider.GetUtcNow();
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        // An installation identifies one physical app instance. If the user
+        // changes accounts without a successful logout, do not leave the
+        // previous account's registration active on that same device.
+        await db.PushDeviceRegistrations
+            .Where(x => x.InstallationId == request.InstallationId &&
+                        x.UserId != userId &&
+                        x.IsActive)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(x => x.IsActive, false)
+                    .SetProperty(x => x.UpdatedAtUtc, now.UtcDateTime),
+                cancellationToken);
+
         var device = await db.PushDeviceRegistrations.SingleOrDefaultAsync(
             x => x.UserId == userId && x.InstallationId == request.InstallationId,
             cancellationToken);

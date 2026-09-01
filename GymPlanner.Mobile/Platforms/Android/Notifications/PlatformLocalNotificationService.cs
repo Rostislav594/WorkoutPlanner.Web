@@ -198,7 +198,7 @@ internal static class AndroidNotificationSupport
         var manager = context.GetSystemService(Context.NotificationService) as NotificationManager;
         if (manager is null) return;
         EnsureRemoteChannelManager(manager);
-        var messageId = data.TryGetValue(PushNotificationPayloadKeys.InboxMessageId, out var value) && int.TryParse(value, out var parsed) ? parsed : Random.Shared.Next(1, int.MaxValue);
+        var messageId = GetRemoteNotificationId(data);
         var launchIntent = new Intent(context, typeof(MainActivity));
         launchIntent.SetFlags(ActivityFlags.ClearTop | ActivityFlags.SingleTop);
         foreach (var pair in data) launchIntent.PutExtra(pair.Key, pair.Value);
@@ -211,6 +211,25 @@ internal static class AndroidNotificationSupport
         var notification = builder.SetContentTitle(title).SetContentText(body)
             .SetSmallIcon(Android.Resource.Drawable.IcDialogInfo).SetAutoCancel(true).SetContentIntent(pendingIntent).Build();
         manager.Notify(messageId, notification);
+    }
+
+    private static int GetRemoteNotificationId(IReadOnlyDictionary<string, string> data)
+    {
+        if (data.TryGetValue(PushNotificationPayloadKeys.InboxMessageId, out var value) &&
+            long.TryParse(value, System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture, out var parsed) &&
+            parsed > 0)
+        {
+            var id = unchecked((int)(parsed ^ (parsed >> 32)));
+            return id switch
+            {
+                0 => 1,
+                int.MinValue => int.MaxValue,
+                _ => Math.Abs(id)
+            };
+        }
+
+        return Random.Shared.Next(1, int.MaxValue);
     }
 
     private static void EnsureChannel(NotificationManager manager)

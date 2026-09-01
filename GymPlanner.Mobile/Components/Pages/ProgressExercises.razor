@@ -2,9 +2,11 @@
 @attribute [Authorize]
 @implements IDisposable
 @using System.Globalization
+@using GymPlanner.Mobile.Orientation
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
 @inject IProgressApiClient ProgressClient
+@inject IScreenOrientationService OrientationService
 
 <section class="progress-exercises-page" aria-labelledby="progress-exercises-title" aria-busy="@_isLoadingPlans">
     <div class="page-heading">
@@ -76,7 +78,7 @@
             <header class="modal-heading">
                 <div>
                     <h2 id="exercise-progress-title">@_selectedExercise</h2>
-                    <p>Динамика роста упражнения</p>
+                    <p>Последние 30 дней · относительно первой тренировки</p>
                 </div>
                 <button class="modal-close" type="button" aria-label="Закрыть" disabled="@_isLoadingProgress" @onclick="CloseExerciseProgress">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
@@ -97,54 +99,56 @@
             }
             else if (_exerciseProgress is not null && _exerciseProgress.Chart.Count > 0)
             {
-                <ProgressLineChart Title="Прогресс, %" Points="_exerciseProgress.Chart" />
+                <div class="chart-page-content">
+                    <ProgressLineChart Title="Прогресс, %" Points="_exerciseProgress.Chart" />
 
-                @if (_exerciseProgress.Chart.Count == 1)
-                {
-                    <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
-                }
+                    @if (_exerciseProgress.Chart.Count == 1)
+                    {
+                        <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
+                    }
 
-                <div class="progress-summary">
-                    <article class="summary-card">
-                        <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
-                            <span class="material-symbols-rounded">trending_up</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Рост</span>
-                            <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
-                            <span class="card-subtitle">Относительно последней тренировки</span>
-                        </div>
-                    </article>
+                    <div class="progress-summary">
+                        <article class="summary-card">
+                            <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
+                                <span class="material-symbols-rounded">trending_up</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Рост</span>
+                                <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
+                                <span class="card-subtitle">Относительно последней тренировки</span>
+                            </div>
+                        </article>
 
-                    <article class="summary-card">
-                        <span class="card-icon best-icon" aria-hidden="true">
-                            <span class="material-symbols-rounded">emoji_events</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Лучший результат</span>
-                            <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
-                            <span class="card-subtitle">Максимальный рост</span>
-                        </div>
-                    </article>
+                        <article class="summary-card">
+                            <span class="card-icon best-icon" aria-hidden="true">
+                                <span class="material-symbols-rounded">emoji_events</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Лучший результат</span>
+                                <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
+                                <span class="card-subtitle">Максимальный рост</span>
+                            </div>
+                        </article>
 
-                    <article class="summary-card">
-                        <span class="card-icon workout-icon" aria-hidden="true">
-                            <span class="material-symbols-rounded">calendar_month</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Тренировок</span>
-                            <strong class="card-value blue">@_exerciseProgress.Chart.Count</strong>
-                            <span class="card-subtitle">Всего в истории</span>
-                        </div>
-                    </article>
+                        <article class="summary-card">
+                            <span class="card-icon workout-icon" aria-hidden="true">
+                                <span class="material-symbols-rounded">calendar_month</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Тренировок</span>
+                                <strong class="card-value blue">@_exerciseProgress.Chart.Count</strong>
+                                <span class="card-subtitle">За последние 30 дней</span>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             }
             else if (!_isLoadingProgress)
             {
                 <div class="modal-empty">
                     <span class="material-symbols-rounded" aria-hidden="true">insights</span>
-                    <h3>Данных пока нет</h3>
-                    <p>Завершите тренировку, чтобы здесь появилась динамика упражнения.</p>
+                    <h3>Нет записей за последние 30 дней</h3>
+                    <p>Завершите тренировку, чтобы здесь появилась актуальная динамика упражнения.</p>
                 </div>
             }
 
@@ -203,7 +207,6 @@
     private bool _isLoadingProgress;
     private bool _isBusy;
     private bool _showToast;
-
     private IReadOnlyList<ExerciseEntry> ExerciseEntries => _plans
         .SelectMany(plan => plan.Exercises.Select(exercise =>
             new ExerciseEntry(plan.Id, plan.WorkoutName, exercise.Name)))
@@ -256,6 +259,7 @@
         var cancellationToken = _progressLoadCts.Token;
         _selectedPlan = _plans.First(plan => plan.Id == entry.PlanId);
         _selectedExercise = entry.ExerciseName;
+        OrientationService.LockLandscape();
         _exerciseProgress = null;
         _progressErrors.Clear();
         _isLoadingProgress = true;
@@ -283,6 +287,7 @@
             return;
 
         _selectedExercise = null;
+        OrientationService.RestoreAutomaticOrientation();
         if (_exerciseToClear is null)
             _selectedPlan = null;
         _exerciseProgress = null;
@@ -347,6 +352,7 @@
 
     public void Dispose()
     {
+        OrientationService.RestoreAutomaticOrientation();
         _disposeCts.Cancel();
         _progressLoadCts?.Cancel();
         _progressLoadCts?.Dispose();

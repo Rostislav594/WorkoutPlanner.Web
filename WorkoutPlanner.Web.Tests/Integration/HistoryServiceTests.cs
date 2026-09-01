@@ -116,9 +116,9 @@ public sealed class HistoryServiceTests
         await application.CreateUserAsync("user-b");
         application.AuthenticationStateProvider.SetUser("user-a");
 
-        var firstDate = new DateTime(2026, 8, 1, 18, 0, 0);
-        var deletedDate = new DateTime(2026, 8, 8, 18, 0, 0);
-        var lastDate = new DateTime(2026, 8, 15, 18, 0, 0);
+        var firstDate = DateTime.Today.AddDays(-20).AddHours(18);
+        var deletedDate = DateTime.Today.AddDays(-10).AddHours(18);
+        var lastDate = DateTime.Today.AddDays(-1).AddHours(18);
         int historyId;
 
         await using (var scope = application.CreateScope())

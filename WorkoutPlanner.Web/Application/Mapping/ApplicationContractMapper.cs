@@ -106,7 +106,7 @@ internal static class ApplicationContractMapper
     {
         return new Contracts.ProgressChartPoint
         {
-            Label = source.Label,
+            Date = source.Date,
             Percent = source.Percent
         };
     }

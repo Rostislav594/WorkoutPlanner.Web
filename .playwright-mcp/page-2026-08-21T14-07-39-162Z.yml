@@ -1,0 +1,18 @@
+- generic [ref=f2e1]:
+  - navigation "Навигация страницы" [ref=f2e27]:
+    - link "На главную" [ref=f2e28] [cursor=pointer]:
+      - /url: ""
+  - region [ref=f2e30]:
+    - img "Томми приветственно машет рукой" [ref=f2e32]
+    - generic [ref=f2e33]:
+      - paragraph [ref=f2e34]: Знакомство с GymPlanner
+      - heading "Привет! Я Томми" [level=1] [ref=f2e35]
+      - paragraph [ref=f2e36]: Рад приветствовать тебя в GymPlanner! Мне очень приятно, что ты присоединился к нашей спортивной команде. Давай быстро разберём самое главное, а дальше будем знакомиться по ходу дела.
+      - generic "Кадр 1 из 4" [ref=f2e37]:
+        - button "Открыть кадр 1" [ref=f2e38] [cursor=pointer]
+        - button "Открыть кадр 2" [active] [ref=f2e39] [cursor=pointer]
+        - button "Открыть кадр 3" [ref=f2e40] [cursor=pointer]
+        - button "Открыть кадр 4" [ref=f2e41] [cursor=pointer]
+      - generic [ref=f2e42]:
+        - button "Назад" [disabled]
+        - button "Далее" [ref=f2e43] [cursor=pointer]

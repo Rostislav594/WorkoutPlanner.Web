@@ -61,7 +61,7 @@
 
 .workout-chip .material-symbols-rounded {
     flex: 0 0 auto;
-    color: var(--color-accent);
+    color: var(--color-success);
     font-size: 28px;
 }
 
@@ -136,7 +136,7 @@
     height: min(34dvh, 260px);
     display: grid;
     place-items: center;
-    color: var(--color-accent);
+    color: var(--color-success);
 }
 
 .no-workout-visual > .material-symbols-rounded {
@@ -264,8 +264,8 @@
     display: grid;
     padding: 4px;
     border-radius: var(--radius-md);
-    background: conic-gradient(from -90deg, color-mix(in srgb, var(--color-accent) 78%, white) var(--workout-progress), rgba(255, 255, 255, .18) 0);
-    box-shadow: 0 6px 18px rgba(255, 122, 26, .1);
+    background: conic-gradient(from -90deg, color-mix(in srgb, var(--color-success) 78%, white) var(--workout-progress), rgba(255, 255, 255, .18) 0);
+    box-shadow: 0 6px 18px rgba(63, 185, 80, .1);
     transition: --workout-progress .45s ease-out;
 }
 
@@ -296,7 +296,7 @@
 
 .workout-progress-indicator__content .material-symbols-rounded {
     flex: 0 0 auto;
-    color: var(--color-accent);
+    color: var(--color-success-hover);
     font-size: 24px;
 }
 
@@ -326,31 +326,57 @@
     gap: 10px;
 }
 
-.add-free-exercise-button {
-    width: 100%;
-    min-height: 58px;
-    display: grid;
-    place-items: center;
+.free-exercise-action {
+    display: flex;
+    justify-content: center;
     margin-top: 12px;
-    border: 2px dashed var(--color-border-strong);
-    border-radius: var(--radius-lg);
-    background: transparent;
-    color: var(--color-accent);
-    font: inherit;
-    cursor: pointer;
-    transition: border-color .18s ease, background-color .18s ease;
 }
 
-.add-free-exercise-button > span {
-    font-size: 38px;
-    font-weight: 350;
-    line-height: 1;
+.add-free-exercise-button {
+    margin: 0;
 }
 
-.add-free-exercise-button:hover:not(:disabled),
-.add-free-exercise-button:focus-visible:not(:disabled) {
-    border-color: var(--color-accent);
-    background: rgba(63, 185, 80, .14);
+.finish-button--hold {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+.finish-button--hold::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--color-success);
+    content: "";
+    transform: scaleX(0);
+    transform-origin: center;
+}
+
+.finish-button--hold.is-filling::before {
+    animation: finish-button-hold-fill 1.9s linear forwards;
+}
+
+.finish-button-label {
+    position: relative;
+    z-index: 1;
+    transition: opacity .12s ease, transform .12s ease;
+}
+
+@keyframes finish-button-hold-fill {
+    to { transform: scaleX(1); }
+}
+
+.finish-button--hold.is-filling .finish-button-label {
+    opacity: 0;
+    transform: scale(.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .finish-button--hold.is-filling::before {
+        animation-duration: .01ms;
+    }
 }
 
 .exercise-group { display: contents; }
@@ -743,6 +769,7 @@
 
 .rest-timer-box strong {
     font-size: 15px;
+    font-variant-numeric: tabular-nums;
 }
 
 .rest-timer-edit {
@@ -1257,6 +1284,17 @@
 @media (max-width: 599px) {
     .modal-overlay { align-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
     .modal-window { max-height: calc(100dvh - 32px); border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+
+    .no-workout-container {
+        min-height: 0;
+        gap: 14px;
+        padding: 24px 12px;
+    }
+
+    .no-workout-visual {
+        max-width: 220px;
+        height: min(18dvh, 150px);
+    }
 }
 
 .workout-completed-window h2 {

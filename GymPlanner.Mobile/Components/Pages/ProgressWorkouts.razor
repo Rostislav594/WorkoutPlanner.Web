@@ -2,9 +2,11 @@
 @attribute [Authorize]
 @implements IDisposable
 @using System.Globalization
+@using GymPlanner.Mobile.Orientation
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
 @inject IProgressApiClient ProgressClient
+@inject IScreenOrientationService OrientationService
 
 <section class="progress-workouts-page" aria-labelledby="progress-workouts-title" aria-busy="@_isLoading">
     <div class="page-heading">
@@ -76,7 +78,7 @@
             <header class="modal-heading">
                 <div>
                     <h2 id="workout-progress-title">@_selectedPlan.WorkoutName</h2>
-                    <p>Динамика роста тренировочного индекса</p>
+                    <p>Последние 30 дней · относительно первой тренировки</p>
                 </div>
                 <button class="modal-close" type="button" aria-label="Закрыть" disabled="@_isLoadingProgress" @onclick="CloseProgress">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
@@ -95,56 +97,58 @@
                     <span>Загружаем прогресс…</span>
                 </div>
             }
-            else if (_selectedProgress is not null && _selectedProgress.Snapshots.Count > 0)
+            else if (_selectedProgress is not null && _selectedProgress.Chart.Count > 0)
             {
-                <ProgressLineChart Title="Прогресс, %" Points="_selectedProgress.Chart" />
+                <div class="chart-page-content">
+                    <ProgressLineChart Title="Прогресс, %" Points="_selectedProgress.Chart" />
 
-                @if (_selectedProgress.Chart.Count == 1)
-                {
-                    <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
-                }
+                    @if (_selectedProgress.Chart.Count == 1)
+                    {
+                        <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
+                    }
 
-                <div class="progress-summary">
-                    <article class="summary-card">
-                        <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
-                            <span class="material-symbols-rounded">moving</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Рост</span>
-                            <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
-                            <span class="card-subtitle">Относительно последней тренировки</span>
-                        </div>
-                    </article>
+                    <div class="progress-summary">
+                        <article class="summary-card">
+                            <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
+                                <span class="material-symbols-rounded">moving</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Рост</span>
+                                <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
+                                <span class="card-subtitle">Относительно последней тренировки</span>
+                            </div>
+                        </article>
 
-                    <article class="summary-card">
-                        <span class="card-icon best-icon" aria-hidden="true">
-                            <span class="material-symbols-rounded">workspace_premium</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Лучший результат</span>
-                            <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
-                            <span class="card-subtitle">Максимальный рост</span>
-                        </div>
-                    </article>
+                        <article class="summary-card">
+                            <span class="card-icon best-icon" aria-hidden="true">
+                                <span class="material-symbols-rounded">workspace_premium</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Лучший результат</span>
+                                <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
+                                <span class="card-subtitle">Максимальный рост</span>
+                            </div>
+                        </article>
 
-                    <article class="summary-card">
-                        <span class="card-icon workout-icon" aria-hidden="true">
-                            <span class="material-symbols-rounded">event_repeat</span>
-                        </span>
-                        <div class="card-content">
-                            <span class="card-title">Тренировок</span>
-                            <strong class="card-value blue">@_selectedProgress.Snapshots.Count</strong>
-                            <span class="card-subtitle">Всего в истории</span>
-                        </div>
-                    </article>
+                        <article class="summary-card">
+                            <span class="card-icon workout-icon" aria-hidden="true">
+                                <span class="material-symbols-rounded">event_repeat</span>
+                            </span>
+                            <div class="card-content">
+                                <span class="card-title">Тренировок</span>
+                                <strong class="card-value blue">@_selectedProgress.Snapshots.Count</strong>
+                                <span class="card-subtitle">Всего в истории</span>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             }
             else if (!_isLoadingProgress)
             {
                 <div class="modal-empty">
                     <span class="material-symbols-rounded" aria-hidden="true">query_stats</span>
-                    <h3>Данных пока нет</h3>
-                    <p>Завершите тренировку, чтобы здесь появилась динамика.</p>
+                    <h3>Нет записей за последние 30 дней</h3>
+                    <p>Завершите тренировку, чтобы здесь появилась актуальная динамика.</p>
                 </div>
             }
 
@@ -201,7 +205,6 @@
     private bool _isLoadingProgress;
     private bool _isBusy;
     private bool _showToast;
-
     private decimal LastTrend => _selectedProgress?.Chart is { Count: >= 2 } chart
         ? Math.Round(chart[^1].Percent - chart[^2].Percent, 2)
         : 0;
@@ -242,6 +245,7 @@
             return;
 
         _selectedPlan = plan;
+        OrientationService.LockLandscape();
         _selectedProgress = null;
         _progressErrors.Clear();
         _isLoadingProgress = true;
@@ -268,6 +272,7 @@
             return;
 
         _selectedPlan = null;
+        OrientationService.RestoreAutomaticOrientation();
         _selectedProgress = null;
         _progressErrors.Clear();
     }
@@ -326,6 +331,7 @@
 
     public void Dispose()
     {
+        OrientationService.RestoreAutomaticOrientation();
         _disposeCts.Cancel();
         _disposeCts.Dispose();
     }

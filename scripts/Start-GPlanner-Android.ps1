@@ -115,19 +115,39 @@ try {
     $androidSdkPath = Split-Path -Parent (Split-Path -Parent $adbPath)
     Write-Host "Используем Android-устройство: $device" -ForegroundColor Cyan
 
+    $legacyRidResourceTable = Join-Path $repositoryRoot 'GymPlanner.Mobile\obj\Debug\net10.0-android\android-arm64\R.txt'
+    if (Test-Path -LiteralPath $legacyRidResourceTable) {
+        Write-Host 'Очищаем устаревшие Android RID-ресурсы…' -ForegroundColor Yellow
+        & dotnet clean $mobileProject -f net10.0-android -c Debug -r android-arm64 `
+            '-p:AppendRuntimeIdentifierToOutputPath=true' `
+            "-p:AndroidSdkDirectory=$androidSdkPath" `
+            -v:minimal
+        if ($LASTEXITCODE -ne 0) { throw 'Не удалось очистить устаревшие Android RID-ресурсы.' }
+    }
+
     Write-Host 'Собираем Android-приложение…' -ForegroundColor Cyan
     & dotnet build $mobileProject -f net10.0-android -c Debug `
         "-p:AndroidSdkDirectory=$androidSdkPath"
     if ($LASTEXITCODE -ne 0) { throw 'Сборка Android-приложения завершилась ошибкой.' }
 
-    $apkPath = Join-Path $repositoryRoot 'GymPlanner.Mobile\bin\Debug\net10.0-android\android-arm64\com.gymplanner.mobile-Signed.apk'
-    if (-not (Test-Path -LiteralPath $apkPath)) {
-        throw "Не найден APK: $apkPath"
+    # AppendRuntimeIdentifierToOutputPath=false keeps the current APK directly
+    # in net10.0-android. Keep the RID-specific locations as compatibility
+    # fallbacks for older build outputs, but always prefer the fresh package.
+    $apkCandidates = @(
+        (Join-Path $repositoryRoot 'GymPlanner.Mobile\bin\Debug\net10.0-android\com.gymplanner.mobile-Signed.apk'),
+        (Join-Path $repositoryRoot 'GymPlanner.Mobile\bin\Debug\net10.0-android\android-arm64\com.gymplanner.mobile-Signed.apk'),
+        (Join-Path $repositoryRoot 'GymPlanner.Mobile\bin\Debug\net10.0-android\android-arm64\publish\com.gymplanner.mobile-Signed.apk')
+    )
+    $apkPath = $apkCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($apkPath)) {
+        throw "Не найден APK. Проверены пути: $($apkCandidates -join '; ')"
     }
 
     Write-Host 'Настраиваем USB-проброс и устанавливаем приложение…' -ForegroundColor Cyan
     & $adbPath -s $device reverse tcp:5121 tcp:5121
-    & $adbPath -s $device install -r $apkPath
+    # Some Xiaomi devices reject ADB incremental installs with
+    # INSTALL_FAILED_USER_RESTRICTED. Force a regular streamed install.
+    & $adbPath -s $device install --no-incremental -r $apkPath
     if ($LASTEXITCODE -ne 0) { throw 'Не удалось установить Android-приложение.' }
 
     & $adbPath -s $device shell am force-stop com.gymplanner.mobile

@@ -184,13 +184,12 @@
                         <footer class="exercise-footer superset-footer">
                             <label class="status-control">
                                 <span>Оценка суперсета</span>
-                                <select class="status-select" value="@GetSupersetStatus(group)" @onchange="args => SetSupersetStatus(group, args)">
-                                    <option value="NotCompleted">Не оценено</option>
-                                    <option value="Easy">Легко</option>
-                                    <option value="Medium">Средне</option>
-                                    <option value="Hard">Тяжело</option>
-                                    <option value="Max">Предел</option>
-                                </select>
+                                <SystemChoiceField class="status-select"
+                                                   Title="Оценка суперсета"
+                                                   Options="RatingOptions"
+                                                   Value="@GetSupersetStatus(group)"
+                                                   ValueChanged="value => SetSupersetStatus(group, value)"
+                                                   AriaLabel="Выбрать оценку суперсета" />
                             </label>
                             @if (HasFollowingGroup(group))
                             {
@@ -311,13 +310,11 @@
                     <footer class="exercise-footer">
                         <label class="status-control">
                             <span>Оценка упражнения</span>
-                            <select class="status-select" @bind="exercise.Status">
-                                <option value="NotCompleted">Не оценено</option>
-                                <option value="Easy">Легко</option>
-                                <option value="Medium">Средне</option>
-                                <option value="Hard">Тяжело</option>
-                                <option value="Max">Предел</option>
-                            </select>
+                            <SystemChoiceField class="status-select"
+                                               Title="Оценка упражнения"
+                                               Options="RatingOptions"
+                                               @bind-Value="exercise.Status"
+                                               AriaLabel="Выбрать оценку упражнения" />
                         </label>
                         @if (HasFollowingExercise(exercise))
                         {
@@ -341,21 +338,33 @@
 
         @if (_isFreeWorkout)
         {
-            <button class="add-free-exercise-button"
-                    type="button"
-                    disabled="@_isBusy"
-                    aria-label="Добавить упражнение"
-                    @onclick="AddFreeExercise">
-                <span aria-hidden="true">+</span>
-            </button>
+            <div class="free-exercise-action">
+                <button class="compact-create-button add-free-exercise-button"
+                        type="button"
+                        disabled="@_isBusy"
+                        @onclick="AddFreeExercise">
+                    <span class="material-symbols-rounded" aria-hidden="true">add</span>
+                    Добавить упражнение
+                </button>
+            </div>
         }
 
-        <button class="finish-button"
-                type="button"
-                disabled="@(_isBusy || _exercises.Count == 0)"
-                @onclick="CompleteAsync">
-            @(_isBusy ? "Сохраняем тренировку…" : "Завершить тренировку")
-        </button>
+        @if (HasFinishableExercise)
+        {
+            <button class="finish-button finish-button--hold @(_isFinishFillActive ? "is-filling" : null)"
+                    type="button"
+                    disabled="@_isBusy"
+                    aria-label="@(_isBusy ? "Сохраняем тренировку" : "Удерживайте, чтобы завершить тренировку")"
+                    @onpointerdown="BeginFinishHoldAsync"
+                    @onpointerup="CancelFinishHold"
+                    @onpointercancel="CancelFinishHold"
+                    @onpointerleave="CancelFinishHold"
+                    @onkeydown="HandleFinishKeyDown"
+                    @onkeyup="HandleFinishKeyUp"
+                    @oncontextmenu:preventDefault="true">
+                <span class="finish-button-label">@(_isBusy ? "Сохраняем тренировку…" : "Завершить тренировку")</span>
+            </button>
+        }
     }
 </section>
 
@@ -378,7 +387,7 @@
             </label>
             <p class="rest-timer-dialog-hint">Это значение изменит только данный таймер. Общие значения настраиваются в профиле.</p>
             <div class="editor-actions rest-timer-actions">
-                <button class="edit-workout-button" type="button" @onclick="StartSelectedRestTimer">@(_selectedRestTimer.IsRunning ? "Перезапустить" : "Запустить")</button>
+                <button class="edit-workout-button" type="button" disabled="@_selectedRestTimer.IsQueued" @onclick="StartSelectedRestTimer">@(_selectedRestTimer.IsRunning ? "Перезапустить" : _selectedRestTimer.IsQueued ? "В очереди" : "Запустить")</button>
                 @if (_selectedRestTimer.IsRunning)
                 {
                     <button class="secondary-button" type="button" @onclick="PauseSelectedRestTimer">Пауза</button>
@@ -499,7 +508,7 @@
                 }
                 @if (_isFreeWorkout)
                 {
-                    <button class="edit-workout-button" type="button" @onclick="BeginFreeExerciseEdit">
+                    <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="BeginFreeExerciseEditAsync">
                         @(editActionExercise.IsConfigured ? "Изменить тренировку" : "Назначить тренировку")
                     </button>
                     <button class="remove-free-exercise-button" type="button" @onclick="RemoveFreeExercise">
@@ -546,15 +555,13 @@
 
             <label class="editor-field">
                 <span>Упражнение</span>
-                <select class="editor-control"
-                        @bind="_freeEditorDraft.ExerciseDefinitionId"
-                        @bind:after="ApplyFreeExerciseDefinition">
-                    <option value="">Выберите упражнение</option>
-                    @foreach (var definition in _exerciseDefinitions)
-                    {
-                        <option value="@definition.Id">@definition.Name</option>
-                    }
-                </select>
+                <SystemChoiceField class="editor-control"
+                                   Title="Выберите упражнение"
+                                   Options="ExerciseDefinitionOptions"
+                                   Value="@(_freeEditorDraft.ExerciseDefinitionId?.ToString() ?? string.Empty)"
+                                   ValueChanged="SetFreeExerciseDefinition"
+                                   Placeholder="Выберите упражнение"
+                                   AriaLabel="Выбрать упражнение из библиотеки" />
             </label>
 
             <label class="editor-field">
@@ -729,6 +736,15 @@
 }
 
 @code {
+    private static readonly IReadOnlyList<SystemChoiceOption> RatingOptions =
+    [
+        new("NotCompleted", "Не оценено"),
+        new("Easy", "Легко"),
+        new("Medium", "Средне"),
+        new("Hard", "Тяжело"),
+        new("Max", "Предел")
+    ];
+
     private readonly List<ExerciseDraft> _exercises = [];
     private readonly List<ExerciseDefinitionApiResponse> _exerciseDefinitions = [];
     private readonly List<string> _errors = [];
@@ -748,6 +764,8 @@
     private bool _showSupersetDialog;
     private bool _photoBusy;
     private bool _confirmPhotoDelete;
+    private bool _isFinishHoldActive;
+    private bool _isFinishFillActive;
     private int _nextFreeExerciseId = -1;
     private int? _editActionExerciseId;
     private int? _freeEditorExerciseId;
@@ -760,11 +778,18 @@
     private string _completionMessage = string.Empty;
     private string? _photoDataUri;
     private CancellationTokenSource? _exerciseHoldCts;
+    private CancellationTokenSource? _finishHoldCts;
     private readonly HashSet<int> _supersetSelection = [];
     private readonly Dictionary<string, RestTimerState> _restTimers = [];
+    private readonly List<RestTimerState> _queuedRestTimers = [];
     private RestTimerState? _selectedRestTimer;
     private int _restBetweenSetsSeconds = 90;
     private int _restBetweenExercisesSeconds = 120;
+
+    private IReadOnlyList<SystemChoiceOption> ExerciseDefinitionOptions =>
+        _exerciseDefinitions
+            .Select(definition => new SystemChoiceOption(definition.Id.ToString(), definition.Name))
+            .ToList();
 
     private IReadOnlyList<ExerciseGroup> ExerciseGroups => _exercises
         .GroupBy(x => x.SupersetGroupId is { } groupId ? $"s:{groupId}" : $"e:{x.Id}")
@@ -786,6 +811,7 @@
     private ExerciseDraft? EditActionExercise => _editActionExerciseId is { } id
         ? _exercises.FirstOrDefault(x => x.Id == id)
         : null;
+    private bool HasFinishableExercise => _exercises.Any(exercise => exercise.IsConfigured);
 
     protected override async Task OnInitializedAsync()
     {
@@ -903,23 +929,90 @@
         await OpenPhotoAsync(exercise);
     }
 
+    private async Task BeginFinishHoldAsync()
+    {
+        if (_isBusy || !HasFinishableExercise || _isFinishHoldActive)
+            return;
+
+        CancelFinishHold();
+        var holdCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
+        _finishHoldCts = holdCts;
+        _isFinishHoldActive = true;
+
+        try
+        {
+            await Task.Delay(100, holdCts.Token);
+            _isFinishFillActive = true;
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(1900, holdCts.Token);
+            if (!holdCts.IsCancellationRequested)
+                await CompleteAsync();
+        }
+        catch (OperationCanceledException) when (holdCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_finishHoldCts, holdCts))
+            {
+                _finishHoldCts = null;
+                _isFinishHoldActive = false;
+                _isFinishFillActive = false;
+                holdCts.Dispose();
+            }
+        }
+    }
+
+    private void CancelFinishHold()
+    {
+        _finishHoldCts?.Cancel();
+        _finishHoldCts?.Dispose();
+        _finishHoldCts = null;
+        _isFinishHoldActive = false;
+        _isFinishFillActive = false;
+    }
+
+    private Task HandleFinishKeyDown(KeyboardEventArgs args) =>
+        args.Key is "Enter" or " " ? BeginFinishHoldAsync() : Task.CompletedTask;
+
+    private void HandleFinishKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Key is "Enter" or " ")
+            CancelFinishHold();
+    }
+
     private async Task OpenPhotoFromSupersetMenuAsync(ExerciseDraft exercise)
     {
         CloseSupersetActions(force: true);
         await OpenPhotoAsync(exercise);
     }
 
-    private void BeginFreeExerciseEdit()
+    private async Task BeginFreeExerciseEditAsync()
     {
-        if (!_isFreeWorkout || EditActionExercise is not { } exercise)
+        if (_isBusy || !_isFreeWorkout || EditActionExercise is not { } exercise)
             return;
 
-        _freeEditorExerciseId = exercise.Id;
-        _freeEditorDraft = exercise.Clone();
-        _freeEditorErrors.Clear();
-        CloseEditWorkoutAction();
-        _showFreeExerciseEditor = true;
-        BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            if (!await EnsureExerciseDefinitionsAsync())
+                return;
+
+            _freeEditorExerciseId = exercise.Id;
+            _freeEditorDraft = exercise.Clone();
+            _freeEditorErrors.Clear();
+            CloseEditWorkoutAction();
+            _showFreeExerciseEditor = true;
+            BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
     }
 
     private void CloseFreeExerciseEditor()
@@ -942,6 +1035,15 @@
         var definition = _exerciseDefinitions.FirstOrDefault(x => x.Id == id);
         if (definition is not null)
             _freeEditorDraft.Name = definition.Name;
+    }
+
+    private void SetFreeExerciseDefinition(string value)
+    {
+        if (_freeEditorDraft is null || !int.TryParse(value, out var definitionId))
+            return;
+
+        _freeEditorDraft.ExerciseDefinitionId = definitionId;
+        ApplyFreeExerciseDefinition();
     }
 
     private void ChangeFreeSetsCount(ChangeEventArgs eventArgs)
@@ -1214,7 +1316,7 @@
 
     private async Task CompleteAsync()
     {
-        if (_isBusy)
+        if (_isBusy || !HasFinishableExercise)
             return;
 
         _errors.Clear();
@@ -1277,18 +1379,8 @@
         _errors.Clear();
         try
         {
-            if (_exerciseDefinitions.Count == 0)
-            {
-                var definitionsResult = await WorkoutClient
-                    .GetExerciseDefinitionsAsync(_disposeCts.Token);
-                if (!definitionsResult.Succeeded)
-                {
-                    _errors.AddRange(definitionsResult.Errors);
-                    return;
-                }
-
-                _exerciseDefinitions.AddRange(definitionsResult.Value!);
-            }
+            if (!await EnsureExerciseDefinitionsAsync())
+                return;
 
             _isFreeWorkout = true;
             _exercises.Clear();
@@ -1301,6 +1393,23 @@
         {
             _isBusy = false;
         }
+    }
+
+    private async Task<bool> EnsureExerciseDefinitionsAsync()
+    {
+        if (_exerciseDefinitions.Count > 0)
+            return true;
+
+        var definitionsResult = await WorkoutClient
+            .GetExerciseDefinitionsAsync(_disposeCts.Token);
+        if (!definitionsResult.Succeeded)
+        {
+            _errors.AddRange(definitionsResult.Errors);
+            return false;
+        }
+
+        _exerciseDefinitions.AddRange(definitionsResult.Value!);
+        return _exerciseDefinitions.Count > 0;
     }
 
     private void AddFreeExercise()
@@ -1328,11 +1437,11 @@
         }
         else if (HasFollowingSet(exercise, set))
         {
-            StartRestTimer(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets));
+            RequestStartRestTimer(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets));
         }
         else if (completed && HasFollowingExercise(exercise))
         {
-            StartRestTimer(GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises));
+            RequestStartRestTimer(GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises));
         }
 
         await Task.CompletedTask;
@@ -1358,11 +1467,11 @@
 
         if (HasFollowingSupersetRound(group, set.SetNumber))
         {
-            StartRestTimer(GetRestTimer(group.Exercises[0].Id, set.SetNumber, RestTimerKind.BetweenSets));
+            RequestStartRestTimer(GetRestTimer(group.Exercises[0].Id, set.SetNumber, RestTimerKind.BetweenSets));
         }
         else if (HasFollowingGroup(group))
         {
-            StartRestTimer(GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises));
+            RequestStartRestTimer(GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises));
         }
 
         await Task.CompletedTask;
@@ -1398,9 +1507,8 @@
         return group.Exercises.All(exercise => exercise.Status == status) ? status : "NotCompleted";
     }
 
-    private static void SetSupersetStatus(ExerciseGroup group, ChangeEventArgs args)
+    private static void SetSupersetStatus(ExerciseGroup group, string status)
     {
-        var status = args.Value?.ToString() ?? "NotCompleted";
         foreach (var exercise in group.Exercises)
             exercise.Status = status;
     }
@@ -1437,29 +1545,61 @@
     private string GetRestTimerLabel(int exerciseId, int setNumber, RestTimerKind kind)
     {
         var timer = GetRestTimer(exerciseId, setNumber, kind);
-        return timer.IsRunning ? $"Осталось {FormatDuration(timer.RemainingSeconds)}" : FormatDuration(timer.DurationSeconds);
+        if (timer.IsCompleted)
+            return "✓";
+        return timer.IsRunning
+            ? $"Осталось {FormatDuration(timer.RemainingSeconds)}"
+            : timer.IsQueued
+                ? "После текущего таймера"
+                : FormatDuration(timer.DurationSeconds);
     }
 
     private void StartSelectedRestTimer()
     {
         if (_selectedRestTimer is null) return;
         _selectedRestTimer.DurationSeconds = Math.Clamp(_selectedRestTimer.DurationSeconds, 5, 3600);
-        StartRestTimer(_selectedRestTimer);
+        if (_selectedRestTimer.IsRunning)
+            StartRestTimer(_selectedRestTimer);
+        else
+            RequestStartRestTimer(_selectedRestTimer);
         CloseRestTimer();
+    }
+
+    private void RequestStartRestTimer(RestTimerState timer)
+    {
+        if (timer.IsRunning || timer.IsQueued)
+            return;
+
+        if (_restTimers.Values.Any(candidate => candidate.IsRunning))
+        {
+            timer.IsQueued = true;
+            _queuedRestTimers.Add(timer);
+            return;
+        }
+
+        StartRestTimer(timer);
     }
 
     private static void StartRestTimer(RestTimerState timer)
     {
+        timer.IsQueued = false;
+        timer.IsCompleted = false;
         timer.RemainingSeconds = timer.DurationSeconds;
         timer.EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(timer.RemainingSeconds);
         timer.IsRunning = true;
     }
 
-    private static void ResetRestTimer(RestTimerState timer)
+    private void ResetRestTimer(RestTimerState timer)
     {
+        var wasRunning = timer.IsRunning;
+        _queuedRestTimers.Remove(timer);
+        timer.IsQueued = false;
         timer.IsRunning = false;
         timer.EndsAtUtc = null;
         timer.RemainingSeconds = timer.DurationSeconds;
+        timer.IsCompleted = false;
+        if (wasRunning)
+            StartNextQueuedRestTimer();
     }
 
     private void PauseSelectedRestTimer()
@@ -1484,12 +1624,32 @@
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested) { }
     }
 
-    private static void UpdateRestTimer(RestTimerState timer)
+    private void UpdateRestTimer(RestTimerState timer)
     {
         if (!timer.IsRunning || timer.EndsAtUtc is null) return;
         timer.RemainingSeconds = Math.Max(0, (int)Math.Ceiling((timer.EndsAtUtc.Value - DateTimeOffset.UtcNow).TotalSeconds));
         if (timer.RemainingSeconds == 0)
+        {
             timer.IsRunning = false;
+            timer.EndsAtUtc = null;
+            timer.IsCompleted = true;
+            StartNextQueuedRestTimer();
+        }
+    }
+
+    private void StartNextQueuedRestTimer()
+    {
+        while (_queuedRestTimers.Count > 0)
+        {
+            var nextTimer = _queuedRestTimers[0];
+            _queuedRestTimers.RemoveAt(0);
+            nextTimer.IsQueued = false;
+            if (!nextTimer.IsRunning)
+            {
+                StartRestTimer(nextTimer);
+                return;
+            }
+        }
     }
 
     private static string FormatDuration(int seconds) => $"{seconds / 60}:{seconds % 60:D2}";
@@ -1773,6 +1933,7 @@
     {
         PersistFreeWorkout();
         CancelExerciseHold();
+        CancelFinishHold();
         CancelSupersetHold();
         BackNavigation.SetBackInterceptor(null);
         _disposeCts.Cancel();
@@ -1804,6 +1965,8 @@
         public int DurationSeconds { get; set; }
         public int RemainingSeconds { get; set; }
         public bool IsRunning { get; set; }
+        public bool IsQueued { get; set; }
+        public bool IsCompleted { get; set; }
         public DateTimeOffset? EndsAtUtc { get; set; }
     }
 

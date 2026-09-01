@@ -1,0 +1,34 @@
+@using System.Globalization
+@using WorkoutPlanner.Web.Application.Contracts
+
+<details class="chart-data-details">
+    <summary>Показать точные значения</summary>
+    <div class="chart-data-scroll">
+        <table>
+            <caption>Данные графика за последние 30 дней</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Дата</th>
+                    <th scope="col">Изменение</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var point in Points)
+                {
+                    <tr>
+                        <td>@point.Date.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)</td>
+                        <td>@FormatPercent(point.Percent)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</details>
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<ProgressChartPoint> Points { get; set; } = [];
+
+    private static string FormatPercent(decimal value) =>
+        $"{(value > 0 ? "+" : string.Empty)}{value.ToString("0.##", CultureInfo.CurrentCulture)}%";
+}

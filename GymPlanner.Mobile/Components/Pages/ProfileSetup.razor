@@ -64,12 +64,12 @@
 
                     <div class="field">
                         <label for="setup-gender">Пол</label>
-                        <InputSelect id="setup-gender" class="auth-input" @bind-Value="_input.Gender">
-                            <option value="">Выберите</option>
-                            <option value="Мужской">Мужской</option>
-                            <option value="Женский">Женский</option>
-                            <option value="Не указывать">Не указывать</option>
-                        </InputSelect>
+                        <SystemChoiceField id="setup-gender"
+                                           class="auth-input"
+                                           Title="Пол"
+                                           Options="GenderOptions"
+                                           @bind-Value="_input.Gender"
+                                           AriaLabel="Выбрать пол" />
                         <ValidationMessage For="@(() => _input.Gender)" />
                     </div>
                 </div>
@@ -83,6 +83,13 @@
 </section>
 
 @code {
+    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    [
+        new("Мужской", "Мужской"),
+        new("Женский", "Женский"),
+        new("Не указывать", "Не указывать")
+    ];
+
     private readonly ProfileInput _input = new();
     private readonly List<string> _loadErrors = [];
     private readonly List<string> _operationErrors = [];

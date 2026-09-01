@@ -49,7 +49,7 @@
                 <label>Имя <InputText class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" /></label>
                 <label>Фамилия <InputText class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" /></label>
                 <label>Дата рождения <InputDate class="auth-input" @bind-Value="_profileInput.BirthDate" /></label>
-                <label>Пол <InputSelect class="auth-input" @bind-Value="_profileInput.Gender"><option value="">Выберите</option><option>Мужской</option><option>Женский</option><option>Не указывать</option></InputSelect></label>
+                <label>Пол <SystemChoiceField class="auth-input" Title="Пол" Options="GenderOptions" @bind-Value="_profileInput.Gender" AriaLabel="Выбрать пол" /></label>
             </div>
             <button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Сохраняем…" : "Сохранить изменения")</button>
         </EditForm>
@@ -85,6 +85,13 @@
 </section>
 
 @code {
+    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    [
+        new("Мужской", "Мужской"),
+        new("Женский", "Женский"),
+        new("Не указывать", "Не указывать")
+    ];
+
     [Parameter] public string Section { get; set; } = string.Empty;
     private readonly List<string> _errors = [];
     private readonly ProfileInput _profileInput = new();

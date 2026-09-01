@@ -126,11 +126,11 @@ select,
 
 body .page-title-row > h1 {
     grid-column: 1;
-    justify-self: center;
+    justify-self: start;
     min-width: 0;
     width: 100%;
     margin-inline: 0;
-    text-align: center;
+    text-align: left;
 }
 
 body .page-title-row > .context-help-button {
@@ -174,7 +174,7 @@ body .setting-header {
 body .notebook-header > div,
 body .setting-header > div {
     grid-column: 2;
-    text-align: center;
+    text-align: left;
 }
 
 body .notebook-header > .back-button,
@@ -192,7 +192,7 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior-y: contain;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y pinch-zoom;
 }
 
 .modal-overlay {
@@ -202,7 +202,7 @@ body {
 .modal-window {
     scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
     overscroll-behavior: contain;
-    touch-action: pan-y;
+    touch-action: pan-x pan-y pinch-zoom;
 }
 
 h1:focus {
@@ -286,36 +286,107 @@ button:not(:disabled) {
     cursor: pointer;
 }
 
-button:is(
+/* Compact creation actions share one touch-friendly treatment across pages. */
+button.compact-create-button {
+    width: fit-content;
+    max-width: 100%;
+    min-height: 52px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px !important;
+    border: 2px solid var(--color-success-hover);
+    border-radius: var(--radius-md);
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(63, 185, 80, .2) 0%, rgba(63, 185, 80, .07) 40%, transparent 72%),
+        rgba(15, 15, 16, .72);
+    color: var(--color-success-hover);
+    font: inherit;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.2;
+    white-space: normal;
+    text-align: center;
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .1),
+        0 8px 22px rgba(63, 185, 80, .14),
+        inset 0 0 18px rgba(63, 185, 80, .07);
+    transition: border-color var(--transition-ui), background-color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+button.compact-create-button .material-symbols-rounded {
+    flex: 0 0 auto;
+    font-size: 24px;
+    line-height: 1;
+}
+
+button.compact-create-button:hover:not(:disabled),
+button.compact-create-button:focus-visible:not(:disabled) {
+    border-color: var(--color-success-hover);
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(79, 196, 107, .28) 0%, rgba(63, 185, 80, .11) 42%, transparent 74%),
+        rgba(15, 15, 16, .82);
+    color: var(--color-success-hover);
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .18),
+        0 10px 26px rgba(63, 185, 80, .2),
+        inset 0 0 22px rgba(63, 185, 80, .1);
+}
+
+button.compact-create-button:active:not(:disabled) {
+    background:
+        radial-gradient(ellipse at 50% 110%, rgba(79, 196, 107, .32) 0%, rgba(63, 185, 80, .13) 46%, transparent 76%),
+        rgba(15, 15, 16, .9);
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .16),
+        0 5px 16px rgba(63, 185, 80, .18),
+        inset 0 0 24px rgba(63, 185, 80, .12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    button.compact-create-button {
+        transition: none;
+    }
+}
+
+button[class]:is(
     .primary-button,
     .finish-button,
     .add-template-button,
     .profile-primary-action,
+    .setting-primary-action,
     .primary-action,
     .auth-submit,
     .history-start-button,
     .guide-button-primary,
     .primary
 ),
-a:is(.primary-button, .profile-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary) {
+a[class]:is(.primary-button, .profile-primary-action, .setting-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary) {
     min-height: var(--button-height) !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--button-gap) !important;
     padding: var(--button-padding-block) var(--button-padding-inline) !important;
-    border: 1px solid var(--color-success) !important;
+    border: 2px solid var(--color-success-hover) !important;
     border-radius: var(--button-radius) !important;
-    background: var(--color-success) !important;
-    color: var(--color-on-success) !important;
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(63, 185, 80, .2) 0%, rgba(63, 185, 80, .07) 40%, transparent 72%),
+        rgba(15, 15, 16, .72) !important;
+    color: var(--color-success-hover) !important;
     font-size: var(--button-font-size) !important;
     font-weight: var(--button-font-weight) !important;
     line-height: 1.2;
     text-decoration: none;
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .1),
+        0 8px 22px rgba(63, 185, 80, .14),
+        inset 0 0 18px rgba(63, 185, 80, .07) !important;
     transition: background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), filter var(--transition-ui) !important;
 }
 
-button:is(
+button[class]:is(
     .secondary-button,
     .profile-secondary-action,
     .secondary-action,
@@ -323,7 +394,7 @@ button:is(
     .section-link,
     .secondary
 ),
-a:is(.secondary-button, .profile-secondary-action, .secondary-action, .guide-button-secondary, .secondary) {
+a[class]:is(.secondary-button, .profile-secondary-action, .secondary-action, .guide-button-secondary, .secondary) {
     min-height: var(--button-height) !important;
     display: inline-flex;
     align-items: center;
@@ -341,46 +412,61 @@ a:is(.secondary-button, .profile-secondary-action, .secondary-action, .guide-but
     transition: background-color var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui), filter var(--transition-ui) !important;
 }
 
-button:is(
+button[class]:is(
     .danger-button,
     .profile-danger-action,
+    .setting-danger-action,
     .danger-action,
-    .photo-delete-button
+    .photo-delete-button,
+    .inbox-clear-dialog__confirm
 ),
-a:is(.danger-button, .profile-danger-action, .danger-action) {
+a[class]:is(.danger-button, .profile-danger-action, .setting-danger-action, .danger-action) {
     min-height: var(--button-height) !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--button-gap) !important;
     padding: var(--button-padding-block) var(--button-padding-inline) !important;
-    border: 1px solid var(--color-danger-action) !important;
+    border: 2px solid var(--color-danger-soft) !important;
     border-radius: var(--button-radius) !important;
-    background: var(--color-danger-action) !important;
-    color: var(--color-text) !important;
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(248, 81, 73, .2) 0%, rgba(248, 81, 73, .07) 40%, transparent 72%),
+        rgba(15, 15, 16, .72) !important;
+    color: var(--color-danger-soft) !important;
     font-size: var(--button-font-size) !important;
     font-weight: var(--button-font-weight) !important;
     line-height: 1.2;
     text-decoration: none;
+    box-shadow:
+        0 0 0 1px rgba(248, 81, 73, .1),
+        0 8px 22px rgba(248, 81, 73, .13),
+        inset 0 0 18px rgba(248, 81, 73, .07) !important;
     transition: background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), filter var(--transition-ui) !important;
 }
 
-a.calendar-link {
+button[class]:is(.edit-workout-button, .free-workout-button),
+a[class].calendar-link {
     min-height: var(--button-height) !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--button-gap) !important;
     padding: var(--button-padding-block) var(--button-padding-inline) !important;
-    border: 1px solid var(--color-accent) !important;
+    border: 2px solid var(--color-accent-hover) !important;
     border-radius: var(--button-radius) !important;
-    background: var(--color-accent) !important;
-    color: var(--color-text) !important;
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(255, 122, 26, .2) 0%, rgba(255, 122, 26, .07) 40%, transparent 72%),
+        rgba(15, 15, 16, .72) !important;
+    color: var(--color-accent-hover) !important;
     font-size: var(--button-font-size) !important;
     font-weight: var(--button-font-weight) !important;
     line-height: 1.2;
     text-decoration: none;
-    transition: background-color var(--transition-ui), border-color var(--transition-ui), filter var(--transition-ui) !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 122, 26, .1),
+        0 8px 22px rgba(255, 122, 26, .13),
+        inset 0 0 18px rgba(255, 122, 26, .07) !important;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), filter var(--transition-ui) !important;
 }
 
 a.back-link {
@@ -493,11 +579,14 @@ button:is(
 }
 
 @media (hover: hover) {
-    button:is(.primary-button, .finish-button, .add-template-button, .profile-primary-action, .primary-action, .auth-submit, .history-start-button, .guide-button-primary, .primary):hover:not(:disabled),
-    a:is(.primary-button, .profile-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary):hover {
+    button[class]:is(.primary-button, .finish-button, .add-template-button, .profile-primary-action, .setting-primary-action, .primary-action, .auth-submit, .history-start-button, .guide-button-primary, .primary):hover:not(:disabled),
+    a[class]:is(.primary-button, .profile-primary-action, .setting-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary):hover {
         border-color: var(--color-success-hover) !important;
-        background: var(--color-success-hover) !important;
-        box-shadow: 0 8px 20px rgba(63, 185, 80, .18) !important;
+        background:
+            radial-gradient(ellipse at 50% 115%, rgba(79, 196, 107, .28) 0%, rgba(63, 185, 80, .11) 42%, transparent 74%),
+            rgba(15, 15, 16, .82) !important;
+        color: var(--color-success-hover) !important;
+        box-shadow: 0 10px 26px rgba(63, 185, 80, .2), inset 0 0 22px rgba(63, 185, 80, .1) !important;
     }
 
     button:is(.secondary-button, .profile-secondary-action, .secondary-action, .guide-button-secondary, .section-link, .secondary):hover:not(:disabled),
@@ -506,10 +595,14 @@ button:is(
         background: var(--color-surface-hover) !important;
     }
 
-    button:is(.danger-button, .profile-danger-action, .danger-action, .photo-delete-button):hover:not(:disabled),
-    a:is(.danger-button, .profile-danger-action, .danger-action):hover {
-        border-color: var(--color-danger) !important;
-        background: var(--color-danger) !important;
+    button[class]:is(.danger-button, .profile-danger-action, .setting-danger-action, .danger-action, .photo-delete-button, .inbox-clear-dialog__confirm):hover:not(:disabled),
+    a[class]:is(.danger-button, .profile-danger-action, .setting-danger-action, .danger-action):hover {
+        border-color: var(--color-danger-soft) !important;
+        background:
+            radial-gradient(ellipse at 50% 115%, rgba(248, 81, 73, .28) 0%, rgba(248, 81, 73, .11) 42%, transparent 74%),
+            rgba(15, 15, 16, .82) !important;
+        color: var(--color-danger-soft) !important;
+        box-shadow: 0 10px 26px rgba(248, 81, 73, .2), inset 0 0 22px rgba(248, 81, 73, .1) !important;
     }
 
     button:is(.icon-close-button, .close-button, .card-menu-button, .month-button, .modal-close, .photo-lightbox-close, .add-tab-button):hover:not(:disabled),
@@ -519,9 +612,14 @@ button:is(
         color: var(--color-text) !important;
     }
 
-    a.calendar-link:hover {
+    button[class]:is(.edit-workout-button, .free-workout-button):hover:not(:disabled),
+    a[class].calendar-link:hover {
         border-color: var(--color-accent-hover) !important;
-        background: var(--color-accent-hover) !important;
+        background:
+            radial-gradient(ellipse at 50% 115%, rgba(255, 122, 26, .28) 0%, rgba(255, 122, 26, .11) 42%, transparent 74%),
+            rgba(15, 15, 16, .82) !important;
+        color: var(--color-accent-hover) !important;
+        box-shadow: 0 10px 26px rgba(255, 122, 26, .2), inset 0 0 22px rgba(255, 122, 26, .1) !important;
     }
 }
 
@@ -544,6 +642,84 @@ button:disabled {
     box-shadow: none !important;
     filter: none !important;
     opacity: .52 !important;
+}
+
+/* Navigation and dismissal controls retain a touch-sized target without a visual box. */
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .photo-lightbox-close
+),
+a:is(.back-button, .back-link),
+.help-dialog__header button {
+    display: grid !important;
+    width: var(--button-height) !important;
+    min-width: var(--button-height) !important;
+    height: var(--button-height) !important;
+    min-height: var(--button-height) !important;
+    place-items: center;
+    padding: 0 !important;
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--color-text-muted) !important;
+}
+
+a.back-link {
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 0 !important;
+    gap: var(--button-gap) !important;
+    padding-inline: 0 !important;
+}
+
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .photo-lightbox-close
+):hover:not(:disabled),
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .photo-lightbox-close
+):focus-visible,
+a:is(.back-button, .back-link):hover,
+a:is(.back-button, .back-link):focus-visible,
+.help-dialog__header button:hover,
+.help-dialog__header button:focus-visible {
+    background: transparent !important;
+    color: var(--color-text) !important;
+}
+
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .photo-lightbox-close
+):focus-visible,
+a:is(.back-button, .back-link):focus-visible,
+.help-dialog__header button:focus-visible {
+    outline: 2px solid var(--color-accent) !important;
+    outline-offset: 2px;
 }
 
 /* Secondary windows share one centered presentation across the app. */

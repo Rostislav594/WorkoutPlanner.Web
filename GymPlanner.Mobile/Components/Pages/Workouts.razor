@@ -41,53 +41,53 @@
                             type="button"
                             title="Настройки"
                             aria-label="Настройки шаблона @plan.WorkoutName"
-                            aria-haspopup="menu"
-                            aria-controls="@($"workout-menu-{plan.Id}")"
+                            aria-haspopup="dialog"
+                            aria-controls="workout-template-actions-title"
                             aria-expanded="@(_menuPlanId == plan.Id)"
                             @onclick="() => ToggleMenu(plan.Id)">
                         <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
                     </button>
-
-                    @if (_menuPlanId == plan.Id)
-                    {
-                        <div id="@($"workout-menu-{plan.Id}")"
-                             class="context-menu workout-template-menu"
-                             role="menu"
-                             aria-label="Действия с шаблоном @plan.WorkoutName">
-                            <button class="context-item"
-                                    type="button"
-                                    role="menuitem"
-                                    @onclick="() => BeginEdit(plan)">
-                                Изменить название
-                            </button>
-                            <button class="context-item danger-context-item"
-                                    type="button"
-                                    role="menuitem"
-                                    @onclick="() => ConfirmDelete(plan)">
-                                Удалить шаблон
-                            </button>
-                        </div>
-                    }
                 </article>
             }
         </div>
     }
 
     <footer class="workouts-footer @(_plans.Count == 0 && !_isLoading ? "workouts-footer-empty" : null)">
-        <button class="add-template-button"
+        <button class="compact-create-button"
                 type="button"
                 aria-haspopup="dialog"
                 disabled="@_isBusy"
                 @onclick="OpenCreateDialog">
-            <span aria-hidden="true">+</span>
+            <span class="material-symbols-rounded" aria-hidden="true">add</span>
             Добавить шаблон
         </button>
     </footer>
 </section>
 
-@if (_menuPlanId is not null)
+@if (MenuPlan is not null)
 {
-    <div class="context-menu-overlay" @onclick="CloseMenu"></div>
+    <div class="modal-overlay top-layer" @onclick="CloseMenu">
+        <section class="modal-window workout-template-actions-modal"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="workout-template-actions-title"
+                 @onclick:stopPropagation="true">
+            <div class="modal-heading">
+                <h2 id="workout-template-actions-title">Действия с шаблоном</h2>
+                <button class="icon-close-button"
+                        type="button"
+                        aria-label="Закрыть"
+                        @onclick="CloseMenu">×</button>
+            </div>
+            <div class="modal-body workout-template-actions-body">
+                <p>@MenuPlan.WorkoutName</p>
+                <div class="workout-template-action-buttons">
+                    <button class="secondary-button" type="button" @onclick="() => BeginEdit(MenuPlan)">Изменить название</button>
+                    <button class="danger-button" type="button" @onclick="() => ConfirmDelete(MenuPlan)">Удалить шаблон</button>
+                </div>
+            </div>
+        </section>
+    </div>
 }
 
 @if (_isCreateOpen || _editingId is not null)
@@ -207,6 +207,9 @@
     private string _newName = string.Empty, _editName = string.Empty;
     private int? _editingId, _menuPlanId;
     private TrainingPlanApiResponse? _deleteTarget;
+    private TrainingPlanApiResponse? MenuPlan => _menuPlanId is { } planId
+        ? _plans.FirstOrDefault(plan => plan.Id == planId)
+        : null;
     protected override Task OnInitializedAsync() => LoadAsync();
 
     private async Task LoadAsync()

@@ -1,0 +1,102 @@
+.orientation-gate {
+    display: flex;
+    min-height: min(52dvh, 26rem);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 18px;
+    border: 1px solid #343b45;
+    border-radius: 1rem;
+    background: #111419;
+    color: #aeb7c2;
+    text-align: center;
+}
+
+.orientation-illustration {
+    width: min(68vw, 15rem);
+    color: #4fc46b;
+}
+
+.orientation-illustration svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.phone {
+    fill: #191e24;
+    stroke: currentColor;
+    stroke-width: 5;
+}
+
+.phone-portrait {
+    opacity: .34;
+}
+
+.phone-landscape {
+    filter: drop-shadow(0 8px 16px rgba(79, 196, 107, .16));
+}
+
+.phone-detail,
+.rotation-path,
+.rotation-arrow {
+    fill: none;
+    stroke: #d7dee7;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.phone-detail {
+    opacity: .55;
+}
+
+.rotation-path,
+.rotation-arrow {
+    stroke: currentColor;
+}
+
+.rotation-path {
+    stroke-dasharray: 8 9;
+}
+
+.orientation-gate h3 {
+    margin: 8px 0 6px;
+    color: #fff;
+    font-size: 1.25rem;
+}
+
+.orientation-gate p {
+    max-width: 32rem;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.55;
+}
+
+.landscape-chart-content {
+    display: none;
+}
+
+@media (orientation: landscape) {
+    .orientation-gate {
+        display: none;
+    }
+
+    .landscape-chart-content {
+        display: block;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .phone-landscape {
+        animation: landscape-ready 1.8s ease-in-out infinite alternate;
+        transform-box: fill-box;
+        transform-origin: center;
+    }
+}
+
+@keyframes landscape-ready {
+    to {
+        transform: translateY(-3px);
+    }
+}

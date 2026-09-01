@@ -26,8 +26,8 @@
                              Items="ChartData"
                                  Name="@ChartSeriesName"
                                  SeriesType="SeriesType.Line"
-                                 ShowDataLabels="true"
-                                 XValue="e => e.Label"
+                                 ShowDataLabels="false"
+                                 XValue="e => e.Date"
                                  YValue="e => e.Percent" />
 
             </ApexChart>
@@ -38,6 +38,8 @@
                     @SinglePointNote
                 </div>
             }
+
+            <ProgressChartDataTable Points="ChartData" />
 
             <div class="progress-summary">
 
@@ -106,7 +108,7 @@
                         </div>
 
                         <div class="card-subtitle">
-                            Всего в истории
+                            За последние 30 дней
                         </div>
 
                     </div>

@@ -30,7 +30,9 @@ public sealed class FirebaseRemotePushProvider(
                 sent++;
                 logger.LogInformation("FCM push sent for installation {InstallationId}: {MessageId}", target.InstallationId, response);
             }
-            catch (FirebaseMessagingException exception) when (exception.MessagingErrorCode == MessagingErrorCode.Unregistered)
+            catch (FirebaseMessagingException exception) when (
+                exception.MessagingErrorCode is MessagingErrorCode.Unregistered or
+                MessagingErrorCode.InvalidArgument)
             {
                 await devices.DeactivateAsync(target.PushToken, cancellationToken);
                 logger.LogInformation("Deactivated unregistered push token for installation {InstallationId}.", target.InstallationId);

@@ -2,17 +2,23 @@
 @using WorkoutPlanner.Api.Contracts
 
 <section class="progress-chart" aria-label="@Title">
-    <h3>@Title</h3>
+    <div class="chart-heading">
+        <h3>@Title</h3>
+        <span>Последние 30 дней</span>
+    </div>
+    <p class="chart-baseline">Изменение относительно первой сохранённой тренировки</p>
     @if (Points.Count == 0)
     {
-        <p class="empty">Данных для графика пока нет.</p>
+        <p class="empty">За последние 30 дней данных для графика нет.</p>
     }
     else
     {
         <div class="chart-frame" role="img" aria-label="@AccessibleSummary">
             <svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                <line class="axis-line" x1="52" y1="20" x2="52" y2="218" />
-                <line class="axis-line" x1="52" y1="218" x2="584" y2="218" />
+                @foreach (var tick in YAxisTicks)
+                {
+                    <line class="grid-line" x1="52" y1="@Format(Y(tick))" x2="584" y2="@Format(Y(tick))" />
+                }
                 @if (Minimum < 0 && Maximum > 0)
                 {
                     <line class="zero-line" x1="52" y1="@Format(Y(0))" x2="584" y2="@Format(Y(0))" />
@@ -21,31 +27,53 @@
                 {
                     <polyline class="progress-line" points="@PolylinePoints" />
                 }
-                @for (var index = 0; index < Points.Count; index++)
-                {
-                    var point = Points[index];
-                    <circle class="progress-point" cx="@Format(X(index))" cy="@Format(Y(point.Percent))" r="6">
-                        <title>@point.Label: @FormatPercent(point.Percent)</title>
-                    </circle>
-                    @if (ShouldShowLabel(index))
-                    {
-                        <foreignObject x="@Format(X(index) - 35)" y="226" width="70" height="28">
-                            <div class="point-label">@ShortLabel(point.Label)</div>
-                        </foreignObject>
-                    }
-                }
-                <foreignObject x="0" y="15" width="47" height="24">
-                    <div class="axis-label">@FormatPercent(Maximum)</div>
-                </foreignObject>
-                <foreignObject x="0" y="205" width="47" height="24">
-                    <div class="axis-label">@FormatPercent(Minimum)</div>
-                </foreignObject>
             </svg>
+
+            @foreach (var tick in YAxisTicks)
+            {
+                <span class="axis-label y-axis-label" style="@YLabelStyle(tick)">@FormatPercent(tick)</span>
+            }
+            @foreach (var tick in XAxisTicks)
+            {
+                <span class="axis-label x-axis-label" style="@XLabelStyle(tick)">@tick.ToString("dd.MM", CultureInfo.CurrentCulture)</span>
+            }
+            @for (var index = 0; index < Points.Count; index++)
+            {
+                var point = Points[index];
+                <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)"
+                      style="@MarkerStyle(point)"
+                      title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"></span>
+            }
         </div>
-        <div class="chart-values" aria-hidden="true">
+
+        <div class="chart-values">
             <span>Последнее: <strong>@FormatPercent(Points[^1].Percent)</strong></span>
             <span>Лучшее: <strong>@FormatPercent(Points.Max(x => x.Percent))</strong></span>
         </div>
+
+        <details class="chart-data-details">
+            <summary>Показать точные значения</summary>
+            <div class="chart-data-scroll">
+                <table>
+                    <caption>Данные графика за последние 30 дней</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Дата</th>
+                            <th scope="col">Изменение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var point in Points)
+                        {
+                            <tr>
+                                <td>@point.Date.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)</td>
+                                <td>@FormatSignedPercent(point.Percent)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </details>
     }
 </section>
 
@@ -60,6 +88,9 @@
 
     [Parameter]
     public IReadOnlyList<ProgressChartPointApiResponse> Points { get; set; } = [];
+
+    private DateTime StartDate => Points.Min(x => x.Date).Date;
+    private DateTime EndDate => Points.Max(x => x.Date).Date;
 
     private decimal Minimum
     {
@@ -91,17 +122,44 @@
         }
     }
 
+    private IReadOnlyList<decimal> YAxisTicks => Enumerable.Range(0, 5)
+        .Select(index => Minimum + (Maximum - Minimum) * index / 4)
+        .Reverse()
+        .ToList();
+
+    private IReadOnlyList<DateTime> XAxisTicks
+    {
+        get
+        {
+            var days = Math.Max(0, (EndDate - StartDate).Days);
+            var tickCount = Math.Min(5, days + 1);
+            if (tickCount <= 1)
+                return [StartDate];
+
+            return Enumerable.Range(0, tickCount)
+                .Select(index => StartDate.AddDays(
+                    Math.Round(days * index / (double)(tickCount - 1))))
+                .Distinct()
+                .ToList();
+        }
+    }
+
     private string PolylinePoints => string.Join(
         " ",
-        Points.Select((point, index) => $"{Format(X(index))},{Format(Y(point.Percent))}"));
+        Points.Select(point => $"{Format(X(point.Date))},{Format(Y(point.Percent))}"));
 
-    private string AccessibleSummary => Points.Count == 0
-        ? $"{Title}. Данных нет."
-        : $"{Title}. Точек: {Points.Count}. Последнее значение {FormatPercent(Points[^1].Percent)}. Лучшее значение {FormatPercent(Points.Max(x => x.Percent))}.";
+    private string AccessibleSummary =>
+        $"{Title}. Период с {StartDate:dd.MM.yyyy} по {EndDate:dd.MM.yyyy}. " +
+        $"Точек: {Points.Count}. Последнее значение {FormatPercent(Points[^1].Percent)}. " +
+        $"Лучшее значение {FormatPercent(Points.Max(x => x.Percent))}.";
 
-    private double X(int index) => Points.Count <= 1
-        ? (PlotLeft + PlotRight) / 2
-        : PlotLeft + (PlotRight - PlotLeft) * index / (Points.Count - 1d);
+    private double X(DateTime date)
+    {
+        var totalDays = (EndDate - StartDate).TotalDays;
+        if (totalDays <= 0)
+            return (PlotLeft + PlotRight) / 2;
+        return PlotLeft + (PlotRight - PlotLeft) * (date.Date - StartDate).TotalDays / totalDays;
+    }
 
     private double Y(decimal value)
     {
@@ -112,23 +170,21 @@
         return PlotBottom - (PlotBottom - PlotTop) * ratio;
     }
 
-    private bool ShouldShowLabel(int index)
-    {
-        if (Points.Count <= 5)
-            return true;
-        if (index == 0 || index == Points.Count - 1)
-            return true;
-        var interval = (int)Math.Ceiling(Points.Count / 4d);
-        return index % interval == 0;
-    }
+    private string MarkerStyle(ProgressChartPointApiResponse point) =>
+        $"left:{Format(X(point.Date) / 6)}%;top:{Format(Y(point.Percent) / 2.6)}%;";
 
-    private static string ShortLabel(string value) => value.Length <= 8
-        ? value
-        : value[..8];
+    private string XLabelStyle(DateTime date) =>
+        $"left:{Format(X(date) / 6)}%;top:{Format((PlotBottom + 13) / 2.6)}%;";
+
+    private string YLabelStyle(decimal value) =>
+        $"left:{Format((PlotLeft - 7) / 6)}%;top:{Format(Y(value) / 2.6)}%;";
 
     private static string Format(double value) =>
         value.ToString("0.##", CultureInfo.InvariantCulture);
 
     private static string FormatPercent(decimal value) =>
         $"{value.ToString("0.##", CultureInfo.CurrentCulture)}%";
+
+    private static string FormatSignedPercent(decimal value) =>
+        $"{(value > 0 ? "+" : string.Empty)}{FormatPercent(value)}";
 }

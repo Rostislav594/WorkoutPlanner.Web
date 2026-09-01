@@ -154,25 +154,34 @@ Required behavior:
 
 If a command, deployment step, or device check cannot run because of environment limitations, state exactly what was not verified.
 
-### Mandatory final cleanup and rebuild
+### Mandatory process control and final cleanup
 
-Before considering any task complete and before writing the final response, Codex must perform a final environment cleanup and a clean rebuild of the solution.
+Codex must actively manage processes when they prevent it from continuing the task, completing a build or deployment, or performing reliable testing. Codex must not abandon or weaken verification merely because a development-related process is blocking a port, file, application instance, build artifact, emulator, device connection, test environment, or similar project resource.
 
-Required sequence:
+Required behavior:
 
-1. Finish all implementation, tests, debugging, deployment, and device verification that require running application or development processes.
-2. Stop every background process that Codex started for the task and that is no longer required, including application instances, `dotnet watch`, development servers, test runners, log streams, temporary tunnels, helper scripts, or similar task-specific processes.
-3. Do not terminate unrelated user, IDE, system, emulator, device, or third-party processes that Codex did not start unless the user explicitly requests it.
-4. Confirm that Codex-started background processes from the task are no longer running.
-5. Run a clean against the actual solution file used by the repository, for example `dotnet clean <solution-file>`.
-6. Rebuild the same solution from the cleaned state, for example `dotnet build <solution-file>`.
-7. Treat the final clean rebuild as mandatory verification. If the clean or rebuild fails, investigate and fix failures caused by the task when possible; otherwise explicitly report the blocker and do not describe the task as fully complete.
-8. Do not leave a development server, watcher, test runner, log stream, or other Codex-started background process running after the task is finished unless the user explicitly asks for it to remain running.
+- Stop application instances, `dotnet watch`, development servers, test runners, log streams, temporary tunnels, helper scripts, or similar task-specific background processes started by Codex when they are no longer required.
+- Codex may also stop a process that it did not start when that process is clearly identified as belonging to the current project or development/test workflow and is blocking the requested work, build, deployment, launch, or verification.
+- When a blocking process is found, determine what it is and why it is blocking the task before terminating it. Do not avoid process termination merely because the process was started by an IDE, a previous development session, a stale app instance, a test runner, an emulator workflow, or another project-related tool.
+- Prefer graceful shutdown first. If graceful shutdown fails and the process is still clearly blocking the current project workflow, Codex may terminate it forcibly.
+- Never indiscriminately terminate processes. Do not stop operating-system-critical, security, unrelated user-application, or unrelated third-party processes unless the user explicitly requests that specific action and it is safe to do so.
+- Before considering the task complete, confirm that Codex-started background processes that are no longer required are stopped and that no known stale project-related process is left blocking normal use of the changed application.
+- Do not leave a Codex-started background process running after the task is finished unless the user explicitly asks for it to remain running.
+- In the final response, state what process cleanup or blocking-process termination was performed, or identify any process intentionally left running and why.
 
-The final response must state:
-- that Codex-started background processes were stopped, or identify any process intentionally left running at the user's request;
-- the solution file that was cleaned and rebuilt;
-- the result of the final clean rebuild.
+### Active verification tools and permissions
+
+Codex must actively use the strongest available verification tools that are appropriate for the task instead of limiting verification to source inspection, compilation, or logs when the result can be tested interactively.
+
+Required behavior:
+
+- When available in the current environment, use Computer Use, device-control tools, browser automation, emulator/device interaction, UI inspection, screenshots, debugging tools, or equivalent capabilities when they materially improve verification of the completed work.
+- Codex must not avoid using an available interactive verification capability merely because terminal-only verification is easier or faster.
+- If an available tool requires enabling an environment capability, opening an allowed session, selecting a connected device, or granting a permission that Codex is authorized to request or activate, Codex should do so when it is necessary for proper testing.
+- If a permission requires explicit user or operating-system approval that Codex cannot grant on its own, Codex must request or surface that approval rather than bypassing the permission model or pretending the verification was completed.
+- Never bypass security controls, authentication, operating-system permission boundaries, or user consent mechanisms.
+- Use interactive tools to exercise the actual changed workflow end to end whenever practical, including launching the application, navigating to the affected screen, performing the changed action, and observing the result.
+- If the required interactive capability is unavailable in the environment, explicitly state what capability was unavailable and which part of verification could therefore not be completed.
 
 ## Git safety
 
@@ -190,9 +199,8 @@ A task is complete only when:
 - The solution is consistent with current architecture and styling.
 - Persistence and migrations are correct when data changes.
 - Relevant build/tests/checks were run or limitations were disclosed.
-- All Codex-started background processes that are no longer required were stopped before final completion.
-- The actual solution was cleaned and successfully rebuilt from the cleaned state, or any blocker was explicitly disclosed and the task was not described as fully complete.
-- The result was deployed to and personally verified on the configured target device whenever the environment allowed device access.
+- All Codex-started background processes that are no longer required were stopped before final completion, and any clearly identified project-related process blocking build, deployment, execution, or testing was handled appropriately.
+- The result was deployed to and personally verified on the configured target device whenever the environment allowed device access. Available interactive verification tools such as Computer Use or equivalent capabilities were used when they materially improved verification.
 - If device verification was impossible, the blocker and the exact unverified behavior were explicitly disclosed; the task must not be described as fully device-verified.
 - No unrelated functionality was intentionally changed.
-- The final response lists changed files, build/test verification, device verification performed, final process cleanup, clean/rebuild result, and any remaining risk.
+- The final response lists changed files, build/test verification, interactive/device verification performed, process cleanup or blocking-process termination, unavailable verification capabilities if any, and any remaining risk.

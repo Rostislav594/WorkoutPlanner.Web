@@ -7,6 +7,7 @@
 .inbox-menu { position: absolute; top: 52px; left: 0; z-index: 41; width: min(340px, calc(100vw - 32px)); max-height: min(62dvh, 500px); overflow-y: auto; padding: 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface-raised); box-shadow: var(--shadow-card); }
 .inbox-menu__header { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 4px 4px 12px; }
 .inbox-menu__header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.inbox-menu__clear-hint { margin: 0; color: var(--color-text-muted); font-size: 12px; font-weight: 700; line-height: 1.35; }
 .inbox-menu__header > div > span, .inbox-message__meta, .inbox-message__date { color: var(--color-text-muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .inbox-menu__header h2 { margin: 3px 0 0; font-size: 20px; }
 .inbox-menu__mark-all { min-height: 36px; padding: 0 8px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-accent-hover); font: inherit; font-size: 12px; font-weight: 750; }

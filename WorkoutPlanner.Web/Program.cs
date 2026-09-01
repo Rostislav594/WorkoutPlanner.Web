@@ -140,7 +140,9 @@ builder.Services.AddSingleton<ISupportNotificationService, TelegramSupportNotifi
 builder.Services.AddScoped<ISupportTicketService, SupportTicketService>();
 builder.Services.AddSingleton<IPushNotificationTemplateProvider,
     PushNotificationTemplateProvider>();
-builder.Services.AddScoped<IPushDeviceRegistrationService, PushDeviceRegistrationService>();
+builder.Services.AddScoped<PushDeviceRegistrationService>();
+builder.Services.AddScoped<IPushDeviceRegistrationService>(sp =>
+    sp.GetRequiredService<PushDeviceRegistrationService>());
 builder.Services.AddScoped<IPushDeviceStore>(sp => sp.GetRequiredService<PushDeviceRegistrationService>());
 builder.Services.AddScoped<IRemotePushProvider>(sp =>
     sp.GetRequiredService<IConfiguration>().GetValue<bool>("Push:Enabled")

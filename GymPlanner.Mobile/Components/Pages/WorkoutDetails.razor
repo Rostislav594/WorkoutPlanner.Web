@@ -46,8 +46,8 @@
     else
     {
         <div class="workout-toolbar">
-            <button class="primary-button add-exercise-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
-                <span aria-hidden="true">＋</span>
+            <button class="compact-create-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
+                <span class="material-symbols-rounded" aria-hidden="true">add</span>
                 Добавить упражнение
             </button>
             @if (SupersetCandidates.Count >= 2)
@@ -304,13 +304,14 @@
 
                 <div class="form-field">
                     <label for="definition">Упражнение из библиотеки</label>
-                    <select id="definition" class="form-control" autofocus @bind="_draft.DefinitionId" @bind:after="ApplyDefinition">
-                        <option value="">-- Не выбрано --</option>
-                        @foreach (var item in _definitions)
-                        {
-                            <option value="@item.Id">@item.Name</option>
-                        }
-                    </select>
+                    <SystemChoiceField id="definition"
+                                       class="form-control"
+                                       Title="Упражнение из библиотеки"
+                                       Options="DefinitionOptions"
+                                       Value="@(_draft.DefinitionId?.ToString() ?? string.Empty)"
+                                       ValueChanged="SetDefinition"
+                                       Placeholder="Не выбрано"
+                                       AriaLabel="Выбрать упражнение из библиотеки" />
                 </div>
 
                 <div class="form-field">
@@ -845,6 +846,20 @@
 
     private static string ToDataUri(ExercisePhotoContent photo) =>
         $"data:{photo.ContentType};base64,{Convert.ToBase64String(photo.Content)}";
+
+    private IReadOnlyList<SystemChoiceOption> DefinitionOptions =>
+        _definitions
+            .Select(definition => new SystemChoiceOption(definition.Id.ToString(), definition.Name))
+            .ToList();
+
+    private void SetDefinition(string value)
+    {
+        if (!int.TryParse(value, out var definitionId))
+            return;
+
+        _draft.DefinitionId = definitionId;
+        ApplyDefinition();
+    }
 
     private void ApplyDefinition() { var definition = _definitions.FirstOrDefault(x => x.Id == _draft.DefinitionId); if (definition is not null) _draft.Name = definition.Name; }
     private void ChangeSetsCount(ChangeEventArgs args) { if (!int.TryParse(args.Value?.ToString(), out var count)) return; _draft.Resize(Math.Clamp(count, 1, 20)); }

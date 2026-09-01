@@ -1,0 +1,23 @@
+<div class="orientation-gate" role="status" aria-live="polite">
+    <div class="orientation-illustration" aria-hidden="true">
+        <svg viewBox="0 0 240 150" focusable="false">
+            <rect class="phone phone-portrait" x="92" y="18" width="56" height="96" rx="12" />
+            <line class="phone-detail" x1="111" y1="104" x2="129" y2="104" />
+            <path class="rotation-path" d="M50 92c14 35 52 52 87 39 16-6 29-17 37-31" />
+            <path class="rotation-arrow" d="m166 91 12 8 7-13" />
+            <rect class="phone phone-landscape" x="62" y="50" width="116" height="68" rx="14" />
+            <line class="phone-detail landscape-detail" x1="69" y1="76" x2="69" y2="92" />
+        </svg>
+    </div>
+    <h3>Поверните смартфон</h3>
+    <p>График доступен в горизонтальном режиме — так даты и изменения будет легче читать.</p>
+</div>
+
+<div class="landscape-chart-content">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public RenderFragment ChildContent { get; set; } = default!;
+}

@@ -183,6 +183,9 @@ public sealed class MobileAuthenticationService : IDisposable
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/v1/auth/logout");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            request.Headers.TryAddWithoutValidation(
+                "X-GPlanner-Installation-Id",
+                Notifications.InstallationIdStore.Get());
             using var response = await _authenticationClient.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode &&
                 response.StatusCode is not HttpStatusCode.Unauthorized and
