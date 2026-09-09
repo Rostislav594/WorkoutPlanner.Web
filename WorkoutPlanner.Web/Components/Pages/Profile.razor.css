@@ -8,3 +8,119 @@
     top: 0;
     right: 0;
 }
+
+.watch-pairing-card {
+    max-width: 620px;
+    padding: clamp(20px, 4vw, 28px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+}
+
+.watch-pairing-card h2 {
+    margin: 0 0 var(--space-4);
+    color: var(--color-text);
+    font-size: var(--text-section-title);
+}
+
+.watch-pairing-description,
+.watch-pairing-instruction,
+.watch-pairing-expiry {
+    color: var(--color-text-muted);
+    line-height: 1.55;
+}
+
+.watch-pairing-description {
+    margin: 0 0 var(--space-5);
+}
+
+.watch-pairing-success {
+    margin-bottom: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid rgba(63, 185, 80, .45);
+    border-radius: var(--radius-md);
+    background: var(--color-success-soft);
+    text-align: center;
+}
+
+.watch-pairing-status {
+    margin: 0 0 var(--space-3);
+    color: #adf0bd;
+    font-weight: 700;
+}
+
+.watch-pairing-code {
+    display: block;
+    color: var(--color-text);
+    font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+    font-size: clamp(2rem, 10vw, 3.25rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    letter-spacing: .16em;
+    line-height: 1.15;
+}
+
+.watch-pairing-instruction {
+    margin: var(--space-4) 0 var(--space-2);
+    color: var(--color-text);
+    font-weight: 700;
+}
+
+.watch-pairing-expiry {
+    margin: 0;
+    font-size: var(--text-label);
+}
+
+.watch-pairing-error {
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-sm);
+    background: var(--color-danger-surface);
+    color: var(--color-danger-soft);
+    line-height: 1.45;
+}
+
+.watch-pairing-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--control-height);
+    padding: 0 var(--space-5);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-sm);
+    background: var(--color-success);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), transform var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.watch-pairing-action:hover:not(:disabled),
+.watch-pairing-action:focus-visible:not(:disabled) {
+    border-color: var(--color-success-hover);
+    background: var(--color-success-hover);
+    box-shadow: 0 10px 22px rgba(63, 185, 80, .2);
+    transform: translateY(-1px);
+}
+
+.watch-pairing-action:focus-visible {
+    outline: 3px solid rgba(63, 185, 80, .35);
+    outline-offset: 3px;
+}
+
+.watch-pairing-action:disabled {
+    cursor: wait;
+    opacity: .65;
+}
+
+@media (max-width: 520px) {
+    .watch-pairing-action {
+        width: 100%;
+    }
+
+    .watch-pairing-code {
+        letter-spacing: .1em;
+    }
+}

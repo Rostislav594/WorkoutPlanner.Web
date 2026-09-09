@@ -68,7 +68,7 @@
         <GoogleServicesJson Include="google-services.json"
                            Condition="Exists('google-services.json')" />
         <!-- App Icon -->
-        <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0F1115" />
+        <MauiIcon Include="Resources\AppIcon\appicon.png" BaseSize="1024,1024" />
 
         <!-- Splash Screen -->
         <MauiSplashScreen Include="Resources\Splash\emblem.png" Color="#0F1115" BaseSize="256,256" />

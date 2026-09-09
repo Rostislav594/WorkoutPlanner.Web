@@ -46,6 +46,7 @@
             <ValidationSummary class="validation-summary" />
             <p class="setting-description">Обновите личные данные, которые используются в вашем профиле.</p>
             <div class="setting-form-grid">
+                <label>Email <input class="auth-input" value="@_profile?.Email" readonly /></label>
                 <label>Имя <InputText class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" /></label>
                 <label>Фамилия <InputText class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" /></label>
                 <label>Дата рождения <InputDate class="auth-input" @bind-Value="_profileInput.BirthDate" /></label>
@@ -54,9 +55,13 @@
             <button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Сохраняем…" : "Сохранить изменения")</button>
         </EditForm>
     }
-    else if (Section == "email")
+    else if (Section == "devices")
     {
-        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">mail</span><h2>Email</h2><p class="setting-value">@_profile?.Email</p><p class="setting-description">Адрес используется для входа в аккаунт. Изменение email пока недоступно.</p></article>
+        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">watch</span><h2>Samsung Galaxy Watch</h2><p class="setting-value">Подключено</p><p class="setting-description">Устройство отображается в списке подключённых устройств.</p></article>
+    }
+    else if (Section == "my-data")
+    {
+        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">database</span><h2>Экспорт и синхронизация</h2><p class="setting-description">Инструменты экспорта данных и синхронизации будут доступны в этом разделе.</p></article>
     }
     else if (Section == "rest-timers")
     {
@@ -104,9 +109,29 @@
     private string _supportMessage = string.Empty;
     private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting) ? setting : new("Настройка не найдена", "help", "Вернитесь в профиль и выберите нужный раздел.", false);
     private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
-        ["personal-information"] = new("Личная информация", "badge", "", true), ["email"] = new("Email", "mail", "", true), ["rest-timers"] = new("Таймеры отдыха", "timer", "", true), ["change-password"] = new("Изменить пароль", "password", "", true), ["report-problem"] = new("Сообщить о проблеме", "bug_report", "", true), ["logout"] = new("Выйти из аккаунта", "logout", "", true), ["delete-account"] = new("Удалить аккаунт", "delete_forever", "", true),
-        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["devices"] = new("Подключённые устройства", "devices", "Управление подключёнными устройствами скоро будет доступно здесь.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "Выбор языка скоро будет доступен здесь.", false), ["my-data"] = new("Мои данные", "database", "Просмотр данных профиля скоро будет доступен здесь.", false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Настройки синхронизации скоро будут доступны здесь.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "Сбор предложений скоро будет доступен здесь.", false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
-    protected override async Task OnInitializedAsync() { if (!Setting.IsAvailable) { _isLoading = false; return; } var result = await ProfileClient.GetAsync(); if (!result.Succeeded) _errors.AddRange(result.Errors); else { _profile = result.Value; _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; } _isLoading = false; }
+        ["personal-information"] = new("Личная информация", "badge", "", true), ["rest-timers"] = new("Таймеры отдыха", "timer", "", true), ["change-password"] = new("Изменить пароль", "password", "", true), ["report-problem"] = new("Сообщить о проблеме", "bug_report", "", true), ["logout"] = new("Выйти из аккаунта", "logout", "", true), ["delete-account"] = new("Удалить аккаунт", "delete_forever", "", true), ["devices"] = new("Подключённые устройства", "devices", "", true), ["my-data"] = new("Мои данные", "database", "", true),
+        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "Выбор языка скоро будет доступен здесь.", false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Синхронизация появится в одном из ближайших обновлений.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "Сбор предложений скоро будет доступен здесь.", false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
+    protected override async Task OnInitializedAsync()
+    {
+        var replacementRoute = Section.ToLowerInvariant() switch
+        {
+            "email" => "/profile/personal-information",
+            "export" or "sync" => "/profile/my-data",
+            _ => null
+        };
+
+        if (replacementRoute is not null)
+        {
+            Navigation.NavigateTo(replacementRoute, replace: true);
+            return;
+        }
+
+        if (!Setting.IsAvailable) { _isLoading = false; return; }
+        var result = await ProfileClient.GetAsync();
+        if (!result.Succeeded) _errors.AddRange(result.Errors);
+        else { _profile = result.Value; _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; }
+        _isLoading = false;
+    }
     private int _restBetweenSetsSeconds = 90; private int _restBetweenExercisesSeconds = 120;
     private async Task SaveProfileAsync() { await RunAsync(async () => { var r = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
     private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add("Укажите время от 5 секунд до 60 минут."); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }

@@ -53,6 +53,7 @@ public sealed class ExerciseTemplateSet
     public double Weight { get; set; }
     public bool Completed { get; set; }
     public bool IsWarmup { get; set; }
+    public long Version { get; set; }
 }
 
 public sealed class ExerciseDefinition

@@ -39,7 +39,8 @@
             }
             @if (SupersetCandidates.Count >= 2)
             {
-                <button class="secondary-button superset-button" type="button" disabled="@_isBusy" @onclick="OpenSupersetDialog">
+                <button class="secondary-button superset-button" type="button" aria-haspopup="dialog" disabled="@_isBusy" @onclick="OpenSupersetDialog">
+                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
                     Создать суперсет
                 </button>
             }
@@ -159,6 +160,9 @@
 
                                                 <label class="complete-control" title="Отметить подход выполненным">
                                                     <input type="checkbox" checked="@set.Completed" @onchange="args => SetSupersetCompletedAsync(group, set, args)" />
+                                                    <svg class="complete-checkmark" viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path d="M6.5 12.5 10.2 16 17.8 8.4" />
+                                                    </svg>
                                                     <span class="visually-hidden">@exercise.Name, подход @set.SetNumber выполнен</span>
                                                 </label>
                                             </fieldset>
@@ -288,6 +292,9 @@
 
                                     <label class="complete-control" title="Отметить подход выполненным">
                                         <input type="checkbox" checked="@set.Completed" @onchange="args => SetCompletedAsync(exercise, set, args)" />
+                                        <svg class="complete-checkmark" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M6.5 12.5 10.2 16 17.8 8.4" />
+                                        </svg>
                                         <span class="visually-hidden">Выполнен</span>
                                     </label>
                                 </fieldset>
@@ -342,7 +349,7 @@
                 <button class="compact-create-button add-free-exercise-button"
                         type="button"
                         disabled="@_isBusy"
-                        @onclick="AddFreeExercise">
+                        @onclick="BeginFreeExerciseCreateAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">add</span>
                     Добавить упражнение
                 </button>
@@ -538,7 +545,7 @@
             <div class="editor-heading">
                 <div>
                     <span>Свободная тренировка</span>
-                    <h2 id="free-exercise-editor-title">Параметры упражнения</h2>
+                    <h2 id="free-exercise-editor-title">@(_isCreatingFreeExercise ? "Новое упражнение" : "Параметры упражнения")</h2>
                 </div>
                 <button class="quick-action-close editor-close"
                         type="button"
@@ -593,7 +600,7 @@
 
             <div class="editor-actions">
                 <button class="edit-workout-button" type="button" @onclick="SaveFreeExerciseEdit">
-                    Сохранить
+                    @(_isCreatingFreeExercise ? "Добавить упражнение" : "Сохранить")
                 </button>
             </div>
         </section>
@@ -764,6 +771,7 @@
     private bool _showSupersetDialog;
     private bool _photoBusy;
     private bool _confirmPhotoDelete;
+    private bool _isCreatingFreeExercise;
     private bool _isFinishHoldActive;
     private bool _isFinishFillActive;
     private int _nextFreeExerciseId = -1;
@@ -1002,6 +1010,7 @@
             _freeEditorExerciseId = exercise.Id;
             _freeEditorDraft = exercise.Clone();
             _freeEditorErrors.Clear();
+            _isCreatingFreeExercise = false;
             CloseEditWorkoutAction();
             _showFreeExerciseEditor = true;
             BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
@@ -1015,13 +1024,54 @@
         }
     }
 
+    private async Task BeginFreeExerciseCreateAsync()
+    {
+        if (_isBusy || !_isFreeWorkout)
+            return;
+
+        _isBusy = true;
+        _errors.Clear();
+        try
+        {
+            if (!await EnsureExerciseDefinitionsAsync())
+                return;
+
+            OpenNewFreeExerciseEditor();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void OpenNewFreeExerciseEditor()
+    {
+        _freeEditorExerciseId = null;
+        _freeEditorDraft = ExerciseDraft.CreateFree(_nextFreeExerciseId);
+        _freeEditorErrors.Clear();
+        _isCreatingFreeExercise = true;
+        _showFreeExerciseEditor = true;
+        BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
+    }
+
     private void CloseFreeExerciseEditor()
     {
+        var discardEmptyWorkout = _isCreatingFreeExercise && _exercises.Count == 0;
         _showFreeExerciseEditor = false;
         _freeEditorExerciseId = null;
         _freeEditorDraft = null;
         _freeEditorErrors.Clear();
+        _isCreatingFreeExercise = false;
         BackNavigation.SetBackInterceptor(null);
+
+        if (discardEmptyWorkout)
+        {
+            _isFreeWorkout = false;
+            FreeWorkoutDraftStore.Clear();
+        }
     }
 
     private void RequestCloseFreeExerciseEditor() =>
@@ -1059,7 +1109,7 @@
 
     private void SaveFreeExerciseEdit()
     {
-        if (_freeEditorDraft is null || _freeEditorExerciseId is null)
+        if (_freeEditorDraft is null)
             return;
 
         _freeEditorErrors.Clear();
@@ -1076,11 +1126,23 @@
         if (_freeEditorErrors.Count > 0)
             return;
 
-        var index = _exercises.FindIndex(x => x.Id == _freeEditorExerciseId.Value);
-        if (index < 0)
-            return;
+        if (_isCreatingFreeExercise)
+        {
+            _exercises.Add(_freeEditorDraft.Clone());
+            _nextFreeExerciseId--;
+        }
+        else
+        {
+            if (_freeEditorExerciseId is not { } exerciseId)
+                return;
 
-        _exercises[index] = _freeEditorDraft.Clone();
+            var index = _exercises.FindIndex(x => x.Id == exerciseId);
+            if (index < 0)
+                return;
+
+            _exercises[index] = _freeEditorDraft.Clone();
+        }
+
         PersistFreeWorkout();
         CloseFreeExerciseEditor();
     }
@@ -1384,7 +1446,7 @@
 
             _isFreeWorkout = true;
             _exercises.Clear();
-            AddFreeExercise();
+            OpenNewFreeExerciseEditor();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -1410,15 +1472,6 @@
 
         _exerciseDefinitions.AddRange(definitionsResult.Value!);
         return _exerciseDefinitions.Count > 0;
-    }
-
-    private void AddFreeExercise()
-    {
-        if (!_isFreeWorkout)
-            return;
-
-        _exercises.Add(ExerciseDraft.CreateFree(_nextFreeExerciseId--));
-        PersistFreeWorkout();
     }
 
     private static void ToggleSetKind(SetDraft set) =>

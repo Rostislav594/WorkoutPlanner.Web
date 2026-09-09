@@ -19,14 +19,6 @@
                         <a class="profile-button" href="profile" aria-label="Открыть профиль">
                             <span class="material-symbols-rounded" aria-hidden="true">person</span>
                         </a>
-                        <button class="logout-button"
-                                type="button"
-                                disabled="@_isLoggingOut"
-                                aria-label="@(_isLoggingOut ? "Выполняется выход" : "Выйти из аккаунта")"
-                                @onclick="LogoutAsync">
-                            <span class="material-symbols-rounded" aria-hidden="true">logout</span>
-                            <span class="action-label">@(_isLoggingOut ? "Выход…" : "Выйти")</span>
-                        </button>
                     </div>
                 </Authorized>
                 <NotAuthorized>
@@ -67,15 +59,8 @@
     }
 </div>
 
-@if (!string.IsNullOrWhiteSpace(_logoutError))
-{
-    <div class="session-error" role="alert">@_logoutError</div>
-}
-
 @code {
-    private bool _isLoggingOut;
     private bool _checkingWelcomeGuide;
-    private string? _logoutError;
     private string CurrentPageKey =>
         Navigation.ToBaseRelativePath(Navigation.Uri);
     private bool IsHomePage => string.IsNullOrEmpty(
@@ -142,30 +127,6 @@
 
     private void OpenNotificationRoute(string route) =>
         _ = InvokeAsync(() => Navigation.NavigateTo(route));
-
-    private async Task LogoutAsync()
-    {
-        if (_isLoggingOut)
-            return;
-
-        _isLoggingOut = true;
-        _logoutError = null;
-        try
-        {
-            var result = await Authentication.LogoutAsync();
-            if (!result.Succeeded)
-            {
-                _logoutError = string.Join(" ", result.Errors);
-                return;
-            }
-
-            Navigation.NavigateTo("/account/login", replace: true);
-        }
-        finally
-        {
-            _isLoggingOut = false;
-        }
-    }
 
     public void Dispose()
     {

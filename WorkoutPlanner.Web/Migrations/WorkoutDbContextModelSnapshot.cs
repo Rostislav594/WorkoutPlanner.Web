@@ -442,6 +442,10 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Property<int>("SetNumber")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("INTEGER");
+
                     b.Property<double>("Weight")
                         .HasColumnType("REAL");
 
@@ -954,6 +958,154 @@ namespace WorkoutPlanner.Web.Migrations
                     b.ToTable("UserProfiles");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("AppVersion")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeviceModel")
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSeenAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("RefreshTokenExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("RevokedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeviceId")
+                        .IsUnique();
+
+                    b.HasIndex("RefreshTokenExpiresAtUtc");
+
+                    b.HasIndex("UserId", "RevokedAtUtc");
+
+                    b.ToTable("WatchDevices", t =>
+                        {
+                            t.HasCheckConstraint("CK_WatchDevices_RefreshTokenExpiry", "[RefreshTokenExpiresAtUtc] > [CreatedAtUtc]");
+                        });
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchPairingCode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CodeHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UsedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodeHash");
+
+                    b.HasIndex("ExpiresAtUtc");
+
+                    b.HasIndex("UserId", "UsedAtUtc", "ExpiresAtUtc");
+
+                    b.ToTable("WatchPairingCodes", t =>
+                        {
+                            t.HasCheckConstraint("CK_WatchPairingCodes_AttemptCount", "[AttemptCount] >= 0");
+
+                            t.HasCheckConstraint("CK_WatchPairingCodes_Expiry", "[ExpiresAtUtc] > [CreatedAtUtc]");
+                        });
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchSyncOperation", b =>
+                {
+                    b.Property<Guid>("OperationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ReceivedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ResultJson")
+                        .IsRequired()
+                        .HasMaxLength(16000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("WatchDeviceId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("OperationId");
+
+                    b.HasIndex("ExpiresAtUtc");
+
+                    b.HasIndex("WatchDeviceId", "ReceivedAtUtc");
+
+                    b.ToTable("WatchSyncOperations", t =>
+                        {
+                            t.HasCheckConstraint("CK_WatchSyncOperations_Expiry", "[ExpiresAtUtc] > [ReceivedAtUtc]");
+                        });
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.WorkoutDay", b =>
                 {
                     b.Property<int>("Id")
@@ -1254,6 +1406,35 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasForeignKey("WorkoutPlanner.Web.Models.UserProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchDevice", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchPairingCode", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.WatchSyncOperation", b =>
+                {
+                    b.HasOne("WorkoutPlanner.Web.Models.WatchDevice", "WatchDevice")
+                        .WithMany()
+                        .HasForeignKey("WatchDeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WatchDevice");
                 });
 
             modelBuilder.Entity("WorkoutPlanner.Web.Models.Exercise", b =>

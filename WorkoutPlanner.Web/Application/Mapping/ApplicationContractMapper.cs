@@ -50,7 +50,8 @@ internal static class ApplicationContractMapper
             Repetitions = source.Repetitions,
             Weight = source.Weight,
             Completed = source.Completed,
-            IsWarmup = source.IsWarmup
+            IsWarmup = source.IsWarmup,
+            Version = source.Version
         };
     }
 

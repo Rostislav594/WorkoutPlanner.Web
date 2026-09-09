@@ -70,6 +70,95 @@ public sealed class MigrationTests
         Assert.Empty(await db.Database.GetPendingMigrationsAsync());
     }
 
+    [Fact]
+    public async Task AddWearOsDevicePersistence_UpgradesExistingSetsAndCreatesWatchGraph()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<WorkoutDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var db = new WorkoutDbContext(options);
+        await db.Database.MigrateAsync("20260828132217_AddPushDeviceRegistrations");
+
+        db.Users.Add(CreateIdentityUser("user-a"));
+        var plan = new TrainingPlan
+        {
+            UserId = "user-a",
+            WorkoutName = "Existing plan",
+            Date = DateTime.Today,
+            Exercises =
+            [
+                new Exercise
+                {
+                    UserId = "user-a",
+                    Name = "Existing exercise",
+                    WorkoutName = "Existing plan",
+                    Sets = []
+                }
+            ]
+        };
+        db.TrainingPlans.Add(plan);
+        await db.SaveChangesAsync();
+        var exerciseId = plan.Exercises[0].Id;
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO ExerciseTemplateSets
+                (ExerciseId, SetNumber, Weight, Repetitions, Completed, IsWarmup)
+            VALUES
+                ({exerciseId}, 1, 42.5, 8, 0, 0)
+            """);
+        var setId = await db.ExerciseTemplateSets
+            .IgnoreQueryFilters()
+            .Where(x => x.ExerciseId == exerciseId)
+            .Select(x => x.Id)
+            .SingleAsync();
+
+        await db.Database.MigrateAsync();
+        db.ChangeTracker.Clear();
+
+        var migratedSet = await db.ExerciseTemplateSets.SingleAsync(x => x.Id == setId);
+        Assert.Equal(0, migratedSet.Version);
+        Assert.Equal(42.5, migratedSet.Weight);
+
+        var now = DateTime.UtcNow;
+        var device = new WatchDevice
+        {
+            Id = Guid.NewGuid(),
+            UserId = "user-a",
+            DeviceId = "migration-test-watch",
+            DisplayName = "Migration test watch",
+            Platform = "WearOS",
+            CreatedAtUtc = now,
+            RefreshTokenHash = "refresh-token-hash",
+            RefreshTokenExpiresAtUtc = now.AddDays(30)
+        };
+        db.WatchDevices.Add(device);
+        db.WatchPairingCodes.Add(new WatchPairingCode
+        {
+            Id = Guid.NewGuid(),
+            UserId = "user-a",
+            CodeHash = "pairing-code-hash",
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(10)
+        });
+        db.WatchSyncOperations.Add(new WatchSyncOperation
+        {
+            OperationId = Guid.NewGuid(),
+            WatchDeviceId = device.Id,
+            OperationType = "CompleteSet",
+            EntityId = setId,
+            ReceivedAtUtc = now,
+            ExpiresAtUtc = now.Add(WatchSyncOperation.RetentionPeriod),
+            ResultJson = "{}"
+        });
+        await db.SaveChangesAsync();
+
+        Assert.True(await db.WatchDevices.AnyAsync(x => x.Id == device.Id));
+        Assert.Empty(await db.Database.GetPendingMigrationsAsync());
+    }
+
     private static IdentityUser CreateIdentityUser(string id)
     {
         return new IdentityUser

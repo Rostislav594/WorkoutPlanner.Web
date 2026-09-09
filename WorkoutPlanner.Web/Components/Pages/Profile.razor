@@ -1,11 +1,17 @@
 @page "/profile"
 @rendermode InteractiveServer
+@implements IDisposable
 @using Microsoft.AspNetCore.Identity
+@using WorkoutPlanner.Api.Contracts
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
+@using WorkoutPlanner.Web.Services.Auth
+@using WorkoutPlanner.Web.Services.WearOs
 @inject IProfileService ProfileService
 @inject IAccountService AccountService
 @inject IWelcomeGuideStateService WelcomeGuideState
+@inject CurrentUserService CurrentUserService
+@inject WatchPairingService WatchPairingService
 @inject ILogger<Profile> Logger
 @inject NavigationManager Navigation
 
@@ -164,6 +170,67 @@
 
                 </section>
             }
+
+            @if (ActiveSection == ProfileSection.Watches)
+            {
+                <section class="profile-panel">
+                    <div class="profile-heading">
+                        <p class="profile-kicker">Wear OS</p>
+                        <h1>Подключение часов</h1>
+                        <p>Создайте одноразовый код, чтобы связать часы с вашим аккаунтом.</p>
+                    </div>
+
+                    <div class="watch-pairing-card">
+                        <h2>Код подключения</h2>
+
+                        @if (!string.IsNullOrWhiteSpace(PairingCodeError))
+                        {
+                            <div class="watch-pairing-error" role="alert">
+                                @PairingCodeError
+                            </div>
+                        }
+
+                        @if (PairingCode is not null)
+                        {
+                            <div class="watch-pairing-success" role="status">
+                                <p class="watch-pairing-status">Код готов</p>
+                                <output class="watch-pairing-code"
+                                        aria-label="Код подключения часов: @FormatCodeForSpeech(PairingCode.Code)">
+                                    @PairingCode.Code
+                                </output>
+                                <p class="watch-pairing-instruction">
+                                    Введите этот код на часах.
+                                </p>
+                                <p class="watch-pairing-expiry">
+                                    Код действует до
+                                    <time datetime="@PairingCode.ExpiresAtUtc.ToString("O")">
+                                        @FormatExpiry(PairingCode.ExpiresAtUtc) UTC
+                                    </time>.
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="watch-pairing-description">
+                                Код состоит из шести цифр и действует ограниченное время.
+                                Новый код отменит ранее созданный.
+                            </p>
+                        }
+
+                        <button class="watch-pairing-action"
+                                type="button"
+                                disabled="@IsCreatingPairingCode"
+                                aria-busy="@IsCreatingPairingCode"
+                                @onclick="CreatePairingCodeAsync">
+                            @(IsCreatingPairingCode
+                                ? "Создаём код…"
+                                : PairingCode is null
+                                    ? "Подключить часы"
+                                    : "Создать новый код")
+                        </button>
+                    </div>
+                </section>
+            }
         </main>
 
         <aside class="profile-sidebar" aria-label="Разделы профиля">
@@ -183,6 +250,12 @@
                     type="button"
                     @onclick="() => ActiveSection = ProfileSection.Training">
                 Настройки тренировок
+            </button>
+
+            <button class="profile-tab @(ActiveSection == ProfileSection.Watches ? "active" : "")"
+                    type="button"
+                    @onclick="() => ActiveSection = ProfileSection.Watches">
+                Часы
             </button>
         </aside>
     </div>
@@ -246,6 +319,14 @@
     private string? ProfileError { get; set; }
 
     private string? PasswordMessage { get; set; }
+
+    private CreateWatchPairingCodeResponse? PairingCode { get; set; }
+
+    private string? PairingCodeError { get; set; }
+
+    private bool IsCreatingPairingCode { get; set; }
+
+    private readonly CancellationTokenSource pairingCodeCancellation = new();
 
     private bool ShowDeleteConfirmation;
 
@@ -327,6 +408,42 @@
         await WelcomeGuideState.ResetAsync();
         Navigation.NavigateTo("/welcome-guide");
     }
+
+    private async Task CreatePairingCodeAsync()
+    {
+        if (IsCreatingPairingCode)
+            return;
+
+        IsCreatingPairingCode = true;
+        PairingCodeError = null;
+
+        try
+        {
+            var userId = await CurrentUserService.GetRequiredUserIdAsync();
+            PairingCode = await WatchPairingService.CreateCodeAsync(
+                userId,
+                pairingCodeCancellation.Token);
+        }
+        catch (OperationCanceledException) when (pairingCodeCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to create a watch pairing code.");
+            PairingCodeError = "Не удалось создать код подключения. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            IsCreatingPairingCode = false;
+        }
+    }
+
+    private static string FormatExpiry(DateTime expiresAtUtc) =>
+        expiresAtUtc.ToUniversalTime().ToString("dd.MM.yyyy, HH:mm");
+
+    private static string FormatCodeForSpeech(string code) =>
+        string.Join(' ', code.ToCharArray());
 
     private void ShowDeleteDialog()
     {
@@ -411,6 +528,13 @@
     {
         Profile,
         Security,
-        Training
+        Training,
+        Watches
+    }
+
+    public void Dispose()
+    {
+        pairingCodeCancellation.Cancel();
+        pairingCodeCancellation.Dispose();
     }
 }

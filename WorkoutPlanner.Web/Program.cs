@@ -19,6 +19,7 @@ using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Push;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.WelcomeGuide;
+using WorkoutPlanner.Web.Services.WearOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +61,21 @@ builder.Services.AddAuthorization(options =>
             policy.RequireAuthenticatedUser();
             policy.AddRequirements(new MobileApiSessionRequirement());
         });
+    options.AddPolicy(
+        WatchAuthorization.DevicePolicyName,
+        policy =>
+        {
+            policy.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new WatchDeviceRequirement());
+        });
+    options.AddPolicy(
+        WatchAuthorization.ManagementPolicyName,
+        policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.AddRequirements(new WatchManagementRequirement());
+        });
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -76,6 +92,39 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = 5,
                 Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+    options.AddPolicy(
+        WatchApiEndpoints.PairingCodeRateLimitPolicy,
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+    options.AddPolicy(
+        WatchApiEndpoints.PairingRateLimitPolicy,
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(5),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+    options.AddPolicy(
+        WatchApiEndpoints.RefreshRateLimitPolicy,
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(5),
                 QueueLimit = 0,
                 AutoReplenishment = true
             }));
@@ -96,6 +145,28 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/account/login";
     options.AccessDeniedPath = "/account/access-denied";
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/api"))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        }
+
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 builder.Services.Configure<BearerTokenOptions>(
     IdentityConstants.BearerScheme,
@@ -114,6 +185,25 @@ builder.Services.AddScoped<MobileSessionService>();
 builder.Services.AddScoped<
     Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
     MobileApiSessionAuthorizationHandler>();
+builder.Services.AddScoped<
+    Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    WatchDeviceAuthorizationHandler>();
+builder.Services.AddScoped<
+    Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    WatchManagementAuthorizationHandler>();
+builder.Services.AddOptions<WatchPairingOptions>()
+    .Bind(builder.Configuration.GetSection(WatchPairingOptions.SectionName))
+    .Validate(
+        x => x.PairingCodeLifetime > TimeSpan.Zero &&
+             x.AccessTokenLifetime > TimeSpan.Zero &&
+             x.RefreshTokenLifetime > x.AccessTokenLifetime &&
+             x.MaximumPairingAttempts > 0,
+        "Wear OS token and pairing lifetimes must be positive and valid.")
+    .ValidateOnStart();
+builder.Services.AddScoped<IPasswordHasher<WatchPairingCode>, PasswordHasher<WatchPairingCode>>();
+builder.Services.AddScoped<WatchTokenService>();
+builder.Services.AddScoped<WatchPairingService>();
+builder.Services.AddScoped<IWatchWorkoutService, WatchWorkoutService>();
 builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, UserProfileService>();
@@ -127,6 +217,7 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<ITrainingPlanService, TrainingPlanService>();
 builder.Services.AddScoped<IStarterPlanService, StarterPlanService>();
 builder.Services.AddScoped<ITodayWorkoutService, TodayWorkoutService>();
+builder.Services.AddScoped<IActiveWorkoutService, ActiveWorkoutService>();
 builder.Services.AddScoped<IWorkoutDayService, WorkoutDayService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IExerciseDefinitionService, ExerciseDefinitionService>();
@@ -322,6 +413,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.MapGymPlannerApi();
+app.MapWatchApi();
 app.MapAdminPublicationApi();
 app.MapAdminOperationsApi();
 app.MapTelegramSupportWebhook();

@@ -35,116 +35,82 @@
 .progress-menu {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
+    gap: 16px;
 }
 
 .progress-menu-card {
     box-sizing: border-box;
+    position: relative;
     display: flex;
-    width: 100%;
+    width: calc(100% - 32px);
+    margin-inline: 16px;
     min-width: 0;
+    aspect-ratio: 2.1 / 1;
     flex-direction: column;
     align-items: center;
-    padding: var(--space-3);
-    border: var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
+    justify-content: center;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     color: var(--color-text);
     text-align: center;
     text-decoration: none;
     box-shadow: none;
-    transition: border-color var(--transition-ui), background-color var(--transition-ui), transform var(--transition-ui);
+    transition: filter var(--transition-ui), transform var(--transition-ui);
     -webkit-tap-highlight-color: transparent;
 }
 
 .progress-menu-card:hover,
 .progress-menu-card:focus-visible {
-    border-color: var(--color-accent);
-    background: var(--color-surface-hover);
-    box-shadow: none;
     outline: none;
+    box-shadow: none;
+    filter: brightness(1.08);
 }
 
 .progress-menu-card:active {
     transform: scale(.985);
 }
 
-.progress-menu-icon {
-    display: grid;
-    width: 112px;
-    height: 112px;
-    place-items: center;
-    margin-bottom: var(--space-2);
-    color: var(--color-success);
-    font-size: 84px;
-    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 48;
-    transition: color var(--transition-ui), transform var(--transition-ui);
-}
-
-.progress-menu-icon-group {
-    display: flex;
-    width: 188px;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    fill: currentColor;
-    font-size: 0;
-}
-
-.progress-menu-icon--gym {
-    width: 80px;
-    height: 80px;
-}
-
-.progress-menu-icon-group svg,
-.progress-menu-icon-group .progress-figure {
-    width: 60px;
-    height: 60px;
-}
-
-.progress-figure {
+.progress-menu-card-art {
+    position: absolute;
+    inset: 0;
     display: block;
-    flex: 0 0 auto;
-    background: currentColor;
-    -webkit-mask-position: center;
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-size: contain;
-    mask-position: center;
-    mask-repeat: no-repeat;
-    mask-size: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    pointer-events: none;
 }
 
-.progress-figure--overhead {
-    -webkit-mask-image: url('/images/progress-overhead.png');
-    mask-image: url('/images/progress-overhead.png');
+.progress-menu-card-art--bottom {
+    transform: scaleY(-1);
 }
 
-.progress-figure--squat {
-    -webkit-mask-image: url('/images/progress-squat.png');
-    mask-image: url('/images/progress-squat.png');
-}
-
-.progress-figure--run {
-    -webkit-mask-image: url('/images/progress-run.png');
-    mask-image: url('/images/progress-run.png');
-}
-
-.progress-figure--dumbbells {
-    -webkit-mask-image: url('/images/progress-dumbbells.png');
-    mask-image: url('/images/progress-dumbbells.png');
-    transform: scale(1.12);
-}
-
-.progress-menu-card:hover .progress-menu-icon,
-.progress-menu-card:focus-visible .progress-menu-icon {
-    transform: scale(1.04);
+.progress-menu-card-figures {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    transform: translateY(-6%) scale(.78);
+    transform-origin: center;
+    pointer-events: none;
 }
 
 .progress-menu-title {
+    position: absolute;
+    z-index: 2;
+    right: 16px;
+    bottom: 12px;
+    left: 16px;
     color: var(--color-text);
     font-size: var(--text-section-title);
     font-weight: 700;
     line-height: 1.15;
+    text-shadow: 0 2px 8px #000, 0 0 3px #000;
 }
 
 @media (min-width: 720px) {
@@ -160,9 +126,10 @@
 
     .progress-menu-card {
         width: min(430px, calc(50% - 12px));
-        min-height: 300px;
+        margin-inline: 0;
+        min-height: 0;
         justify-content: center;
-        padding: var(--space-5);
+        padding: 0;
     }
 
     .progress-menu-card:hover,
@@ -170,17 +137,12 @@
         transform: translateY(-3px);
     }
 
-    .progress-menu-icon {
-        width: 132px;
-        height: 132px;
-        margin-bottom: var(--space-4);
-        font-size: 96px;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .progress-menu-card,
-    .progress-menu-icon {
+    .progress-menu-card-art,
+    .progress-menu-card-figures {
         transition: none;
     }
 }

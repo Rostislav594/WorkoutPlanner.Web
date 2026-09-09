@@ -1,5 +1,7 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
@@ -28,7 +30,8 @@ public sealed class TelegramSupportNotificationService :
         _httpClient = new HttpClient(new SocketsHttpHandler
         {
             ConnectTimeout = TimeSpan.FromSeconds(10),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(10)
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            ConnectCallback = ConnectOverIpv4Async
         })
         {
             Timeout = TimeSpan.FromSeconds(20)
@@ -66,9 +69,10 @@ public sealed class TelegramSupportNotificationService :
                 notification.TicketNumber);
             return SupportNotificationResult.Failed;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
             _logger.LogWarning(
+                exception,
                 "Telegram support notification failed for ticket {TicketNumber}.",
                 notification.TicketNumber);
             return SupportNotificationResult.Failed;
@@ -146,6 +150,54 @@ public sealed class TelegramSupportNotificationService :
 
     private string BuildApiUrl(string method) =>
         $"https://api.telegram.org/bot{_options.BotToken}/{method}";
+
+    private static async ValueTask<Stream> ConnectOverIpv4Async(
+        SocketsHttpConnectionContext context,
+        CancellationToken cancellationToken)
+    {
+        var addresses = await Dns.GetHostAddressesAsync(
+            context.DnsEndPoint.Host,
+            AddressFamily.InterNetwork,
+            cancellationToken);
+        if (addresses.Length == 0)
+        {
+            throw new HttpRequestException(
+                $"No IPv4 address was found for {context.DnsEndPoint.Host}.");
+        }
+
+        Exception? lastException = null;
+        foreach (var address in addresses)
+        {
+            var socket = new Socket(
+                AddressFamily.InterNetwork,
+                SocketType.Stream,
+                ProtocolType.Tcp)
+            {
+                NoDelay = true
+            };
+
+            try
+            {
+                await socket.ConnectAsync(
+                    address,
+                    context.DnsEndPoint.Port,
+                    cancellationToken);
+                return new NetworkStream(socket, ownsSocket: true);
+            }
+            catch (Exception exception) when (
+                exception is SocketException or OperationCanceledException)
+            {
+                socket.Dispose();
+                lastException = exception;
+                if (exception is OperationCanceledException)
+                    throw;
+            }
+        }
+
+        throw new HttpRequestException(
+            $"Could not connect to {context.DnsEndPoint.Host} over IPv4.",
+            lastException);
+    }
 
     private static string BuildMessage(SupportTicketNotification ticket)
     {

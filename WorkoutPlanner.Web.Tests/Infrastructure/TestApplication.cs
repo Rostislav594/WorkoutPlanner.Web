@@ -14,6 +14,7 @@ using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.Push;
+using WorkoutPlanner.Web.Services.WearOs;
 
 namespace WorkoutPlanner.Web.Tests.Infrastructure;
 
@@ -95,6 +96,8 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddScoped<TrainingPlanService>();
         services.AddScoped<ExerciseService>();
         services.AddScoped<WorkoutDayService>();
+        services.AddScoped<IActiveWorkoutService, ActiveWorkoutService>();
+        services.AddScoped<IWatchWorkoutService, WatchWorkoutService>();
         services.AddScoped<HistoryService>();
         services.AddScoped<WorkoutCompletionService>();
         services.AddScoped<PushDeviceRegistrationService>();

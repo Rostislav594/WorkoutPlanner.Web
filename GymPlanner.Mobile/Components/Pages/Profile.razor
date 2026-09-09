@@ -47,10 +47,6 @@
                 <h2>@DisplayName</h2>
                 <p>@DisplayEmail</p>
             </div>
-            <a class="profile-edit-action" href="/profile/personal-information">
-                <span class="material-symbols-rounded" aria-hidden="true">edit</span>
-                <span>Редактировать профиль</span>
-            </a>
         </article>
 
         <div class="profile-sections">
@@ -348,14 +344,14 @@
 
     private IReadOnlyList<ProfileSection> ProfileSections =>
     [
-        new("personal-data", "Личные данные", [new("badge", "Личная информация", "/profile/personal-information"), new("mail", "Email", "/profile/email")]),
-        new("training", "Тренировки", [new("scale", "Единицы измерения", "/profile/units", "кг"), new("timer", "Таймеры отдыха", "/profile/rest-timers", RestTimersSummary), new("exercise", "Настройки тренировок", "/profile/workout-settings")]),
-        new("devices", "Устройства", [new("devices", "Подключённые устройства", "/profile/devices"), new("watch", "Samsung Galaxy Watch", "/profile/devices", "Подключено", ShowChevron: false, IsStatus: true)]),
-        new("application", "Приложение", [new("notifications", "Уведомления", "/profile/notifications"), new("palette", "Внешний вид", "/profile/appearance"), new("language", "Язык", "/profile/language", "Русский")]),
-        new("data", "Данные", [new("database", "Мои данные", "/profile/my-data"), new("download", "Экспорт данных", "/profile/export"), new("sync", "Синхронизация", "/profile/sync")]),
-        new("security", "Безопасность", [new("password", "Изменить пароль", "/profile/change-password"), new("devices_other", "Активные сеансы", "/profile/sessions")]),
-        new("support", "Поддержка", [new("help", "Помощь", "/profile/help"), new("bug_report", "Сообщить о проблеме", "/profile/report-problem"), new("lightbulb", "Предложить идею", "/profile/suggest-idea")]),
-        new("about", "О приложении", [new("info", "О GPlanner", "/profile/about"), new("privacy_tip", "Политика конфиденциальности", "/profile/privacy"), new("tag", "Версия", "/profile/about", "1.0.0", ShowChevron: false), new("logout", "Выйти из аккаунта", "/profile/logout", IsStandalone: true)]),
+        new("personal-data", "Личные данные", [new("badge", "Личная информация", "/profile/personal-information")]),
+        new("training", "Тренировки", [new("timer", "Таймеры отдыха", "/profile/rest-timers")]),
+        new("devices", "Устройства", [new("devices", "Подключённые устройства", "/profile/devices")]),
+        new("application", "Приложение", [new("notifications", "Уведомления", "/profile/notifications"), new("language", "Язык", "/profile/language")]),
+        new("data", "Данные", [new("database", "Мои данные", "/profile/my-data")]),
+        new("security", "Безопасность", [new("password", "Изменить пароль", "/profile/change-password")]),
+        new("support", "Поддержка", [new("bug_report", "Сообщить о проблеме", "/profile/report-problem"), new("lightbulb", "Предложить идею", "/profile/suggest-idea")]),
+        new("about", "О приложении", [new("privacy_tip", "Политика конфиденциальности", "/profile/privacy"), new("tag", "Версия", "/profile/about", ShowChevron: false), new("logout", "Выйти из аккаунта", "/profile/logout", IsStandalone: true)]),
         new("danger-zone", "Опасная зона", [new("delete_forever", "Удалить аккаунт", "/profile/delete-account", ShowChevron: false, IsDanger: true)])
     ];
 
@@ -379,7 +375,6 @@
     private string FullName => $"{_profileInput.FirstName} {_profileInput.LastName}".Trim();
     private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? "Пользователь GPlanner" : FullName;
     private string DisplayEmail => _profile?.Email ?? Authentication.CurrentEmail ?? string.Empty;
-    private string RestTimersSummary => $"Подходы {FormatDuration(_restBetweenSetsSeconds)} · упражнения {FormatDuration(_restBetweenExercisesSeconds)}";
     private string? SupportScreenshotDataUri => _supportScreenshot is null
         ? null
         : $"data:{_supportScreenshot.ContentType};base64,{Convert.ToBase64String(_supportScreenshot.Content)}";
@@ -642,12 +637,12 @@
     }
 
     private void ClearOperationState() { _operationErrors.Clear(); _message = null; }
-    private static string FormatDuration(int seconds) => $"{seconds / 60}:{seconds % 60:D2}";
     private static string RowClass(ProfileItem item) => $"settings-row{(item.IsDanger ? " settings-row--danger" : string.Empty)}{(item.IsStandalone ? " settings-row--standalone" : string.Empty)}";
     private static string ValueClass(ProfileItem item) => item.IsStatus ? "settings-value settings-value--status" : "settings-value";
     private static bool IsAvailable(ProfileItem item) => item.Route is
         "/profile/personal-information" or
-        "/profile/email" or
+        "/profile/devices" or
+        "/profile/my-data" or
         "/profile/rest-timers" or
         "/profile/change-password" or
         "/profile/report-problem" or

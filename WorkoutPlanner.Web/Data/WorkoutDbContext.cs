@@ -57,6 +57,15 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<MobileSession> MobileSessions =>
         Set<MobileSession>();
 
+    public DbSet<WatchDevice> WatchDevices =>
+        Set<WatchDevice>();
+
+    public DbSet<WatchPairingCode> WatchPairingCodes =>
+        Set<WatchPairingCode>();
+
+    public DbSet<WatchSyncOperation> WatchSyncOperations =>
+        Set<WatchSyncOperation>();
+
     public DbSet<SupportTicket> SupportTickets =>
         Set<SupportTicket>();
 
@@ -115,6 +124,109 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<MobileSession>()
             .Property(x => x.DeviceName)
             .HasMaxLength(120);
+
+        modelBuilder.Entity<WatchDevice>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WatchDevice>()
+            .HasIndex(x => x.DeviceId)
+            .IsUnique();
+
+        modelBuilder.Entity<WatchDevice>()
+            .HasIndex(x => new { x.UserId, x.RevokedAtUtc });
+
+        modelBuilder.Entity<WatchDevice>()
+            .HasIndex(x => x.RefreshTokenExpiresAtUtc);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.DeviceId)
+            .HasMaxLength(160);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.DisplayName)
+            .HasMaxLength(120);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.Platform)
+            .HasMaxLength(30);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.RefreshTokenHash)
+            .HasMaxLength(256);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.AppVersion)
+            .HasMaxLength(40);
+
+        modelBuilder.Entity<WatchDevice>()
+            .Property(x => x.DeviceModel)
+            .HasMaxLength(120);
+
+        modelBuilder.Entity<WatchDevice>()
+            .ToTable(table => table.HasCheckConstraint(
+                "CK_WatchDevices_RefreshTokenExpiry",
+                "[RefreshTokenExpiresAtUtc] > [CreatedAtUtc]"));
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .HasIndex(x => x.CodeHash);
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .HasIndex(x => new { x.UserId, x.UsedAtUtc, x.ExpiresAtUtc });
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .HasIndex(x => x.ExpiresAtUtc);
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .Property(x => x.CodeHash)
+            .HasMaxLength(256);
+
+        modelBuilder.Entity<WatchPairingCode>()
+            .ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_WatchPairingCodes_Expiry",
+                    "[ExpiresAtUtc] > [CreatedAtUtc]");
+                table.HasCheckConstraint(
+                    "CK_WatchPairingCodes_AttemptCount",
+                    "[AttemptCount] >= 0");
+            });
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .HasKey(x => x.OperationId);
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .HasOne(x => x.WatchDevice)
+            .WithMany()
+            .HasForeignKey(x => x.WatchDeviceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .HasIndex(x => new { x.WatchDeviceId, x.ReceivedAtUtc });
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .HasIndex(x => x.ExpiresAtUtc);
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .Property(x => x.OperationType)
+            .HasMaxLength(40);
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .Property(x => x.ResultJson)
+            .HasMaxLength(16000);
+
+        modelBuilder.Entity<WatchSyncOperation>()
+            .ToTable(table => table.HasCheckConstraint(
+                "CK_WatchSyncOperations_Expiry",
+                "[ExpiresAtUtc] > [ReceivedAtUtc]"));
 
         modelBuilder.Entity<SupportTicket>()
             .HasOne<IdentityUser>()
@@ -233,6 +345,10 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             .WithMany(x => x.Sets)
             .HasForeignKey(x => x.ExerciseId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<ExerciseTemplateSet>()
+            .Property(x => x.Version)
+            .IsConcurrencyToken();
 
         modelBuilder.Entity<TrainingPlan>()
             .HasMany(x => x.Exercises)

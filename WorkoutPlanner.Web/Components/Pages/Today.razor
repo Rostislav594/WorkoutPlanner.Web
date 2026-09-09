@@ -5,14 +5,13 @@
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @using Microsoft.JSInterop
-@using System.Text.Json
 
-@inject IHistoryService HistoryService
 @inject ITodayWorkoutService TodayWorkoutService
 @inject IExerciseService ExerciseService
-@inject IWorkoutDayService WorkoutDayService
+@inject IActiveWorkoutService ActiveWorkoutService
+@inject IWorkoutCompletionService WorkoutCompletionService
 @inject IJSRuntime JS
-@inject IProgressService ProgressService
+@inject ILogger<Today> Logger
 
 <div class="page-content">
 
@@ -90,6 +89,7 @@
 
                              <input type="checkbox"
                                    checked="@set.Completed"
+                                   disabled="@SavingSetIds.Contains(set.Id)"
                                    @onchange="async e => await SetCompleted(set, (bool)e.Value!)" />
 
                             <span class="set-text">
@@ -275,6 +275,7 @@
     bool ShowStatusWarning = false;
     TrainingPlan? TodayWorkout;
     List<Exercise> Exercises = new();
+    HashSet<int> SavingSetIds = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -327,52 +328,19 @@
 
             return;
         }
-        var history = new WorkoutHistoryDetails
-        {
-            Exercises = Exercises.Select(x => new WorkoutHistoryExercise
-            {
-                Name = x.Name,
-                Status = x.Status,
-
-                Sets = x.Sets
-                    .OrderBy(s => s.SetNumber)
-                    .Select(s => new WorkoutHistorySet
-                    {
-                        SetNumber = s.SetNumber,
-                        Weight = s.Weight,
-                        Repetitions = s.Repetitions,
-                        Completed = s.Completed
-                    })
-                    .ToList()
-            }).ToList()
-        };
-
-        var details = JsonSerializer.Serialize(history);
-
-        await HistoryService.AddHistoryAsync(
-            new WorkoutHistory
-            {
-                WorkoutName =
-                    TodayWorkout.WorkoutName,
-
-                Date = DateTime.Now,
-
-                Summary = "",
-
-                Details = details
-            });
-            await ProgressService.SaveProgressAsync(
-            TodayWorkout.WorkoutName );
-            
-
-
-
         foreach (var exercise in Exercises)
         {
             await ExerciseService.UpdateExerciseAsync(exercise);
         }
-        await WorkoutDayService
-            .CompleteTodayWorkoutAsync();
+
+        var result = await WorkoutCompletionService.CompleteTodayAsync();
+        if (!result.Succeeded)
+        {
+            await JS.InvokeVoidAsync(
+                "alert",
+                "Не удалось завершить тренировку. Обновите страницу и попробуйте снова.");
+            return;
+        }
 
         ShowWorkoutCompleted = true;
 
@@ -390,10 +358,48 @@
     ExerciseTemplateSet set,
     bool value)
     {
+        if (!SavingSetIds.Add(set.Id))
+            return;
+
+        var previousValue = set.Completed;
         set.Completed = value;
 
-        var exercise = Exercises.First(x => x.Sets.Contains(set));
-        await ExerciseService.UpdateExerciseAsync(exercise);
+        try
+        {
+            var result = await ActiveWorkoutService.UpdateSetAsync(
+                set.Id,
+                new UpdateWorkoutSet(
+                    set.Weight,
+                    set.Repetitions,
+                    set.Completed,
+                    set.Version));
+            if (!result.Succeeded)
+            {
+                set.Completed = previousValue;
+                await JS.InvokeVoidAsync(
+                    "alert",
+                    "Не удалось сохранить подход. Обновите страницу и попробуйте снова.");
+            }
+            else
+            {
+                set.Version = result.Set!.Version;
+            }
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(
+                exception,
+                "Could not update active workout set {SetId}.",
+                set.Id);
+            set.Completed = previousValue;
+            await JS.InvokeVoidAsync(
+                "alert",
+                "Не удалось сохранить подход. Обновите страницу и попробуйте снова.");
+        }
+        finally
+        {
+            SavingSetIds.Remove(set.Id);
+        }
 
     }
 

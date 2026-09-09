@@ -17,4 +17,6 @@ public class ExerciseTemplateSet
     public bool Completed { get; set; }
 
     public bool IsWarmup { get; set; }
+
+    public long Version { get; set; }
 }

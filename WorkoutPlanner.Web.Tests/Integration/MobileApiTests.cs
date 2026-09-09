@@ -54,6 +54,15 @@ public sealed class MobileApiTests
             "/api/v1/support/tickets",
             document,
             StringComparison.Ordinal);
+        Assert.Contains("/api/watch/pairing-codes", document, StringComparison.Ordinal);
+        Assert.Contains("/api/watch/pair", document, StringComparison.Ordinal);
+        Assert.Contains("/api/watch/token/refresh", document, StringComparison.Ordinal);
+        Assert.Contains("/api/watch/devices", document, StringComparison.Ordinal);
+        Assert.Contains("/api/watch/workouts/active", document, StringComparison.Ordinal);
+        Assert.Contains(
+            "/api/watch/sets/{setId}/complete",
+            document,
+            StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1466,6 +1475,520 @@ public sealed class MobileApiTests
         Assert.False(await verificationDb.TrainingPlans.AnyAsync(x =>
             x.UserId != null));
     }
+
+    [Fact]
+    public async Task WatchPairing_RotatesRefreshTokenAndRevocationStopsAccess()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var watch = CreateClient(factory);
+
+        using var anonymousCode = await watch.PostAsync(
+            "/api/watch/pairing-codes",
+            null);
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousCode.StatusCode);
+
+        using var registration = await owner.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("watch-owner@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var mobileTokens = await LoginAsync(
+            owner,
+            "watch-owner@example.test",
+            "password1",
+            "Owner phone");
+        SetBearer(owner, mobileTokens.AccessToken);
+
+        using var codeResponse = await owner.PostAsync(
+            "/api/watch/pairing-codes",
+            null);
+        Assert.Equal(HttpStatusCode.Created, codeResponse.StatusCode);
+        var pairingCode = await codeResponse.Content
+            .ReadFromJsonAsync<CreateWatchPairingCodeResponse>();
+        Assert.NotNull(pairingCode);
+        Assert.Matches("^[0-9]{6}$", pairingCode.Code);
+        Assert.True(pairingCode.ExpiresAtUtc > DateTime.UtcNow);
+
+        var pairRequest = new PairWatchRequest(
+            pairingCode.Code,
+            "stable-watch-installation",
+            "Galaxy Watch",
+            "SM-R960",
+            "1.0.0");
+        using var paired = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            pairRequest);
+        Assert.Equal(HttpStatusCode.OK, paired.StatusCode);
+        var tokens = await paired.Content.ReadFromJsonAsync<WatchTokenResponse>();
+        Assert.NotNull(tokens);
+        Assert.False(string.IsNullOrWhiteSpace(tokens.AccessToken));
+        Assert.False(string.IsNullOrWhiteSpace(tokens.RefreshToken));
+
+        using var replay = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            pairRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, replay.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var storedCode = await db.WatchPairingCodes.SingleAsync();
+            var storedDevice = await db.WatchDevices.SingleAsync();
+            Assert.NotEqual(pairingCode.Code, storedCode.CodeHash);
+            Assert.NotEqual(tokens.RefreshToken, storedDevice.RefreshTokenHash);
+            Assert.NotNull(storedCode.UsedAtUtc);
+        }
+
+        watch.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", tokens.AccessToken);
+        using var watchCannotManage = await watch.GetAsync("/api/watch/devices");
+        Assert.Equal(HttpStatusCode.Forbidden, watchCannotManage.StatusCode);
+        watch.DefaultRequestHeaders.Authorization = null;
+
+        var firstRefreshTask = watch.PostAsJsonAsync(
+            "/api/watch/token/refresh",
+            new RefreshWatchTokenRequest(tokens.RefreshToken));
+        var secondRefreshTask = watch.PostAsJsonAsync(
+            "/api/watch/token/refresh",
+            new RefreshWatchTokenRequest(tokens.RefreshToken));
+        var refreshResponses = await Task.WhenAll(firstRefreshTask, secondRefreshTask);
+        using var firstRefresh = refreshResponses[0];
+        using var secondRefresh = refreshResponses[1];
+        Assert.Equal(
+            [HttpStatusCode.OK, HttpStatusCode.Unauthorized],
+            refreshResponses.Select(x => x.StatusCode).Order().ToArray());
+        var successfulRefresh = refreshResponses.Single(x => x.StatusCode == HttpStatusCode.OK);
+        var rotated = await successfulRefresh.Content.ReadFromJsonAsync<WatchTokenResponse>();
+        Assert.NotNull(rotated);
+        Assert.NotEqual(tokens.RefreshToken, rotated.RefreshToken);
+
+        var devices = await owner.GetFromJsonAsync<List<WatchDeviceResponse>>(
+            "/api/watch/devices");
+        var device = Assert.Single(devices!);
+        Assert.Equal("stable-watch-installation", device.DeviceId);
+        Assert.False(device.IsRevoked);
+
+        using var revoked = await owner.DeleteAsync(
+            "/api/watch/devices/stable-watch-installation");
+        Assert.Equal(HttpStatusCode.NoContent, revoked.StatusCode);
+        using var revokedRefresh = await watch.PostAsJsonAsync(
+            "/api/watch/token/refresh",
+            new RefreshWatchTokenRequest(rotated.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, revokedRefresh.StatusCode);
+    }
+
+    [Fact]
+    public async Task WatchManagement_IsUserScopedAndExpiredCodesAreRejected()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var other = CreateClient(factory);
+        using var watch = CreateClient(factory);
+
+        foreach (var (client, email) in new[]
+                 {
+                     (owner, "watch-scope-owner@example.test"),
+                     (other, "watch-scope-other@example.test")
+                 })
+        {
+            using var registration = await client.PostAsJsonAsync(
+                "/api/v1/auth/register",
+                new MobileRegisterRequest(email, "password1"));
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+            var tokens = await LoginAsync(client, email, "password1", "Phone");
+            SetBearer(client, tokens.AccessToken);
+        }
+
+        using var codeResponse = await owner.PostAsync(
+            "/api/watch/pairing-codes",
+            null);
+        var code = await codeResponse.Content
+            .ReadFromJsonAsync<CreateWatchPairingCodeResponse>();
+        Assert.NotNull(code);
+
+        using var replacementResponse = await owner.PostAsync(
+            "/api/watch/pairing-codes",
+            null);
+        var replacementCode = await replacementResponse.Content
+            .ReadFromJsonAsync<CreateWatchPairingCodeResponse>();
+        Assert.NotNull(replacementCode);
+        using var invalidated = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            new PairWatchRequest(
+                code.Code,
+                "invalidated-code-device",
+                "Invalidated",
+                null,
+                null));
+        Assert.Equal(HttpStatusCode.BadRequest, invalidated.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var stored = await db.WatchPairingCodes.SingleAsync(x => x.UsedAtUtc == null);
+            stored.CreatedAtUtc = DateTime.UtcNow.AddMinutes(-15);
+            stored.ExpiresAtUtc = DateTime.UtcNow.AddSeconds(-1);
+            await db.SaveChangesAsync();
+        }
+
+        using var expired = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            new PairWatchRequest(
+                replacementCode.Code,
+                "expired-code-device",
+                "Expired",
+                null,
+                null));
+        Assert.Equal(HttpStatusCode.Gone, expired.StatusCode);
+
+        var otherDevices = await other.GetFromJsonAsync<List<WatchDeviceResponse>>(
+            "/api/watch/devices");
+        Assert.NotNull(otherDevices);
+        Assert.Empty(otherDevices);
+        using var crossUserDelete = await other.DeleteAsync(
+            "/api/watch/devices/expired-code-device");
+        Assert.Equal(HttpStatusCode.NotFound, crossUserDelete.StatusCode);
+    }
+
+    [Fact]
+    public async Task WatchRefresh_IsInvalidatedByPasswordSecurityStampChange()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var watch = CreateClient(factory);
+        using var registration = await owner.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("watch-password@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var mobileTokens = await LoginAsync(
+            owner,
+            "watch-password@example.test",
+            "password1",
+            "Phone");
+        SetBearer(owner, mobileTokens.AccessToken);
+
+        using var codeResponse = await owner.PostAsync("/api/watch/pairing-codes", null);
+        var code = await codeResponse.Content.ReadFromJsonAsync<CreateWatchPairingCodeResponse>();
+        Assert.NotNull(code);
+        using var paired = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            new PairWatchRequest(code.Code, "password-watch", "Watch", null, null));
+        var tokens = await paired.Content.ReadFromJsonAsync<WatchTokenResponse>();
+        Assert.NotNull(tokens);
+
+        using var changed = await owner.PostAsJsonAsync(
+            "/api/v1/account/change-password",
+            new ChangePasswordApiRequest("password1", "password2"));
+        Assert.Equal(HttpStatusCode.NoContent, changed.StatusCode);
+
+        using var refresh = await watch.PostAsJsonAsync(
+            "/api/watch/token/refresh",
+            new RefreshWatchTokenRequest(tokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+    }
+
+    [Fact]
+    public async Task WatchPairingEndpoint_RateLimitsAnonymousAttempts()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        HttpStatusCode lastStatus = 0;
+        for (var attempt = 0; attempt < 11; attempt++)
+        {
+            using var response = await client.PostAsJsonAsync(
+                "/api/watch/pair",
+                new PairWatchRequest(
+                    "000000",
+                    $"rate-limit-device-{attempt}",
+                    "Rate limit test",
+                    null,
+                    null));
+            lastStatus = response.StatusCode;
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, lastStatus);
+    }
+
+    [Fact]
+    public async Task WatchWorkoutApi_ReturnsCurrentSetCompletesAndReplaysIdempotently()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var watch = CreateClient(factory);
+        await RegisterLoginAndPairWatchAsync(
+            owner,
+            watch,
+            "watch-workout@example.test",
+            "workout-watch");
+
+        int firstSetId;
+        int secondSetId;
+        int firstExerciseId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var userId = await db.Users
+                .Where(x => x.Email == "watch-workout@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var plan = new WorkoutPlanner.Web.Models.TrainingPlan
+            {
+                UserId = userId,
+                WorkoutName = "Watch workout",
+                Date = DateTime.Today,
+                Exercises =
+                [
+                    new WorkoutPlanner.Web.Models.Exercise
+                    {
+                        UserId = userId,
+                        Name = "Squat",
+                        WorkoutName = "Watch workout",
+                        Sets =
+                        [
+                            new WorkoutPlanner.Web.Models.ExerciseTemplateSet
+                            {
+                                SetNumber = 2,
+                                Weight = 80,
+                                Repetitions = 6
+                            },
+                            new WorkoutPlanner.Web.Models.ExerciseTemplateSet
+                            {
+                                SetNumber = 1,
+                                Weight = 70,
+                                Repetitions = 8
+                            }
+                        ]
+                    },
+                    new WorkoutPlanner.Web.Models.Exercise
+                    {
+                        UserId = userId,
+                        Name = "Press",
+                        WorkoutName = "Watch workout",
+                        Sets =
+                        [
+                            new WorkoutPlanner.Web.Models.ExerciseTemplateSet
+                            {
+                                SetNumber = 1,
+                                Weight = 30,
+                                Repetitions = 10
+                            }
+                        ]
+                    }
+                ]
+            };
+            db.TrainingPlans.Add(plan);
+            await db.SaveChangesAsync();
+            db.WorkoutDays.Add(new WorkoutPlanner.Web.Models.WorkoutDay
+            {
+                UserId = userId,
+                Date = DateTime.Today,
+                TrainingPlanId = plan.Id
+            });
+            await db.SaveChangesAsync();
+            firstExerciseId = plan.Exercises[0].Id;
+            firstSetId = plan.Exercises[0].Sets.Single(x => x.SetNumber == 1).Id;
+            secondSetId = plan.Exercises[0].Sets.Single(x => x.SetNumber == 2).Id;
+        }
+
+        var active = await watch.GetFromJsonAsync<WatchActiveWorkoutResponse>(
+            "/api/watch/workouts/active");
+        Assert.NotNull(active);
+        Assert.Null(active.StartedAtUtc);
+        Assert.Equal(firstExerciseId, active.CurrentExerciseId);
+        Assert.Equal(firstSetId, active.CurrentSetId);
+        Assert.Equal([1, 2], active.Exercises[0].Sets.Select(x => x.SetNumber));
+        Assert.Equal([70d, 80d], active.Exercises[0].Sets.Select(x => x.Weight));
+
+        var operationId = Guid.NewGuid();
+        var request = new CompleteWatchSetRequest(
+            operationId,
+            DateTime.UtcNow,
+            ClientVersion: 0);
+        using var completedResponse = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{firstSetId}/complete",
+            request);
+        Assert.Equal(HttpStatusCode.OK, completedResponse.StatusCode);
+        var completed = await completedResponse.Content
+            .ReadFromJsonAsync<CompleteWatchSetResponse>();
+        Assert.NotNull(completed);
+        Assert.True(completed.Set.IsCompleted);
+        Assert.Equal(1, completed.Set.Version);
+        Assert.Equal(secondSetId, completed.CurrentSetId);
+
+        using var replayResponse = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{firstSetId}/complete",
+            request);
+        Assert.Equal(HttpStatusCode.OK, replayResponse.StatusCode);
+        var replay = await replayResponse.Content
+            .ReadFromJsonAsync<CompleteWatchSetResponse>();
+        Assert.Equal(completed, replay);
+
+        using var reusedForAnotherSet = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{secondSetId}/complete",
+            request);
+        Assert.Equal(HttpStatusCode.Conflict, reusedForAnotherSet.StatusCode);
+
+        using var conflictResponse = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{firstSetId}/complete",
+            new CompleteWatchSetRequest(Guid.NewGuid(), DateTime.UtcNow, 0));
+        Assert.Equal(HttpStatusCode.Conflict, conflictResponse.StatusCode);
+        var conflict = await conflictResponse.Content
+            .ReadFromJsonAsync<WatchSetConflictResponse>();
+        Assert.NotNull(conflict);
+        Assert.Equal("WORKOUT_SET_CONFLICT", conflict.Code);
+        Assert.Equal(1, conflict.Set!.Version);
+        Assert.True(conflict.Set.IsCompleted);
+        Assert.Equal(secondSetId, conflict.CurrentSetId);
+
+        await using var verificationScope = factory.Services.CreateAsyncScope();
+        var verificationFactory = verificationScope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+        await using var verificationDb = await verificationFactory.CreateDbContextAsync();
+        var storedSet = await verificationDb.ExerciseTemplateSets
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == firstSetId);
+        Assert.True(storedSet.Completed);
+        Assert.Equal(1, storedSet.Version);
+        Assert.Equal(
+            1,
+            await verificationDb.WatchSyncOperations.CountAsync(x =>
+                x.OperationId == operationId));
+    }
+
+    [Fact]
+    public async Task WatchWorkoutApi_ProtectsOwnershipFinishedStateAndRevocation()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var other = CreateClient(factory);
+        using var watch = CreateClient(factory);
+        await RegisterLoginAndPairWatchAsync(
+            owner,
+            watch,
+            "watch-security@example.test",
+            "security-watch");
+
+        using var noWorkout = await watch.GetAsync("/api/watch/workouts/active");
+        Assert.Equal(HttpStatusCode.NotFound, noWorkout.StatusCode);
+
+        using var otherRegistration = await other.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest("watch-other@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, otherRegistration.StatusCode);
+        int foreignSetId;
+        int finishedSetId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var ownerId = await db.Users
+                .Where(x => x.Email == "watch-security@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var otherId = await db.Users
+                .Where(x => x.Email == "watch-other@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var finishedPlan = CreateWatchTestPlan(ownerId, "Finished");
+            var foreignPlan = CreateWatchTestPlan(otherId, "Foreign");
+            db.TrainingPlans.AddRange(finishedPlan, foreignPlan);
+            await db.SaveChangesAsync();
+            db.WorkoutDays.AddRange(
+                new WorkoutPlanner.Web.Models.WorkoutDay
+                {
+                    UserId = ownerId,
+                    Date = DateTime.Today,
+                    TrainingPlanId = finishedPlan.Id,
+                    IsCompleted = true
+                },
+                new WorkoutPlanner.Web.Models.WorkoutDay
+                {
+                    UserId = otherId,
+                    Date = DateTime.Today,
+                    TrainingPlanId = foreignPlan.Id
+                });
+            await db.SaveChangesAsync();
+            finishedSetId = finishedPlan.Exercises[0].Sets[0].Id;
+            foreignSetId = foreignPlan.Exercises[0].Sets[0].Id;
+        }
+
+        using var finished = await watch.GetAsync("/api/watch/workouts/active");
+        Assert.Equal(HttpStatusCode.Gone, finished.StatusCode);
+        using var finishedCompletion = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{finishedSetId}/complete",
+            new CompleteWatchSetRequest(Guid.NewGuid(), DateTime.UtcNow, 0));
+        Assert.Equal(HttpStatusCode.Gone, finishedCompletion.StatusCode);
+        using var foreignCompletion = await watch.PostAsJsonAsync(
+            $"/api/watch/sets/{foreignSetId}/complete",
+            new CompleteWatchSetRequest(Guid.NewGuid(), DateTime.UtcNow, 0));
+        Assert.Equal(HttpStatusCode.NotFound, foreignCompletion.StatusCode);
+
+        using var revoked = await owner.DeleteAsync(
+            "/api/watch/devices/security-watch");
+        Assert.Equal(HttpStatusCode.NoContent, revoked.StatusCode);
+        using var afterRevoke = await watch.GetAsync("/api/watch/workouts/active");
+        Assert.Equal(HttpStatusCode.Forbidden, afterRevoke.StatusCode);
+    }
+
+    private static async Task RegisterLoginAndPairWatchAsync(
+        HttpClient owner,
+        HttpClient watch,
+        string email,
+        string deviceId)
+    {
+        using var registration = await owner.PostAsJsonAsync(
+            "/api/v1/auth/register",
+            new MobileRegisterRequest(email, "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var mobileTokens = await LoginAsync(owner, email, "password1", "Owner phone");
+        SetBearer(owner, mobileTokens.AccessToken);
+        using var codeResponse = await owner.PostAsync("/api/watch/pairing-codes", null);
+        var code = await codeResponse.Content
+            .ReadFromJsonAsync<CreateWatchPairingCodeResponse>();
+        Assert.NotNull(code);
+        using var pairResponse = await watch.PostAsJsonAsync(
+            "/api/watch/pair",
+            new PairWatchRequest(code.Code, deviceId, "Test watch", null, "1.0"));
+        Assert.Equal(HttpStatusCode.OK, pairResponse.StatusCode);
+        var tokens = await pairResponse.Content.ReadFromJsonAsync<WatchTokenResponse>();
+        Assert.NotNull(tokens);
+        SetBearer(watch, tokens.AccessToken);
+    }
+
+    private static WorkoutPlanner.Web.Models.TrainingPlan CreateWatchTestPlan(
+        string userId,
+        string name) =>
+        new()
+        {
+            UserId = userId,
+            WorkoutName = name,
+            Date = DateTime.Today,
+            Exercises =
+            [
+                new WorkoutPlanner.Web.Models.Exercise
+                {
+                    UserId = userId,
+                    Name = "Exercise",
+                    WorkoutName = name,
+                    Sets =
+                    [
+                        new WorkoutPlanner.Web.Models.ExerciseTemplateSet
+                        {
+                            SetNumber = 1,
+                            Weight = 50,
+                            Repetitions = 8
+                        }
+                    ]
+                }
+            ]
+        };
 
     private static HttpClient CreateClient(
         WebApplicationFactory<Program> factory) =>

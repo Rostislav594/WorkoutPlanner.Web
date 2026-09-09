@@ -106,38 +106,6 @@
     font-size: var(--text-label);
 }
 
-.profile-edit-action {
-    position: relative;
-    z-index: 1;
-    grid-column: 1 / -1;
-    display: inline-flex;
-    width: 100%;
-    min-height: var(--button-height);
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, .07);
-    color: var(--color-text);
-    font: inherit;
-    font-size: var(--text-label);
-    font-weight: 750;
-    text-decoration: none;
-    transition: border-color var(--transition-ui), background-color var(--transition-ui);
-}
-
-.profile-edit-action:hover,
-.profile-edit-action:focus-visible {
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
-}
-
-.profile-edit-action .material-symbols-rounded {
-    font-size: 20px;
-}
-
 .profile-sections {
     display: grid;
     gap: var(--space-5);

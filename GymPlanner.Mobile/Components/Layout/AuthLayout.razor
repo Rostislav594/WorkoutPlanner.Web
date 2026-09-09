@@ -1,5 +1,26 @@
 @inherits LayoutComponentBase
 
+<svg class="auth-effects" aria-hidden="true" focusable="false">
+    <defs>
+        <filter id="auth-title-inner-shadow"
+                x="-10%"
+                y="-10%"
+                width="120%"
+                height="120%"
+                primitiveUnits="userSpaceOnUse">
+            <feComponentTransfer in="SourceAlpha" result="inverse-alpha">
+                <feFuncA type="table" tableValues="1 0" />
+            </feComponentTransfer>
+            <feGaussianBlur in="inverse-alpha" stdDeviation="2.4" result="blurred-inverse" />
+            <feOffset in="blurred-inverse" dx="0" dy="2.4" result="offset-blur" />
+            <feComposite in="offset-blur" in2="SourceAlpha" operator="in" result="inner-shadow-mask" />
+            <feFlood flood-color="#000000" flood-opacity=".76" result="shadow-color" />
+            <feComposite in="shadow-color" in2="inner-shadow-mask" operator="in" result="inner-shadow" />
+            <feComposite in="inner-shadow" in2="SourceGraphic" operator="over" />
+        </filter>
+    </defs>
+</svg>
+
 <main class="auth-shell">
     @Body
 </main>

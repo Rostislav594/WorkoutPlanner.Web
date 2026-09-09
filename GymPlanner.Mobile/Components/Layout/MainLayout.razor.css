@@ -42,18 +42,20 @@
     gap: 8px;
 }
 
-.profile-button,
-.logout-button {
-    min-width: 44px;
-    min-height: 44px;
+.profile-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    padding: 0 12px;
-    border: 1px solid var(--color-border-strong);
+    padding: 0 !important;
+    border: 0 !important;
     border-radius: var(--radius-sm);
-    background: var(--color-surface-raised);
+    background: transparent !important;
+    box-shadow: none !important;
     color: var(--color-text);
     font: inherit;
     font-size: 14px;
@@ -63,17 +65,19 @@
     transition: background-color .18s ease, border-color .18s ease, color .18s ease;
 }
 
-.profile-button:hover,
-.profile-button:focus-visible,
-.logout-button:hover:not(:disabled),
-.logout-button:focus-visible:not(:disabled) {
-    border-color: var(--color-accent);
-    background: var(--color-surface-hover);
+.profile-button:hover {
+    border-color: transparent !important;
+    background: transparent !important;
+    color: var(--color-accent-hover) !important;
+}
+
+.profile-button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
     color: var(--color-accent-hover);
 }
 
-.profile-button .material-symbols-rounded,
-.logout-button .material-symbols-rounded {
+.profile-button .material-symbols-rounded {
     font-size: 22px;
 }
 
@@ -230,19 +234,7 @@
         font-size: 24px;
     }
 
-    .action-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
-
-    .profile-button,
-    .logout-button {
+    .profile-button {
         padding: 0 9px;
     }
 
@@ -286,7 +278,6 @@
     .mobile-shell,
     .mobile-content,
     .profile-button,
-    .logout-button,
     .mobile-navigation ::deep a {
         transition: none;
     }

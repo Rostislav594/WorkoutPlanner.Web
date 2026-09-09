@@ -156,11 +156,19 @@ public sealed class ExerciseService : IExerciseService
                 entity.Sets.Add(targetSet);
             }
 
+            var setChanged =
+                targetSet.SetNumber != sourceSet.SetNumber ||
+                targetSet.Repetitions != sourceSet.Repetitions ||
+                targetSet.Weight != sourceSet.Weight ||
+                targetSet.Completed != sourceSet.Completed ||
+                targetSet.IsWarmup != sourceSet.IsWarmup;
             targetSet.SetNumber = sourceSet.SetNumber;
             targetSet.Repetitions = sourceSet.Repetitions;
             targetSet.Weight = sourceSet.Weight;
             targetSet.Completed = sourceSet.Completed;
             targetSet.IsWarmup = sourceSet.IsWarmup;
+            if (setChanged)
+                targetSet.Version++;
 
             if (targetSet.Id > 0)
                 retainedSetIds.Add(targetSet.Id);
