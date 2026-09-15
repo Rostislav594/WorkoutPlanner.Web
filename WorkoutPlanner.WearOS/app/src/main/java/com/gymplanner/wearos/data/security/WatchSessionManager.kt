@@ -72,6 +72,9 @@ class WatchSessionManager(
         }
         val tokens = response.body()
         if (!response.isSuccessful || tokens == null) {
+            if (response.code() == 408 || response.code() == 429 || response.code() >= 500) {
+                throw IOException("Temporary token refresh failure.")
+            }
             if (response.code() == 400 || response.code() == 401 || response.code() == 403) clear()
             return false
         }

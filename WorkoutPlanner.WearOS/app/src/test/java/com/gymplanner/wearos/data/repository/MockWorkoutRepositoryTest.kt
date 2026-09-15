@@ -1,5 +1,6 @@
 package com.gymplanner.wearos.data.repository
 
+import com.gymplanner.wearos.domain.model.CompletedWorkoutKind
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.domain.model.PairingStatus
 import kotlinx.coroutines.test.runTest
@@ -24,13 +25,27 @@ class MockWorkoutRepositoryTest {
     }
 
     @Test
-    fun validPairingAndRefresh_openFirstSet() = runTest {
+    fun phoneConfirmation_passesThroughWaitingStateAndConnects() = runTest {
+        val repository = createRepository()
+
+        val states = mutableListOf<PairingStatus>()
+        val idle = repository.state.value as MockWorkoutState.Pairing
+        states += idle.status
+
+        repository.pairWithPhoneConfirmation()
+
+        // Подтверждение с телефона не только подключает часы, но и сразу
+        // открывает тренировку — ручное «Обновить» больше не нужно.
+        assertTrue(repository.state.value is MockWorkoutState.CurrentSet)
+        assertEquals(PairingStatus.Idle, states.single())
+    }
+
+    @Test
+    fun validPairing_opensFirstSetWithoutManualRefresh() = runTest {
         val repository = createRepository()
 
         repository.pair("123456")
-        assertTrue(repository.state.value is MockWorkoutState.NoActiveWorkout)
 
-        repository.refreshActiveWorkout()
         val firstSet = repository.state.value as MockWorkoutState.CurrentSet
         assertEquals("Жим лёжа", firstSet.exerciseName)
         assertEquals(1, firstSet.setNumber)
@@ -43,12 +58,13 @@ class MockWorkoutRepositoryTest {
         repository.pair("123456")
         repository.refreshActiveWorkout()
 
-        repository.completeCurrentSet()
+        assertTrue(repository.completeCurrentSet())
         assertTrue(repository.state.value is MockWorkoutState.Rest)
+        assertFalse(repository.completeCurrentSet())
         repository.finishRest()
         assertEquals(2, (repository.state.value as MockWorkoutState.CurrentSet).setNumber)
 
-        repository.completeCurrentSet()
+        assertTrue(repository.completeCurrentSet())
         repository.finishRest()
         val nextExercise = repository.state.value as MockWorkoutState.CurrentSet
         assertEquals("Приседания", nextExercise.exerciseName)
@@ -62,11 +78,32 @@ class MockWorkoutRepositoryTest {
         repository.pair("123456")
         repository.refreshActiveWorkout()
 
-        repository.completeCurrentSet()
+        assertTrue(repository.completeCurrentSet())
         val rest = repository.state.value as MockWorkoutState.Rest
 
         assertEquals(14_000L, rest.endsAtElapsedRealtimeMillis)
         assertEquals(10, rest.durationSeconds)
+    }
+
+    @Test
+    fun lastSetLeadsToReadyToFinishAndThenToCompletedScreen() = runTest {
+        val repository = createRepository()
+        repository.pair("123456")
+        repository.refreshActiveWorkout()
+
+        repeat(4) {
+            assertTrue(repository.completeCurrentSet())
+            repository.finishRest()
+        }
+
+        assertEquals(MockWorkoutState.ReadyToFinish, repository.state.value)
+
+        assertEquals(
+            com.gymplanner.wearos.domain.repository.FinishWorkoutResult.Success,
+            repository.finishWorkout(),
+        )
+        val finished = repository.state.value as MockWorkoutState.Completed
+        assertEquals(CompletedWorkoutKind.Scheduled, finished.kind)
     }
 
     private fun createRepository(

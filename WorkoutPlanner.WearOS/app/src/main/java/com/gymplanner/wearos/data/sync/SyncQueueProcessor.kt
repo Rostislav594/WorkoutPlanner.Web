@@ -1,25 +1,32 @@
 package com.gymplanner.wearos.data.sync
 
+import com.gymplanner.wearos.data.local.DeviceSessionMetadata
 import com.gymplanner.wearos.data.local.PendingSyncOperation
 import com.gymplanner.wearos.data.local.SyncOperationStatus
 import com.gymplanner.wearos.data.local.WorkoutDao
 import com.gymplanner.wearos.data.remote.CompletionResult
 import com.gymplanner.wearos.data.remote.SessionRefreshResult
 import com.gymplanner.wearos.data.remote.WatchRemoteDataSource
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class SyncQueueProcessor(
     private val workoutDao: WorkoutDao,
     private val remoteDataSource: WatchRemoteDataSource,
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
 ) {
-    suspend fun drain(): QueueDrainResult {
+    private val drainMutex = Mutex()
+
+    suspend fun drain(): QueueDrainResult = drainMutex.withLock { drainLocked() }
+
+    private suspend fun drainLocked(): QueueDrainResult {
         workoutDao.resetInterruptedOperations()
 
         while (true) {
             val operation = workoutDao.claimNextOperation(wallClockMillis())
                 ?: return QueueDrainResult.Complete
             when (val result = sendWithSingleRefresh(operation)) {
-                is CompletionResult.Success -> workoutDao.markSynced(
+                is CompletionResult.Success -> workoutDao.applySuccessAndDelete(
                     operation,
                     result.set.isCompleted,
                     result.set.weightKilograms,
@@ -51,19 +58,40 @@ class SyncQueueProcessor(
                         result.message,
                         false,
                     )
+                    workoutDao.markFollowingOperationsConflicted(
+                        operation.entityId,
+                        operation.sequenceNumber,
+                        dependentConflictMessage,
+                    )
                 }
-                is CompletionResult.Unauthorized -> workoutDao.updateOperationStatus(
-                    operation.operationId,
-                    SyncOperationStatus.Failed,
-                    result.message,
-                    false,
-                )
-                is CompletionResult.PermanentFailure -> workoutDao.updateOperationStatus(
-                    operation.operationId,
-                    SyncOperationStatus.Failed,
-                    result.message,
-                    false,
-                )
+                is CompletionResult.Unauthorized -> {
+                    workoutDao.updateOperationStatus(
+                        operation.operationId,
+                        SyncOperationStatus.Failed,
+                        result.message,
+                        false,
+                    )
+                    workoutDao.upsertSession(
+                        DeviceSessionMetadata(
+                            isPaired = false,
+                            lastCheckedAtUtcMillis = wallClockMillis(),
+                        ),
+                    )
+                    return QueueDrainResult.Complete
+                }
+                is CompletionResult.PermanentFailure -> {
+                    workoutDao.updateOperationStatus(
+                        operation.operationId,
+                        SyncOperationStatus.Failed,
+                        result.message,
+                        false,
+                    )
+                    workoutDao.markFollowingOperationsConflicted(
+                        operation.entityId,
+                        operation.sequenceNumber,
+                        dependentConflictMessage,
+                    )
+                }
             }
         }
     }
@@ -71,14 +99,19 @@ class SyncQueueProcessor(
     private suspend fun sendWithSingleRefresh(
         operation: PendingSyncOperation,
     ): CompletionResult {
-        val firstResult = remoteDataSource.completeSet(operation)
+        val firstResult = remoteDataSource.sendSetMutation(operation)
         if (firstResult !is CompletionResult.Unauthorized) return firstResult
         return when (remoteDataSource.refreshSession()) {
-            SessionRefreshResult.Success -> remoteDataSource.completeSet(operation)
+            SessionRefreshResult.Success -> remoteDataSource.sendSetMutation(operation)
             SessionRefreshResult.TransientFailure ->
                 CompletionResult.TransientFailure("Не удалось обновить сессию")
             SessionRefreshResult.Invalid -> firstResult
         }
+    }
+
+    private companion object {
+        const val dependentConflictMessage =
+            "Предыдущая операция подхода отклонена; обновите тренировку"
     }
 }
 

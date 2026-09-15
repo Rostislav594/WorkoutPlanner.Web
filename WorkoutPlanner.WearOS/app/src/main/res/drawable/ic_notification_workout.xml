@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Монохромная иконка уведомления: система сама перекрашивает её по месту. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20.6,9.4h-1.2V7.6c0,-0.6 -0.5,-1.1 -1.1,-1.1h-1.4c-0.6,0 -1.1,0.5 -1.1,1.1v3.5H8.2V7.6c0,-0.6 -0.5,-1.1 -1.1,-1.1H5.7c-0.6,0 -1.1,0.5 -1.1,1.1v1.8H3.4C2.6,9.4 2,10 2,10.8v2.4c0,0.8 0.6,1.4 1.4,1.4h1.2v1.8c0,0.6 0.5,1.1 1.1,1.1h1.4c0.6,0 1.1,-0.5 1.1,-1.1v-3.5h7.6v3.5c0,0.6 0.5,1.1 1.1,1.1h1.4c0.6,0 1.1,-0.5 1.1,-1.1v-1.8h1.2c0.8,0 1.4,-0.6 1.4,-1.4v-2.4C22,10 21.4,9.4 20.6,9.4z" />
+</vector>

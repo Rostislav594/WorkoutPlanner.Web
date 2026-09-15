@@ -1,56 +1,61 @@
 package com.gymplanner.wearos.ui.rest
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
-import androidx.wear.compose.material3.TextButton
 import com.gymplanner.wearos.domain.model.MockWorkoutState
-import com.gymplanner.wearos.ui.common.WearScreen
+import com.gymplanner.wearos.ui.common.GlowFrame
+import com.gymplanner.wearos.ui.theme.WearColors
 
+/**
+ * Отдых между подходами.
+ *
+ * Экран сведён к одному числу: на него смотрят мельком, между вдохами.
+ * Янтарная обводка вместо зелёной сразу говорит, что идёт пауза, даже если
+ * цифры прочитать не успели.
+ *
+ * Кроме таймера на экране нет ничего: так решено по макету. Пропуск отдыха
+ * остался — его делает касание по всему экрану, — но подписи об этом больше
+ * нет, поэтому жест виден только через contentDescription для TalkBack.
+ */
 @Composable
 fun RestTimerScreen(
     state: MockWorkoutState.Rest,
     remainingSeconds: Int,
     onSkip: () -> Unit,
 ) {
-    WearScreen {
-        Text(
-            text = "Подход выполнен",
-            color = MaterialTheme.colorScheme.primary,
-            style = MaterialTheme.typography.labelMedium,
-        )
-        Spacer(Modifier.height(2.dp))
+    val interactionSource = remember { MutableInteractionSource() }
+
+    GlowFrame(
+        glowColor = WearColors.Amber,
+        modifier = Modifier
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onSkip,
+            )
+            .semantics { contentDescription = "Отдых. Коснитесь, чтобы пропустить" },
+    ) {
         Text(
             text = formatTimer(remainingSeconds),
-            style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.Bold),
+            color = WearColors.TextPrimary,
+            style = MaterialTheme.typography.displayLarge,
             textAlign = TextAlign.Center,
         )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = state.nextSet?.let { "Далее: ${it.exerciseName}, подход ${it.setNumber}" }
-                ?: "Это последний mock-подход",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodySmall,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(8.dp))
-        TextButton(
-            onClick = onSkip,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 48.dp),
-        ) {
-            Text("Пропустить")
-        }
     }
 }
 
-private fun formatTimer(seconds: Int): String = "%02d:%02d".format(seconds / 60, seconds % 60)
+internal fun formatTimer(totalSeconds: Int): String {
+    val safeSeconds = totalSeconds.coerceAtLeast(0)
+    val minutes = safeSeconds / 60
+    val seconds = safeSeconds % 60
+    return "$minutes:${seconds.toString().padStart(2, '0')}"
+}

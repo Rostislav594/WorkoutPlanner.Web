@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">GPlanner</string>
+    <string name="workout_channel_name">Активная тренировка</string>
+    <string name="workout_in_progress">Тренировка идёт</string>
+    <string name="workout_rest_in_progress">Отдых</string>
+    <string name="workout_rest_finished">Отдых закончен</string>
 </resources>
 

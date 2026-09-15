@@ -6,6 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
@@ -15,7 +17,7 @@ import androidx.room.TypeConverters
         PendingSyncOperation::class,
         DeviceSessionMetadata::class,
     ],
-    version = 1,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(WorkoutConverters::class)
@@ -32,8 +34,48 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     context.applicationContext,
                     WorkoutDatabase::class.java,
                     "workout-planner-wear.db",
-                ).build().also { instance = it }
+                ).addMigrations(migration1To2, migration2To3, migration3To4).build().also { instance = it }
             }
+
+        /**
+         * Суперсеты и настройки отдыха.
+         *
+         * Группа суперсета нужна, чтобы часы чередовали подходы двух упражнений,
+         * а длительности отдыха приходят из профиля пользователя: раньше они
+         * были зашиты в коде и не совпадали с тем, что человек видит в
+         * приложении. NULL означает «сервер ещё не прислал» — тогда действуют
+         * значения по умолчанию.
+         */
+        /**
+         * Вид тренировки. Нужен только для финального экрана: после свободной
+         * тренировки человека отправляют в приложение, потому что там ждёт
+         * вопрос о сохранении шаблона.
+         */
+        internal val migration3To4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE local_workouts " +
+                        "ADD COLUMN isFree INTEGER NOT NULL DEFAULT 0",
+                )
+            }
+        }
+
+        internal val migration2To3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE local_exercises ADD COLUMN supersetGroupId INTEGER")
+                db.execSQL("ALTER TABLE local_workouts ADD COLUMN restBetweenSetsSeconds INTEGER")
+                db.execSQL("ALTER TABLE local_workouts ADD COLUMN restBetweenExercisesSeconds INTEGER")
+            }
+        }
+
+        internal val migration1To2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE local_workouts " +
+                        "ADD COLUMN workoutName TEXT NOT NULL DEFAULT ''",
+                )
+            }
+        }
     }
 }
 

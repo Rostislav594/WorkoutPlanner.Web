@@ -4,6 +4,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Тренировка продолжается, когда экран погашен: сервис держит отсчёт
+         отдыха и вибрирует по его окончании. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-feature
         android:name="android.hardware.type.watch"
         android:required="true" />
@@ -11,7 +18,9 @@
     <application
         android:name=".WorkoutPlannerWearApplication"
         android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.WorkoutPlanner.WearOS">
 
@@ -29,6 +38,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".workout.ActiveWorkoutService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <!-- Не health: тип health требует разрешения на датчики тела, а мы их
+                 не читаем. Сервис нужен только чтобы отсчёт отдыха и вибрация
+                 пережили погасший экран. -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Countdown between workout sets: keeps the rest timer running and vibrates when the rest period ends while the screen is off." />
+        </service>
     </application>
 
 </manifest>

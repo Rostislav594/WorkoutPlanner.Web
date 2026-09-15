@@ -1,4 +1,6 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.api.GradleException
+import java.net.URI
 
 plugins {
     id("com.android.application")
@@ -7,16 +9,69 @@ plugins {
     id("org.jetbrains.kotlin.kapt")
 }
 
+val verifyReleaseConfiguration = tasks.register("verifyReleaseConfiguration") {
+    group = "verification"
+    description = "Rejects unsafe or missing Wear OS release API configuration."
+    doLast {
+        val value = providers.gradleProperty("WEAR_RELEASE_API_BASE_URL").orNull
+            ?: throw GradleException(
+                "WEAR_RELEASE_API_BASE_URL is required for release builds.",
+            )
+        val uri = runCatching { URI(value) }.getOrNull()
+            ?: throw GradleException("WEAR_RELEASE_API_BASE_URL must be a valid absolute URI.")
+        if (
+            uri.scheme != "https" ||
+            uri.host.isNullOrBlank() ||
+            uri.rawUserInfo != null ||
+            uri.rawQuery != null ||
+            uri.rawFragment != null ||
+            !value.endsWith("/")
+        ) {
+            throw GradleException(
+                "WEAR_RELEASE_API_BASE_URL must use HTTPS, contain no credentials/query/fragment, " +
+                    "and end with '/'.",
+            )
+        }
+        val host = uri.host.lowercase()
+        if (
+            host.endsWith(".invalid") ||
+            host.endsWith(".local") ||
+            host == "localhost" ||
+            host == "0.0.0.0" ||
+            host == "::1" ||
+            host.startsWith("127.") ||
+            host == "10.0.2.2"
+        ) {
+            throw GradleException(
+                "WEAR_RELEASE_API_BASE_URL must not point to a placeholder or local host.",
+            )
+        }
+    }
+}
+
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    dependsOn(verifyReleaseConfiguration)
+}
+
 android {
     namespace = "com.gymplanner.wearos"
     compileSdk = 36
     buildToolsVersion = "36.0.0"
 
     defaultConfig {
-        applicationId = "com.gymplanner.wearos"
+        // Тот же идентификатор, что у телефонного приложения. Google требует
+        // одинаковый package name, чтобы Play отдавал часам и телефону сборки
+        // одного продукта, а не двух независимых приложений с разными отзывами.
+        // namespace при этом остаётся своим: он определяет пакет R и BuildConfig
+        // и к идентификатору установки отношения не имеет.
+        applicationId = "com.gymplanner.mobile"
         minSdk = 30
         targetSdk = 36
-        versionCode = 1
+
+        // versionCode обязан быть уникальным среди всех форм-факторов одного
+        // package name, поэтому у часов своя полоса нумерации: 2_000_000+.
+        // Телефон остаётся в диапазоне до 1_000_000, и коды никогда не столкнутся.
+        versionCode = 2_000_001
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -24,6 +79,16 @@ android {
 
     buildTypes {
         debug {
+            // Отладочная сборка живёт под своим идентификатором.
+            //
+            // В релизе часы и телефон обязаны делить package name и один ключ
+            // подписи, но отладочные сборки подписаны разными ключами: MAUI
+            // берёт свой debug keystore, Gradle — свой. С одинаковым id они не
+            // могут ни сосуществовать, ни заменить друг друга: установка падает
+            // с INSTALL_FAILED_UPDATE_INCOMPATIBLE. Суффикс убирает и это, и
+            // риск случайно затереть телефонное приложение сборкой для часов.
+            applicationIdSuffix = ".watch"
+
             val debugApiBaseUrl = providers.gradleProperty("WEAR_DEBUG_API_BASE_URL")
                 .orElse("http://10.0.2.2:5121/api/watch/")
                 .get()
@@ -77,6 +142,13 @@ dependencies {
     implementation("androidx.wear.compose:compose-foundation:1.6.2")
     implementation("androidx.wear.compose:compose-material3:1.6.2")
     implementation("androidx.wear.compose:compose-navigation:1.6.2")
+
+    // Открытие ссылки подтверждения на сопряжённом телефоне.
+    implementation("androidx.wear:wear-remote-interactions:1.1.0")
+
+    // Индикатор идущей тренировки на циферблате и в списке приложений.
+    implementation("androidx.wear:wear-ongoing:1.0.0")
+    implementation("androidx.core:core-ktx:1.17.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 

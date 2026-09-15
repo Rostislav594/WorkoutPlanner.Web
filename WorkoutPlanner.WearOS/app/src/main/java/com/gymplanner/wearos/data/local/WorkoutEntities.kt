@@ -8,11 +8,17 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "local_workouts")
 data class LocalWorkout(
     @PrimaryKey val workoutId: Long,
+    val workoutName: String,
     val isActive: Boolean,
     val lastCheckedAtUtcMillis: Long,
     val restCompletedSetId: Long? = null,
     val restEndsAtUtcMillis: Long? = null,
     val restDurationSeconds: Int? = null,
+    /** Из профиля пользователя. NULL — сервер ещё не прислал. */
+    val restBetweenSetsSeconds: Int? = null,
+    val restBetweenExercisesSeconds: Int? = null,
+    /** Свободная тренировка, начатая на телефоне без шаблона. */
+    val isFree: Boolean = false,
 )
 
 @Entity(
@@ -32,6 +38,8 @@ data class LocalExercise(
     val workoutId: Long,
     val name: String,
     val orderIndex: Int,
+    /** Упражнения с одной группой выполняются вперемежку. NULL — обычное. */
+    val supersetGroupId: Int? = null,
 )
 
 @Entity(
@@ -90,6 +98,9 @@ data class DeviceSessionMetadata(
 
 enum class SyncOperationType {
     CompleteSet,
+    UndoSet,
+    UpdateWeight,
+    UpdateReps,
 }
 
 enum class SyncOperationStatus {
@@ -99,3 +110,9 @@ enum class SyncOperationStatus {
     Failed,
     Conflict,
 }
+
+data class SetMutationPayload(
+    val clientVersion: Long,
+    val weightKilograms: Double? = null,
+    val repetitions: Int? = null,
+)

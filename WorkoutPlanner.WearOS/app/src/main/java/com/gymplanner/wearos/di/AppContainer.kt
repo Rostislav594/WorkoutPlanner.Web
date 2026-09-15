@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.gymplanner.wearos.BuildConfig
 import com.gymplanner.wearos.data.local.WorkoutDatabase
+import com.gymplanner.wearos.data.phone.RemoteActivityPhoneLinkOpener
 import com.gymplanner.wearos.data.remote.RetrofitWatchRemoteDataSource
 import com.gymplanner.wearos.data.remote.SafeNetworkLoggingInterceptor
 import com.gymplanner.wearos.data.remote.WatchApiService
@@ -21,7 +22,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(context: Context) {
-    private val workoutDao = WorkoutDatabase.getInstance(context).workoutDao()
+    val workoutDao = WorkoutDatabase.getInstance(context).workoutDao()
     private val gson: Gson = GsonBuilder().create()
     private val api = Retrofit.Builder()
         .baseUrl(BuildConfig.API_BASE_URL)
@@ -53,6 +54,9 @@ class AppContainer(context: Context) {
         workoutDao = workoutDao,
         remoteDataSource = remoteDataSource,
         syncScheduler = syncScheduler,
+        syncQueueProcessor = syncQueueProcessor,
+        phoneLinkOpener = RemoteActivityPhoneLinkOpener(context),
+        gson = gson,
     )
 
     private companion object {

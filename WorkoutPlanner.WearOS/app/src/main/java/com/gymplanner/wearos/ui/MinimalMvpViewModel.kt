@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.gymplanner.wearos.domain.model.MockWorkoutState
+import com.gymplanner.wearos.domain.repository.FinishWorkoutResult
 import com.gymplanner.wearos.domain.repository.WorkoutRepository
 import com.gymplanner.wearos.domain.usecase.ObserveWorkoutStateUseCase
 import kotlinx.coroutines.currentCoroutineContext
@@ -27,10 +28,14 @@ class MinimalMvpViewModel(
     private val mutablePairingCode = MutableStateFlow("")
     private val mutableRestSeconds = MutableStateFlow<Int?>(null)
     private val mutableEvents = MutableSharedFlow<UiEvent>(extraBufferCapacity = 2)
+    private val mutableActionMessage = MutableStateFlow<String?>(null)
+    private val mutableIsFinishing = MutableStateFlow(false)
 
     val pairingCode: StateFlow<String> = mutablePairingCode.asStateFlow()
     val restSeconds: StateFlow<Int?> = mutableRestSeconds.asStateFlow()
     val events = mutableEvents.asSharedFlow()
+    val actionMessage: StateFlow<String?> = mutableActionMessage.asStateFlow()
+    val isFinishing: StateFlow<Boolean> = mutableIsFinishing.asStateFlow()
 
     val state: StateFlow<MockWorkoutState> = ObserveWorkoutStateUseCase(repository)()
         .stateIn(
@@ -60,6 +65,10 @@ class MinimalMvpViewModel(
         viewModelScope.launch { repository.pair(mutablePairingCode.value) }
     }
 
+    fun confirmOnPhone() {
+        viewModelScope.launch { repository.pairWithPhoneConfirmation() }
+    }
+
     fun retryPairing() {
         mutablePairingCode.value = ""
         viewModelScope.launch { repository.retryPairing() }
@@ -72,10 +81,32 @@ class MinimalMvpViewModel(
     fun completeCurrentSet() {
         viewModelScope.launch {
             if (repository.state.value !is MockWorkoutState.CurrentSet) return@launch
-            repository.completeCurrentSet()
-            if (repository.state.value is MockWorkoutState.Rest) {
+            if (repository.completeCurrentSet()) {
+                mutableActionMessage.value = null
                 mutableEvents.emit(UiEvent.SetCompleted)
+            } else {
+                mutableActionMessage.value = mutationRejectedMessage
             }
+        }
+    }
+
+    fun finishWorkout() {
+        if (mutableIsFinishing.value) return
+        viewModelScope.launch {
+            mutableIsFinishing.value = true
+            when (val result = repository.finishWorkout()) {
+                FinishWorkoutResult.Success -> {
+                    mutableActionMessage.value = null
+                    mutableEvents.emit(UiEvent.WorkoutFinished)
+                }
+                FinishWorkoutResult.UnresolvedOperations -> {
+                    mutableActionMessage.value = unresolvedOperationsMessage
+                }
+                is FinishWorkoutResult.Failure -> {
+                    mutableActionMessage.value = result.message
+                }
+            }
+            mutableIsFinishing.value = false
         }
     }
 
@@ -102,6 +133,7 @@ class MinimalMvpViewModel(
     sealed interface UiEvent {
         data object SetCompleted : UiEvent
         data object RestFinished : UiEvent
+        data object WorkoutFinished : UiEvent
     }
 
     class Factory(
@@ -118,6 +150,10 @@ class MinimalMvpViewModel(
         private const val pairingCodeLength = 6
         private const val timerTickMillis = 250L
         private const val nanosPerMillisecond = 1_000_000L
+        private const val mutationRejectedMessage =
+            "Не удалось сохранить. Попробуйте ещё раз"
+        private const val unresolvedOperationsMessage =
+            "Есть неотправленные изменения. Дождитесь связи"
 
         internal fun remainingSeconds(remainingMillis: Long): Int =
             ((remainingMillis.coerceAtLeast(0L) + 999L) / 1_000L).toInt()

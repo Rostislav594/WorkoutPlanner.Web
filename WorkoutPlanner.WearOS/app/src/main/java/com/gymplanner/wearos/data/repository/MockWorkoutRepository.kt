@@ -1,9 +1,11 @@
 package com.gymplanner.wearos.data.repository
 
+import com.gymplanner.wearos.domain.model.CompletedWorkoutKind
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.domain.model.PairingStatus
 import com.gymplanner.wearos.domain.model.SetPreview
 import com.gymplanner.wearos.domain.repository.WorkoutRepository
+import com.gymplanner.wearos.domain.repository.FinishWorkoutResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +19,7 @@ class MockWorkoutRepository(
 ) : WorkoutRepository {
     private val mutableState = MutableStateFlow<MockWorkoutState>(MockWorkoutState.Pairing())
     private var currentSetIndex = 0
+    private val workoutSets = initialWorkoutSets.toMutableList()
 
     override val state: StateFlow<MockWorkoutState> = mutableState.asStateFlow()
 
@@ -27,14 +30,34 @@ class MockWorkoutRepository(
         mutableState.value = MockWorkoutState.Pairing(status = PairingStatus.Connecting)
         delay(simulatedDelayMillis)
 
-        mutableState.value = if (pairingCode == demoPairingCode) {
-            MockWorkoutState.NoActiveWorkout(lastCheckedAtMillis = wallClockMillis())
+        if (pairingCode == demoPairingCode) {
+            // Как и в боевом репозитории: после подключения тренировка
+            // подтягивается сама, без ручного «Обновить».
+            adoptNewSession()
         } else {
-            MockWorkoutState.Pairing(
+            mutableState.value = MockWorkoutState.Pairing(
                 status = PairingStatus.Error,
                 errorMessage = "Неверный код",
             )
         }
+    }
+
+    /// В демо-режиме телефон «подтверждает» заявку сам после короткой паузы.
+    override suspend fun pairWithPhoneConfirmation() {
+        val pairingState = mutableState.value as? MockWorkoutState.Pairing ?: return
+        if (pairingState.status != PairingStatus.Idle) return
+
+        mutableState.value = MockWorkoutState.Pairing(status = PairingStatus.Connecting)
+        delay(simulatedDelayMillis)
+        mutableState.value = MockWorkoutState.Pairing(status = PairingStatus.WaitingForPhone)
+        delay(simulatedDelayMillis)
+        adoptNewSession()
+    }
+
+    /** Новое подключение начинает демо-тренировку с первого подхода. */
+    private fun adoptNewSession() {
+        currentSetIndex = 0
+        mutableState.value = workoutSets[0].toUiState()
     }
 
     override suspend fun retryPairing() {
@@ -56,9 +79,9 @@ class MockWorkoutRepository(
         mutableState.value = workoutSets[currentSetIndex].toUiState()
     }
 
-    override suspend fun completeCurrentSet() {
-        val completedSet = workoutSets.getOrNull(currentSetIndex) ?: return
-        if (mutableState.value !is MockWorkoutState.CurrentSet) return
+    override suspend fun completeCurrentSet(): Boolean {
+        val completedSet = workoutSets.getOrNull(currentSetIndex) ?: return false
+        if (mutableState.value !is MockWorkoutState.CurrentSet) return false
 
         val nextSet = workoutSets.getOrNull(currentSetIndex + 1)
         mutableState.value = MockWorkoutState.Rest(
@@ -68,6 +91,17 @@ class MockWorkoutRepository(
             endsAtElapsedRealtimeMillis = elapsedRealtimeMillis() + restDurationSeconds * millisPerSecond,
             nextSet = nextSet?.let { SetPreview(it.exerciseName, it.setNumber) },
         )
+        return true
+    }
+
+    override suspend fun finishWorkout(): FinishWorkoutResult {
+        if (mutableState.value !is MockWorkoutState.ReadyToFinish) {
+            return FinishWorkoutResult.Failure("Сначала завершите все подходы")
+        }
+        mutableState.value = MockWorkoutState.Completed(
+            kind = CompletedWorkoutKind.Scheduled,
+        )
+        return FinishWorkoutResult.Success
     }
 
     override suspend fun finishRest() {
@@ -76,9 +110,7 @@ class MockWorkoutRepository(
         val nextIndex = currentSetIndex + 1
         val nextSet = workoutSets.getOrNull(nextIndex)
         if (nextSet == null) {
-            mutableState.value = MockWorkoutState.NoActiveWorkout(
-                lastCheckedAtMillis = wallClockMillis(),
-            )
+            mutableState.value = MockWorkoutState.ReadyToFinish
             return
         }
 
@@ -87,13 +119,13 @@ class MockWorkoutRepository(
     }
 
     private fun MockSet.toUiState() = MockWorkoutState.CurrentSet(
+        setId = currentSetIndex.toLong() + 1,
         exerciseName = exerciseName,
         exerciseNumber = exerciseNumber,
         totalExercises = totalExercises,
         setNumber = setNumber,
         totalSets = totalSets,
         weightKilograms = weightKilograms,
-        repetitions = repetitions,
     )
 
     private data class MockSet(
@@ -111,7 +143,7 @@ class MockWorkoutRepository(
         const val millisPerSecond = 1_000L
         const val nanosPerMillisecond = 1_000_000L
 
-        val workoutSets = listOf(
+        val initialWorkoutSets = listOf(
             MockSet("Жим лёжа", 1, 2, 1, 2, 80.0, 8),
             MockSet("Жим лёжа", 1, 2, 2, 2, 82.5, 6),
             MockSet("Приседания", 2, 2, 1, 2, 100.0, 8),
