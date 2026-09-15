@@ -9,8 +9,10 @@ public sealed record MobileTokenResponse(
     long ExpiresIn,
     string RefreshToken);
 public sealed record RegistrationResponse(string Email);
-public sealed record ProfileResponse(string Email, string FirstName, string LastName, DateTime? BirthDate, string Gender, bool HasProfile, int RestBetweenSetsSeconds = 90, int RestBetweenExercisesSeconds = 120);
+public sealed record ProfileResponse(string Email, string FirstName, string LastName, DateTime? BirthDate, string Gender, bool HasProfile, int RestBetweenSetsSeconds = 90, int RestBetweenExercisesSeconds = 120, string PreferredLanguage = "ru");
 public sealed record UpdateProfileRequest(string FirstName, string LastName, DateTime? BirthDate, string Gender);
 public sealed record RestTimerSettingsResponse(int RestBetweenSetsSeconds, int RestBetweenExercisesSeconds);
 public sealed record UpdateRestTimerSettingsRequest(int RestBetweenSetsSeconds, int RestBetweenExercisesSeconds);
+public sealed record LanguageSettingsResponse(string PreferredLanguage);
+public sealed record UpdateLanguageRequest(string PreferredLanguage);
 public sealed record ChangePasswordApiRequest(string CurrentPassword, string NewPassword);

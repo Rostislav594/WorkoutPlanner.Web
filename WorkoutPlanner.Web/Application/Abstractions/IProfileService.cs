@@ -17,6 +17,9 @@ public interface IProfileService
     Task<bool> UpdateRestTimerSettingsAsync(
         RestTimerSettingsUpdateRequest request,
         CancellationToken cancellationToken = default);
+    Task<bool> UpdatePreferredLanguageAsync(
+        LanguageUpdateRequest request,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IAccountService

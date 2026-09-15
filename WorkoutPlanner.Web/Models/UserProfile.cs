@@ -27,6 +27,15 @@ public class UserProfile
 
     public int RestBetweenExercisesSeconds { get; set; } = 120;
 
+    /// <summary>
+    /// Язык интерфейса: "ru", "uk" или "en" (см. AppLanguages).
+    /// Хранится в профиле, а не на устройстве, потому что push-уведомления
+    /// формируются на сервере и должны приходить на языке пользователя.
+    /// </summary>
+    [Required]
+    [MaxLength(10)]
+    public string PreferredLanguage { get; set; } = "ru";
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -16,7 +16,9 @@ using WorkoutPlanner.Web.Services;
 using WorkoutPlanner.Web.Services.Activity;
 using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Localization;
 using WorkoutPlanner.Web.Services.Push;
+using WorkoutPlanner.Web.Services.Realtime;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.WelcomeGuide;
 using WorkoutPlanner.Web.Services.WearOs;
@@ -255,6 +257,15 @@ builder.Services.AddSingleton<IInboxPublicationImageStorage, PublicationImageSto
 builder.Services.AddGymPlannerAdminOperations(builder.Configuration);
 
 
+// Локализация: ресурсы лежат в WorkoutPlanner.Localization, в корне проекта,
+// поэтому ResourcesPath оставляем пустым.
+builder.Services.AddLocalization();
+// На сервере культура выставляется на каждый запрос через UseRequestLocalization,
+// поэтому источником языка может быть окружение запроса.
+builder.Services.AddScoped<WorkoutPlanner.Localization.IAppText>(
+    _ => new WorkoutPlanner.Localization.AppText(
+        () => System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName));
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -288,6 +299,11 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
+
+// Культура запроса берётся из Accept-Language (его шлёт мобильный клиент),
+// из ?culture= или из cookie. Ставим до UseAuthentication, чтобы любой
+// код ниже по конвейеру уже видел CurrentUICulture пользователя.
+app.UseRequestLocalization(GymPlannerLocalization.CreateOptions());
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Русский — исходный язык приложения, поэтому он лежит в нейтральных .resx
+         без суффикса культуры. Украинский и английский — в сателлитных сборках. -->
+    <NeutralResourcesLanguage>ru</NeutralResourcesLanguage>
+    <!-- MAUI по умолчанию вырезает сателлитные сборки: без этого uk/en
+         не попадут в APK и приложение молча останется русским. -->
+    <SatelliteResourceLanguages>ru;uk;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Полный пакет, а не Abstractions: мобильному хосту нужен AddLocalization(),
+         которого в Abstractions нет. Web получает его же из shared framework. -->
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.9" />
+  </ItemGroup>
+</Project>

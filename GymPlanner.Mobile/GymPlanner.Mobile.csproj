@@ -14,6 +14,11 @@
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
         <Nullable>enable</Nullable>
 
+        <!-- Локализация: без этого списка MAUI вырезает сателлитные сборки
+             WorkoutPlanner.Localization.resources.dll, и приложение молча
+             остаётся русским независимо от выбранного языка. -->
+        <SatelliteResourceLanguages>ru;uk;en</SatelliteResourceLanguages>
+
         <!-- Enable XAML source generation for faster build times and improved performance.
              This generates C# code from XAML at compile time instead of runtime inflation.
              To disable, remove this line.
@@ -94,6 +99,7 @@
         <ProjectReference Include="..\WorkoutPlanner.Api.Contracts\WorkoutPlanner.Api.Contracts.csproj" />
         <ProjectReference Include="..\WorkoutPlanner.Domain\WorkoutPlanner.Domain.csproj" />
         <ProjectReference Include="..\WorkoutPlanner.UI\WorkoutPlanner.UI.csproj" />
+        <ProjectReference Include="..\WorkoutPlanner.Localization\WorkoutPlanner.Localization.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">

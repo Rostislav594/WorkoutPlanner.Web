@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Profile_SuggestIdea_Title" xml:space="preserve">
+    <value>Suggest an idea</value>
+  </data>
+  <data name="Profile_SuggestIdea_Body" xml:space="preserve">
+    <value>I am waiting for your suggestions and ideas! Follow the link to the Instagram page and send me a direct message — I would love to improve GPlanner together with you!</value>
+  </data>
+  <data name="Profile_SuggestIdea_OpenFailed" xml:space="preserve">
+    <value>Could not open Instagram. Open the link manually: {0}</value>
+  </data>
+  <data name="Profile_Language_Title" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Profile_Language_Description" xml:space="preserve">
+    <value>Choose the interface language. The setting is saved to your account and applies on all your devices.</value>
+  </data>
+  <data name="Profile_Language_SystemDefault" xml:space="preserve">
+    <value>Match device</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="Common_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Common_Soon" xml:space="preserve">
+    <value>Soon</value>
+  </data>
+  <data name="Sets_One" xml:space="preserve">
+    <value>{0} set</value>
+  </data>
+  <data name="Sets_Few" xml:space="preserve">
+    <value>{0} sets</value>
+  </data>
+  <data name="Sets_Many" xml:space="preserve">
+    <value>{0} sets</value>
+  </data>
+  <data name="Reps_One" xml:space="preserve">
+    <value>{0} rep</value>
+  </data>
+  <data name="Reps_Few" xml:space="preserve">
+    <value>{0} reps</value>
+  </data>
+  <data name="Reps_Many" xml:space="preserve">
+    <value>{0} reps</value>
+  </data>
+  <data name="Workouts_One" xml:space="preserve">
+    <value>{0} workout</value>
+  </data>
+  <data name="Workouts_Few" xml:space="preserve">
+    <value>{0} workouts</value>
+  </data>
+  <data name="Workouts_Many" xml:space="preserve">
+    <value>{0} workouts</value>
+  </data>
+  <data name="Exercises_One" xml:space="preserve">
+    <value>{0} exercise</value>
+  </data>
+  <data name="Exercises_Few" xml:space="preserve">
+    <value>{0} exercises</value>
+  </data>
+  <data name="Exercises_Many" xml:space="preserve">
+    <value>{0} exercises</value>
+  </data>
+  <data name="Days_One" xml:space="preserve">
+    <value>{0} day</value>
+  </data>
+  <data name="Days_Few" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="Days_Many" xml:space="preserve">
+    <value>{0} days</value>
+  </data>
+  <data name="Minutes_One" xml:space="preserve">
+    <value>{0} minute</value>
+  </data>
+  <data name="Minutes_Few" xml:space="preserve">
+    <value>{0} minutes</value>
+  </data>
+  <data name="Minutes_Many" xml:space="preserve">
+    <value>{0} minutes</value>
+  </data>
+  <data name="Seconds_One" xml:space="preserve">
+    <value>{0} second</value>
+  </data>
+  <data name="Seconds_Few" xml:space="preserve">
+    <value>{0} seconds</value>
+  </data>
+  <data name="Seconds_Many" xml:space="preserve">
+    <value>{0} seconds</value>
+  </data>
+</root>

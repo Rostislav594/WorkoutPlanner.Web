@@ -9,6 +9,7 @@ public sealed class UserProfile
     public string Gender { get; set; } = string.Empty;
     public int RestBetweenSetsSeconds { get; set; } = 90;
     public int RestBetweenExercisesSeconds { get; set; } = 120;
+    public string PreferredLanguage { get; set; } = "ru";
 }
 
 public sealed record ProfileUpdateRequest(
@@ -16,6 +17,9 @@ public sealed record ProfileUpdateRequest(
     string LastName,
     DateTime? BirthDate,
     string Gender);
+
+public sealed record LanguageUpdateRequest(
+    string PreferredLanguage);
 
 public sealed record RestTimerSettingsUpdateRequest(
     int RestBetweenSetsSeconds,

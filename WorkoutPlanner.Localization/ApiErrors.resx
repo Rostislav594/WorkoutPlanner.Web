@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="common.unknown" xml:space="preserve">
+    <value>Что-то пошло не так. Попробуйте ещё раз.</value>
+  </data>
+  <data name="common.network_unavailable" xml:space="preserve">
+    <value>Нет соединения с сервером.</value>
+  </data>
+  <data name="common.server_rejected" xml:space="preserve">
+    <value>Сервер отклонил запрос ({0}).</value>
+  </data>
+  <data name="common.empty_response" xml:space="preserve">
+    <value>Сервер вернул пустой ответ.</value>
+  </data>
+  <data name="common.unauthorized" xml:space="preserve">
+    <value>Войдите в аккаунт заново.</value>
+  </data>
+  <data name="common.forbidden" xml:space="preserve">
+    <value>Недостаточно прав для этого действия.</value>
+  </data>
+  <data name="common.not_found" xml:space="preserve">
+    <value>Данные не найдены.</value>
+  </data>
+  <data name="profile.first_name_required" xml:space="preserve">
+    <value>Укажите имя.</value>
+  </data>
+  <data name="profile.last_name_required" xml:space="preserve">
+    <value>Укажите фамилию.</value>
+  </data>
+  <data name="profile.birth_date_invalid" xml:space="preserve">
+    <value>Укажите корректную дату рождения.</value>
+  </data>
+  <data name="profile.gender_required" xml:space="preserve">
+    <value>Выберите пол.</value>
+  </data>
+  <data name="profile.language_unsupported" xml:space="preserve">
+    <value>Этот язык не поддерживается.</value>
+  </data>
+  <data name="profile.save_failed" xml:space="preserve">
+    <value>Не удалось сохранить профиль.</value>
+  </data>
+  <data name="password.current_invalid" xml:space="preserve">
+    <value>Текущий пароль указан неверно.</value>
+  </data>
+  <data name="password.too_short" xml:space="preserve">
+    <value>Пароль должен содержать не менее {0} символов.</value>
+  </data>
+  <data name="password.mismatch" xml:space="preserve">
+    <value>Пароли не совпадают.</value>
+  </data>
+  <data name="rest_timer.out_of_range" xml:space="preserve">
+    <value>Укажите время от 5 секунд до 60 минут.</value>
+  </data>
+  <data name="support.message_too_short" xml:space="preserve">
+    <value>Опишите проблему хотя бы в {0} символах.</value>
+  </data>
+  <data name="support.message_too_long" xml:space="preserve">
+    <value>Описание не должно превышать {0} символов.</value>
+  </data>
+  <data name="support.screenshot_too_large" xml:space="preserve">
+    <value>Размер скриншота не должен превышать 5 МБ.</value>
+  </data>
+  <data name="support.screenshot_unsupported" xml:space="preserve">
+    <value>Поддерживаются только изображения JPG, PNG и WebP.</value>
+  </data>
+  <data name="workout.no_exercises" xml:space="preserve">
+    <value>Добавьте хотя бы одно упражнение.</value>
+  </data>
+  <data name="workout.invalid_sets" xml:space="preserve">
+    <value>Проверьте оценку и подходы каждого упражнения.</value>
+  </data>
+  <data name="workout.save_failed" xml:space="preserve">
+    <value>Не удалось сохранить тренировку.</value>
+  </data>
+  <data name="watch_pairing.request_not_found" xml:space="preserve">
+    <value>Заявка на подключение часов не найдена.</value>
+  </data>
+  <data name="watch_pairing.request_expired" xml:space="preserve">
+    <value>Срок заявки истёк. Начните подключение на часах заново.</value>
+  </data>
+  <data name="watch_pairing.request_already_resolved" xml:space="preserve">
+    <value>На эту заявку уже ответили.</value>
+  </data>
+  <data name="watch_pairing.device_already_paired" xml:space="preserve">
+    <value>Эти часы уже подключены к другому аккаунту.</value>
+  </data>
+</root>

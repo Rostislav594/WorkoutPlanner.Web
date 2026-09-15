@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Profile_SuggestIdea_Title" xml:space="preserve">
+    <value>Предложить идею</value>
+  </data>
+  <data name="Profile_SuggestIdea_Body" xml:space="preserve">
+    <value>Жду ваши предложения и рекомендации! Переходите по ссылке на Instagram-страницу и пишите в личные сообщения — буду рад улучшать GPlanner вместе с вами!</value>
+  </data>
+  <data name="Profile_SuggestIdea_OpenFailed" xml:space="preserve">
+    <value>Не удалось открыть Instagram. Откройте ссылку вручную: {0}</value>
+    <comment>{0} — URL страницы Instagram.</comment>
+  </data>
+  <data name="Profile_Language_Title" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="Profile_Language_Description" xml:space="preserve">
+    <value>Выберите язык интерфейса. Настройка сохраняется в вашем аккаунте и применяется на всех устройствах.</value>
+  </data>
+  <data name="Profile_Language_SystemDefault" xml:space="preserve">
+    <value>Как на устройстве</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>Загружаем…</value>
+  </data>
+  <data name="Common_Retry" xml:space="preserve">
+    <value>Повторить</value>
+  </data>
+  <data name="Common_Soon" xml:space="preserve">
+    <value>Скоро</value>
+  </data>
+  <data name="Sets_One" xml:space="preserve">
+    <value>{0} подход</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Sets_Few" xml:space="preserve">
+    <value>{0} подхода</value>
+  </data>
+  <data name="Sets_Many" xml:space="preserve">
+    <value>{0} подходов</value>
+  </data>
+  <data name="Reps_One" xml:space="preserve">
+    <value>{0} повтор</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Reps_Few" xml:space="preserve">
+    <value>{0} повтора</value>
+  </data>
+  <data name="Reps_Many" xml:space="preserve">
+    <value>{0} повторов</value>
+  </data>
+  <data name="Workouts_One" xml:space="preserve">
+    <value>{0} тренировка</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Workouts_Few" xml:space="preserve">
+    <value>{0} тренировки</value>
+  </data>
+  <data name="Workouts_Many" xml:space="preserve">
+    <value>{0} тренировок</value>
+  </data>
+  <data name="Exercises_One" xml:space="preserve">
+    <value>{0} упражнение</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Exercises_Few" xml:space="preserve">
+    <value>{0} упражнения</value>
+  </data>
+  <data name="Exercises_Many" xml:space="preserve">
+    <value>{0} упражнений</value>
+  </data>
+  <data name="Days_One" xml:space="preserve">
+    <value>{0} день</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Days_Few" xml:space="preserve">
+    <value>{0} дня</value>
+  </data>
+  <data name="Days_Many" xml:space="preserve">
+    <value>{0} дней</value>
+  </data>
+  <data name="Minutes_One" xml:space="preserve">
+    <value>{0} минута</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Minutes_Few" xml:space="preserve">
+    <value>{0} минуты</value>
+  </data>
+  <data name="Minutes_Many" xml:space="preserve">
+    <value>{0} минут</value>
+  </data>
+  <data name="Seconds_One" xml:space="preserve">
+    <value>{0} секунда</value>
+    <comment>Форма мн. числа. {0} — количество. Выбирается через PluralRules.</comment>
+  </data>
+  <data name="Seconds_Few" xml:space="preserve">
+    <value>{0} секунды</value>
+  </data>
+  <data name="Seconds_Many" xml:space="preserve">
+    <value>{0} секунд</value>
+  </data>
+</root>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using WorkoutPlanner.Api.Contracts;
+using WorkoutPlanner.Localization;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
@@ -66,6 +67,15 @@ public static class GymPlannerApiEndpoints
             .WithTags("Profile")
             .RequireAuthorization(MobileApiAuthorization.PolicyName)
             .Produces<RestTimerSettingsResponse>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+
+        api.MapPut("/profile/language", UpdateLanguageAsync)
+            .WithTags("Profile")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName)
+            .Produces<LanguageSettingsResponse>()
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden)
@@ -433,7 +443,8 @@ public static class GymPlannerApiEndpoints
             profile?.Gender ?? string.Empty,
             profile is not null,
             profile?.RestBetweenSetsSeconds ?? 90,
-            profile?.RestBetweenExercisesSeconds ?? 120);
+            profile?.RestBetweenExercisesSeconds ?? 120,
+            AppLanguages.Resolve(profile?.PreferredLanguage));
 
     private static async Task<IResult> UpdateRestTimerSettingsAsync(
         UpdateRestTimerSettingsRequest request,
@@ -458,6 +469,28 @@ public static class GymPlannerApiEndpoints
         return Results.Ok(new RestTimerSettingsResponse(
             request.RestBetweenSetsSeconds,
             request.RestBetweenExercisesSeconds));
+    }
+
+    private static async Task<IResult> UpdateLanguageAsync(
+        UpdateLanguageRequest request,
+        IProfileService profileService,
+        CancellationToken cancellationToken)
+    {
+        if (!AppLanguages.IsSupported(request.PreferredLanguage))
+        {
+            return ApiProblems.ValidationProblem(
+                nameof(request.PreferredLanguage),
+                ApiErrorCodes.ProfileLanguageUnsupported,
+                $"Supported languages: {string.Join(", ", AppLanguages.Codes)}.");
+        }
+
+        var language = AppLanguages.Resolve(request.PreferredLanguage);
+        var succeeded = await profileService.UpdatePreferredLanguageAsync(
+            new(language), cancellationToken);
+        if (!succeeded)
+            return Results.Problem(title: "Profile was not found.", statusCode: StatusCodes.Status409Conflict);
+
+        return Results.Ok(new LanguageSettingsResponse(language));
     }
 
     private static Dictionary<string, string[]> ValidateCredentials(

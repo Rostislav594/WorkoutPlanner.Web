@@ -2,6 +2,7 @@
   <Project Path="GymPlanner.Mobile/GymPlanner.Mobile.csproj" />
   <Project Path="WorkoutPlanner.Api.Contracts/WorkoutPlanner.Api.Contracts.csproj" />
   <Project Path="WorkoutPlanner.Domain/WorkoutPlanner.Domain.csproj" />
+  <Project Path="WorkoutPlanner.Localization/WorkoutPlanner.Localization.csproj" />
   <Project Path="WorkoutPlanner.UI/WorkoutPlanner.UI.csproj" />
   <Project Path="WorkoutPlanner.Web/WorkoutPlanner.Web.csproj" />
   <Project Path="WorkoutPlanner.Web.Tests/WorkoutPlanner.Web.Tests.csproj" />

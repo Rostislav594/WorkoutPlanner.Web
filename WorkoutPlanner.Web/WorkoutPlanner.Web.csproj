@@ -30,6 +30,7 @@
     <ProjectReference Include="..\WorkoutPlanner.Api.Contracts\WorkoutPlanner.Api.Contracts.csproj" />
     <ProjectReference Include="..\WorkoutPlanner.Domain\WorkoutPlanner.Domain.csproj" />
     <ProjectReference Include="..\WorkoutPlanner.UI\WorkoutPlanner.UI.csproj" />
+    <ProjectReference Include="..\WorkoutPlanner.Localization\WorkoutPlanner.Localization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

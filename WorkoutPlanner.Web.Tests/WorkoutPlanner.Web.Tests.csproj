@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WorkoutPlanner.Web\WorkoutPlanner.Web.csproj" />
+    <ProjectReference Include="..\WorkoutPlanner.Localization\WorkoutPlanner.Localization.csproj" />
   </ItemGroup>
 
 </Project>

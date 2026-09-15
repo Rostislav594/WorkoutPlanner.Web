@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Authentication;
 
@@ -17,7 +18,21 @@ internal static class MobileApiErrorReader
                 cancellationToken: cancellationToken);
             var messages = new List<string>();
 
-            if (document.RootElement.TryGetProperty("errors", out var errors) &&
+            // Сначала машиночитаемые коды: их перевод берётся из ресурсов клиента
+            // и не зависит от языка сервера. Если эндпоинт ещё не переведён на коды,
+            // ниже отработает прежний разбор текста.
+            if (document.RootElement.TryGetProperty(
+                    ApiErrorMessages.ExtensionName, out var codes) &&
+                codes.ValueKind == JsonValueKind.Array)
+            {
+                messages.AddRange(codes.EnumerateArray()
+                    .Where(value => value.ValueKind == JsonValueKind.String)
+                    .Select(value => ApiErrorMessages.Describe(value.GetString()))
+                    .Where(value => value is not null)!);
+            }
+
+            if (messages.Count == 0 &&
+                document.RootElement.TryGetProperty("errors", out var errors) &&
                 errors.ValueKind == JsonValueKind.Object)
             {
                 foreach (var property in errors.EnumerateObject())
@@ -48,6 +63,6 @@ internal static class MobileApiErrorReader
             // A non-ProblemDetails response falls back to the HTTP status below.
         }
 
-        return [$"Сервер отклонил запрос ({(int)response.StatusCode})."];
+        return [ApiErrorMessages.ServerRejected((int)response.StatusCode)];
     }
 }

@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
+using GymPlanner.Mobile.Localization;
 using WorkoutPlanner.Api.Contracts;
 
 namespace GymPlanner.Mobile.Api;
@@ -66,6 +67,27 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
         catch (HttpRequestException)
         {
             return ApiResult<RestTimerSettingsResponse>.Failure("Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult<LanguageSettingsResponse>> SaveLanguageAsync(
+        UpdateLanguageRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PutAsJsonAsync("api/v1/profile/language", request, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+
+            var settings = await response.Content.ReadFromJsonAsync<LanguageSettingsResponse>(cancellationToken);
+            return settings is null
+                ? ApiResult<LanguageSettingsResponse>.Failure(ApiErrorMessages.Unknown())
+                : ApiResult<LanguageSettingsResponse>.Success(settings);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<LanguageSettingsResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 

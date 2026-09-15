@@ -41,7 +41,22 @@ public static class MauiProgram
 			Api.ExercisePhotoApiClient>();
 		builder.Services.AddSingleton<Api.ISupportApiClient, Api.SupportApiClient>();
 		builder.Services.AddSingleton<Api.IInboxApiClient, Api.InboxApiClient>();
+		builder.Services.AddSingleton<Api.IWatchManagementApiClient,
+			Api.WatchManagementApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
+		builder.Services.AddSingleton<ExternalLinks.IExternalLinkOpener,
+			ExternalLinks.MauiExternalLinkOpener>();
+		builder.Services.AddSingleton<Localization.IAppLanguageService,
+			Localization.MauiAppLanguageService>();
+		// Язык берётся из сервиса, а не из культуры потока: в BlazorWebView
+		// культура рендерера фиксируется при старте процесса и на лету не меняется.
+		builder.Services.AddSingleton<WorkoutPlanner.Localization.IAppText>(
+			serviceProvider =>
+			{
+				var language = serviceProvider
+					.GetRequiredService<Localization.IAppLanguageService>();
+				return new WorkoutPlanner.Localization.AppText(() => language.Current);
+			});
 		builder.Services.AddSingleton<SystemControls.ISystemChoicePicker,
 			SystemControls.MauiSystemChoicePicker>();
 		builder.Services.AddSingleton<Notifications.NotificationNavigationService>();
@@ -62,10 +77,15 @@ public static class MauiProgram
 		builder.Services.AddSingleton(serviceProvider =>
 		{
 			var options = serviceProvider.GetRequiredService<Infrastructure.MobileApiOptions>();
+			var languageHandler = new Localization.LanguageHttpMessageHandler(
+				serviceProvider.GetRequiredService<Localization.IAppLanguageService>())
+			{
+				InnerHandler = Infrastructure.MobileHttpMessageHandlerFactory.Create()
+			};
 			var handler = new Authentication.AuthenticatedHttpMessageHandler(
 				serviceProvider.GetRequiredService<Authentication.MobileAuthenticationService>())
 			{
-				InnerHandler = Infrastructure.MobileHttpMessageHandlerFactory.Create()
+				InnerHandler = languageHandler
 			};
 			return new HttpClient(handler) { BaseAddress = options.BaseAddress };
 		});
@@ -75,6 +95,14 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		var app = builder.Build();
+
+		// Язык надо поднять до первого рендера, иначе первый экран
+		// успеет отрисоваться на языке по умолчанию.
+		var language = app.Services.GetRequiredService<Localization.IAppLanguageService>();
+		language.Initialize();
+		Localization.ApiErrorMessages.UseLanguage(() => language.Current);
+
+		return app;
 	}
 }

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
+using WorkoutPlanner.Localization;
 
 namespace WorkoutPlanner.Web.Services.Auth;
 
@@ -36,7 +37,8 @@ public sealed class UserProfileService : IProfileService
             BirthDate = profile.BirthDate,
             Gender = profile.Gender,
             RestBetweenSetsSeconds = profile.RestBetweenSetsSeconds,
-            RestBetweenExercisesSeconds = profile.RestBetweenExercisesSeconds
+            RestBetweenExercisesSeconds = profile.RestBetweenExercisesSeconds,
+            PreferredLanguage = AppLanguages.Resolve(profile.PreferredLanguage)
         };
     }
 
@@ -96,6 +98,25 @@ public sealed class UserProfileService : IProfileService
 
         profile.RestBetweenSetsSeconds = request.RestBetweenSetsSeconds;
         profile.RestBetweenExercisesSeconds = request.RestBetweenExercisesSeconds;
+        profile.UpdatedAt = DateTime.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UpdatePreferredLanguageAsync(
+        LanguageUpdateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (!AppLanguages.IsSupported(request.PreferredLanguage))
+            return false;
+
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var profile = await db.UserProfiles.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+        if (profile is null)
+            return false;
+
+        profile.PreferredLanguage = AppLanguages.Resolve(request.PreferredLanguage);
         profile.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return true;
