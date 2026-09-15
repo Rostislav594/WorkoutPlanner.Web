@@ -51,6 +51,20 @@ public sealed class NotificationNavigationService
         return true;
     }
 
+    /// <summary>
+    /// Переход на экран подтверждения часов по ссылке, открытой с часов.
+    /// Идентификатор заявки — просто непрозрачный секрет, поэтому проверяем
+    /// только форму, а решение о валидности принимает сервер.
+    /// </summary>
+    public bool OpenWatchApproval(string? requestId)
+    {
+        if (!IsPairingRequestId(requestId))
+            return false;
+
+        Open($"/watch/approve/{requestId}");
+        return true;
+    }
+
     public void MarkReady()
     {
         Action<string>? handler;
@@ -78,6 +92,11 @@ public sealed class NotificationNavigationService
         }
     }
 
+    private static bool IsPairingRequestId(string? value) =>
+        !string.IsNullOrWhiteSpace(value) &&
+        value.Length <= 64 &&
+        value.All(x => char.IsAsciiLetterOrDigit(x) || x == '-' || x == '_');
+
     private static bool IsSafeRoute(string route)
     {
         if (!Uri.TryCreate(route, UriKind.Relative, out _))
@@ -88,6 +107,9 @@ public sealed class NotificationNavigationService
         {
             return workoutId > 0;
         }
+
+        if (route.StartsWith("/watch/approve/", StringComparison.Ordinal))
+            return IsPairingRequestId(route["/watch/approve/".Length..]);
 
         return route.StartsWith("/notifications/message/", StringComparison.Ordinal) &&
             long.TryParse(

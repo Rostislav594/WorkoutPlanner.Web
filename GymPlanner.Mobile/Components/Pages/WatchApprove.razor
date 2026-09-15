@@ -1,0 +1,122 @@
+@page "/watch/approve/{RequestId}"
+@layout MainLayout
+@inject IWatchManagementApiClient WatchClient
+@inject NavigationManager Navigation
+
+<PageTitle>Подключение часов</PageTitle>
+
+<section class="watch-approve">
+    @if (_loading)
+    {
+        <p class="page-state" role="status">Загружаем заявку…</p>
+    }
+    else if (_completed is not null)
+    {
+        <div class="watch-approve__result" role="status">
+            <h1>@_completed</h1>
+            <button class="primary-button" type="button" @onclick="GoToSettings">Готово</button>
+        </div>
+    }
+    else if (_details is null)
+    {
+        <div class="watch-approve__result" role="alert">
+            <h1>Заявка недоступна</h1>
+            <p class="watch-approve__hint">@(_error ?? "Попробуйте начать подключение на часах заново.")</p>
+            <button class="secondary-button" type="button" @onclick="GoToSettings">Назад</button>
+        </div>
+    }
+    else
+    {
+        <h1 class="watch-approve__title">Подключить часы?</h1>
+        <p class="watch-approve__device">@_details.DisplayName</p>
+        @if (!string.IsNullOrWhiteSpace(_details.DeviceModel))
+        {
+            <p class="watch-approve__model">@_details.DeviceModel</p>
+        }
+        <p class="watch-approve__hint">
+            Часы получат доступ к вашей активной тренировке: смогут отмечать подходы,
+            менять вес и повторы и завершать тренировку.
+        </p>
+        <p class="watch-approve__warning">
+            Подтверждайте, только если запрос пришёл с ваших часов прямо сейчас.
+        </p>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <p class="watch-approve__error" role="alert">@_error</p>
+        }
+
+        <div class="watch-approve__actions">
+            <button class="primary-button" type="button" disabled="@_busy" @onclick="ApproveAsync">
+                @(_busy ? "Подключаем…" : "Подключить")
+            </button>
+            <button class="secondary-button" type="button" disabled="@_busy" @onclick="RejectAsync">
+                Отклонить
+            </button>
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter]
+    public string RequestId { get; set; } = string.Empty;
+
+    private WatchPairingRequestDetailsResponse? _details;
+    private string? _error;
+    private string? _completed;
+    private bool _loading = true;
+    private bool _busy;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _completed = null;
+
+        var result = await WatchClient.GetPairingRequestAsync(RequestId);
+        _details = result.Value;
+        if (_details is null)
+        {
+            _error = FirstError(result.Errors);
+        }
+        else if (!string.Equals(_details.Status, WatchPairingStatuses.Pending, StringComparison.Ordinal))
+        {
+            // Заявку уже закрыли — на часах или в другом сеансе.
+            _details = null;
+            _error = "На эту заявку уже ответили.";
+        }
+
+        _loading = false;
+    }
+
+    private Task ApproveAsync() =>
+        DecideAsync(
+            () => WatchClient.ApprovePairingRequestAsync(RequestId),
+            "Часы подключены");
+
+    private Task RejectAsync() =>
+        DecideAsync(
+            () => WatchClient.RejectPairingRequestAsync(RequestId),
+            "Запрос отклонён");
+
+    private async Task DecideAsync(Func<Task<ApiResult>> action, string successMessage)
+    {
+        if (_busy)
+            return;
+
+        _busy = true;
+        _error = null;
+        var result = await action();
+        _busy = false;
+
+        if (result.Succeeded)
+            _completed = successMessage;
+        else
+            _error = FirstError(result.Errors) ?? "Не удалось выполнить действие.";
+    }
+
+    private static string? FirstError(IReadOnlyList<string> errors) =>
+        errors.Count > 0 ? errors[0] : null;
+
+    private void GoToSettings() => Navigation.NavigateTo("/profile/settings");
+}

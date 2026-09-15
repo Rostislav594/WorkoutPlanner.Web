@@ -11,6 +11,17 @@ using WorkoutPlanner.Api.Contracts;
 namespace GymPlanner.Mobile;
 
 [Activity(Theme = "@style/Maui.SplashTheme", MainLauncher = true, WindowSoftInputMode = SoftInput.AdjustResize, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize | ConfigChanges.Density)]
+// Ссылка подтверждения, которую часы открывают на телефоне.
+// Пока это кастомная схема: проверенный App Link требует домена с assetlinks.json.
+[IntentFilter(
+	new[] { Android.Content.Intent.ActionView },
+	Categories = new[]
+	{
+		Android.Content.Intent.CategoryDefault,
+		Android.Content.Intent.CategoryBrowsable
+	},
+	DataScheme = WatchPairingLink.Scheme,
+	DataHost = WatchPairingLink.Host)]
 public class MainActivity : MauiAppCompatActivity
 {
 	protected override void OnCreate(Bundle? savedInstanceState)
@@ -42,6 +53,13 @@ public class MainActivity : MauiAppCompatActivity
 		if (!string.IsNullOrWhiteSpace(route))
 		{
 			navigation?.Open(route);
+			return;
+		}
+
+		if (navigation is not null &&
+			WatchPairingLink.TryReadRequestId(intent?.Data?.ToString(), out var requestId) &&
+			navigation.OpenWatchApproval(requestId))
+		{
 			return;
 		}
 

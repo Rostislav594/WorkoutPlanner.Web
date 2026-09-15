@@ -2,10 +2,17 @@
 @attribute [Authorize]
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.Extensions.Logging
+@using GymPlanner.Mobile.ExternalLinks
+@using GymPlanner.Mobile.Localization
 @using WorkoutPlanner.Api.Contracts
+@using WorkoutPlanner.Localization
 @inject IProfileApiClient ProfileClient
+@inject IWatchManagementApiClient WatchClient
 @inject ISupportApiClient SupportClient
 @inject IMobilePhotoPicker PhotoPicker
+@inject IExternalLinkOpener LinkOpener
+@inject IAppLanguageService Language
+@inject IAppText Text
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
 @inject ILogger<ProfileSetting> Logger
@@ -57,7 +64,143 @@
     }
     else if (Section == "devices")
     {
-        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">watch</span><h2>Samsung Galaxy Watch</h2><p class="setting-value">Подключено</p><p class="setting-description">Устройство отображается в списке подключённых устройств.</p></article>
+        <div class="watch-settings-stack" aria-busy="@_isBusy">
+            @if (!string.IsNullOrWhiteSpace(_watchMessage))
+            {
+                <div class="watch-success" role="status">@_watchMessage</div>
+            }
+            @if (_watchErrors.Count > 0)
+            {
+                <div class="watch-error" role="alert">
+                    <span>@string.Join(" ", _watchErrors)</span>
+                </div>
+            }
+
+            <article class="setting-card watch-pairing-card">
+                <div class="watch-card-heading">
+                    <span class="setting-icon material-symbols-rounded" aria-hidden="true">watch</span>
+                    <div>
+                        <p class="setting-eyebrow">Wear OS</p>
+                        <h2>Подключить часы</h2>
+                    </div>
+                </div>
+                <p class="setting-description">
+                    Создайте одноразовый код и введите его в приложении GPlanner на часах.
+                </p>
+
+                @if (_pairingCode is not null)
+                {
+                    <div class="watch-pairing-result" role="status">
+                        <span>Код подключения</span>
+                        <output aria-label="Код подключения часов: @FormatCodeForSpeech(_pairingCode.Code)">
+                            @_pairingCode.Code
+                        </output>
+                        <small>
+                            Действует до @_pairingCode.ExpiresAtUtc.ToLocalTime().ToString("HH:mm").
+                            Новый код отменит предыдущий.
+                        </small>
+                    </div>
+                }
+
+                <button class="setting-primary-action" type="button"
+                        disabled="@_isBusy" @onclick="CreatePairingCodeAsync">
+                    @(_isBusy
+                        ? "Создаём код…"
+                        : _pairingCode is null ? "Создать код" : "Создать новый код")
+                </button>
+            </article>
+
+            <article class="setting-card watch-devices-card">
+                <div class="watch-list-heading">
+                    <div>
+                        <p class="setting-eyebrow">Ваши устройства</p>
+                        <h2>Подключённые часы</h2>
+                    </div>
+                    <button class="watch-refresh-button" type="button"
+                            aria-label="Обновить список часов"
+                            disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
+                        <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
+                    </button>
+                </div>
+
+                @if (_isBusy && !_watchDevicesLoaded)
+                {
+                    <div class="watch-list-state" role="status">Загружаем устройства…</div>
+                }
+                else if (!_watchDevicesLoaded)
+                {
+                    <div class="watch-list-state">
+                        <strong>Список устройств недоступен</strong>
+                        <span>Проверьте соединение и попробуйте загрузить список снова.</span>
+                        <button class="watch-list-retry" type="button"
+                                disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
+                            Повторить загрузку
+                        </button>
+                    </div>
+                }
+                else if (!ActiveWatchDevices.Any())
+                {
+                    <div class="watch-list-state">
+                        <span class="material-symbols-rounded" aria-hidden="true">watch_off</span>
+                        <strong>Часы пока не подключены</strong>
+                        <span>Создайте код выше и введите его на часах.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="watch-device-list">
+                        @foreach (var device in ActiveWatchDevices)
+                        {
+                            <section class="watch-device-item" aria-label="@device.DisplayName">
+                                <div class="watch-device-copy">
+                                    <strong>@device.DisplayName</strong>
+                                    <span>@FormatWatchMetadata(device)</span>
+                                    <small>@FormatLastSeen(device.LastSeenAtUtc)</small>
+                                </div>
+                                <button class="watch-disconnect-button" type="button"
+                                        disabled="@_isBusy"
+                                        @onclick="() => ConfirmWatchRevocation(device)">
+                                    Отключить
+                                </button>
+                            </section>
+                        }
+                    </div>
+
+                    @if (ActiveWatchDevices.Count() > 1)
+                    {
+                        <button class="watch-disconnect-all" type="button"
+                                disabled="@_isBusy" @onclick="ConfirmAllWatchRevocations">
+                            Отключить все часы
+                        </button>
+                    }
+                }
+            </article>
+
+            @if (_watchPendingRevocation is not null || _revokeAllWatchesRequested)
+            {
+                <article class="setting-card watch-confirmation" role="alertdialog"
+                         aria-labelledby="watch-confirmation-title"
+                         aria-describedby="watch-confirmation-description">
+                    <span class="material-symbols-rounded" aria-hidden="true">warning</span>
+                    <h2 id="watch-confirmation-title">Отключить часы?</h2>
+                    <p id="watch-confirmation-description">
+                        @(_revokeAllWatchesRequested
+                            ? "Все подключённые часы потеряют доступ к аккаунту."
+                            : $"Часы «{_watchPendingRevocation!.DisplayName}» потеряют доступ к аккаунту.")
+                    </p>
+                    <div class="watch-confirmation-actions">
+                        <button class="setting-secondary-action" type="button"
+                                disabled="@_isBusy" @onclick="CancelWatchRevocation">
+                            Отмена
+                        </button>
+                        <button class="setting-danger-action" type="button"
+                                disabled="@_isBusy" @onclick="RevokeConfirmedWatchesAsync">
+                            @(_isBusy ? "Отключаем…" : "Отключить")
+                        </button>
+                    </div>
+                </article>
+            }
+        </div>
     }
     else if (Section == "my-data")
     {
@@ -79,6 +222,49 @@
     {
         <div class="setting-card"><label class="support-field">Что произошло?<textarea maxlength="2000" placeholder="Опишите, что произошло..." @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">Минимум 10 символов. Не указывайте пароль или другие конфиденциальные данные.</p><button class="setting-secondary-action" type="button" disabled="@_isBusy" @onclick="PickScreenshotAsync">Добавить скриншот</button>@if (_screenshot is not null) { <p class="setting-description">Прикреплён файл: @_screenshot.FileName</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? "Отправляем…" : "Отправить")</button></div>
     }
+    else if (Section == "suggest-idea")
+    {
+        <article class="setting-card idea-card">
+            <a class="idea-link" href="@InstagramUrl" target="_blank" rel="noopener noreferrer" @onclick="OpenInstagramAsync" @onclick:preventDefault="true">
+                <span class="idea-link-icon material-symbols-rounded" aria-hidden="true">photo_camera</span>
+                <span class="idea-link-text"><span class="idea-link-title">Instagram</span><span class="idea-link-handle">@@@InstagramHandle</span></span>
+                <span class="idea-link-open material-symbols-rounded" aria-hidden="true">open_in_new</span>
+            </a>
+            <p class="idea-description">@Text["Profile_SuggestIdea_Body"]</p>
+            @if (_instagramError is not null)
+            {
+                <p class="idea-error" role="alert">@_instagramError</p>
+            }
+        </article>
+    }
+    else if (Section == "language")
+    {
+        <article class="setting-card language-card">
+            <p class="setting-description">@Text["Profile_Language_Description"]</p>
+            <div class="language-options" role="radiogroup" aria-label="@Text["Profile_Language_Title"]">
+                @foreach (var option in AppLanguages.All)
+                {
+                    var isCurrent = option.Code == Language.Current;
+                    <button class="@(isCurrent ? "language-option language-option--active" : "language-option")"
+                            type="button"
+                            role="radio"
+                            aria-checked="@(isCurrent ? "true" : "false")"
+                            disabled="@_isBusy"
+                            @onclick="() => SelectLanguageAsync(option.Code)">
+                        <span class="language-option-name">@option.NativeName</span>
+                        @if (isCurrent)
+                        {
+                            <span class="material-symbols-rounded" aria-hidden="true">check</span>
+                        }
+                    </button>
+                }
+            </div>
+            @if (_languageError is not null)
+            {
+                <p class="idea-error" role="alert">@_languageError</p>
+            }
+        </article>
+    }
     else if (Section == "logout")
     {
         <article class="setting-card"><p class="setting-description">Вы выйдете из аккаунта на этом устройстве.</p><button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="LogoutAsync">Выйти из аккаунта</button></article>
@@ -99,18 +285,27 @@
 
     [Parameter] public string Section { get; set; } = string.Empty;
     private readonly List<string> _errors = [];
+    private readonly List<string> _watchErrors = [];
     private readonly ProfileInput _profileInput = new();
     private readonly PasswordInput _passwordInput = new();
     private ProfileResponse? _profile;
+    private CreateWatchPairingCodeResponse? _pairingCode;
+    private IReadOnlyList<WatchDeviceResponse> _watchDevices = [];
+    private WatchDeviceResponse? _watchPendingRevocation;
     private PickedPhoto? _screenshot;
     private bool _isLoading = true;
     private bool _isBusy;
     private bool _deleteConfirmed;
+    private bool _watchDevicesLoaded;
+    private bool _revokeAllWatchesRequested;
     private string _supportMessage = string.Empty;
+    private string? _watchMessage;
+    private IEnumerable<WatchDeviceResponse> ActiveWatchDevices =>
+        _watchDevices.Where(device => !device.IsRevoked);
     private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting) ? setting : new("Настройка не найдена", "help", "Вернитесь в профиль и выберите нужный раздел.", false);
     private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
         ["personal-information"] = new("Личная информация", "badge", "", true), ["rest-timers"] = new("Таймеры отдыха", "timer", "", true), ["change-password"] = new("Изменить пароль", "password", "", true), ["report-problem"] = new("Сообщить о проблеме", "bug_report", "", true), ["logout"] = new("Выйти из аккаунта", "logout", "", true), ["delete-account"] = new("Удалить аккаунт", "delete_forever", "", true), ["devices"] = new("Подключённые устройства", "devices", "", true), ["my-data"] = new("Мои данные", "database", "", true),
-        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "Выбор языка скоро будет доступен здесь.", false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Синхронизация появится в одном из ближайших обновлений.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "Сбор предложений скоро будет доступен здесь.", false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
+        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "", true, RequiresProfile: false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Синхронизация появится в одном из ближайших обновлений.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
     protected override async Task OnInitializedAsync()
     {
         var replacementRoute = Section.ToLowerInvariant() switch
@@ -126,13 +321,152 @@
             return;
         }
 
-        if (!Setting.IsAvailable) { _isLoading = false; return; }
+        if (Section == "devices")
+        {
+            await LoadWatchDevicesAsync();
+            _isLoading = false;
+            return;
+        }
+
+        if (!Setting.IsAvailable || !Setting.RequiresProfile) { _isLoading = false; return; }
         var result = await ProfileClient.GetAsync();
         if (!result.Succeeded) _errors.AddRange(result.Errors);
-        else { _profile = result.Value; _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; }
+        else { _profile = result.Value; Language.ApplyFromProfile(_profile!.PreferredLanguage); _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; }
         _isLoading = false;
     }
+    private string? _languageError;
+    private async Task SelectLanguageAsync(string languageCode)
+    {
+        if (_isBusy || languageCode == Language.Current) return;
+        _isBusy = true;
+        _languageError = null;
+        try
+        {
+            // Применяем сразу: интерфейс не должен ждать сервер, и выбор
+            // обязан сохраниться даже без сети.
+            Language.Apply(languageCode);
+
+            var result = await ProfileClient.SaveLanguageAsync(new(languageCode));
+            if (!result.Succeeded) _languageError = string.Join(" ", result.Errors);
+        }
+        finally { _isBusy = false; }
+    }
+    private const string InstagramHandle = "gymplanner1";
+    private const string InstagramUrl = $"https://www.instagram.com/{InstagramHandle}/";
+    private string? _instagramError;
+    private async Task OpenInstagramAsync() { _instagramError = null; if (!await LinkOpener.OpenAsync(InstagramUrl)) _instagramError = $"Не удалось открыть Instagram. Откройте ссылку вручную: {InstagramUrl}"; }
     private int _restBetweenSetsSeconds = 90; private int _restBetweenExercisesSeconds = 120;
+    private async Task LoadWatchDevicesAsync()
+    {
+        await RunWatchActionAsync(async () =>
+        {
+            var result = await WatchClient.GetDevicesAsync();
+            if (!result.Succeeded)
+            {
+                _watchErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _watchDevices = result.Value!;
+            _watchDevicesLoaded = true;
+        }, clearMessage: false);
+    }
+
+    private async Task CreatePairingCodeAsync()
+    {
+        await RunWatchActionAsync(async () =>
+        {
+            var result = await WatchClient.CreatePairingCodeAsync();
+            if (!result.Succeeded)
+            {
+                _watchErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _pairingCode = result.Value;
+            _watchMessage = "Код создан. Введите его на часах.";
+        });
+    }
+
+    private void ConfirmWatchRevocation(WatchDeviceResponse device)
+    {
+        _watchPendingRevocation = device;
+        _revokeAllWatchesRequested = false;
+        _watchErrors.Clear();
+        _watchMessage = null;
+    }
+
+    private void ConfirmAllWatchRevocations()
+    {
+        _watchPendingRevocation = null;
+        _revokeAllWatchesRequested = true;
+        _watchErrors.Clear();
+        _watchMessage = null;
+    }
+
+    private void CancelWatchRevocation()
+    {
+        if (_isBusy) return;
+        _watchPendingRevocation = null;
+        _revokeAllWatchesRequested = false;
+    }
+
+    private async Task RevokeConfirmedWatchesAsync()
+    {
+        var revokeAll = _revokeAllWatchesRequested;
+        var device = _watchPendingRevocation;
+        await RunWatchActionAsync(async () =>
+        {
+            var result = revokeAll
+                ? await WatchClient.RevokeAllAsync()
+                : device is null
+                    ? ApiResult.Failure("Не выбраны часы для отключения.")
+                    : await WatchClient.RevokeAsync(device.DeviceId);
+            if (!result.Succeeded)
+            {
+                _watchErrors.AddRange(result.Errors);
+                return;
+            }
+
+            _watchDevices = revokeAll
+                ? _watchDevices.Select(item => item with { IsRevoked = true }).ToArray()
+                : _watchDevices.Select(item =>
+                    item.DeviceId == device!.DeviceId
+                        ? item with { IsRevoked = true }
+                        : item).ToArray();
+            _watchMessage = revokeAll
+                ? "Все часы отключены."
+                : $"Часы «{device!.DisplayName}» отключены.";
+            _watchPendingRevocation = null;
+            _revokeAllWatchesRequested = false;
+        });
+    }
+
+    private async Task RunWatchActionAsync(Func<Task> action, bool clearMessage = true)
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        _watchErrors.Clear();
+        if (clearMessage) _watchMessage = null;
+        try { await action(); }
+        finally { _isBusy = false; }
+    }
+
+    private static string FormatCodeForSpeech(string code) =>
+        string.Join(' ', code.ToCharArray());
+
+    private static string FormatWatchMetadata(WatchDeviceResponse device)
+    {
+        var values = new[] { device.DeviceModel, device.AppVersion is null ? null : $"GPlanner {device.AppVersion}" }
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+        var metadata = string.Join(" · ", values);
+        return string.IsNullOrWhiteSpace(metadata) ? "Wear OS" : metadata;
+    }
+
+    private static string FormatLastSeen(DateTime? lastSeenAtUtc) =>
+        lastSeenAtUtc is null
+            ? "Ещё не синхронизировались"
+            : $"Последняя активность: {lastSeenAtUtc.Value.ToLocalTime():dd.MM.yyyy HH:mm}";
     private async Task SaveProfileAsync() { await RunAsync(async () => { var r = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
     private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add("Укажите время от 5 секунд до 60 минут."); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
     private async Task ChangePasswordAsync() { await RunAsync(async () => { var r = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword)); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
@@ -144,5 +478,5 @@
     private SupportDeviceContext GetDeviceContext() { try { return new(AppInfo.Current.VersionString, DeviceInfo.Current.Platform.ToString(), DeviceInfo.Current.VersionString, $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}".Trim()); } catch (Exception exception) { Logger.LogDebug(exception, "Device context is unavailable for a support ticket."); return new(null, null, null, null); } }
     private sealed class ProfileInput { [Required, MaxLength(80)] public string FirstName { get; set; } = string.Empty; [Required, MaxLength(80)] public string LastName { get; set; } = string.Empty; [Required] public DateTime? BirthDate { get; set; } [Required] public string Gender { get; set; } = string.Empty; }
     private sealed class PasswordInput { [Required] public string CurrentPassword { get; set; } = string.Empty; [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty; [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")] public string ConfirmPassword { get; set; } = string.Empty; }
-    private sealed record ProfileSettingInfo(string Title, string Icon, string Description, bool IsAvailable);
+    private sealed record ProfileSettingInfo(string Title, string Icon, string Description, bool IsAvailable, bool RequiresProfile = true);
 }
