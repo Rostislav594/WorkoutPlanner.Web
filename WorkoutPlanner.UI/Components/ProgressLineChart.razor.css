@@ -1,45 +1,144 @@
 .progress-chart {
-    --chart-line: #35b64a;
-    --chart-marker: #ff9918;
-    --chart-marker-border: #ffc052;
-    --chart-grid: rgba(175, 181, 192, .36);
-    border: 1px solid #343b45;
-    border-radius: 1rem;
-    padding: .85rem;
-    background: #111419;
+    --chart-line: #3fb950;
+    --chart-axis: rgba(63, 185, 80, .85);
+    --chart-marker: #ff7a1a;
+    --chart-marker-ring: 63, 185, 80;
+    --chart-value: #f08c34;
+    /* Без собственной рамки, фона и скругления: график лежит на поверхности
+       окна, а не выглядит вложенной карточкой. */
+    padding: 0;
 }
 .chart-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .35rem .75rem; }
 .chart-heading h3 { margin: 0; color: #fff; font-size: 1rem; }
-.chart-heading span, .chart-baseline { color: #aeb7c2; font-size: .78rem; }
-.chart-baseline { margin: .25rem 0 .65rem; line-height: 1.4; }
-.chart-frame { position: relative; width: 100%; height: clamp(12rem, 48vw, 15rem); min-width: 0; }
+.chart-heading span { color: #aeb7c2; font-size: .78rem; }
+.chart-frame { position: relative; width: 100%; height: clamp(12rem, 48vw, 15rem); min-width: 0; margin-top: .65rem; }
 .chart-frame svg { width: 100%; height: 100%; overflow: visible; }
-.grid-line { stroke: var(--chart-grid); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.zero-line { stroke: #687582; stroke-width: 1.5; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
-.progress-line { fill: none; stroke: var(--chart-line); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+
+.axis-line {
+    stroke: var(--chart-axis);
+    stroke-width: 2;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.zero-line {
+    stroke: rgba(104, 117, 130, .55);
+    stroke-width: 1;
+    stroke-dasharray: 4 6;
+    vector-effect: non-scaling-stroke;
+}
+
+.progress-line {
+    fill: none;
+    stroke: var(--chart-line);
+    stroke-width: 3;
+    stroke-opacity: .85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+/* Прочерчивание от нулевой точки: у маски разъезжается правая граница.
+   Штриховкой это делать нельзя — stroke-dasharray считается в экранном
+   пространстве из-за non-scaling-stroke, а SVG растянут неравномерно
+   (preserveAspectRatio="none"), поэтому нормированная длина не совпадает с
+   реальной и линия не дочерчивается до конца.
+   Ширина в кадре только начальная: конечная берётся из атрибута, поэтому
+   fill-mode не нужен. */
+.curve-reveal {
+    animation: chart-reveal 1.8s linear;
+}
+
+@keyframes chart-reveal {
+    from {
+        width: 0;
+    }
+}
+
+/* Значения из макета, одинаковые для всех точек в долях радиуса.
+   Верхний слой — обводка: радиальный #3FB950, прозрачный до 66% радиуса и
+   сплошной к краю, непрозрачность 90%. В макете это stroke inside: вес 2 на
+   кружке 10 и вес 4 на кружке 20 — то есть одна и та же полоса 60–100%.
+   Нижний слой — заливка: радиальный #FF7A1A, непрозрачность 78% → 92%.
+   closest-side привязывает 100% градиента к краю кружка, а не к диагонали.
+   Эффектов в макете нет, поэтому свечения тоже нет. */
 .chart-marker {
     position: absolute;
-    z-index: 1;
-    width: 11px;
-    height: 11px;
-    border: 2px solid var(--chart-marker-border);
+    z-index: 2;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: var(--chart-marker);
+    background-image:
+        radial-gradient(circle closest-side,
+            rgba(var(--chart-marker-ring), 0) 66%,
+            rgba(var(--chart-marker-ring), .9) 100%),
+        radial-gradient(circle closest-side,
+            rgba(255, 122, 26, .78) 31%,
+            rgba(255, 122, 26, .92) 57%);
     box-sizing: border-box;
-    box-shadow: 0 0 7px rgba(255, 153, 24, .38);
     transform: translate(-50%, -50%);
+    /* backwards прячет точку на время задержки; после анимации значения
+       возвращаются к обычным, поэтому forwards не нужен. */
+    animation: chart-marker-in .34s ease-out var(--draw-delay, 0s) backwards;
 }
+
+@keyframes chart-marker-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(.35);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Последняя точка (Ellipse 10) — вдвое крупнее при той же отделке. */
 .chart-marker.latest {
-    width: 16px;
-    height: 16px;
-    box-shadow:
-        0 0 0 4px rgba(255, 153, 24, .14),
-        0 0 16px rgba(255, 153, 24, .58),
-        0 0 7px rgba(255, 192, 82, .82);
+    z-index: 3;
+    width: 20px;
+    height: 20px;
 }
-.axis-label { position: absolute; color: #aeb7c2; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
+
+.chart-value-label {
+    position: absolute;
+    z-index: 1;
+    color: var(--chart-value);
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    transform: translate(-64%, -215%);
+    /* Подпись появляется чуть позже своей точки. Анимируется только
+       непрозрачность: смещение у подписей разное (leading, latest), и трогать
+       transform в кадрах значило бы дублировать их для каждого варианта. */
+    animation: chart-label-in .38s ease-out calc(var(--draw-delay, 0s) + .1s) backwards;
+}
+
+@keyframes chart-label-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+/* Первая точка стоит на самой оси: подпись уводится вправо, иначе линия оси
+   проходит сквозь текст. */
+.chart-value-label.leading { transform: translate(9px, -215%); }
+.chart-value-label.latest {
+    font-size: 16px;
+    font-weight: 700;
+    transform: translate(-72%, -180%);
+}
+
+.axis-label { position: absolute; color: #8d97a3; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
 .x-axis-label { transform: translate(-50%, 0); }
-.y-axis-label { transform: translate(-100%, -50%); }
 .chart-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-top: .25rem; color: #aeb7c2; font-size: .85rem; }
 .chart-values strong { color: #80d89b; }
 .chart-data-details { margin-top: .55rem; color: #d9e0e7; }
@@ -53,24 +152,26 @@ th:last-child, td:last-child { text-align: right; }
 .empty { margin: 0; color: #aeb7c2; }
 
 @media (max-width: 390px) {
-    .progress-chart { padding-inline: .65rem; }
     .axis-label { font-size: 11px; }
+    .chart-value-label { font-size: 11px; }
+    .chart-value-label.latest { font-size: 14px; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-    .progress-chart {
-        padding: .65rem .8rem;
-    }
-
-    .chart-baseline {
-        margin-bottom: .35rem;
-    }
-
     .chart-frame {
         height: clamp(10.5rem, 44dvh, 13rem);
+        margin-top: .35rem;
     }
 
     .chart-data-details {
         margin-top: .25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .curve-reveal,
+    .chart-marker,
+    .chart-value-label {
+        animation: none;
     }
 }

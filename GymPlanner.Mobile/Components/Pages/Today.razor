@@ -357,7 +357,7 @@
 
         @if (HasFinishableExercise)
         {
-            <button class="finish-button finish-button--hold @(_isFinishFillActive ? "is-filling" : null)"
+            <button class="finish-button finish-button--hold"
                     type="button"
                     disabled="@_isBusy"
                     aria-label="@(_isBusy ? "Сохраняем тренировку" : "Удерживайте, чтобы завершить тренировку")"
@@ -373,6 +373,26 @@
         }
     }
 </section>
+
+@if (_isFinishAnimationActive)
+{
+    <div class="finish-hold-overlay" aria-hidden="true">
+        <div class="finish-hold-animation">
+            <svg class="finish-hold-symbol" viewBox="0 0 120 120" focusable="false">
+                <defs>
+                    <radialGradient id="finish-ring-gradient" gradientUnits="userSpaceOnUse" cx="60" cy="60" r="58">
+                        <stop offset="90%" stop-color="#4fc46b" />
+                        <stop offset="100%" stop-color="#265e33" />
+                    </radialGradient>
+                </defs>
+                <circle class="finish-hold-glow" cx="60" cy="60" r="52" stroke="url(#finish-ring-gradient)" />
+                <circle class="finish-hold-progress" cx="60" cy="60" r="52" stroke="url(#finish-ring-gradient)" />
+                <path class="finish-hold-check" d="M32 61 L53 83 L88 29" />
+            </svg>
+        </div>
+    </div>
+    <span class="visually-hidden" role="status">Удерживайте кнопку до завершения анимации</span>
+}
 
 @if (_selectedRestTimer is not null)
 {
@@ -960,9 +980,9 @@
         try
         {
             await Task.Delay(100, holdCts.Token);
-            _isFinishFillActive = true;
+            _isFinishAnimationActive = true;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(1900, holdCts.Token);
+            await Task.Delay(3300, holdCts.Token);
             if (!holdCts.IsCancellationRequested)
                 await CompleteAsync();
         }
@@ -975,7 +995,7 @@
             {
                 _finishHoldCts = null;
                 _isFinishHoldActive = false;
-                _isFinishFillActive = false;
+                _isFinishAnimationActive = false;
                 holdCts.Dispose();
             }
         }
@@ -987,7 +1007,7 @@
         _finishHoldCts?.Dispose();
         _finishHoldCts = null;
         _isFinishHoldActive = false;
-        _isFinishFillActive = false;
+        _isFinishAnimationActive = false;
     }
 
     private Task HandleFinishKeyDown(KeyboardEventArgs args) =>

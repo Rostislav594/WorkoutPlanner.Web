@@ -642,19 +642,20 @@
 .history-summary {
     display: flex;
     align-items: flex-start;
-    gap: 9px;
-    margin-top: 14px;
-    padding: 12px 14px;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 9px 11px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     color: var(--color-text-muted);
-    line-height: 1.45;
+    font-size: 13px;
+    line-height: 1.35;
 }
 
 .history-summary .material-symbols-rounded {
     flex: 0 0 auto;
     color: var(--color-accent);
-    font-size: 21px;
+    font-size: 17px;
 }
 
 .history-summary p {

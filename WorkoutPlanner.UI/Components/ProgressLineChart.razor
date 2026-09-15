@@ -1,4 +1,5 @@
 @using System.Globalization
+@using System.Text
 @using WorkoutPlanner.Api.Contracts
 
 <section class="progress-chart" aria-label="@Title">
@@ -6,7 +7,6 @@
         <h3>@Title</h3>
         <span>Последние 30 дней</span>
     </div>
-    <p class="chart-baseline">Изменение относительно первой сохранённой тренировки</p>
     @if (Points.Count == 0)
     {
         <p class="empty">За последние 30 дней данных для графика нет.</p>
@@ -15,30 +15,62 @@
     {
         <div class="chart-frame" role="img" aria-label="@AccessibleSummary">
             <svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                @foreach (var tick in YAxisTicks)
-                {
-                    <line class="grid-line" x1="52" y1="@Format(Y(tick))" x2="584" y2="@Format(Y(tick))" />
-                }
+                <defs>
+                    @* Значения перенесены из макета: один цвет #3FB950, у нуля
+                       непрозрачность 100% и далее спад до 25% к дальнему краю. *@
+                    <linearGradient id="@LineGradientId" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stop-color="#3FB950" stop-opacity="1" />
+                        <stop offset="19%" stop-color="#3FB950" stop-opacity="0.8" />
+                        <stop offset="37%" stop-color="#3FB950" stop-opacity="0.55" />
+                        <stop offset="56%" stop-color="#3FB950" stop-opacity="0.4" />
+                        <stop offset="77%" stop-color="#3FB950" stop-opacity="0.3" />
+                        <stop offset="100%" stop-color="#3FB950" stop-opacity="0.25" />
+                    </linearGradient>
+                    @* Кривая раскрывается движением правой границы этой маски.
+                       Маска идёт ровно от первой точки до последней, поэтому
+                       момент раскрытия совпадает с задержкой появления точки:
+                       и то и другое отсчитывается по оси X. *@
+                    <clipPath id="@CurveClipId">
+                        <rect class="curve-reveal"
+                              x="@Format(PlotLeft)"
+                              y="0"
+                              width="@Format(PlotRight + 12 - PlotLeft)"
+                              height="260" />
+                    </clipPath>
+                </defs>
                 @if (Minimum < 0 && Maximum > 0)
                 {
-                    <line class="zero-line" x1="52" y1="@Format(Y(0))" x2="584" y2="@Format(Y(0))" />
+                    <line class="zero-line" x1="@Format(PlotLeft)" y1="@Format(Y(0))" x2="@Format(PlotRight + 12)" y2="@Format(Y(0))" />
                 }
+                <line class="axis-line" x1="@Format(PlotLeft)" y1="@Format(PlotTop - 16)" x2="@Format(PlotLeft)" y2="@Format(PlotBottom + 18)" />
+                <line class="axis-line" x1="@Format(PlotLeft - 26)" y1="@Format(PlotBottom)" x2="@Format(PlotRight + 12)" y2="@Format(PlotBottom)" />
                 @if (Points.Count > 1)
                 {
-                    <polyline class="progress-line" points="@PolylinePoints" />
+                    <g clip-path="url(#@CurveClipId)">
+                        <path class="progress-line"
+                              style="stroke:url(#@LineGradientId)"
+                              d="@CurvePath" />
+                    </g>
                 }
             </svg>
 
-            @foreach (var tick in YAxisTicks)
-            {
-                <span class="axis-label y-axis-label" style="@YLabelStyle(tick)">@FormatPercent(tick)</span>
-            }
             @foreach (var tick in XAxisTicks)
             {
                 <span class="axis-label x-axis-label" style="@XLabelStyle(tick)">@tick.ToString("dd.MM", CultureInfo.CurrentCulture)</span>
             }
+            @foreach (var index in LabelledIndices)
+            {
+                var labelled = Points[index];
+                <span class="chart-value-label @LabelEdgeClass(index)"
+                      style="@MarkerStyle(labelled)">@FormatPercent(labelled.Percent)</span>
+            }
             @for (var index = 0; index < Points.Count; index++)
             {
+                @* Опорная точка не рисуется: от неё ведётся отсчёт, собственного
+                   изменения у неё нет. Подпись 0% при этом остаётся. *@
+                if (IsBaseline(index))
+                    continue;
+
                 var point = Points[index];
                 <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)"
                       style="@MarkerStyle(point)"
@@ -78,10 +110,25 @@
 </section>
 
 @code {
-    private const double PlotLeft = 52;
-    private const double PlotRight = 584;
-    private const double PlotTop = 20;
-    private const double PlotBottom = 218;
+    private const double PlotLeft = 34;
+    private const double PlotRight = 574;
+    private const double PlotTop = 38;
+    private const double PlotBottom = 206;
+    // Минимальный зазор между подписями как доля ширины поля. Подпись занимает
+    // около 55 пикселей при ширине поля порядка 790 в горизонтали.
+    private const double MinLabelGap = 0.075;
+
+    // Должно совпадать с длительностью chart-reveal в стилях.
+    private const double CurveDurationSeconds = 1.8;
+
+    // Идентификатор градиента уникален на экземпляр: несколько графиков на одной
+    // странице не должны ссылаться на чужой <defs>.
+    private readonly string _lineGradientId = $"progress-line-{Guid.NewGuid():N}";
+    private readonly string _curveClipId = $"progress-clip-{Guid.NewGuid():N}";
+
+    private string LineGradientId => _lineGradientId;
+
+    private string CurveClipId => _curveClipId;
 
     [Parameter, EditorRequired]
     public string Title { get; set; } = string.Empty;
@@ -92,18 +139,21 @@
     private DateTime StartDate => Points.Min(x => x.Date).Date;
     private DateTime EndDate => Points.Max(x => x.Date).Date;
 
+    // Пока значения неотрицательны, нижняя граница шкалы совпадает с нулём:
+    // горизонтальная ось становится базовой линией, от которой растёт кривая,
+    // как на референсе. Отрицательные значения по-прежнему получают запас снизу.
     private decimal Minimum
     {
         get
         {
             if (Points.Count == 0)
                 return 0;
-            var minimum = Math.Min(0, Points.Min(x => x.Percent));
-            var maximum = Math.Max(0, Points.Max(x => x.Percent));
-            if (minimum == maximum)
-                return minimum - 5;
-            var padding = Math.Max(2, (maximum - minimum) * .12m);
-            return Math.Floor(minimum - padding);
+            var lowest = Points.Min(x => x.Percent);
+            if (lowest >= 0)
+                return 0;
+            var highest = Math.Max(0, Points.Max(x => x.Percent));
+            var padding = Math.Max(2, (highest - lowest) * .12m);
+            return Math.Floor(lowest - padding);
         }
     }
 
@@ -113,19 +163,14 @@
         {
             if (Points.Count == 0)
                 return 5;
-            var minimum = Math.Min(0, Points.Min(x => x.Percent));
-            var maximum = Math.Max(0, Points.Max(x => x.Percent));
-            if (minimum == maximum)
-                return maximum + 5;
-            var padding = Math.Max(2, (maximum - minimum) * .12m);
-            return Math.Ceiling(maximum + padding);
+            var lowest = Math.Min(0, Points.Min(x => x.Percent));
+            var highest = Points.Max(x => x.Percent);
+            if (highest <= lowest)
+                return lowest + 5;
+            var padding = Math.Max(2, (highest - lowest) * .12m);
+            return Math.Ceiling(highest + padding);
         }
     }
-
-    private IReadOnlyList<decimal> YAxisTicks => Enumerable.Range(0, 5)
-        .Select(index => Minimum + (Maximum - Minimum) * index / 4)
-        .Reverse()
-        .ToList();
 
     private IReadOnlyList<DateTime> XAxisTicks
     {
@@ -144,9 +189,116 @@
         }
     }
 
-    private string PolylinePoints => string.Join(
-        " ",
-        Points.Select(point => $"{Format(X(point.Date))},{Format(Y(point.Percent))}"));
+    // Референс подписывает значение над каждой точкой. Подписи отбираются слева
+    // направо по фактическому зазору между точками, а не по номеру: при плотном
+    // ряде соседние подписи иначе наезжают друг на друга. Последняя точка
+    // подписывается всегда — при нехватке места уступает предыдущая.
+    private IReadOnlyList<int> LabelledIndices
+    {
+        get
+        {
+            var count = Points.Count;
+            if (count == 0)
+                return [];
+            if (count == 1)
+                return [0];
+
+            var kept = new List<int> { 0 };
+            var lastOffset = LabelOffset(0);
+
+            for (var index = 1; index < count - 1; index++)
+            {
+                var offset = LabelOffset(index);
+                if (offset - lastOffset < MinLabelGap)
+                    continue;
+                kept.Add(index);
+                lastOffset = offset;
+            }
+
+            var finalOffset = LabelOffset(count - 1);
+            while (kept.Count > 1 && finalOffset - LabelOffset(kept[^1]) < MinLabelGap)
+                kept.RemoveAt(kept.Count - 1);
+
+            kept.Add(count - 1);
+            return kept;
+        }
+    }
+
+    // Положение точки как доля ширины поля — в тех же единицах, что и left в стиле.
+    private double LabelOffset(int index) =>
+        X(Points[index].Date) / 600d;
+
+    // Монотонная кубическая интерполяция (Fritsch–Carlson): даёт плавную кривую
+    // референса и при этом не выносит линию за пределы фактических значений.
+    private string CurvePath
+    {
+        get
+        {
+            var plotted = Points
+                .Select(point => (X: X(point.Date), Y: Y(point.Percent)))
+                .ToList();
+
+            if (plotted.Count < 2)
+                return string.Empty;
+
+            var count = plotted.Count;
+            var widths = new double[count - 1];
+            var slopes = new double[count - 1];
+            for (var index = 0; index < count - 1; index++)
+            {
+                widths[index] = plotted[index + 1].X - plotted[index].X;
+                slopes[index] = widths[index] == 0
+                    ? 0
+                    : (plotted[index + 1].Y - plotted[index].Y) / widths[index];
+            }
+
+            var tangents = new double[count];
+            tangents[0] = slopes[0];
+            tangents[count - 1] = slopes[count - 2];
+            for (var index = 1; index < count - 1; index++)
+            {
+                tangents[index] = slopes[index - 1] * slopes[index] <= 0
+                    ? 0
+                    : (slopes[index - 1] + slopes[index]) / 2;
+            }
+
+            for (var index = 0; index < count - 1; index++)
+            {
+                if (slopes[index] == 0)
+                {
+                    tangents[index] = 0;
+                    tangents[index + 1] = 0;
+                    continue;
+                }
+
+                var start = tangents[index] / slopes[index];
+                var end = tangents[index + 1] / slopes[index];
+                var magnitude = start * start + end * end;
+                if (magnitude <= 9)
+                    continue;
+
+                var limiter = 3 / Math.Sqrt(magnitude);
+                tangents[index] = limiter * start * slopes[index];
+                tangents[index + 1] = limiter * end * slopes[index];
+            }
+
+            var path = new StringBuilder();
+            path.Append(CultureInfo.InvariantCulture, $"M {Format(plotted[0].X)} {Format(plotted[0].Y)}");
+            for (var index = 0; index < count - 1; index++)
+            {
+                var third = widths[index] / 3;
+                var firstX = plotted[index].X + third;
+                var firstY = plotted[index].Y + tangents[index] * third;
+                var secondX = plotted[index + 1].X - third;
+                var secondY = plotted[index + 1].Y - tangents[index + 1] * third;
+                path.Append(
+                    CultureInfo.InvariantCulture,
+                    $" C {Format(firstX)} {Format(firstY)}, {Format(secondX)} {Format(secondY)}, {Format(plotted[index + 1].X)} {Format(plotted[index + 1].Y)}");
+            }
+
+            return path.ToString();
+        }
+    }
 
     private string AccessibleSummary =>
         $"{Title}. Период с {StartDate:dd.MM.yyyy} по {EndDate:dd.MM.yyyy}. " +
@@ -170,14 +322,43 @@
         return PlotBottom - (PlotBottom - PlotTop) * ratio;
     }
 
-    private string MarkerStyle(ProgressChartPointApiResponse point) =>
-        $"left:{Format(X(point.Date) / 6)}%;top:{Format(Y(point.Percent) / 2.6)}%;";
+    // Первая точка отсчёта: без собственного маркера, поэтому её подпись
+    // остаётся обычной, даже когда она же является последней точкой ряда.
+    private bool IsBaseline(int index) =>
+        index == 0 && Points[0].Percent == 0;
+
+    private string LabelEdgeClass(int index) =>
+        index == 0
+            ? "leading"
+            : index == Points.Count - 1 ? "latest" : string.Empty;
+
+    // Точка всплывает в тот момент, когда прочерчиваемая линия доходит до неё,
+    // поэтому задержка берётся из фактического положения по оси, а не из номера:
+    // интервалы между тренировками неравномерные.
+    private string MarkerStyle(ProgressChartPointApiResponse point)
+    {
+        var horizontal = X(point.Date);
+        return $"left:{Format(horizontal / 6)}%;" +
+            $"top:{Format(Y(point.Percent) / 2.6)}%;" +
+            $"--draw-delay:{Format(DrawDelaySeconds(horizontal))}s;";
+    }
+
+    private double DrawDelaySeconds(double horizontal)
+    {
+        if (Points.Count < 2)
+            return 0;
+
+        var first = X(Points[0].Date);
+        var last = X(Points[^1].Date);
+        var span = last - first;
+        if (span <= 0)
+            return 0;
+
+        return CurveDurationSeconds * Math.Clamp((horizontal - first) / span, 0, 1);
+    }
 
     private string XLabelStyle(DateTime date) =>
-        $"left:{Format(X(date) / 6)}%;top:{Format((PlotBottom + 13) / 2.6)}%;";
-
-    private string YLabelStyle(decimal value) =>
-        $"left:{Format((PlotLeft - 7) / 6)}%;top:{Format(Y(value) / 2.6)}%;";
+        $"left:{Format(X(date) / 6)}%;top:{Format((PlotBottom + 16) / 2.6)}%;";
 
     private static string Format(double value) =>
         value.ToString("0.##", CultureInfo.InvariantCulture);

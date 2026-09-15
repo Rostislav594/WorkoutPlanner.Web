@@ -56,7 +56,7 @@
                         <span class="history-title">@item.WorkoutName</span>
                         <span class="history-date">
                             <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
-                            @item.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                            @item.Date.ToString("dd MMMM yyyy, HH:mm", RussianCulture)
                         </span>
                     </span>
                     <span class="history-card-aside">
@@ -85,7 +85,7 @@
                     <h2 id="history-title">@_selected.WorkoutName</h2>
                     <p>
                         <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
-                        @_selected.Date.ToLocalTime().ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                        @_selected.Date.ToString("dd MMMM yyyy, HH:mm", RussianCulture)
                     </p>
                 </div>
                 <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="Закрыть историю">

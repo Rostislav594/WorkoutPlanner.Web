@@ -104,8 +104,28 @@
     scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
 }
 
+/* Обёртка пересоздаётся по @key на каждый маршрут, поэтому анимация играет
+   заново при каждом переходе. Анимируются только opacity и transform — они
+   считаются композитором и не вызывают перерасчёт раскладки.
+   Без forwards намеренно: этот режим оставил бы transform: translateY(0)
+   навсегда, а ненулевой transform делает элемент containing block для
+   потомков с position: fixed — и модальные окна начинают позиционироваться
+   от него, а не от экрана. Конечные значения анимации и так равны обычным. */
 .page-transition {
     min-width: 0;
+    animation: page-fade-up .3s ease;
+}
+
+@keyframes page-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .home-shell,
@@ -282,4 +302,7 @@
         transition: none;
     }
 
+    .page-transition {
+        animation: none;
+    }
 }

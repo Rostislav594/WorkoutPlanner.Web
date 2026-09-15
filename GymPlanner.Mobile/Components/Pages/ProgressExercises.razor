@@ -102,11 +102,6 @@
                 <div class="chart-page-content">
                     <ProgressLineChart Title="Прогресс, %" Points="_exerciseProgress.Chart" />
 
-                    @if (_exerciseProgress.Chart.Count == 1)
-                    {
-                        <p class="chart-scale-note">Пока есть только одна точка. Кривая появится после второй сохранённой тренировки.</p>
-                    }
-
                     <div class="progress-summary">
                         <article class="summary-card">
                             <span class="card-icon growth-icon @TrendClass" aria-hidden="true">

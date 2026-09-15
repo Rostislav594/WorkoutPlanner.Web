@@ -342,46 +342,91 @@
 }
 
 .finish-button--hold {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
     touch-action: manipulation;
 }
 
-.finish-button--hold::before {
-    position: absolute;
-    z-index: 0;
+.finish-hold-overlay {
+    position: fixed;
+    z-index: 90;
     inset: 0;
-    border-radius: inherit;
-    background: var(--color-success);
-    content: "";
-    transform: scaleX(0);
-    transform-origin: center;
+    display: grid;
+    place-items: center;
+    padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
+        max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+    background: rgba(15, 15, 16, .72);
+    pointer-events: none;
+    animation: finish-overlay-enter .18s ease-out both;
 }
 
-.finish-button--hold.is-filling::before {
-    animation: finish-button-hold-fill 1.9s linear forwards;
+.finish-hold-animation {
+    width: clamp(148px, 42vw, 196px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
 }
 
-.finish-button-label {
-    position: relative;
-    z-index: 1;
-    transition: opacity .12s ease, transform .12s ease;
+.finish-hold-symbol {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
 }
 
-@keyframes finish-button-hold-fill {
-    to { transform: scaleX(1); }
+.finish-hold-glow,
+.finish-hold-progress,
+.finish-hold-check {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
-.finish-button--hold.is-filling .finish-button-label {
+.finish-hold-glow {
+    stroke-width: 6.32;
     opacity: 0;
-    transform: scale(.94);
+    filter: drop-shadow(0 0 clamp(19px, 5.5vw, 26px) #4fc46b);
+    animation: finish-glow-in .7s ease-out 2.6s forwards;
+}
+
+.finish-hold-progress {
+    stroke-dasharray: 327;
+    stroke-dashoffset: 327;
+    transform: rotate(-90deg);
+    transform-origin: 60px 60px;
+    animation: finish-circle-draw 1.9s linear forwards;
+    stroke-width: 6.32;
+}
+
+.finish-hold-check {
+    stroke: var(--color-text);
+    stroke-width: 4.75;
+    stroke-dasharray: 96;
+    stroke-dashoffset: 96;
+    animation: finish-check-draw .7s cubic-bezier(.22, 1, .36, 1) 1.9s forwards;
+}
+
+@keyframes finish-overlay-enter {
+    from { opacity: 0; }
+}
+
+@keyframes finish-circle-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes finish-check-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes finish-glow-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .finish-button--hold.is-filling::before {
-        animation-duration: .01ms;
-    }
+    .finish-hold-overlay { animation: none; }
+    .finish-hold-progress { animation-timing-function: steps(12, end); }
+    .finish-hold-check { animation-timing-function: steps(3, end); }
+    .finish-hold-glow { animation-timing-function: steps(4, end); }
 }
 
 .exercise-group { display: contents; }

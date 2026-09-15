@@ -335,13 +335,6 @@
     margin: 0;
 }
 
-.chart-scale-note {
-    margin: 10px 0 0;
-    color: var(--color-text-muted);
-    font-size: .875rem;
-    text-align: center;
-}
-
 .progress-summary {
     display: flex;
     flex-direction: column;
