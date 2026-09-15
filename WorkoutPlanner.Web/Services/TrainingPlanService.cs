@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Application.Mapping;
@@ -30,7 +30,9 @@ public sealed class TrainingPlanService : ITrainingPlanService
             .AsNoTracking()
             .Include(x => x.Exercises)
                 .ThenInclude(x => x.Sets)
-            .Where(x => x.UserId == userId)
+            // Черновик идущей свободной тренировки шаблоном не является и в
+            // списке планов человеку не нужен.
+            .Where(x => x.UserId == userId && !x.IsFreeDraft)
             .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
 

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
@@ -208,6 +208,93 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         {
             return ApiResult<CompleteFreeWorkoutResponse>.Failure(
                 "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult<FreeWorkoutDraftResponse>> StartFreeWorkoutDraftAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PostAsync(
+                "api/v1/workouts/free/draft",
+                content: null,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(
+                    null,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            }
+
+            var draft = await response.Content.ReadFromJsonAsync<
+                FreeWorkoutDraftResponse>(cancellationToken);
+            return draft is null
+                ? ApiResult<FreeWorkoutDraftResponse>.Failure(
+                    "Сервер вернул пустой черновик свободной тренировки.")
+                : ApiResult<FreeWorkoutDraftResponse>.Success(draft);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<FreeWorkoutDraftResponse>.Failure(
+                "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<OptionalApiResult<FreeWorkoutDraftResponse>> GetFreeWorkoutDraftAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.GetAsync(
+                "api/v1/workouts/free/draft",
+                cancellationToken);
+            // Черновика нет — значит свободная тренировка не идёт. Это обычное
+            // положение дел, а не ошибка.
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return OptionalApiResult<FreeWorkoutDraftResponse>.Empty();
+            if (!response.IsSuccessStatusCode)
+            {
+                return OptionalApiResult<FreeWorkoutDraftResponse>.Failure(
+                    [.. await MobileApiErrorReader.ReadAsync(
+                        response,
+                        cancellationToken)]);
+            }
+
+            var draft = await response.Content.ReadFromJsonAsync<
+                FreeWorkoutDraftResponse>(cancellationToken);
+            return draft is null
+                ? OptionalApiResult<FreeWorkoutDraftResponse>.Failure(
+                    "Сервер вернул пустой черновик свободной тренировки.")
+                : OptionalApiResult<FreeWorkoutDraftResponse>.Success(draft);
+        }
+        catch (HttpRequestException)
+        {
+            return OptionalApiResult<FreeWorkoutDraftResponse>.Failure(
+                "Нет соединения с сервером.");
+        }
+    }
+
+    public async Task<ApiResult> DiscardFreeWorkoutDraftAsync(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.DeleteAsync(
+                "api/v1/workouts/free/draft",
+                cancellationToken);
+            // Нечего отменять — цель уже достигнута, ошибкой это не считается.
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return ApiResult.Success;
+            return response.IsSuccessStatusCode
+                ? ApiResult.Success
+                : new(
+                    false,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult.Failure("Нет соединения с сервером.");
         }
     }
 

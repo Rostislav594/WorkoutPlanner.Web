@@ -1,4 +1,4 @@
-@page "/today"
+﻿@page "/today"
 @attribute [Authorize]
 @implements IDisposable
 @using WorkoutPlanner.Api.Contracts
@@ -9,7 +9,6 @@
 @inject IMobilePhotoPicker PhotoPicker
 @inject NavigationManager Navigation
 @inject MobileBackNavigationService BackNavigation
-@inject FreeWorkoutDraftStore FreeWorkoutDraftStore
 
 <section class="today-page" aria-busy="@_isLoading">
     <header class="today-header">
@@ -617,7 +616,10 @@
                  @onclick:stopPropagation="true">
             <span class="edit-workout-icon material-symbols-rounded" aria-hidden="true">bookmark_add</span>
             <h2 id="free-template-question">Сделать из сегодняшней тренировки шаблон?</h2>
-            <p>При выборе «Нет» тренировка сохранится только в истории.</p>
+            <div class="template-progress-note">
+                <p class="template-progress-note__text">Шаблон будет отслеживаться в графике прогресса. При выборе «Нет» тренировка сохранится только в истории.</p>
+                <span class="template-progress-note__mark material-symbols-rounded" aria-hidden="true">priority_high</span>
+            </div>
             @if (_templateErrors.Count > 0)
             {
                 <div class="editor-error" role="alert">@string.Join(" ", _templateErrors)</div>
@@ -625,7 +627,6 @@
             <div class="prompt-actions">
                 <button class="edit-workout-button" type="button" @onclick="OpenTemplateNamePrompt">Да</button>
                 <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithoutTemplateAsync">Нет</button>
-                <button class="text-button" type="button" disabled="@_isBusy" @onclick="CloseFreeTemplatePrompt">Отмена</button>
             </div>
         </section>
     </div>
@@ -773,8 +774,17 @@
     private bool _confirmPhotoDelete;
     private bool _isCreatingFreeExercise;
     private bool _isFinishHoldActive;
-    private bool _isFinishFillActive;
+    private bool _isFinishAnimationActive;
     private int _nextFreeExerciseId = -1;
+    /// <summary>
+    /// План черновика идущей свободной тренировки.
+    /// </summary>
+    /// <remarks>
+    /// Свободная тренировка живёт на сервере с самого начала, иначе её не видят
+    /// часы. Упражнения добавляются в этот план обычными эндпоинтами, поэтому
+    /// идентификаторы у них настоящие, а не выдуманные локально.
+    /// </remarks>
+    private int? _freeDraftPlanId;
     private int? _editActionExerciseId;
     private int? _freeEditorExerciseId;
     private ExerciseGroup? _supersetActionGroup;
@@ -1070,7 +1080,22 @@
         if (discardEmptyWorkout)
         {
             _isFreeWorkout = false;
-            FreeWorkoutDraftStore.Clear();
+            _ = DiscardFreeWorkoutDraftAsync();
+        }
+    }
+
+    /// <summary>
+    /// Убирает черновик с сервера, чтобы тренировка перестала числиться идущей.
+    /// </summary>
+    private async Task DiscardFreeWorkoutDraftAsync()
+    {
+        _freeDraftPlanId = null;
+        try
+        {
+            await LifecycleClient.DiscardFreeWorkoutDraftAsync(_disposeCts.Token);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
         }
     }
 
@@ -1107,7 +1132,7 @@
         _freeEditorDraft.ResizeSets(Math.Clamp(count, 1, 20));
     }
 
-    private void SaveFreeExerciseEdit()
+    private async Task SaveFreeExerciseEdit()
     {
         if (_freeEditorDraft is null)
             return;
@@ -1126,10 +1151,28 @@
         if (_freeEditorErrors.Count > 0)
             return;
 
+        if (_freeDraftPlanId is not { } planId)
+        {
+            _freeEditorErrors.Add("Свободная тренировка не начата.");
+            return;
+        }
+
+        // Упражнение уходит на сервер сразу, а не в конце тренировки: только так
+        // его увидят часы, и только так у подходов появляются настоящие
+        // идентификаторы, по которым часы смогут их закрывать.
         if (_isCreatingFreeExercise)
         {
-            _exercises.Add(_freeEditorDraft.Clone());
-            _nextFreeExerciseId--;
+            var created = await WorkoutClient.CreateExerciseAsync(
+                planId,
+                _freeEditorDraft.ToRequest(),
+                _disposeCts.Token);
+            if (!created.Succeeded || created.Value is not { } createdExercise)
+            {
+                _freeEditorErrors.AddRange(created.Errors);
+                return;
+            }
+
+            _exercises.Add(ExerciseDraft.From(createdExercise));
         }
         else
         {
@@ -1140,10 +1183,19 @@
             if (index < 0)
                 return;
 
-            _exercises[index] = _freeEditorDraft.Clone();
+            var updated = await WorkoutClient.UpdateExerciseAsync(
+                exerciseId,
+                _freeEditorDraft.ToRequest(),
+                _disposeCts.Token);
+            if (!updated.Succeeded || updated.Value is not { } updatedExercise)
+            {
+                _freeEditorErrors.AddRange(updated.Errors);
+                return;
+            }
+
+            _exercises[index] = ExerciseDraft.From(updatedExercise);
         }
 
-        PersistFreeWorkout();
         CloseFreeExerciseEditor();
     }
 
@@ -1331,23 +1383,29 @@
                 _restBetweenExercisesSeconds = profile.RestBetweenExercisesSeconds;
             }
 
-            var savedDraft = FreeWorkoutDraftStore.Load();
-            if (savedDraft is { IsActive: true } && savedDraft.Exercises.Count > 0)
+            // Черновик спрашивается у сервера, а не читается из памяти телефона:
+            // тренировку мог продолжать кто угодно из двух устройств, и правда
+            // о ней теперь одна — серверная.
+            var draftResult = await LifecycleClient.GetFreeWorkoutDraftAsync(
+                _disposeCts.Token);
+            if (draftResult.Succeeded && draftResult.Value is { } draft)
             {
-                _isFreeWorkout = true;
-                _workout = null;
-                _exercises.Clear();
-                _exercises.AddRange(savedDraft.Exercises.Select(ExerciseDraft.FromFree));
-                _nextFreeExerciseId = _exercises.Count == 0
-                    ? -1
-                    : _exercises.Min(exercise => exercise.Id) - 1;
-                return;
+                var draftPlan = await WorkoutClient.GetPlanAsync(
+                    draft.TrainingPlanId,
+                    _disposeCts.Token);
+                if (draftPlan.Succeeded && draftPlan.Value is { } plan)
+                {
+                    _isFreeWorkout = true;
+                    _freeDraftPlanId = draft.TrainingPlanId;
+                    _workout = null;
+                    _exercises.Clear();
+                    _exercises.AddRange(plan.Exercises.Select(ExerciseDraft.From));
+                    return;
+                }
             }
 
-            if (savedDraft is { IsActive: true })
-                FreeWorkoutDraftStore.Clear();
-
             _isFreeWorkout = false;
+            _freeDraftPlanId = null;
 
             var result = await LifecycleClient.StartTodayWorkoutAsync(
                 _disposeCts.Token);
@@ -1444,6 +1502,15 @@
             if (!await EnsureExerciseDefinitionsAsync())
                 return;
 
+            var draftResult = await LifecycleClient.StartFreeWorkoutDraftAsync(
+                _disposeCts.Token);
+            if (!draftResult.Succeeded || draftResult.Value is not { } draft)
+            {
+                _errors.AddRange(draftResult.Errors);
+                return;
+            }
+
+            _freeDraftPlanId = draft.TrainingPlanId;
             _isFreeWorkout = true;
             _exercises.Clear();
             OpenNewFreeExerciseEditor();
@@ -1707,16 +1774,23 @@
 
     private static string FormatDuration(int seconds) => $"{seconds / 60}:{seconds % 60:D2}";
 
-    private void RemoveFreeExercise()
+    private async Task RemoveFreeExercise()
     {
         if (!_isFreeWorkout || EditActionExercise is not { } exercise)
             return;
 
         var id = exercise.Id;
         CloseEditWorkoutAction();
+
+        var result = await WorkoutClient.DeleteExerciseAsync(id, _disposeCts.Token);
+        if (!result.Succeeded)
+        {
+            _errors.AddRange(result.Errors);
+            return;
+        }
+
         _exercises.RemoveAll(x => x.Id == id);
         _photoThumbnails.Remove(id);
-        PersistFreeWorkout();
     }
 
     private void CloseFreeTemplatePrompt()
@@ -1805,7 +1879,9 @@
                 : "Свободная тренировка сохранена только в истории — без календаря, шаблонов и графиков.";
             _isFreeWorkout = false;
             _exercises.Clear();
-            FreeWorkoutDraftStore.Clear();
+            // Черновик на сервере удаляется вместе с записью в историю, одной
+            // транзакцией, поэтому отдельного запроса здесь не нужно.
+            _freeDraftPlanId = null;
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -1848,18 +1924,9 @@
         _errors.Clear();
         try
         {
+            // Свободная тренировка идёт тем же путём, что и запланированная:
+            // её упражнения теперь живут на сервере и правятся так же.
             var groupId = (_exercises.Max(x => x.SupersetGroupId) ?? 0) + 1;
-            if (_isFreeWorkout)
-            {
-                foreach (var exercise in _exercises.Where(x => _supersetSelection.Contains(x.Id)))
-                    exercise.SupersetGroupId = groupId;
-
-                _showSupersetDialog = false;
-                _supersetSelection.Clear();
-                PersistFreeWorkout();
-                return;
-            }
-
             foreach (var exercise in _exercises.Where(x => _supersetSelection.Contains(x.Id)))
             {
                 exercise.SupersetGroupId = groupId;
@@ -1890,30 +1957,20 @@
         _errors.Clear();
         try
         {
-            if (_isFreeWorkout)
+            foreach (var exercise in group.Exercises)
             {
-                foreach (var exercise in group.Exercises)
-                    exercise.SupersetGroupId = null;
-            }
-            else
-            {
-                foreach (var exercise in group.Exercises)
+                exercise.SupersetGroupId = null;
+                var result = await WorkoutClient.UpdateExerciseAsync(exercise.Id, exercise.ToRequest(), _disposeCts.Token);
+                if (!result.Succeeded)
                 {
-                    exercise.SupersetGroupId = null;
-                    var result = await WorkoutClient.UpdateExerciseAsync(exercise.Id, exercise.ToRequest(), _disposeCts.Token);
-                    if (!result.Succeeded)
-                    {
-                        _errors.AddRange(result.Errors);
-                        return;
-                    }
-
-                    exercise.UpdateFrom(result.Value!);
+                    _errors.AddRange(result.Errors);
+                    return;
                 }
+
+                exercise.UpdateFrom(result.Value!);
             }
 
             CloseSupersetActions(force: true);
-            if (_isFreeWorkout)
-                PersistFreeWorkout();
         }
         finally
         {
@@ -1930,23 +1987,18 @@
         _errors.Clear();
         try
         {
-            if (!_isFreeWorkout)
+            foreach (var exercise in group.Exercises)
             {
-                foreach (var exercise in group.Exercises)
+                var result = await WorkoutClient.DeleteExerciseAsync(exercise.Id, _disposeCts.Token);
+                if (!result.Succeeded)
                 {
-                    var result = await WorkoutClient.DeleteExerciseAsync(exercise.Id, _disposeCts.Token);
-                    if (!result.Succeeded)
-                    {
-                        _errors.AddRange(result.Errors);
-                        return;
-                    }
+                    _errors.AddRange(result.Errors);
+                    return;
                 }
             }
 
             var ids = group.Exercises.Select(exercise => exercise.Id).ToHashSet();
             _exercises.RemoveAll(exercise => ids.Contains(exercise.Id));
-            if (_isFreeWorkout)
-                PersistFreeWorkout();
             CloseSupersetActions(force: true);
         }
         finally
@@ -1984,30 +2036,12 @@
 
     public void Dispose()
     {
-        PersistFreeWorkout();
         CancelExerciseHold();
         CancelFinishHold();
         CancelSupersetHold();
         BackNavigation.SetBackInterceptor(null);
         _disposeCts.Cancel();
         _disposeCts.Dispose();
-    }
-
-    private void PersistFreeWorkout()
-    {
-        if (!_isFreeWorkout)
-            return;
-
-        if (_exercises.Count == 0)
-        {
-            _isFreeWorkout = false;
-            FreeWorkoutDraftStore.Clear();
-            return;
-        }
-
-        FreeWorkoutDraftStore.Save(new FreeWorkoutDraft(
-            true,
-            _exercises.Select(exercise => exercise.ToFree()).ToList()));
     }
 
     private enum RestTimerKind { BetweenSets, BetweenExercises }
@@ -2063,28 +2097,6 @@
                 .Select(SetDraft.From));
             return draft;
         }
-
-        public static ExerciseDraft FromFree(FreeWorkoutExerciseDraft source)
-        {
-            var draft = new ExerciseDraft
-            {
-                Id = source.Id,
-                Name = source.Name,
-                ExerciseDefinitionId = source.ExerciseDefinitionId,
-                Status = source.Status,
-                SupersetGroupId = source.SupersetGroupId
-            };
-            draft.Sets.AddRange(source.Sets.Select(SetDraft.FromFree));
-            return draft;
-        }
-
-        public FreeWorkoutExerciseDraft ToFree() => new(
-            Id,
-            Name,
-            ExerciseDefinitionId,
-            Status,
-            SupersetGroupId,
-            Sets.Select(set => set.ToFree()).ToList());
 
         public SaveExerciseRequest ToRequest() => new(
             Name,
@@ -2172,21 +2184,5 @@
             Completed = source.Completed,
             IsWarmup = source.IsWarmup
         };
-
-        public static SetDraft FromFree(FreeWorkoutSetDraft source) => new()
-        {
-            SetNumber = source.SetNumber,
-            Repetitions = source.Repetitions,
-            Weight = source.Weight,
-            Completed = source.Completed,
-            IsWarmup = source.IsWarmup
-        };
-
-        public FreeWorkoutSetDraft ToFree() => new(
-            SetNumber,
-            Repetitions,
-            Weight,
-            Completed,
-            IsWarmup);
     }
 }

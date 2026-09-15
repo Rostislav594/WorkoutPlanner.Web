@@ -1,4 +1,4 @@
-@page "/calendar"
+﻿@page "/calendar"
 @attribute [Authorize]
 @implements IDisposable
 @using System.Globalization
@@ -6,7 +6,6 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IWorkoutLifecycleApiClient LifecycleClient
 @inject ILocalWorkoutReminderService ReminderService
-@inject FreeWorkoutDraftStore FreeWorkoutDraftStore
 
 <section class="calendar-page" aria-busy="@_isLoading">
     <header class="calendar-header">
@@ -219,8 +218,17 @@
     private LocalWorkoutReminder? _scheduledReminder;
     private bool _isLoading = true;
     private bool _isBusy;
+    /// <summary>
+    /// Идёт ли прямо сейчас свободная тренировка.
+    /// </summary>
+    /// <remarks>
+    /// Состояние спрашивается у сервера при загрузке, а не читается из памяти
+    /// телефона: тренировку могли начать и вести с часов.
+    /// </remarks>
+    private bool _hasFreeWorkoutDraft;
+
     private bool IsTodayBlockedByFreeWorkout =>
-        _selectedDate?.Date == DateTime.Today && FreeWorkoutDraftStore.HasActiveDraft;
+        _selectedDate?.Date == DateTime.Today && _hasFreeWorkoutDraft;
 
     private string MonthTitle => _currentMonth.ToString("MMMM yyyy", RussianCulture);
 
@@ -250,9 +258,13 @@
         var plansTask = loadPlans
             ? WorkoutClient.GetPlansAsync(_disposeCts.Token)
             : null;
+        var draftTask = LifecycleClient.GetFreeWorkoutDraftAsync(_disposeCts.Token);
 
         try
         {
+            var draftResult = await draftTask;
+            _hasFreeWorkoutDraft = draftResult.Succeeded && draftResult.Value is not null;
+
             if (plansTask is not null)
                 await Task.WhenAll(calendarTask, plansTask);
             else

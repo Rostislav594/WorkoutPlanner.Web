@@ -1282,6 +1282,36 @@
     line-height: 1.45;
 }
 
+/* Предупреждение о том, что без шаблона тренировка не попадёт в график:
+   текст в рамке цвета опасности, восклицательный знак справа от рамки.
+   Знак вынесен из потока и лежит в правом поле, а поле продублировано слева —
+   иначе он смещает рамку и она перестаёт быть по центру диалога. */
+.free-template-prompt .template-progress-note {
+    position: relative;
+    margin-top: 12px;
+    padding-inline: 38px;
+    text-align: left;
+}
+
+.free-template-prompt .template-progress-note__text {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-surface);
+    color: var(--color-danger-soft);
+}
+
+.free-template-prompt .template-progress-note__mark {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    color: var(--color-danger);
+    font-size: 28px;
+    line-height: 1;
+}
+
 .template-name-prompt .editor-field {
     text-align: left;
 }

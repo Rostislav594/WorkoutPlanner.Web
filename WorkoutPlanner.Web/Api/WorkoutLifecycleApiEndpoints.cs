@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
@@ -69,6 +69,20 @@ public static class WorkoutLifecycleApiEndpoints
             .Produces<CompleteFreeWorkoutResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+        freeWorkout.MapPost("/draft", StartFreeWorkoutDraftAsync)
+            .Produces<FreeWorkoutDraftResponse>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+        freeWorkout.MapGet("/draft", GetFreeWorkoutDraftAsync)
+            .Produces<FreeWorkoutDraftResponse>()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+        freeWorkout.MapDelete("/draft", DiscardFreeWorkoutDraftAsync)
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
@@ -256,6 +270,44 @@ public static class WorkoutLifecycleApiEndpoints
             $"/api/v1/history/{result.History.Id}",
             ToResponse(result.History));
     }
+
+    /// <summary>
+    /// Начинает свободную тренировку: создаёт черновик на сервере.
+    /// </summary>
+    /// <remarks>
+    /// С этого момента тренировку видят и телефон, и часы. Дальше упражнения и
+    /// подходы правятся обычными эндпоинтами планов по возвращённому
+    /// <c>TrainingPlanId</c> — своего набора у свободной тренировки нет.
+    /// </remarks>
+    private static async Task<IResult> StartFreeWorkoutDraftAsync(
+        IFreeWorkoutDraftService drafts,
+        CancellationToken cancellationToken)
+    {
+        var draft = await drafts.StartAsync(cancellationToken);
+        return Results.Ok(ToResponse(draft));
+    }
+
+    private static async Task<IResult> GetFreeWorkoutDraftAsync(
+        IFreeWorkoutDraftService drafts,
+        CancellationToken cancellationToken)
+    {
+        var draft = await drafts.GetAsync(cancellationToken);
+        return draft is null ? Results.NotFound() : Results.Ok(ToResponse(draft));
+    }
+
+    /// <summary>
+    /// Отменяет свободную тренировку, ничего не сохраняя в историю.
+    /// </summary>
+    private static async Task<IResult> DiscardFreeWorkoutDraftAsync(
+        IFreeWorkoutDraftService drafts,
+        CancellationToken cancellationToken)
+    {
+        var discarded = await drafts.DiscardAsync(cancellationToken);
+        return discarded ? Results.NoContent() : Results.NotFound();
+    }
+
+    private static FreeWorkoutDraftResponse ToResponse(FreeWorkoutDraftResult draft) =>
+        new(draft.TrainingPlanId, draft.WorkoutId, draft.WorkoutName, draft.AlreadyStarted);
 
     private static async Task<IResult> CompleteFreeWorkoutAsync(
         CompleteFreeWorkoutRequest request,

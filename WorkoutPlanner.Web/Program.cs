@@ -236,6 +236,7 @@ builder.Services.AddScoped<
     IExercisePhotoApplicationService,
     ExercisePhotoApplicationService>();
 builder.Services.AddScoped<ITrainingPlanService, TrainingPlanService>();
+builder.Services.AddScoped<IFreeWorkoutDraftService, FreeWorkoutDraftService>();
 builder.Services.AddScoped<IStarterPlanService, StarterPlanService>();
 builder.Services.AddScoped<ITodayWorkoutService, TodayWorkoutService>();
 builder.Services.AddScoped<IActiveWorkoutService, ActiveWorkoutService>();

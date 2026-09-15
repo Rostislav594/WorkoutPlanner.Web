@@ -17,3 +17,22 @@ public sealed record CompleteFreeWorkoutRequest(
 public sealed record CompleteFreeWorkoutResponse(
     WorkoutHistoryApiResponse History,
     int? TrainingPlanId);
+
+/// <summary>
+/// Черновик свободной тренировки, которая идёт прямо сейчас.
+/// </summary>
+/// <param name="TrainingPlanId">
+/// Идентификатор плана: по нему телефон правит упражнения обычными эндпоинтами
+/// планов, отдельного набора для свободной тренировки не нужно.
+/// </param>
+/// <param name="WorkoutId">
+/// Идентификатор активной тренировки — то же число, что увидят часы.
+/// </param>
+/// <param name="AlreadyStarted">
+/// Черновик уже существовал: повторный старт возвращает его, а не создаёт второй.
+/// </param>
+public sealed record FreeWorkoutDraftResponse(
+    int TrainingPlanId,
+    int WorkoutId,
+    string WorkoutName,
+    bool AlreadyStarted);

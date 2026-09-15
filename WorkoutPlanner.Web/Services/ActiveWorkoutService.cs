@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
@@ -44,8 +44,13 @@ public sealed class ActiveWorkoutService(
                 !x.IsCompleted)
             .OrderBy(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken);
+
+        // Запланированной на сегодня нет — возможно, человек начал свободную
+        // тренировку. Она живёт планом-черновиком и строки в календаре не имеет,
+        // поэтому ищется отдельно. Иначе часы, спрашивая активную тренировку,
+        // всегда получали бы «ничего» у того, кто не пользуется шаблонами.
         if (day is null)
-            return null;
+            return await LoadFreeDraftAsync(db, userId, today, cancellationToken);
 
         var plan = await db.TrainingPlans
             .AsNoTracking()
@@ -57,7 +62,42 @@ public sealed class ActiveWorkoutService(
         if (plan is null)
             return null;
 
-        var exercises = plan.Exercises
+        var exercises = ToActiveExercises(plan);
+
+        return new ActiveWorkout(
+            day.Id,
+            plan.Id,
+            plan.WorkoutName,
+            day.Date,
+            exercises);
+    }
+
+    private static async Task<ActiveWorkout?> LoadFreeDraftAsync(
+        WorkoutDbContext db,
+        string userId,
+        DateTime today,
+        CancellationToken cancellationToken)
+    {
+        var draft = await db.TrainingPlans
+            .AsNoTracking()
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.Sets)
+            .Where(x => x.UserId == userId && x.IsFreeDraft)
+            .OrderByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (draft is null)
+            return null;
+
+        return new ActiveWorkout(
+            FreeWorkoutDraftId.FromPlanId(draft.Id),
+            draft.Id,
+            draft.WorkoutName,
+            today,
+            ToActiveExercises(draft));
+    }
+
+    private static List<ActiveWorkoutExercise> ToActiveExercises(Models.TrainingPlan plan) =>
+        plan.Exercises
             .OrderBy(x => x.Id)
             .Select((exercise, index) => new ActiveWorkoutExercise(
                 exercise.Id,
@@ -70,14 +110,6 @@ public sealed class ActiveWorkoutService(
                     .Select(ToContract)
                     .ToList()))
             .ToList();
-
-        return new ActiveWorkout(
-            day.Id,
-            plan.Id,
-            plan.WorkoutName,
-            day.Date,
-            exercises);
-    }
 
     public async Task<WorkoutSetUpdateResult> UpdateSetAsync(
         int setId,

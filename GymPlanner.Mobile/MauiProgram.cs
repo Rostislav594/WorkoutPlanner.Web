@@ -20,7 +20,6 @@ public static class MauiProgram
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSingleton<Navigation.MobileBackNavigationService>();
 		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();
-		builder.Services.AddSingleton<Lifecycle.FreeWorkoutDraftStore>();
 		builder.Services.AddSingleton<Orientation.IScreenOrientationService,
 			Orientation.ScreenOrientationService>();
 		builder.Services.AddSingleton<MainPage>();

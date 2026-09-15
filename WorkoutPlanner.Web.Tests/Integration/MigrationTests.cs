@@ -25,14 +25,15 @@ public sealed class MigrationTests
         db.Users.AddRange(
             CreateIdentityUser("user-a"),
             CreateIdentityUser("user-b"));
-        db.TrainingPlans.Add(
-            new TrainingPlan
-            {
-                UserId = null,
-                WorkoutName = "Legacy global plan",
-                Date = DateTime.Today
-            });
         await db.SaveChangesAsync();
+
+        // Старая строка вставляется чистым SQL с перечислением колонок: модель
+        // EF описывает сегодняшнюю схему, а база здесь намеренно откачена назад.
+        // Через DbSet вставка ломалась бы при каждой новой колонке плана.
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO TrainingPlans (UserId, WorkoutName, Date)
+            VALUES (NULL, 'Legacy global plan', {DateTime.Today})
+            """);
 
         await db.Database.MigrateAsync();
 
@@ -84,25 +85,33 @@ public sealed class MigrationTests
         await db.Database.MigrateAsync("20260828132217_AddPushDeviceRegistrations");
 
         db.Users.Add(CreateIdentityUser("user-a"));
-        var plan = new TrainingPlan
+        await db.SaveChangesAsync();
+
+        // План — тоже старой схемы, поэтому идёт чистым SQL (см. пояснение выше).
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO TrainingPlans (UserId, WorkoutName, Date)
+            VALUES ('user-a', 'Existing plan', {DateTime.Today})
+            """);
+        var planId = await db.TrainingPlans
+            .IgnoreQueryFilters()
+            .Where(x => x.WorkoutName == "Existing plan")
+            .Select(x => x.Id)
+            .SingleAsync();
+
+        db.Exercises.Add(new Exercise
         {
             UserId = "user-a",
+            Name = "Existing exercise",
             WorkoutName = "Existing plan",
-            Date = DateTime.Today,
-            Exercises =
-            [
-                new Exercise
-                {
-                    UserId = "user-a",
-                    Name = "Existing exercise",
-                    WorkoutName = "Existing plan",
-                    Sets = []
-                }
-            ]
-        };
-        db.TrainingPlans.Add(plan);
+            TrainingPlanId = planId,
+            Sets = []
+        });
         await db.SaveChangesAsync();
-        var exerciseId = plan.Exercises[0].Id;
+        var exerciseId = await db.Exercises
+            .IgnoreQueryFilters()
+            .Where(x => x.TrainingPlanId == planId)
+            .Select(x => x.Id)
+            .SingleAsync();
         await db.Database.ExecuteSqlInterpolatedAsync($"""
             INSERT INTO ExerciseTemplateSets
                 (ExerciseId, SetNumber, Weight, Repetitions, Completed, IsWarmup)

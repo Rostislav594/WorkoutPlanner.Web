@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
@@ -15,8 +15,18 @@ public sealed class WorkoutCompletionService(
     TimeProvider timeProvider)
     : IWorkoutCompletionService
 {
-    public async Task<WorkoutCompletionResult> CompleteTodayAsync(
-        CancellationToken cancellationToken = default)
+    public Task<WorkoutCompletionResult> CompleteTodayAsync(
+        CancellationToken cancellationToken = default) =>
+        CompleteTodayAsync(workoutDayId: null, cancellationToken);
+
+    public Task<WorkoutCompletionResult> CompleteTodayAsync(
+        int workoutDayId,
+        CancellationToken cancellationToken = default) =>
+        CompleteTodayAsync((int?)workoutDayId, cancellationToken);
+
+    private async Task<WorkoutCompletionResult> CompleteTodayAsync(
+        int? workoutDayId,
+        CancellationToken cancellationToken)
     {
         var userId = await currentUser.GetRequiredUserIdAsync();
         var now = timeProvider.GetLocalNow().DateTime;
@@ -28,6 +38,7 @@ public sealed class WorkoutCompletionService(
             .FirstOrDefaultAsync(
             x => x.UserId == userId &&
                  x.Date.Date == today &&
+                 (workoutDayId == null || x.Id == workoutDayId) &&
                  !x.IsCompleted,
             cancellationToken);
         if (day is null)
@@ -119,6 +130,84 @@ public sealed class WorkoutCompletionService(
             });
     }
 
+    public async Task<WorkoutCompletionResult> CompleteFreeDraftAsync(
+        int trainingPlanId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        var now = timeProvider.GetLocalNow().DateTime;
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            cancellationToken);
+
+        var draft = await db.TrainingPlans
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.Sets)
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.ExerciseDefinition)
+                    .ThenInclude(x => x!.SecondaryMuscles)
+            .FirstOrDefaultAsync(
+                x => x.Id == trainingPlanId &&
+                     x.UserId == userId &&
+                     x.IsFreeDraft,
+                cancellationToken);
+        if (draft is null)
+        {
+            return new(
+                false,
+                WorkoutCompletionFailure.NoScheduledWorkout,
+                null);
+        }
+
+        if (draft.Exercises.Count == 0)
+            return new(false, WorkoutCompletionFailure.NoExercises, null);
+
+        var snapshot = new WorkoutHistoryDetails
+        {
+            Exercises = draft.Exercises
+                .OrderBy(x => x.Id)
+                .Select(ToSnapshot)
+                .ToList()
+        };
+        var historyEntity = new Models.WorkoutHistory
+        {
+            UserId = userId,
+            WorkoutName = draft.WorkoutName,
+            Date = now,
+            Summary = string.Empty,
+            Details = JsonSerializer.Serialize(snapshot)
+        };
+        db.WorkoutHistory.Add(historyEntity);
+
+        await SaveProgressAsync(
+            db,
+            userId,
+            draft.WorkoutName,
+            draft.Exercises,
+            now,
+            cancellationToken);
+
+        // Черновик исчезает вместе с записью в историю: иначе и телефон, и часы
+        // продолжали бы показывать завершённую тренировку как идущую.
+        db.TrainingPlans.Remove(draft);
+
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return new(
+            true,
+            WorkoutCompletionFailure.None,
+            new WorkoutHistory
+            {
+                Id = historyEntity.Id,
+                WorkoutName = historyEntity.WorkoutName,
+                Date = historyEntity.Date,
+                Summary = historyEntity.Summary,
+                Details = historyEntity.Details
+            });
+    }
+
     public async Task<FreeWorkoutCompletionResult> CompleteFreeAsync(
         FreeWorkoutCompletion workout,
         CancellationToken cancellationToken = default)
@@ -176,7 +265,7 @@ public sealed class WorkoutCompletionService(
             WorkoutName = workoutName,
             Date = now,
             Summary = workout.SaveAsTemplate
-                ? "Выполнено как свободная тренировка и сохранено в шаблоны."
+                ? "Свободная тренировка · сохранена в шаблоны"
                 : "Свободная тренировка",
             Details = JsonSerializer.Serialize(historySnapshot)
         };
@@ -213,6 +302,16 @@ public sealed class WorkoutCompletionService(
         }
 
         db.WorkoutHistory.Add(historyEntity);
+
+        // Тренировка закончилась — черновик больше не активен и должен исчезнуть,
+        // иначе и телефон, и часы продолжали бы показывать её как идущую.
+        // Удаление идёт внутри той же транзакции, что и запись в историю.
+        var drafts = await db.TrainingPlans
+            .Where(x => x.UserId == userId && x.IsFreeDraft)
+            .ToListAsync(cancellationToken);
+        if (drafts.Count > 0)
+            db.TrainingPlans.RemoveRange(drafts);
+
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
