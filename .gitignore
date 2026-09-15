@@ -373,3 +373,6 @@ WorkoutPlanner.Web/wwwroot/WorkoutImages/
 **/firebase-service-account*.json
 **/service-account*.json
 .buildcheck/
+
+# Screenshots captured during on-device design QA
+/gymplanner-*.png
