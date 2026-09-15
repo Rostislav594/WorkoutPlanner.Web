@@ -10,11 +10,282 @@
 }
 
 .watch-pairing-card {
-    max-width: 620px;
+    min-width: 0;
     padding: clamp(20px, 4vw, 28px);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     background: var(--color-bg-elevated);
+}
+
+.watch-management-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, .85fr) minmax(360px, 1.15fr);
+    gap: var(--space-5);
+    align-items: start;
+}
+
+.watch-refresh-action,
+.watch-revoke-all-action,
+.watch-inline-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.watch-refresh-action:hover:not(:disabled),
+.watch-refresh-action:focus-visible:not(:disabled),
+.watch-inline-action:hover:not(:disabled),
+.watch-inline-action:focus-visible:not(:disabled) {
+    border-color: var(--color-success);
+    background: var(--color-surface-hover);
+}
+
+.watch-devices-panel {
+    min-width: 0;
+    padding: clamp(20px, 4vw, 28px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-elevated);
+}
+
+.watch-devices-heading,
+.watch-device-title-row,
+.watch-device-actions,
+.watch-revoked-device,
+.watch-confirmation-actions {
+    display: flex;
+    align-items: center;
+}
+
+.watch-devices-heading,
+.watch-device-title-row,
+.watch-revoked-device {
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.watch-devices-heading {
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+}
+
+.watch-devices-heading h2,
+.watch-device-title h3,
+.watch-devices-state h3,
+.watch-confirmation-dialog h2 {
+    margin: 0;
+    color: var(--color-text);
+}
+
+.watch-devices-heading h2 {
+    font-size: var(--text-section-title);
+}
+
+.watch-devices-heading p {
+    margin: var(--space-1) 0 0;
+    color: var(--color-text-muted);
+}
+
+.watch-revoke-all-action,
+.watch-inline-action-danger {
+    border-color: rgba(248, 81, 73, .55);
+    color: var(--color-danger-soft);
+}
+
+.watch-revoke-all-action:hover:not(:disabled),
+.watch-revoke-all-action:focus-visible:not(:disabled),
+.watch-inline-action-danger:hover:not(:disabled),
+.watch-inline-action-danger:focus-visible:not(:disabled) {
+    border-color: var(--color-danger);
+    background: var(--color-danger-surface);
+}
+
+.watch-devices-state {
+    padding: var(--space-6) var(--space-4);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+.watch-devices-state p {
+    margin: var(--space-2) 0 0;
+    line-height: 1.55;
+}
+
+.watch-devices-state-error {
+    border-color: rgba(248, 81, 73, .55);
+    background: var(--color-danger-surface);
+    color: var(--color-danger-soft);
+}
+
+.watch-devices-state-error .watch-inline-action {
+    margin-top: var(--space-4);
+}
+
+.watch-device-list {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.watch-device-card {
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-raised);
+}
+
+.watch-device-title {
+    min-width: 0;
+    flex: 1;
+}
+
+.watch-device-title h3 {
+    overflow-wrap: anywhere;
+    font-size: 1.05rem;
+}
+
+.watch-device-title label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 700;
+}
+
+.watch-device-name-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-elevated);
+    color: var(--color-text);
+    font: inherit;
+}
+
+.watch-device-validation {
+    display: block;
+    margin-top: var(--space-2);
+    color: var(--color-danger-soft);
+    font-size: var(--text-label);
+}
+
+.watch-device-status {
+    flex: none;
+    padding: 5px 9px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 999px;
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 700;
+}
+
+.watch-device-status-active {
+    border-color: rgba(63, 185, 80, .45);
+    background: var(--color-success-soft);
+    color: #adf0bd;
+}
+
+.watch-device-details {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-4) 0;
+}
+
+.watch-device-details div {
+    min-width: 0;
+}
+
+.watch-device-details dt {
+    margin-bottom: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+}
+
+.watch-device-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--color-text);
+    font-size: .92rem;
+}
+
+.watch-device-actions,
+.watch-confirmation-actions {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.watch-inline-action {
+    min-height: 40px;
+}
+
+.watch-inline-action-primary {
+    border-color: var(--color-success);
+    background: var(--color-success);
+}
+
+.watch-revoked-devices {
+    margin-top: var(--space-5);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+}
+
+.watch-revoked-devices summary {
+    min-height: 44px;
+    padding-top: var(--space-4);
+    color: var(--color-text-muted);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.watch-revoked-list {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+}
+
+.watch-revoked-device {
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-raised);
+}
+
+.watch-revoked-device strong,
+.watch-revoked-device span {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.watch-revoked-device strong {
+    color: var(--color-text);
+}
+
+.watch-revoked-device div > span {
+    margin-top: var(--space-1);
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+}
+
+.watch-confirmation-dialog p {
+    color: var(--color-text-muted);
+    line-height: 1.6;
+}
+
+.watch-confirmation-actions {
+    justify-content: flex-end;
+    margin-top: var(--space-5);
 }
 
 .watch-pairing-card h2 {
@@ -116,11 +387,30 @@
 }
 
 @media (max-width: 520px) {
+    .watch-devices-heading,
+    .watch-device-title-row,
+    .watch-revoked-device {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .watch-device-details {
+        grid-template-columns: 1fr;
+    }
+
+    .watch-refresh-action,
+    .watch-revoke-all-action,
     .watch-pairing-action {
         width: 100%;
     }
 
     .watch-pairing-code {
         letter-spacing: .1em;
+    }
+}
+
+@media (max-width: 1100px) {
+    .watch-management-grid {
+        grid-template-columns: 1fr;
     }
 }

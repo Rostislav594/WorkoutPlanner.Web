@@ -63,6 +63,9 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<WatchPairingCode> WatchPairingCodes =>
         Set<WatchPairingCode>();
 
+    public DbSet<WatchPairingRequest> WatchPairingRequests =>
+        Set<WatchPairingRequest>();
+
     public DbSet<WatchSyncOperation> WatchSyncOperations =>
         Set<WatchSyncOperation>();
 
@@ -198,6 +201,54 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
                 table.HasCheckConstraint(
                     "CK_WatchPairingCodes_AttemptCount",
                     "[AttemptCount] >= 0");
+            });
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .HasOne<IdentityUser>()
+            .WithMany()
+            .HasForeignKey(x => x.ApprovedByUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .HasIndex(x => x.RequestId)
+            .IsUnique();
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .HasIndex(x => x.ExpiresAtUtc);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.RequestId)
+            .HasMaxLength(64);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.PollTokenHash)
+            .HasMaxLength(256);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.DeviceId)
+            .HasMaxLength(160);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.DisplayName)
+            .HasMaxLength(120);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.DeviceModel)
+            .HasMaxLength(120);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .Property(x => x.AppVersion)
+            .HasMaxLength(40);
+
+        modelBuilder.Entity<WatchPairingRequest>()
+            .ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_WatchPairingRequests_Expiry",
+                    "[ExpiresAtUtc] > [CreatedAtUtc]");
+                table.HasCheckConstraint(
+                    "CK_WatchPairingRequests_PollCount",
+                    "[PollCount] >= 0");
             });
 
         modelBuilder.Entity<WatchSyncOperation>()

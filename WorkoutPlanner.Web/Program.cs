@@ -120,6 +120,18 @@ builder.Services.AddRateLimiter(options =>
                 AutoReplenishment = true
             }));
     options.AddPolicy(
+        WatchApiEndpoints.PairingStatusRateLimitPolicy,
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                // Часы опрашивают заявку раз в пару секунд, пока она жива.
+                PermitLimit = 150,
+                Window = TimeSpan.FromMinutes(5),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+    options.AddPolicy(
         WatchApiEndpoints.RefreshRateLimitPolicy,
         context => RateLimitPartition.GetFixedWindowLimiter(
             context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
@@ -199,13 +211,20 @@ builder.Services.AddOptions<WatchPairingOptions>()
         x => x.PairingCodeLifetime > TimeSpan.Zero &&
              x.AccessTokenLifetime > TimeSpan.Zero &&
              x.RefreshTokenLifetime > x.AccessTokenLifetime &&
-             x.MaximumPairingAttempts > 0,
+             x.MaximumPairingAttempts > 0 &&
+             x.PairingRequestLifetime > TimeSpan.Zero,
         "Wear OS token and pairing lifetimes must be positive and valid.")
+    .Validate(
+        x => x.ApproveUrlTemplate.Contains(
+            WatchPairingOptions.RequestIdPlaceholder,
+            StringComparison.Ordinal),
+        "WatchPairing:ApproveUrlTemplate must contain the {requestId} placeholder.")
     .ValidateOnStart();
 builder.Services.AddScoped<IPasswordHasher<WatchPairingCode>, PasswordHasher<WatchPairingCode>>();
 builder.Services.AddScoped<WatchTokenService>();
 builder.Services.AddScoped<WatchPairingService>();
 builder.Services.AddScoped<IWatchWorkoutService, WatchWorkoutService>();
+builder.Services.AddSingleton<IWorkoutRealtimeNotifier, WorkoutRealtimeNotifier>();
 builder.Services.AddScoped<AccountDeletionService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IProfileService, UserProfileService>();

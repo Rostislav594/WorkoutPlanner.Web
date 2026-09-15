@@ -2,6 +2,7 @@ using System.Security.Claims;
 using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
+using WorkoutPlanner.Localization;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Services.WearOs;
 
@@ -11,6 +12,9 @@ public static class WatchApiEndpoints
 {
     public const string PairingRateLimitPolicy = "WatchPairing";
     public const string PairingCodeRateLimitPolicy = "WatchPairingCode";
+
+    /// <summary>Опрос статуса заявки идёт чаще остального: часы ждут подтверждения.</summary>
+    public const string PairingStatusRateLimitPolicy = "WatchPairingStatus";
     public const string RefreshRateLimitPolicy = "WatchTokenRefresh";
 
     public static RouteGroupBuilder MapWatchApi(this IEndpointRouteBuilder endpoints)
@@ -36,6 +40,49 @@ public static class WatchApiEndpoints
             .ProducesProblem(StatusCodes.Status410Gone)
             .Produces(StatusCodes.Status429TooManyRequests);
 
+        // --- Сопряжение подтверждением на телефоне ---
+
+        watch.MapPost("/pair/request", StartPairingRequestAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting(PairingRateLimitPolicy)
+            .Produces<StartWatchPairingResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status429TooManyRequests);
+
+        watch.MapPost("/pair/status", PollPairingRequestAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting(PairingStatusRateLimitPolicy)
+            .Produces<WatchPairingStatusResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status429TooManyRequests);
+
+        watch.MapGet("/pair/requests/{requestId}", GetPairingRequestAsync)
+            .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
+            .Produces<WatchPairingRequestDetailsResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapPost("/pair/requests/{requestId}/approve", ApprovePairingRequestAsync)
+            .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status410Gone)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapPost("/pair/requests/{requestId}/reject", RejectPairingRequestAsync)
+            .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status410Gone)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         watch.MapPost("/token/refresh", RefreshAsync)
             .AllowAnonymous()
             .RequireRateLimiting(RefreshRateLimitPolicy)
@@ -50,10 +97,24 @@ public static class WatchApiEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
+        watch.MapPut("/devices/{deviceId}", RenameDeviceAsync)
+            .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
+            .Produces<WatchDeviceResponse>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         watch.MapDelete("/devices/{deviceId}", RevokeDeviceAsync)
             .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapDelete("/devices", RevokeAllDevicesAsync)
+            .RequireAuthorization(WatchAuthorization.ManagementPolicyName)
+            .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
@@ -72,6 +133,34 @@ public static class WatchApiEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound)
             .Produces<WatchSetConflictResponse>(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status410Gone)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapPut("/sets/{setId:int}", UpdateSetAsync)
+            .RequireAuthorization(WatchAuthorization.DevicePolicyName)
+            .Produces<WatchSetMutationResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces<WatchSetConflictResponse>(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status410Gone)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapPost("/sets/{setId:int}/undo", UndoSetAsync)
+            .RequireAuthorization(WatchAuthorization.DevicePolicyName)
+            .Produces<WatchSetMutationResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .Produces<WatchSetConflictResponse>(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status410Gone)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        watch.MapPost("/workouts/{workoutId:int}/finish", FinishWorkoutAsync)
+            .RequireAuthorization(WatchAuthorization.DevicePolicyName)
+            .Produces<FinishWatchWorkoutResponse>()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
@@ -119,6 +208,116 @@ public static class WatchApiEndpoints
         };
     }
 
+    private static async Task<IResult> StartPairingRequestAsync(
+        StartWatchPairingRequest request,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken)
+    {
+        var errors = ValidateDeviceMetadata(
+            request.DeviceId,
+            request.DisplayName,
+            request.DeviceModel,
+            request.AppVersion);
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
+
+        var response = await pairing.StartRequestAsync(request, cancellationToken);
+        return Results.Created("/api/watch/pair/request", response);
+    }
+
+    private static async Task<IResult> PollPairingRequestAsync(
+        WatchPairingStatusRequest request,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(request.RequestId))
+            errors[nameof(request.RequestId)] = ["Request ID is required."];
+        if (string.IsNullOrWhiteSpace(request.PollToken))
+            errors[nameof(request.PollToken)] = ["Poll token is required."];
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
+
+        var result = await pairing.PollRequestAsync(
+            request.RequestId,
+            request.PollToken,
+            cancellationToken);
+        if (result.Succeeded)
+            return Results.Ok(new WatchPairingStatusResponse(result.Status!, result.Tokens));
+
+        return result.Failure switch
+        {
+            WatchPairingRequestFailure.DeviceOwnedByAnotherUser => Problem(
+                StatusCodes.Status409Conflict,
+                "WATCH_DEVICE_ALREADY_PAIRED",
+                "The device is already paired with another account."),
+            _ => Problem(
+                StatusCodes.Status404NotFound,
+                "WATCH_PAIRING_REQUEST_NOT_FOUND",
+                "The pairing request does not exist.")
+        };
+    }
+
+    private static async Task<IResult> GetPairingRequestAsync(
+        string requestId,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken)
+    {
+        var details = await pairing.GetRequestAsync(requestId, cancellationToken);
+        return details is null
+            ? ApiProblems.Problem(
+                ApiErrorCodes.WatchPairingRequestNotFound,
+                "The pairing request does not exist.",
+                StatusCodes.Status404NotFound)
+            : Results.Ok(details);
+    }
+
+    private static async Task<IResult> ApprovePairingRequestAsync(
+        string requestId,
+        ClaimsPrincipal principal,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken) =>
+        ToDecisionResult(await pairing.ApproveRequestAsync(
+            GetRequiredUserId(principal),
+            requestId,
+            cancellationToken));
+
+    private static async Task<IResult> RejectPairingRequestAsync(
+        string requestId,
+        ClaimsPrincipal principal,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken) =>
+        ToDecisionResult(await pairing.RejectRequestAsync(
+            GetRequiredUserId(principal),
+            requestId,
+            cancellationToken));
+
+    private static IResult ToDecisionResult(WatchPairingDecisionResult result)
+    {
+        if (result.Succeeded)
+            return Results.NoContent();
+
+        return result.Failure switch
+        {
+            WatchPairingRequestFailure.Expired => ApiProblems.Problem(
+                ApiErrorCodes.WatchPairingRequestExpired,
+                "The pairing request has expired.",
+                StatusCodes.Status410Gone),
+            WatchPairingRequestFailure.AlreadyResolved => ApiProblems.Problem(
+                ApiErrorCodes.WatchPairingRequestAlreadyResolved,
+                "The pairing request has already been answered.",
+                StatusCodes.Status409Conflict),
+            WatchPairingRequestFailure.DeviceOwnedByAnotherUser => ApiProblems.Problem(
+                ApiErrorCodes.WatchDeviceAlreadyPaired,
+                "The device is already paired with another account.",
+                StatusCodes.Status409Conflict),
+            _ => ApiProblems.Problem(
+                ApiErrorCodes.WatchPairingRequestNotFound,
+                "The pairing request does not exist.",
+                StatusCodes.Status404NotFound)
+        };
+    }
+
     private static async Task<IResult> RefreshAsync(
         RefreshWatchTokenRequest request,
         WatchPairingService pairing,
@@ -151,6 +350,33 @@ public static class WatchApiEndpoints
             GetRequiredUserId(principal),
             cancellationToken));
 
+    private static async Task<IResult> RenameDeviceAsync(
+        string deviceId,
+        RenameWatchDeviceRequest request,
+        ClaimsPrincipal principal,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.DisplayName) ||
+            request.DisplayName.Trim().Length > 120)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.DisplayName)] =
+                    ["Display name is required and must not exceed 120 characters."]
+            });
+        }
+
+        var device = await pairing.RenameAsync(
+            GetRequiredUserId(principal),
+            deviceId,
+            request.DisplayName,
+            cancellationToken);
+        return device is null
+            ? Results.NotFound()
+            : Results.Ok(device);
+    }
+
     private static async Task<IResult> RevokeDeviceAsync(
         string deviceId,
         ClaimsPrincipal principal,
@@ -162,6 +388,17 @@ public static class WatchApiEndpoints
             cancellationToken)
             ? Results.NoContent()
             : Results.NotFound();
+
+    private static async Task<IResult> RevokeAllDevicesAsync(
+        ClaimsPrincipal principal,
+        WatchPairingService pairing,
+        CancellationToken cancellationToken)
+    {
+        await pairing.RevokeAllAsync(
+            GetRequiredUserId(principal),
+            cancellationToken);
+        return Results.NoContent();
+    }
 
     private static async Task<IResult> GetActiveWorkoutAsync(
         IWatchWorkoutService workouts,
@@ -184,7 +421,7 @@ public static class WatchApiEndpoints
                 "There is no active workout for today.");
         }
 
-        return Results.Ok(ToResponse(result.Workout));
+        return Results.Ok(ToResponse(result));
     }
 
     private static async Task<IResult> CompleteSetAsync(
@@ -212,9 +449,139 @@ public static class WatchApiEndpoints
             request.ClientVersion,
             request.ChangedAtUtc,
             cancellationToken);
+        return ToSetMutationResult(
+            result,
+            static (set, currentExerciseId, currentSetId, processedAtUtc) =>
+                new CompleteWatchSetResponse(
+                    set,
+                    currentExerciseId,
+                    currentSetId,
+                    processedAtUtc));
+    }
+
+    private static async Task<IResult> UpdateSetAsync(
+        int setId,
+        UpdateWatchSetRequest request,
+        ClaimsPrincipal principal,
+        IWatchWorkoutService workouts,
+        CancellationToken cancellationToken)
+    {
+        var errors = ValidateMutationRequest(
+            request.OperationId,
+            request.ChangedAtUtc,
+            request.ClientVersion);
+        if (!double.IsFinite(request.ActualWeight) ||
+            request.ActualWeight is < 0 or > 2000)
+        {
+            errors[nameof(request.ActualWeight)] =
+                ["Actual weight must be between 0 and 2000."];
+        }
+        if (request.ActualReps is < 1 or > 1000)
+        {
+            errors[nameof(request.ActualReps)] =
+                ["Actual repetitions must be between 1 and 1000."];
+        }
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
+
+        var result = await workouts.UpdateSetAsync(
+            GetRequiredWatchDeviceId(principal),
+            setId,
+            request.OperationId,
+            request.ActualWeight,
+            request.ActualReps,
+            request.ClientVersion,
+            request.ChangedAtUtc,
+            cancellationToken);
+        return ToSetMutationResult(
+            result,
+            static (set, currentExerciseId, currentSetId, processedAtUtc) =>
+                new WatchSetMutationResponse(
+                    set,
+                    currentExerciseId,
+                    currentSetId,
+                    processedAtUtc));
+    }
+
+    private static async Task<IResult> UndoSetAsync(
+        int setId,
+        UndoWatchSetRequest request,
+        ClaimsPrincipal principal,
+        IWatchWorkoutService workouts,
+        CancellationToken cancellationToken)
+    {
+        var errors = ValidateMutationRequest(
+            request.OperationId,
+            request.ChangedAtUtc,
+            request.ClientVersion);
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
+
+        var result = await workouts.UndoSetAsync(
+            GetRequiredWatchDeviceId(principal),
+            setId,
+            request.OperationId,
+            request.ClientVersion,
+            request.ChangedAtUtc,
+            cancellationToken);
+        return ToSetMutationResult(
+            result,
+            static (set, currentExerciseId, currentSetId, processedAtUtc) =>
+                new WatchSetMutationResponse(
+                    set,
+                    currentExerciseId,
+                    currentSetId,
+                    processedAtUtc));
+    }
+
+    private static async Task<IResult> FinishWorkoutAsync(
+        int workoutId,
+        ClaimsPrincipal principal,
+        IWatchWorkoutService workouts,
+        CancellationToken cancellationToken)
+    {
+        var result = await workouts.FinishWorkoutAsync(
+            GetRequiredWatchDeviceId(principal),
+            workoutId,
+            cancellationToken);
+        if (result.Succeeded)
+            return Results.Ok(new FinishWatchWorkoutResponse(workoutId, result.AlreadyFinished));
+
+        return result.Failure switch
+        {
+            FinishWatchWorkoutFailure.WorkoutNotReady => Problem(
+                StatusCodes.Status409Conflict,
+                "WORKOUT_NOT_READY_TO_FINISH",
+                "All workout sets must be completed before finishing from the watch."),
+            _ => Problem(
+                StatusCodes.Status404NotFound,
+                "WATCH_WORKOUT_NOT_FOUND",
+                "The workout does not belong to the active watch user.")
+        };
+    }
+
+    private static Dictionary<string, string[]> ValidateMutationRequest(
+        Guid operationId,
+        DateTime changedAtUtc,
+        long clientVersion)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (operationId == Guid.Empty)
+            errors[nameof(operationId)] = ["Operation ID is required."];
+        if (changedAtUtc == default)
+            errors[nameof(changedAtUtc)] = ["ChangedAtUtc is required."];
+        if (clientVersion < 0)
+            errors[nameof(clientVersion)] = ["Client version cannot be negative."];
+        return errors;
+    }
+
+    private static IResult ToSetMutationResult<TResponse>(
+        CompleteWatchSetResult result,
+        Func<WatchSetResponse, int?, int?, DateTime, TResponse> createResponse)
+    {
         if (result.Succeeded)
         {
-            return Results.Ok(new CompleteWatchSetResponse(
+            return Results.Ok(createResponse(
                 ToResponse(result.Set!),
                 result.CurrentExerciseId,
                 result.CurrentSetId,
@@ -229,7 +596,7 @@ public static class WatchApiEndpoints
                     "Workout set conflict",
                     StatusCodes.Status409Conflict,
                     "WORKOUT_SET_CONFLICT",
-                    "The set changed after the watch loaded it.",
+                    "The set changed after the watch loaded it or the requested state is no longer applicable.",
                     result.Set is null ? null : ToResponse(result.Set),
                     result.CurrentExerciseId,
                     result.CurrentSetId),
@@ -239,6 +606,10 @@ public static class WatchApiEndpoints
 
         return result.Failure switch
         {
+            CompleteWatchSetFailure.InvalidValues => Problem(
+                StatusCodes.Status400BadRequest,
+                "WATCH_SET_VALUES_INVALID",
+                "The requested weight or repetitions are invalid."),
             CompleteWatchSetFailure.WorkoutFinished => Problem(
                 StatusCodes.Status410Gone,
                 "WORKOUT_ALREADY_FINISHED",
@@ -257,19 +628,34 @@ public static class WatchApiEndpoints
     private static Dictionary<string, string[]> ValidatePairRequest(
         PairWatchRequest request)
     {
-        var errors = new Dictionary<string, string[]>();
+        var errors = ValidateDeviceMetadata(
+            request.DeviceId,
+            request.DisplayName,
+            request.DeviceModel,
+            request.AppVersion);
         if (request.Code is null ||
             request.Code.Length != 6 ||
             request.Code.Any(x => !char.IsAsciiDigit(x)))
             errors[nameof(request.Code)] = ["Pairing code must contain exactly six digits."];
-        if (string.IsNullOrWhiteSpace(request.DeviceId) || request.DeviceId.Trim().Length > 160)
-            errors[nameof(request.DeviceId)] = ["Device ID is required and must not exceed 160 characters."];
-        if (string.IsNullOrWhiteSpace(request.DisplayName) || request.DisplayName.Trim().Length > 120)
-            errors[nameof(request.DisplayName)] = ["Display name is required and must not exceed 120 characters."];
-        if (request.DeviceModel?.Trim().Length > 120)
-            errors[nameof(request.DeviceModel)] = ["Device model must not exceed 120 characters."];
-        if (request.AppVersion?.Trim().Length > 40)
-            errors[nameof(request.AppVersion)] = ["App version must not exceed 40 characters."];
+        return errors;
+    }
+
+    /// <summary>Общие ограничения метаданных устройства для обоих способов сопряжения.</summary>
+    private static Dictionary<string, string[]> ValidateDeviceMetadata(
+        string? deviceId,
+        string? displayName,
+        string? deviceModel,
+        string? appVersion)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (string.IsNullOrWhiteSpace(deviceId) || deviceId.Trim().Length > 160)
+            errors["DeviceId"] = ["Device ID is required and must not exceed 160 characters."];
+        if (string.IsNullOrWhiteSpace(displayName) || displayName.Trim().Length > 120)
+            errors["DisplayName"] = ["Display name is required and must not exceed 120 characters."];
+        if (deviceModel?.Trim().Length > 120)
+            errors["DeviceModel"] = ["Device model must not exceed 120 characters."];
+        if (appVersion?.Trim().Length > 40)
+            errors["AppVersion"] = ["App version must not exceed 40 characters."];
         return errors;
     }
 
@@ -280,29 +666,73 @@ public static class WatchApiEndpoints
             detail: detail,
             extensions: new Dictionary<string, object?> { ["code"] = code });
 
-    private static WatchActiveWorkoutResponse ToResponse(ActiveWorkout workout)
+    private static WatchActiveWorkoutResponse ToResponse(WatchActiveWorkoutResult result)
     {
+        var workout = result.Workout!;
         var exercises = workout.Exercises
             .Select(x => new WatchExerciseResponse(
                 x.ExerciseId,
                 x.Name,
                 x.Order,
+                x.SupersetGroupId,
                 x.Sets.Select(ToResponse).ToList()))
             .ToList();
-        var current = exercises
-            .SelectMany(exercise => exercise.Sets
-                .Where(set => !set.IsCompleted)
-                .Select(set => (exercise.ExerciseId, set.SetId)))
-            .FirstOrDefault();
+        var current = OrderSetsForWatch(workout)
+            .FirstOrDefault(x => !x.Set.Completed);
         return new WatchActiveWorkoutResponse(
             workout.WorkoutId,
             workout.WorkoutName,
             workout.ScheduledDate,
             StartedAtUtc: null,
             exercises,
-            current == default ? null : current.ExerciseId,
-            current == default ? null : current.SetId);
+            current is null ? null : current.ExerciseId,
+            current is null ? null : current.Set.SetId,
+            result.RestBetweenSetsSeconds,
+            result.RestBetweenExercisesSeconds,
+            FreeWorkoutDraftId.IsDraft(workout.WorkoutId));
     }
+
+    /// <summary>
+    /// Порядок, в котором часы ведут человека по тренировке.
+    /// </summary>
+    /// <remarks>
+    /// Упражнения вне суперсета идут подряд: все подходы одного, потом другого.
+    /// Внутри суперсета подходы чередуются кругами — первый подход каждого
+    /// упражнения группы, затем второй и так далее. Простой перебор по порядку
+    /// упражнений повёл бы человека неверно: суперсет тем и отличается, что
+    /// упражнения выполняются вперемежку.
+    /// </remarks>
+    private static IEnumerable<WatchOrderedSet> OrderSetsForWatch(ActiveWorkout workout)
+    {
+        var groups = workout.Exercises
+            .OrderBy(x => x.Order)
+            .GroupBy(x => x.SupersetGroupId is { } groupId ? $"s:{groupId}" : $"e:{x.ExerciseId}")
+            .Select(group => group.OrderBy(x => x.Order).ToList())
+            .OrderBy(group => group[0].Order);
+
+        foreach (var group in groups)
+        {
+            if (group.Count == 1)
+            {
+                foreach (var set in group[0].Sets.OrderBy(x => x.SetNumber))
+                    yield return new WatchOrderedSet(group[0].ExerciseId, set);
+                continue;
+            }
+
+            var rounds = group.Max(x => x.Sets.Count);
+            for (var round = 0; round < rounds; round++)
+            {
+                foreach (var exercise in group)
+                {
+                    var ordered = exercise.Sets.OrderBy(x => x.SetNumber).ToList();
+                    if (round < ordered.Count)
+                        yield return new WatchOrderedSet(exercise.ExerciseId, ordered[round]);
+                }
+            }
+        }
+    }
+
+    private sealed record WatchOrderedSet(int ExerciseId, ActiveWorkoutSet Set);
 
     private static WatchSetResponse ToResponse(ActiveWorkoutSet set) =>
         new(

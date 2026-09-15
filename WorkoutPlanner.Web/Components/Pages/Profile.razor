@@ -174,14 +174,34 @@
             @if (ActiveSection == ProfileSection.Watches)
             {
                 <section class="profile-panel">
-                    <div class="profile-heading">
-                        <p class="profile-kicker">Wear OS</p>
-                        <h1>Подключение часов</h1>
-                        <p>Создайте одноразовый код, чтобы связать часы с вашим аккаунтом.</p>
+                    <div class="profile-heading profile-heading-row">
+                        <div>
+                            <p class="profile-kicker">Wear OS</p>
+                            <h1>Подключённые часы</h1>
+                            <p>Подключайте часы и управляйте их доступом к вашему аккаунту.</p>
+                        </div>
+                        <button class="watch-refresh-action"
+                                type="button"
+                                disabled="@IsLoadingWatchDevices"
+                                aria-busy="@IsLoadingWatchDevices"
+                                @onclick="LoadWatchDevicesAsync">
+                            @(IsLoadingWatchDevices ? "Обновляем…" : "Обновить список")
+                        </button>
                     </div>
 
+                    @if (!string.IsNullOrWhiteSpace(WatchSuccessMessage))
+                    {
+                        <div class="profile-success" role="status">@WatchSuccessMessage</div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(WatchActionError))
+                    {
+                        <div class="watch-pairing-error" role="alert">@WatchActionError</div>
+                    }
+
+                    <div class="watch-management-grid">
                     <div class="watch-pairing-card">
-                        <h2>Код подключения</h2>
+                        <h2>Подключить новые часы</h2>
 
                         @if (!string.IsNullOrWhiteSpace(PairingCodeError))
                         {
@@ -225,9 +245,166 @@
                             @(IsCreatingPairingCode
                                 ? "Создаём код…"
                                 : PairingCode is null
-                                    ? "Подключить часы"
+                                    ? "Создать код"
                                     : "Создать новый код")
                         </button>
+                    </div>
+
+                    <div class="watch-devices-panel" aria-busy="@IsLoadingWatchDevices">
+                        <div class="watch-devices-heading">
+                            <div>
+                                <h2>Ваши устройства</h2>
+                                @if (WatchDevicesLoaded)
+                                {
+                                    <p>@ActiveWatchDevices.Count активных</p>
+                                }
+                            </div>
+                            @if (ActiveWatchDevices.Count > 0)
+                            {
+                                <button class="watch-revoke-all-action"
+                                        type="button"
+                                        disabled="@IsManagingWatches"
+                                        @onclick="ConfirmRevokeAllWatches">
+                                    Отключить все
+                                </button>
+                            }
+                        </div>
+
+                        @if (IsLoadingWatchDevices && !WatchDevicesLoaded)
+                        {
+                            <div class="watch-devices-state" role="status">
+                                Загружаем подключённые часы…
+                            </div>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(WatchDevicesError))
+                        {
+                            <div class="watch-devices-state watch-devices-state-error" role="alert">
+                                <p>@WatchDevicesError</p>
+                                <button class="watch-inline-action" type="button" @onclick="LoadWatchDevicesAsync">
+                                    Повторить
+                                </button>
+                            </div>
+                        }
+                        else if (ActiveWatchDevices.Count == 0)
+                        {
+                            <div class="watch-devices-state">
+                                <h3>Нет подключённых часов</h3>
+                                <p>Создайте код и введите его в приложении на часах.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="watch-device-list">
+                                @foreach (var device in ActiveWatchDevices)
+                                {
+                                    <article class="watch-device-card">
+                                        <div class="watch-device-title-row">
+                                            <div class="watch-device-title">
+                                                @if (EditingWatchDeviceId == device.DeviceId)
+                                                {
+                                                    <label for="watch-name-@device.Id">Название устройства</label>
+                                                    <input id="watch-name-@device.Id"
+                                                           class="watch-device-name-input"
+                                                           maxlength="120"
+                                                           disabled="@(ManagingWatchDeviceId == device.DeviceId)"
+                                                           @bind="EditingWatchDisplayName"
+                                                           @bind:event="oninput" />
+                                                    @if (!string.IsNullOrWhiteSpace(RenameValidationError))
+                                                    {
+                                                        <span class="watch-device-validation" role="alert">
+                                                            @RenameValidationError
+                                                        </span>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <h3>@device.DisplayName</h3>
+                                                }
+                                            </div>
+                                            <span class="watch-device-status watch-device-status-active">Подключены</span>
+                                        </div>
+
+                                        <dl class="watch-device-details">
+                                            <div>
+                                                <dt>Модель</dt>
+                                                <dd>@(device.DeviceModel ?? "Не указана")</dd>
+                                            </div>
+                                            <div>
+                                                <dt>Подключены</dt>
+                                                <dd><time datetime="@device.CreatedAtUtc.ToString("O")">@FormatDeviceDate(device.CreatedAtUtc)</time></dd>
+                                            </div>
+                                            <div>
+                                                <dt>Последняя активность</dt>
+                                                <dd>
+                                                    @if (device.LastSeenAtUtc is { } lastSeenAtUtc)
+                                                    {
+                                                        <time datetime="@lastSeenAtUtc.ToString("O")">@FormatDeviceDate(lastSeenAtUtc)</time>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>Ещё не было</span>
+                                                    }
+                                                </dd>
+                                            </div>
+                                        </dl>
+
+                                        <div class="watch-device-actions">
+                                            @if (EditingWatchDeviceId == device.DeviceId)
+                                            {
+                                                <button class="watch-inline-action watch-inline-action-primary"
+                                                        type="button"
+                                                        disabled="@(ManagingWatchDeviceId == device.DeviceId || string.IsNullOrWhiteSpace(EditingWatchDisplayName))"
+                                                        aria-busy="@(ManagingWatchDeviceId == device.DeviceId)"
+                                                        @onclick="() => RenameWatchDeviceAsync(device)">
+                                                    @(ManagingWatchDeviceId == device.DeviceId ? "Сохраняем…" : "Сохранить")
+                                                </button>
+                                                <button class="watch-inline-action"
+                                                        type="button"
+                                                        disabled="@(ManagingWatchDeviceId == device.DeviceId)"
+                                                        @onclick="CancelWatchRename">
+                                                    Отмена
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="watch-inline-action"
+                                                        type="button"
+                                                        disabled="@IsManagingWatches"
+                                                        @onclick="() => BeginWatchRename(device)">
+                                                    Переименовать
+                                                </button>
+                                                <button class="watch-inline-action watch-inline-action-danger"
+                                                        type="button"
+                                                        disabled="@IsManagingWatches"
+                                                        @onclick="() => ConfirmRevokeWatch(device)">
+                                                    Отключить
+                                                </button>
+                                            }
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        }
+
+                        @if (RevokedWatchDevices.Count > 0)
+                        {
+                            <details class="watch-revoked-devices">
+                                <summary>Отключённые устройства (@RevokedWatchDevices.Count)</summary>
+                                <div class="watch-revoked-list">
+                                    @foreach (var device in RevokedWatchDevices)
+                                    {
+                                        <div class="watch-revoked-device">
+                                            <div>
+                                                <strong>@device.DisplayName</strong>
+                                                <span>@(device.DeviceModel ?? "Модель не указана")</span>
+                                            </div>
+                                            <span class="watch-device-status">Отключены</span>
+                                        </div>
+                                    }
+                                </div>
+                            </details>
+                        }
+                    </div>
                     </div>
                 </section>
             }
@@ -236,25 +413,25 @@
         <aside class="profile-sidebar" aria-label="Разделы профиля">
             <button class="profile-tab @(ActiveSection == ProfileSection.Profile ? "active" : "")"
                     type="button"
-                    @onclick="() => ActiveSection = ProfileSection.Profile">
+                    @onclick="() => SelectSectionAsync(ProfileSection.Profile)">
                 Профиль
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Security ? "active" : "")"
                     type="button"
-                    @onclick="() => ActiveSection = ProfileSection.Security">
+                    @onclick="() => SelectSectionAsync(ProfileSection.Security)">
                 Настройки безопасности
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Training ? "active" : "")"
                     type="button"
-                    @onclick="() => ActiveSection = ProfileSection.Training">
+                    @onclick="() => SelectSectionAsync(ProfileSection.Training)">
                 Настройки тренировок
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Watches ? "active" : "")"
                     type="button"
-                    @onclick="() => ActiveSection = ProfileSection.Watches">
+                    @onclick="() => SelectSectionAsync(ProfileSection.Watches)">
                 Часы
             </button>
         </aside>
@@ -297,6 +474,45 @@
     </div>
 }
 
+@if (ShowWatchRevokeConfirmation)
+{
+    <div class="modal-overlay">
+        <div class="modal-window watch-confirmation-dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="watch-revoke-title">
+            <h2 id="watch-revoke-title">
+                @(RevokeAllWatchesRequested ? "Отключить все часы?" : "Отключить часы?")
+            </h2>
+            <p>
+                @if (RevokeAllWatchesRequested)
+                {
+                    <span>Все подключённые часы потеряют доступ к аккаунту. Для повторного подключения потребуется новый код.</span>
+                }
+                else
+                {
+                    <span>Устройство «@WatchPendingRevocation?.DisplayName» потеряет доступ к аккаунту. Для повторного подключения потребуется новый код.</span>
+                }
+            </p>
+            <div class="watch-confirmation-actions">
+                <button class="secondary-button"
+                        type="button"
+                        disabled="@IsManagingWatches"
+                        @onclick="CloseWatchRevokeConfirmation">
+                    Отмена
+                </button>
+                <button class="danger-button"
+                        type="button"
+                        disabled="@IsManagingWatches"
+                        aria-busy="@IsManagingWatches"
+                        @onclick="RevokeConfirmedWatchesAsync">
+                    @(IsManagingWatches ? "Отключаем…" : "Отключить")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private UserProfile? CurrentProfile { get; set; }
 
@@ -325,6 +541,44 @@
     private string? PairingCodeError { get; set; }
 
     private bool IsCreatingPairingCode { get; set; }
+
+    private IReadOnlyList<WatchDeviceResponse> WatchDevices { get; set; } = [];
+
+    private IReadOnlyList<WatchDeviceResponse> ActiveWatchDevices =>
+        WatchDevices.Where(x => !x.IsRevoked).ToList();
+
+    private IReadOnlyList<WatchDeviceResponse> RevokedWatchDevices =>
+        WatchDevices.Where(x => x.IsRevoked).ToList();
+
+    private bool WatchDevicesLoaded { get; set; }
+
+    private bool IsLoadingWatchDevices { get; set; }
+
+    private string? WatchDevicesError { get; set; }
+
+    private string? WatchActionError { get; set; }
+
+    private string? WatchSuccessMessage { get; set; }
+
+    private string? EditingWatchDeviceId { get; set; }
+
+    private string EditingWatchDisplayName { get; set; } = string.Empty;
+
+    private string? RenameValidationError { get; set; }
+
+    private string? ManagingWatchDeviceId { get; set; }
+
+    private WatchDeviceResponse? WatchPendingRevocation { get; set; }
+
+    private bool RevokeAllWatchesRequested { get; set; }
+
+    private bool IsRevokingWatches { get; set; }
+
+    private bool IsManagingWatches =>
+        ManagingWatchDeviceId is not null || IsRevokingWatches;
+
+    private bool ShowWatchRevokeConfirmation =>
+        WatchPendingRevocation is not null || RevokeAllWatchesRequested;
 
     private readonly CancellationTokenSource pairingCodeCancellation = new();
 
@@ -439,8 +693,194 @@
         }
     }
 
+    private async Task SelectSectionAsync(ProfileSection section)
+    {
+        ActiveSection = section;
+        if (section == ProfileSection.Watches && !WatchDevicesLoaded)
+            await LoadWatchDevicesAsync();
+    }
+
+    private async Task LoadWatchDevicesAsync()
+    {
+        if (IsLoadingWatchDevices)
+            return;
+
+        IsLoadingWatchDevices = true;
+        WatchDevicesError = null;
+        try
+        {
+            var userId = await CurrentUserService.GetRequiredUserIdAsync();
+            WatchDevices = await WatchPairingService.GetDevicesAsync(
+                userId,
+                pairingCodeCancellation.Token);
+            WatchDevicesLoaded = true;
+        }
+        catch (OperationCanceledException) when (pairingCodeCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to load watch devices.");
+            WatchDevicesError = "Не удалось загрузить список часов. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            IsLoadingWatchDevices = false;
+        }
+    }
+
+    private void BeginWatchRename(WatchDeviceResponse device)
+    {
+        WatchActionError = null;
+        WatchSuccessMessage = null;
+        RenameValidationError = null;
+        EditingWatchDeviceId = device.DeviceId;
+        EditingWatchDisplayName = device.DisplayName;
+    }
+
+    private void CancelWatchRename()
+    {
+        EditingWatchDeviceId = null;
+        EditingWatchDisplayName = string.Empty;
+        RenameValidationError = null;
+    }
+
+    private async Task RenameWatchDeviceAsync(WatchDeviceResponse device)
+    {
+        if (ManagingWatchDeviceId is not null)
+            return;
+
+        var displayName = EditingWatchDisplayName.Trim();
+        if (displayName.Length is 0 or > 120)
+        {
+            RenameValidationError = "Введите название длиной от 1 до 120 символов.";
+            return;
+        }
+
+        ManagingWatchDeviceId = device.DeviceId;
+        WatchActionError = null;
+        WatchSuccessMessage = null;
+        RenameValidationError = null;
+        try
+        {
+            var userId = await CurrentUserService.GetRequiredUserIdAsync();
+            var renamed = await WatchPairingService.RenameAsync(
+                userId,
+                device.DeviceId,
+                displayName,
+                pairingCodeCancellation.Token);
+            if (renamed is null)
+            {
+                WatchActionError = "Часы уже отключены или больше недоступны.";
+                await LoadWatchDevicesAsync();
+                return;
+            }
+
+            WatchDevices = WatchDevices
+                .Select(x => x.DeviceId == renamed.DeviceId ? renamed : x)
+                .ToList();
+            CancelWatchRename();
+            WatchSuccessMessage = "Название часов сохранено.";
+        }
+        catch (OperationCanceledException) when (pairingCodeCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to rename watch device {WatchDeviceId}.", device.Id);
+            WatchActionError = "Не удалось переименовать часы. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            ManagingWatchDeviceId = null;
+        }
+    }
+
+    private void ConfirmRevokeWatch(WatchDeviceResponse device)
+    {
+        WatchActionError = null;
+        WatchSuccessMessage = null;
+        WatchPendingRevocation = device;
+        RevokeAllWatchesRequested = false;
+    }
+
+    private void ConfirmRevokeAllWatches()
+    {
+        WatchActionError = null;
+        WatchSuccessMessage = null;
+        WatchPendingRevocation = null;
+        RevokeAllWatchesRequested = true;
+    }
+
+    private void CloseWatchRevokeConfirmation()
+    {
+        if (IsRevokingWatches)
+            return;
+
+        WatchPendingRevocation = null;
+        RevokeAllWatchesRequested = false;
+    }
+
+    private async Task RevokeConfirmedWatchesAsync()
+    {
+        if (IsRevokingWatches)
+            return;
+
+        var revokeAll = RevokeAllWatchesRequested;
+        var device = WatchPendingRevocation;
+        IsRevokingWatches = true;
+        ManagingWatchDeviceId = device?.DeviceId;
+        WatchActionError = null;
+        try
+        {
+            var userId = await CurrentUserService.GetRequiredUserIdAsync();
+            if (revokeAll)
+            {
+                await WatchPairingService.RevokeAllAsync(
+                    userId,
+                    pairingCodeCancellation.Token);
+                WatchSuccessMessage = "Все часы отключены.";
+            }
+            else if (device is not null)
+            {
+                var revoked = await WatchPairingService.RevokeAsync(
+                    userId,
+                    device.DeviceId,
+                    pairingCodeCancellation.Token);
+                WatchSuccessMessage = revoked
+                    ? $"Часы «{device.DisplayName}» отключены."
+                    : "Часы уже были отключены.";
+            }
+
+            WatchPendingRevocation = null;
+            RevokeAllWatchesRequested = false;
+            await LoadWatchDevicesAsync();
+        }
+        catch (OperationCanceledException) when (pairingCodeCancellation.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Failed to revoke watch access.");
+            WatchActionError = "Не удалось отключить часы. Попробуйте ещё раз.";
+        }
+        finally
+        {
+            ManagingWatchDeviceId = null;
+            IsRevokingWatches = false;
+        }
+    }
+
     private static string FormatExpiry(DateTime expiresAtUtc) =>
         expiresAtUtc.ToUniversalTime().ToString("dd.MM.yyyy, HH:mm");
+
+    private static string FormatDeviceDate(DateTime utcDate) =>
+        DateTime.SpecifyKind(utcDate, DateTimeKind.Utc)
+            .ToLocalTime()
+            .ToString("dd.MM.yyyy, HH:mm");
 
     private static string FormatCodeForSpeech(string code) =>
         string.Join(' ', code.ToCharArray());

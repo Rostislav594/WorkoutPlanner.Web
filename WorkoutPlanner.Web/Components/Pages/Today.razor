@@ -1,15 +1,19 @@
 @page "/today"
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
+@using WorkoutPlanner.Web.Services.Auth
 @using Microsoft.JSInterop
 
 @inject ITodayWorkoutService TodayWorkoutService
 @inject IExerciseService ExerciseService
 @inject IActiveWorkoutService ActiveWorkoutService
 @inject IWorkoutCompletionService WorkoutCompletionService
+@inject IWorkoutRealtimeNotifier WorkoutRealtimeNotifier
+@inject CurrentUserService CurrentUserService
 @inject IJSRuntime JS
 @inject ILogger<Today> Logger
 
@@ -37,6 +41,13 @@
                 <span>@TodayWorkout.WorkoutName</span>
 
             </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(LiveUpdateMessage))
+        {
+            <span class="visually-hidden" role="status" aria-atomic="true">
+                @LiveUpdateMessage
+            </span>
         }
 
     </div>
@@ -276,9 +287,21 @@
     TrainingPlan? TodayWorkout;
     List<Exercise> Exercises = new();
     HashSet<int> SavingSetIds = [];
+    IDisposable? RealtimeSubscription;
+    IDisposable? RealtimeFinishedSubscription;
+    string? LiveUpdateMessage;
+    bool IsDisposed;
 
     protected override async Task OnInitializedAsync()
     {
+        var userId = await CurrentUserService.GetRequiredUserIdAsync();
+        RealtimeSubscription = WorkoutRealtimeNotifier.Subscribe(
+            userId,
+            HandleWorkoutSetUpdatedAsync);
+        RealtimeFinishedSubscription = WorkoutRealtimeNotifier.SubscribeWorkoutFinished(
+            userId,
+            HandleWorkoutFinishedAsync);
+
         TodayWorkout =
             await TodayWorkoutService
                 .GetTodayWorkoutAsync();
@@ -290,6 +313,50 @@
                     .GetExercisesAsync(
                         TodayWorkout.WorkoutName);
         }
+    }
+
+    private Task HandleWorkoutSetUpdatedAsync(
+        WorkoutSetUpdatedNotification notification) =>
+        InvokeAsync(() =>
+        {
+            if (IsDisposed)
+                return;
+
+            var exercise = Exercises.FirstOrDefault(x =>
+                x.Sets.Any(set => set.Id == notification.Set.SetId));
+            var set = exercise?.Sets.FirstOrDefault(x =>
+                x.Id == notification.Set.SetId);
+            if (set is null || set.Version >= notification.Set.Version)
+                return;
+
+            set.SetNumber = notification.Set.SetNumber;
+            set.Weight = notification.Set.Weight;
+            set.Repetitions = notification.Set.Repetitions;
+            set.Completed = notification.Set.Completed;
+            set.IsWarmup = notification.Set.IsWarmup;
+            set.Version = notification.Set.Version;
+            LiveUpdateMessage =
+                $"Подход {set.SetNumber} упражнения «{exercise!.Name}» обновлён с часов.";
+            StateHasChanged();
+        });
+
+    private Task HandleWorkoutFinishedAsync(
+        WorkoutFinishedNotification notification) =>
+        InvokeAsync(() =>
+        {
+            if (IsDisposed || TodayWorkout is null)
+                return;
+
+            ShowWorkoutCompleted = true;
+            LiveUpdateMessage = "Тренировка завершена с часов.";
+            StateHasChanged();
+        });
+
+    public void Dispose()
+    {
+        IsDisposed = true;
+        RealtimeSubscription?.Dispose();
+        RealtimeFinishedSubscription?.Dispose();
     }
 
     void OpenStatusWindow(Exercise exercise)

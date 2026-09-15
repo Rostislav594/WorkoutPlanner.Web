@@ -14,4 +14,27 @@ public interface IWatchWorkoutService
         long expectedVersion,
         DateTime changedAtUtc,
         CancellationToken cancellationToken = default);
+
+    Task<CompleteWatchSetResult> UpdateSetAsync(
+        Guid watchDeviceId,
+        int setId,
+        Guid operationId,
+        double weight,
+        int repetitions,
+        long expectedVersion,
+        DateTime changedAtUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<CompleteWatchSetResult> UndoSetAsync(
+        Guid watchDeviceId,
+        int setId,
+        Guid operationId,
+        long expectedVersion,
+        DateTime changedAtUtc,
+        CancellationToken cancellationToken = default);
+
+    Task<FinishWatchWorkoutResult> FinishWorkoutAsync(
+        Guid watchDeviceId,
+        int workoutId,
+        CancellationToken cancellationToken = default);
 }
