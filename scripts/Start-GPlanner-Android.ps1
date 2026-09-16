@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$DeviceSerial,
     [switch]$BackendOnly,
@@ -62,18 +62,40 @@ function Get-ApiListener {
         Select-Object -First 1
 }
 
+function Get-HttpStatusFromError($errorRecord) {
+    # 401 от /api/v1/profile без токена — признак того, что backend уже поднялся.
+    # Оба хоста бросают на 4xx исключение, но разных типов: Windows PowerShell 5.1
+    # даёт System.Net.WebException, PowerShell 7 — HttpResponseException. Общий у них
+    # только Response.StatusCode, по нему и определяем код.
+    $response = $errorRecord.Exception.Response
+    if ($null -eq $response) {
+        return $null
+    }
+
+    try {
+        return [int]$response.StatusCode
+    }
+    catch {
+        return $null
+    }
+}
+
 function Wait-ForApi {
     $deadline = (Get-Date).AddSeconds(60)
     do {
         try {
             $response = Invoke-WebRequest -Uri 'http://127.0.0.1:5121/api/v1/profile' `
-                -UseBasicParsing -MaximumRedirection 0 -SkipHttpErrorCheck
+                -UseBasicParsing -MaximumRedirection 0 -TimeoutSec 5
             if ($response.StatusCode -in 200, 401, 403) {
                 return
             }
         }
         catch {
-            # API is still starting.
+            $status = Get-HttpStatusFromError $_
+            if ($null -ne $status -and $status -in 200, 401, 403) {
+                return
+            }
+            # Иначе API ещё поднимается.
         }
         Start-Sleep -Milliseconds 500
     } while ((Get-Date) -lt $deadline)
@@ -151,7 +173,25 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Не удалось установить Android-приложение.' }
 
     & $adbPath -s $device shell am force-stop com.gymplanner.mobile
-    & $adbPath -s $device shell monkey -p com.gymplanner.mobile 1 | Out-Null
+
+    # monkey печатает служебную строку "args: [...]" в stderr даже при успешном
+    # запуске. В Windows PowerShell 5.1 вывод native-команды в stderr становится
+    # ErrorRecord, а $ErrorActionPreference = 'Stop' делает его терминирующим,
+    # из-за чего скрипт падал уже ПОСЛЕ успешной установки и запуска приложения.
+    # Здесь важен только код возврата, поэтому stderr не должен прерывать работу.
+    $previousErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & $adbPath -s $device shell monkey -p com.gymplanner.mobile `
+            -c android.intent.category.LAUNCHER 1 | Out-Null
+        $launchExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+    }
+
+    if ($launchExitCode -ne 0) { throw 'Не удалось запустить приложение на устройстве.' }
+
     Write-Host 'GPlanner запущен на телефоне.' -ForegroundColor Green
 }
 finally {
