@@ -306,3 +306,51 @@
         animation: none;
     }
 }
+
+/* Экран отказа страницы. Показывается внутри области контента, поэтому шапка и
+   нижняя навигация остаются на месте и из сломанного раздела можно уйти. */
+.page-error {
+    display: grid;
+    justify-items: center;
+    gap: .6rem;
+    margin: 2rem auto;
+    padding: 1.6rem 1.25rem;
+    max-width: 22rem;
+    border: 1px solid var(--color-border-strong, #4a4a4d);
+    border-radius: var(--radius-xl, 1.5rem);
+    background: var(--color-surface-raised, #16191f);
+    text-align: center;
+}
+
+.page-error__icon {
+    color: var(--color-danger, #f85149);
+    font-family: "Material Symbols Rounded";
+    font-size: 40px;
+    line-height: 1;
+}
+
+.page-error__title {
+    margin: 0;
+    color: var(--color-text, #f5f5f5);
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.page-error__body {
+    margin: 0;
+    color: var(--color-text-muted, #a6a6ad);
+    font-size: .92rem;
+    line-height: 1.45;
+}
+
+.page-error__action {
+    min-height: 44px;
+    margin-top: .4rem;
+    padding: 0 1.4rem;
+    border: 1px solid var(--color-border-strong, #4a4a4d);
+    border-radius: var(--radius-sm, .7rem);
+    background: var(--color-surface, #111419);
+    color: var(--color-text, #f5f5f5);
+    font-size: .95rem;
+    font-weight: 650;
+}

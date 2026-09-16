@@ -30,7 +30,27 @@
     }
     <main class="mobile-content">
         <div class="page-transition" @key="CurrentPageKey">
-            @Body
+            @* Верхний перехват для рендерера. Необработанное исключение страницы
+               иначе сносит весь рендерер Blazor, и приложение просто замирает:
+               не работают ни кнопки, ни навигация, ни закрытие открытого диалога.
+               ErrorBoundary оставляет живыми шапку и нижнюю навигацию, поэтому
+               из сломанного раздела всегда можно уйти. Ключ страницы пересоздаёт
+               границу при переходе, так что отдельно сбрасывать её не нужно. *@
+            <ErrorBoundary @ref="_pageErrorBoundary">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent>
+                    <div class="page-error" role="alert">
+                        <span class="page-error__icon material-symbols-rounded" aria-hidden="true">error</span>
+                        <h2 class="page-error__title">@Text["Layout_PageErrorTitle"]</h2>
+                        <p class="page-error__body">@Text["Layout_PageErrorBody"]</p>
+                        <button class="page-error__action" type="button" @onclick="RetryFailedPage">
+                            @Text["Common_Retry"]
+                        </button>
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
         </div>
     </main>
     @if (!HidesApplicationNavigation)
@@ -62,6 +82,13 @@
 
 @code {
     private bool _checkingWelcomeGuide;
+    private ErrorBoundary? _pageErrorBoundary;
+
+    // Recover пересоздаёт содержимое границы, то есть страница инициализируется
+    // заново. Для сетевого сбоя этого достаточно; если причина устойчивая,
+    // экран ошибки просто появится снова, а не оставит пользователя в тупике.
+    private void RetryFailedPage() => _pageErrorBoundary?.Recover();
+
     private string CurrentPageKey =>
         Navigation.ToBaseRelativePath(Navigation.Uri);
     private bool IsHomePage => string.IsNullOrEmpty(

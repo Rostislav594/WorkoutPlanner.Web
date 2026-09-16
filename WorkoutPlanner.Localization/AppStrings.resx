@@ -3434,4 +3434,10 @@
   <data name="Help_ChartSample" xml:space="preserve">
     <value>Пример графика с демонстрационными данными</value>
   </data>
+  <data name="Layout_PageErrorTitle" xml:space="preserve">
+    <value>Раздел не открылся</value>
+  </data>
+  <data name="Layout_PageErrorBody" xml:space="preserve">
+    <value>Что-то пошло не так при загрузке. Остальное приложение работает — попробуйте снова или перейдите в другой раздел.</value>
+  </data>
 </root>

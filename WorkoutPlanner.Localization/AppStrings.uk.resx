@@ -3403,4 +3403,10 @@
   <data name="Help_ChartSample" xml:space="preserve">
     <value>Приклад графіка з демонстраційними даними</value>
   </data>
+  <data name="Layout_PageErrorTitle" xml:space="preserve">
+    <value>Розділ не відкрився</value>
+  </data>
+  <data name="Layout_PageErrorBody" xml:space="preserve">
+    <value>Щось пішло не так під час завантаження. Решта застосунку працює — спробуйте ще раз або перейдіть до іншого розділу.</value>
+  </data>
 </root>

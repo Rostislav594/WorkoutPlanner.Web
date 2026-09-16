@@ -3403,4 +3403,10 @@
   <data name="Help_ChartSample" xml:space="preserve">
     <value>Example chart with sample data</value>
   </data>
+  <data name="Layout_PageErrorTitle" xml:space="preserve">
+    <value>This section did not open</value>
+  </data>
+  <data name="Layout_PageErrorBody" xml:space="preserve">
+    <value>Something went wrong while loading it. The rest of the app still works, so try again or move to another section.</value>
+  </data>
 </root>

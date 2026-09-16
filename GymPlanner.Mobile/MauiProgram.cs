@@ -67,6 +67,7 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Notifications.IRemotePushTokenProvider,
 			Notifications.FirebasePushTokenProvider>();
 #endif
+		builder.Services.AddSingleton<Diagnostics.UnhandledErrorLogger>();
 		builder.Services.AddSingleton<Notifications.PushRegistrationCoordinator>();
 		builder.Services.AddSingleton<Notifications.InboxNotificationState>();
 		builder.Services.AddSingleton<Notifications.ILocalNotificationPlatform,
@@ -95,6 +96,10 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
+
+		// Подписка ставится до первого рендера: отказ во время запуска тоже
+		// должен попасть в журнал, а не исчезнуть молча.
+		app.Services.GetRequiredService<Diagnostics.UnhandledErrorLogger>().Attach();
 
 		// Язык надо поднять до первого рендера, иначе первый экран
 		// успеет отрисоваться на языке по умолчанию.
