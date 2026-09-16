@@ -49,6 +49,10 @@
 .shortcut-title { font-size: 12px; font-weight: 700; }
 
 .home-identity {
+    position: relative;
+    width: 100%;
+    height: min(42dvh, 360px);
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -57,21 +61,32 @@
 }
 
 .home-logo {
-    width: min(100%, 620px);
-    max-height: min(52dvh, 480px);
-    object-fit: contain;
-    animation: fade-up .45s ease forwards;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc((100vw - 64px) * 1.36);
+    max-width: none;
+    height: auto;
+    transform: translate(-52.4%, -50%);
+    animation: home-logo-fade .45s ease forwards;
 }
 
-@keyframes fade-up {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes home-logo-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @media (max-width: 360px) {
     .desktop-shortcuts { right: 0; gap: 2px; }
     .shortcut-tile { width: 68px; }
     .home-layout { padding-inline: 4px; }
+}
+
+@media (orientation: landscape) {
+    .home-layout { padding-block: 12px 8px; }
+    .desktop-shortcuts { right: 72px; }
+    .home-identity { height: min(50dvh, 220px); }
+    .home-logo { width: min(calc((100vw - 64px) * 1.36), 120dvh); }
 }
 
 @media (prefers-reduced-motion: reduce) {

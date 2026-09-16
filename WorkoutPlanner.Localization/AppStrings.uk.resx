@@ -157,4 +157,3250 @@
   <data name="Seconds_Many" xml:space="preserve">
     <value>{0} секунд</value>
   </data>
+  <data name="Nav_Today" xml:space="preserve">
+    <value>Сьогодні</value>
+  </data>
+  <data name="Nav_Workouts" xml:space="preserve">
+    <value>Тренування</value>
+  </data>
+  <data name="Nav_Home" xml:space="preserve">
+    <value>Головна</value>
+  </data>
+  <data name="Nav_History" xml:space="preserve">
+    <value>Історія</value>
+  </data>
+  <data name="Nav_Progress" xml:space="preserve">
+    <value>Прогрес</value>
+  </data>
+  <data name="Nav_Main" xml:space="preserve">
+    <value>Основна навігація</value>
+  </data>
+  <data name="Layout_BrandHome" xml:space="preserve">
+    <value>GymPlanner — головна</value>
+  </data>
+  <data name="Layout_OpenProfile" xml:space="preserve">
+    <value>Відкрити профіль</value>
+  </data>
+  <data name="Home_Tools" xml:space="preserve">
+    <value>Інструменти</value>
+  </data>
+  <data name="Home_Calendar" xml:space="preserve">
+    <value>Календар</value>
+  </data>
+  <data name="Home_Notebook" xml:space="preserve">
+    <value>Нотатник</value>
+  </data>
+  <data name="Progress_Title" xml:space="preserve">
+    <value>Прогрес</value>
+  </data>
+  <data name="Progress_Sections" xml:space="preserve">
+    <value>Розділи прогресу</value>
+  </data>
+  <data name="Progress_Exercises" xml:space="preserve">
+    <value>Вправи</value>
+  </data>
+  <data name="Progress_Workouts" xml:space="preserve">
+    <value>Тренування</value>
+  </data>
+  <data name="Common_Choose" xml:space="preserve">
+    <value>Оберіть</value>
+  </data>
+  <data name="Common_Password" xml:space="preserve">
+    <value>Пароль</value>
+  </data>
+  <data name="Notification_PageTitle" xml:space="preserve">
+    <value>Сповіщення</value>
+  </data>
+  <data name="Notification_Loading" xml:space="preserve">
+    <value>Завантажуємо сповіщення…</value>
+  </data>
+  <data name="Notification_NotFound" xml:space="preserve">
+    <value>Сповіщення не знайдено</value>
+  </data>
+  <data name="Notification_Close" xml:space="preserve">
+    <value>Закрити сповіщення</value>
+  </data>
+  <data name="Notification_ImageAlt" xml:space="preserve">
+    <value>Ілюстрація до публікації «{0}»</value>
+  </data>
+  <data name="Notification_Ticket" xml:space="preserve">
+    <value>Звернення {0}</value>
+  </data>
+  <data name="InboxType_SupportReply" xml:space="preserve">
+    <value>Техпідтримка</value>
+  </data>
+  <data name="InboxType_News" xml:space="preserve">
+    <value>Новини</value>
+  </data>
+  <data name="InboxType_Update" xml:space="preserve">
+    <value>Оновлення</value>
+  </data>
+  <data name="InboxType_System" xml:space="preserve">
+    <value>Системне повідомлення</value>
+  </data>
+  <data name="Inbox_Open" xml:space="preserve">
+    <value>Відкрити сповіщення</value>
+  </data>
+  <data name="Inbox_Center" xml:space="preserve">
+    <value>Центр сповіщень</value>
+  </data>
+  <data name="Inbox_ClearHint" xml:space="preserve">
+    <value>Утримуйте, щоб очистити історію</value>
+  </data>
+  <data name="Inbox_MarkAllRead" xml:space="preserve">
+    <value>Прочитати всі</value>
+  </data>
+  <data name="Inbox_Empty" xml:space="preserve">
+    <value>Нових повідомлень немає</value>
+  </data>
+  <data name="Inbox_UnreadDot" xml:space="preserve">
+    <value>Непрочитане</value>
+  </data>
+  <data name="Inbox_DeleteMessage" xml:space="preserve">
+    <value>Видалити повідомлення</value>
+  </data>
+  <data name="Inbox_ClearTitle" xml:space="preserve">
+    <value>Очистити історію сповіщень?</value>
+  </data>
+  <data name="Inbox_ClearDescription" xml:space="preserve">
+    <value>Усі повідомлення буде видалено без можливості відновлення.</value>
+  </data>
+  <data name="Inbox_Clear" xml:space="preserve">
+    <value>Очистити</value>
+  </data>
+  <data name="Inbox_Clearing" xml:space="preserve">
+    <value>Видаляємо…</value>
+  </data>
+  <data name="Inbox_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити сповіщення.</value>
+  </data>
+  <data name="Inbox_DeleteFailed" xml:space="preserve">
+    <value>Не вдалося видалити повідомлення.</value>
+  </data>
+  <data name="Inbox_ClearFailed" xml:space="preserve">
+    <value>Не вдалося видалити історію.</value>
+  </data>
+  <data name="Inbox_UnreadCount_One" xml:space="preserve">
+    <value>{0} непрочитане сповіщення</value>
+  </data>
+  <data name="Inbox_UnreadCount_Few" xml:space="preserve">
+    <value>{0} непрочитаних сповіщення</value>
+  </data>
+  <data name="Inbox_UnreadCount_Many" xml:space="preserve">
+    <value>{0} непрочитаних сповіщень</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Вхід</value>
+  </data>
+  <data name="Login_Submit" xml:space="preserve">
+    <value>Увійти</value>
+  </data>
+  <data name="Login_SubmitBusy" xml:space="preserve">
+    <value>Входимо…</value>
+  </data>
+  <data name="Login_NoAccount" xml:space="preserve">
+    <value>Немає акаунта?</value>
+  </data>
+  <data name="Login_CreateAccount" xml:space="preserve">
+    <value>Створити</value>
+  </data>
+  <data name="Register_Title" xml:space="preserve">
+    <value>Реєстрація</value>
+  </data>
+  <data name="Register_ConfirmPassword" xml:space="preserve">
+    <value>Повторіть пароль</value>
+  </data>
+  <data name="Register_Submit" xml:space="preserve">
+    <value>Створити акаунт</value>
+  </data>
+  <data name="Register_SubmitBusy" xml:space="preserve">
+    <value>Створюємо акаунт…</value>
+  </data>
+  <data name="Register_HaveAccount" xml:space="preserve">
+    <value>Акаунт уже є?</value>
+  </data>
+  <data name="Register_SignIn" xml:space="preserve">
+    <value>Увійти</value>
+  </data>
+  <data name="Validation_EmailRequired" xml:space="preserve">
+    <value>Введіть email.</value>
+  </data>
+  <data name="Validation_EmailInvalid" xml:space="preserve">
+    <value>Введіть коректний email.</value>
+  </data>
+  <data name="Validation_PasswordRequired" xml:space="preserve">
+    <value>Введіть пароль.</value>
+  </data>
+  <data name="Validation_PasswordTooShort" xml:space="preserve">
+    <value>Пароль має містити щонайменше 6 символів.</value>
+  </data>
+  <data name="Validation_PasswordsDoNotMatch" xml:space="preserve">
+    <value>Паролі не збігаються.</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Закрити</value>
+  </data>
+  <data name="Common_Settings" xml:space="preserve">
+    <value>Налаштування</value>
+  </data>
+  <data name="Common_Name" xml:space="preserve">
+    <value>Назва</value>
+  </data>
+  <data name="Common_Saving" xml:space="preserve">
+    <value>Зберігаємо…</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Видалити</value>
+  </data>
+  <data name="Common_Deleting" xml:space="preserve">
+    <value>Видаляємо…</value>
+  </data>
+  <data name="Common_Create" xml:space="preserve">
+    <value>Створити</value>
+  </data>
+  <data name="Common_Done" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="Workouts_Title" xml:space="preserve">
+    <value>Шаблони тренувань</value>
+  </data>
+  <data name="Workouts_Loading" xml:space="preserve">
+    <value>Завантажуємо шаблони…</value>
+  </data>
+  <data name="Workouts_OpenTemplate" xml:space="preserve">
+    <value>Відкрити шаблон {0}</value>
+  </data>
+  <data name="Workouts_TemplateSettings" xml:space="preserve">
+    <value>Налаштування шаблона {0}</value>
+  </data>
+  <data name="Workouts_AddTemplate" xml:space="preserve">
+    <value>Додати шаблон</value>
+  </data>
+  <data name="Workouts_TemplateActions" xml:space="preserve">
+    <value>Дії з шаблоном</value>
+  </data>
+  <data name="Workouts_Rename" xml:space="preserve">
+    <value>Змінити назву</value>
+  </data>
+  <data name="Workouts_DeleteTemplate" xml:space="preserve">
+    <value>Видалити шаблон</value>
+  </data>
+  <data name="Workouts_NewTemplate" xml:space="preserve">
+    <value>Новий шаблон</value>
+  </data>
+  <data name="Workouts_TemplateName" xml:space="preserve">
+    <value>Назва шаблона</value>
+  </data>
+  <data name="Workouts_DeleteTitle" xml:space="preserve">
+    <value>Видалити шаблон?</value>
+  </data>
+  <data name="Workouts_DeletePrefix" xml:space="preserve">
+    <value>Буде видалено шаблон</value>
+  </data>
+  <data name="Workouts_DeleteSuffix" xml:space="preserve">
+    <value>, його вправи, призначення в календарі та прогрес.</value>
+  </data>
+  <data name="Calendar_Title" xml:space="preserve">
+    <value>Календар</value>
+  </data>
+  <data name="Calendar_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити календар</value>
+  </data>
+  <data name="Calendar_PreviousMonth" xml:space="preserve">
+    <value>Попередній місяць</value>
+  </data>
+  <data name="Calendar_NextMonth" xml:space="preserve">
+    <value>Наступний місяць</value>
+  </data>
+  <data name="Calendar_Loading" xml:space="preserve">
+    <value>Завантажуємо календар…</value>
+  </data>
+  <data name="Calendar_WorkoutActions" xml:space="preserve">
+    <value>Дії з тренуванням</value>
+  </data>
+  <data name="Calendar_MoveToAnotherDate" xml:space="preserve">
+    <value>Перенести на іншу дату</value>
+  </data>
+  <data name="Calendar_PickNewDate" xml:space="preserve">
+    <value>Обрати нову дату тренування</value>
+  </data>
+  <data name="Calendar_SelectedDay" xml:space="preserve">
+    <value>Обраний день</value>
+  </data>
+  <data name="Calendar_FinishFreeWorkoutFirst" xml:space="preserve">
+    <value>Спочатку завершіть або видаліть вільне тренування на сьогодні.</value>
+  </data>
+  <data name="Calendar_AssignWorkout" xml:space="preserve">
+    <value>Призначити тренування</value>
+  </data>
+  <data name="Calendar_CreatePlanFirst" xml:space="preserve">
+    <value>Спочатку створіть тренувальний план.</value>
+  </data>
+  <data name="Calendar_DayInPast" xml:space="preserve">
+    <value>Цей день уже минув. Призначити тренування неможливо.</value>
+  </data>
+  <data name="Calendar_Assign" xml:space="preserve">
+    <value>Призначити</value>
+  </data>
+  <data name="Calendar_PickFutureDate" xml:space="preserve">
+    <value>Оберіть іншу поточну або майбутню дату.</value>
+  </data>
+  <data name="Calendar_ReminderTimeInvalid" xml:space="preserve">
+    <value>Вкажіть коректний час нагадування.</value>
+  </data>
+  <data name="Calendar_ReminderTimeSkipped" xml:space="preserve">
+    <value>Цей час пропускається під час переходу на літній час.</value>
+  </data>
+  <data name="Calendar_ReminderTimeInPast" xml:space="preserve">
+    <value>Час нагадування має бути в майбутньому.</value>
+  </data>
+  <data name="Calendar_CompletedSuffix" xml:space="preserve">
+    <value>, завершено</value>
+  </data>
+  <data name="Notebook_Back" xml:space="preserve">
+    <value>На головну</value>
+  </data>
+  <data name="Notebook_Subtitle" xml:space="preserve">
+    <value>Нотатки зберігаються на цьому пристрої.</value>
+  </data>
+  <data name="Notebook_Tabs" xml:space="preserve">
+    <value>Вкладки нотатника</value>
+  </data>
+  <data name="Notebook_TabHint" xml:space="preserve">
+    <value>{0}. Утримуйте, щоб перейменувати.</value>
+  </data>
+  <data name="Notebook_AddTab" xml:space="preserve">
+    <value>Додати вкладку</value>
+  </data>
+  <data name="Notebook_NoteText" xml:space="preserve">
+    <value>Текст нотатки {0}</value>
+  </data>
+  <data name="Notebook_Placeholder" xml:space="preserve">
+    <value>Почніть писати…</value>
+  </data>
+  <data name="Notebook_DeleteTab" xml:space="preserve">
+    <value>Видалити вкладку</value>
+  </data>
+  <data name="Notebook_NewTab" xml:space="preserve">
+    <value>Нова вкладка</value>
+  </data>
+  <data name="Notebook_NewName" xml:space="preserve">
+    <value>Нова назва</value>
+  </data>
+  <data name="Notebook_TabSettings" xml:space="preserve">
+    <value>Налаштування вкладки</value>
+  </data>
+  <data name="Notebook_RenameTab" xml:space="preserve">
+    <value>Перейменувати вкладку</value>
+  </data>
+  <data name="Notebook_DefaultTabName" xml:space="preserve">
+    <value>Нотатки</value>
+  </data>
+  <data name="Notebook_NameRequired" xml:space="preserve">
+    <value>Введіть назву вкладки.</value>
+  </data>
+  <data name="Notebook_NameTaken" xml:space="preserve">
+    <value>Вкладка з такою назвою вже є.</value>
+  </data>
+  <data name="WatchApprove_PageTitle" xml:space="preserve">
+    <value>Підключення годинника</value>
+  </data>
+  <data name="WatchApprove_Loading" xml:space="preserve">
+    <value>Завантажуємо запит…</value>
+  </data>
+  <data name="WatchApprove_Unavailable" xml:space="preserve">
+    <value>Запит недоступний</value>
+  </data>
+  <data name="WatchApprove_RetryHint" xml:space="preserve">
+    <value>Спробуйте почати підключення на годиннику заново.</value>
+  </data>
+  <data name="WatchApprove_Title" xml:space="preserve">
+    <value>Підключити годинник?</value>
+  </data>
+  <data name="WatchApprove_Scope" xml:space="preserve">
+    <value>Годинник отримає доступ до вашого активного тренування: зможе відмічати підходи, змінювати вагу й повтори та завершувати тренування.</value>
+  </data>
+  <data name="WatchApprove_Warning" xml:space="preserve">
+    <value>Підтверджуйте, лише якщо запит надійшов з вашого годинника просто зараз.</value>
+  </data>
+  <data name="WatchApprove_Connect" xml:space="preserve">
+    <value>Підключити</value>
+  </data>
+  <data name="WatchApprove_Connecting" xml:space="preserve">
+    <value>Підключаємо…</value>
+  </data>
+  <data name="WatchApprove_Reject" xml:space="preserve">
+    <value>Відхилити</value>
+  </data>
+  <data name="WatchApprove_AlreadyAnswered" xml:space="preserve">
+    <value>На цей запит уже відповіли.</value>
+  </data>
+  <data name="WatchApprove_Connected" xml:space="preserve">
+    <value>Годинник підключено</value>
+  </data>
+  <data name="WatchApprove_Rejected" xml:space="preserve">
+    <value>Запит відхилено</value>
+  </data>
+  <data name="WatchApprove_ActionFailed" xml:space="preserve">
+    <value>Не вдалося виконати дію.</value>
+  </data>
+  <data name="Common_Kg" xml:space="preserve">
+    <value>кг</value>
+  </data>
+  <data name="Common_Superset" xml:space="preserve">
+    <value>Суперсет</value>
+  </data>
+  <data name="Common_Exercise" xml:space="preserve">
+    <value>Вправа</value>
+  </data>
+  <data name="Common_SetNumber" xml:space="preserve">
+    <value>Підхід {0}</value>
+  </data>
+  <data name="Common_WarmupSet" xml:space="preserve">
+    <value>Розминковий</value>
+  </data>
+  <data name="Common_WorkingSet" xml:space="preserve">
+    <value>Робочий</value>
+  </data>
+  <data name="Common_SetCompleted" xml:space="preserve">
+    <value>Виконано</value>
+  </data>
+  <data name="Common_SetNotCompleted" xml:space="preserve">
+    <value>Не виконано</value>
+  </data>
+  <data name="Common_AndSeparator" xml:space="preserve">
+    <value> і </value>
+  </data>
+  <data name="Difficulty_Easy" xml:space="preserve">
+    <value>Легко</value>
+  </data>
+  <data name="Difficulty_Medium" xml:space="preserve">
+    <value>Середньо</value>
+  </data>
+  <data name="Difficulty_Hard" xml:space="preserve">
+    <value>Важко</value>
+  </data>
+  <data name="Difficulty_Max" xml:space="preserve">
+    <value>Межа</value>
+  </data>
+  <data name="Difficulty_NotRated" xml:space="preserve">
+    <value>Не оцінено</value>
+  </data>
+  <data name="History_Title" xml:space="preserve">
+    <value>Історія</value>
+  </data>
+  <data name="History_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити історію</value>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>Завантажуємо історію…</value>
+  </data>
+  <data name="History_EmptyTitle" xml:space="preserve">
+    <value>Історія поки порожня</value>
+  </data>
+  <data name="History_EmptyBody" xml:space="preserve">
+    <value>Завершені тренування та їхні результати з'являться тут.</value>
+  </data>
+  <data name="History_Open" xml:space="preserve">
+    <value>Відкрити історію тренування {0}</value>
+  </data>
+  <data name="History_Legacy" xml:space="preserve">
+    <value>Архівна</value>
+  </data>
+  <data name="History_Close" xml:space="preserve">
+    <value>Закрити історію</value>
+  </data>
+  <data name="History_SnapshotUnavailableTitle" xml:space="preserve">
+    <value>Деталі архівного запису недоступні</value>
+  </data>
+  <data name="History_SnapshotUnavailableBody" xml:space="preserve">
+    <value>Початкові дані збережено на сервері без змін, їх не буде перезаписано.</value>
+  </data>
+  <data name="History_SupersetLabel" xml:space="preserve">
+    <value>Суперсет {0}</value>
+  </data>
+  <data name="History_Round" xml:space="preserve">
+    <value>Коло {0}</value>
+  </data>
+  <data name="History_SupersetSetName" xml:space="preserve">
+    <value>{0} · підхід {1}</value>
+  </data>
+  <data name="History_DeleteWarning" xml:space="preserve">
+    <value>Видалити цей запис історії без можливості відновлення?</value>
+  </data>
+  <data name="History_DeleteConfirm" xml:space="preserve">
+    <value>Видалити остаточно</value>
+  </data>
+  <data name="History_DeleteEntry" xml:space="preserve">
+    <value>Видалити запис</value>
+  </data>
+  <data name="Progress_BackToSections" xml:space="preserve">
+    <value>Повернутися до розділів прогресу</value>
+  </data>
+  <data name="ProgressWorkouts_Title" xml:space="preserve">
+    <value>Прогрес тренувань</value>
+  </data>
+  <data name="ProgressExercises_Title" xml:space="preserve">
+    <value>Прогрес вправ</value>
+  </data>
+  <data name="Progress_LoadingWorkouts" xml:space="preserve">
+    <value>Завантажуємо тренування…</value>
+  </data>
+  <data name="ProgressWorkouts_EmptyTitle" xml:space="preserve">
+    <value>Немає тренувань для аналізу</value>
+  </data>
+  <data name="ProgressWorkouts_EmptyBody" xml:space="preserve">
+    <value>Створіть тренувальний план, щоб відстежувати його динаміку.</value>
+  </data>
+  <data name="ProgressExercises_EmptyTitle" xml:space="preserve">
+    <value>Немає вправ для аналізу</value>
+  </data>
+  <data name="ProgressExercises_EmptyBody" xml:space="preserve">
+    <value>Додайте вправи до тренувального плану, щоб відстежувати їхню динаміку.</value>
+  </data>
+  <data name="Progress_OpenWorkouts" xml:space="preserve">
+    <value>Відкрити тренування</value>
+  </data>
+  <data name="ProgressWorkouts_ClearHistory" xml:space="preserve">
+    <value>Очистити історію тренування {0}</value>
+  </data>
+  <data name="ProgressExercises_ClearHistory" xml:space="preserve">
+    <value>Очистити історію вправи {0}</value>
+  </data>
+  <data name="Progress_Last30Days" xml:space="preserve">
+    <value>Останні 30 днів · відносно першого тренування</value>
+  </data>
+  <data name="Progress_Loading" xml:space="preserve">
+    <value>Завантажуємо прогрес…</value>
+  </data>
+  <data name="Progress_ChartTitle" xml:space="preserve">
+    <value>Прогрес, %</value>
+  </data>
+  <data name="Progress_Growth" xml:space="preserve">
+    <value>Зростання</value>
+  </data>
+  <data name="Progress_GrowthSubtitle" xml:space="preserve">
+    <value>Відносно останнього тренування</value>
+  </data>
+  <data name="Progress_Best" xml:space="preserve">
+    <value>Найкращий результат</value>
+  </data>
+  <data name="Progress_BestSubtitle" xml:space="preserve">
+    <value>Максимальне зростання</value>
+  </data>
+  <data name="Progress_WorkoutsCount" xml:space="preserve">
+    <value>Тренувань</value>
+  </data>
+  <data name="Progress_WorkoutsTotalSubtitle" xml:space="preserve">
+    <value>Усього в історії</value>
+  </data>
+  <data name="Progress_WorkoutsLast30Subtitle" xml:space="preserve">
+    <value>За останні 30 днів</value>
+  </data>
+  <data name="Progress_NoRecordsTitle" xml:space="preserve">
+    <value>Немає записів за останні 30 днів</value>
+  </data>
+  <data name="ProgressWorkouts_NoRecordsBody" xml:space="preserve">
+    <value>Завершіть тренування, щоб тут з'явилася актуальна динаміка.</value>
+  </data>
+  <data name="ProgressExercises_NoRecordsBody" xml:space="preserve">
+    <value>Завершіть тренування, щоб тут з'явилася актуальна динаміка вправи.</value>
+  </data>
+  <data name="ProgressWorkouts_ClearTitle" xml:space="preserve">
+    <value>Очистити історію тренування?</value>
+  </data>
+  <data name="ProgressExercises_ClearTitle" xml:space="preserve">
+    <value>Очистити історію вправи?</value>
+  </data>
+  <data name="ProgressWorkouts_ClearBodyPrefix" xml:space="preserve">
+    <value>Буде видалено всю історію тренування</value>
+  </data>
+  <data name="ProgressExercises_ClearBodyPrefix" xml:space="preserve">
+    <value>Буде видалено історію вправи</value>
+  </data>
+  <data name="ProgressExercises_ClearBodyMiddle" xml:space="preserve">
+    <value>у тренуванні</value>
+  </data>
+  <data name="Progress_ClearWarning" xml:space="preserve">
+    <value>Цю дію не можна скасувати. Історія завершених тренувань не видаляється.</value>
+  </data>
+  <data name="ProgressWorkouts_Cleared" xml:space="preserve">
+    <value>Історію успішно видалено</value>
+  </data>
+  <data name="ProgressExercises_Cleared" xml:space="preserve">
+    <value>Історію вправи успішно видалено</value>
+  </data>
+  <data name="Gender_Male" xml:space="preserve">
+    <value>Чоловіча</value>
+  </data>
+  <data name="Gender_Female" xml:space="preserve">
+    <value>Жіноча</value>
+  </data>
+  <data name="Gender_Unspecified" xml:space="preserve">
+    <value>Не вказувати</value>
+  </data>
+  <data name="Common_Gender" xml:space="preserve">
+    <value>Стать</value>
+  </data>
+  <data name="Common_FirstName" xml:space="preserve">
+    <value>Ім'я</value>
+  </data>
+  <data name="Common_LastName" xml:space="preserve">
+    <value>Прізвище</value>
+  </data>
+  <data name="Common_BirthDate" xml:space="preserve">
+    <value>Дата народження</value>
+  </data>
+  <data name="Common_BirthDatePlaceholder" xml:space="preserve">
+    <value>ДД.ММ.РРРР</value>
+  </data>
+  <data name="ProfileSetup_Checking" xml:space="preserve">
+    <value>Перевіряємо профіль…</value>
+  </data>
+  <data name="ProfileSetup_Kicker" xml:space="preserve">
+    <value>Профіль користувача</value>
+  </data>
+  <data name="ProfileSetup_Title" xml:space="preserve">
+    <value>Налаштування профілю</value>
+  </data>
+  <data name="ProfileSetup_Subtitle" xml:space="preserve">
+    <value>Заповніть основні дані, щоб продовжити роботу з GPlanner.</value>
+  </data>
+  <data name="ProfileSetup_SelectGender" xml:space="preserve">
+    <value>Обрати стать</value>
+  </data>
+  <data name="ProfileSetup_Save" xml:space="preserve">
+    <value>Зберегти профіль</value>
+  </data>
+  <data name="Validation_BirthDateFormat" xml:space="preserve">
+    <value>Введіть дату народження у форматі ДД.ММ.РРРР.</value>
+  </data>
+  <data name="Validation_BirthDateInvalid" xml:space="preserve">
+    <value>Вкажіть коректну дату народження.</value>
+  </data>
+  <data name="Validation_FirstNameRequired" xml:space="preserve">
+    <value>Введіть ім'я.</value>
+  </data>
+  <data name="Validation_FirstNameTooLong" xml:space="preserve">
+    <value>Ім'я задовге.</value>
+  </data>
+  <data name="Validation_LastNameRequired" xml:space="preserve">
+    <value>Введіть прізвище.</value>
+  </data>
+  <data name="Validation_LastNameTooLong" xml:space="preserve">
+    <value>Прізвище задовге.</value>
+  </data>
+  <data name="Validation_BirthDateRequired" xml:space="preserve">
+    <value>Вкажіть дату народження.</value>
+  </data>
+  <data name="Validation_GenderRequired" xml:space="preserve">
+    <value>Оберіть стать.</value>
+  </data>
+  <data name="ProfileSection_PersonalData" xml:space="preserve">
+    <value>Особисті дані</value>
+  </data>
+  <data name="ProfileItem_PersonalInformation" xml:space="preserve">
+    <value>Особиста інформація</value>
+  </data>
+  <data name="ProfileItem_RestTimers" xml:space="preserve">
+    <value>Таймери відпочинку</value>
+  </data>
+  <data name="ProfileSection_Devices" xml:space="preserve">
+    <value>Пристрої</value>
+  </data>
+  <data name="ProfileItem_Watch" xml:space="preserve">
+    <value>Смарт-годинник Wear OS</value>
+  </data>
+  <data name="ProfileSection_Application" xml:space="preserve">
+    <value>Застосунок</value>
+  </data>
+  <data name="ProfileItem_Notifications" xml:space="preserve">
+    <value>Сповіщення</value>
+  </data>
+  <data name="ProfileSection_Data" xml:space="preserve">
+    <value>Дані</value>
+  </data>
+  <data name="ProfileItem_MyData" xml:space="preserve">
+    <value>Мої дані</value>
+  </data>
+  <data name="ProfileSection_Security" xml:space="preserve">
+    <value>Безпека</value>
+  </data>
+  <data name="ProfileItem_ChangePassword" xml:space="preserve">
+    <value>Змінити пароль</value>
+  </data>
+  <data name="ProfileSection_Support" xml:space="preserve">
+    <value>Підтримка</value>
+  </data>
+  <data name="ProfileItem_ReportProblem" xml:space="preserve">
+    <value>Повідомити про проблему</value>
+  </data>
+  <data name="ProfileSection_About" xml:space="preserve">
+    <value>Про застосунок</value>
+  </data>
+  <data name="ProfileItem_Privacy" xml:space="preserve">
+    <value>Політика конфіденційності</value>
+  </data>
+  <data name="ProfileItem_Version" xml:space="preserve">
+    <value>Версія</value>
+  </data>
+  <data name="ProfileItem_Logout" xml:space="preserve">
+    <value>Вийти з акаунта</value>
+  </data>
+  <data name="ProfileSection_DangerZone" xml:space="preserve">
+    <value>Небезпечна зона</value>
+  </data>
+  <data name="ProfileItem_DeleteAccount" xml:space="preserve">
+    <value>Видалити акаунт</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Профіль</value>
+  </data>
+  <data name="Profile_Loading" xml:space="preserve">
+    <value>Завантажуємо профіль…</value>
+  </data>
+  <data name="Profile_Avatar" xml:space="preserve">
+    <value>Аватар користувача</value>
+  </data>
+  <data name="Profile_SectionNotReady" xml:space="preserve">
+    <value>{0}. Розділ поки не налаштовано.</value>
+  </data>
+  <data name="Profile_EditTitle" xml:space="preserve">
+    <value>Редагувати профіль</value>
+  </data>
+  <data name="Profile_SaveChanges" xml:space="preserve">
+    <value>Зберегти зміни</value>
+  </data>
+  <data name="Profile_CurrentPassword" xml:space="preserve">
+    <value>Поточний пароль</value>
+  </data>
+  <data name="Profile_NewPassword" xml:space="preserve">
+    <value>Новий пароль</value>
+  </data>
+  <data name="Profile_ConfirmNewPassword" xml:space="preserve">
+    <value>Підтвердження нового пароля</value>
+  </data>
+  <data name="Profile_PasswordBusy" xml:space="preserve">
+    <value>Виконуємо…</value>
+  </data>
+  <data name="Profile_RestTimersHint" xml:space="preserve">
+    <value>Ці значення стануть часом за замовчуванням для всіх таймерів відпочинку.</value>
+  </data>
+  <data name="Profile_RestBetweenSets" xml:space="preserve">
+    <value>Між підходами, с.</value>
+  </data>
+  <data name="Profile_RestBetweenExercises" xml:space="preserve">
+    <value>Між вправами, с.</value>
+  </data>
+  <data name="Profile_ApplyToAllTimers" xml:space="preserve">
+    <value>Застосувати до всіх таймерів</value>
+  </data>
+  <data name="Profile_SupportEyebrow" xml:space="preserve">
+    <value>Довідка та підтримка</value>
+  </data>
+  <data name="Profile_SupportQuestion" xml:space="preserve">
+    <value>Що сталося?</value>
+  </data>
+  <data name="Profile_SupportPlaceholder" xml:space="preserve">
+    <value>Опишіть, що сталося...</value>
+  </data>
+  <data name="Profile_SupportHint" xml:space="preserve">
+    <value>Щонайменше 10 символів</value>
+  </data>
+  <data name="Profile_AddScreenshot" xml:space="preserve">
+    <value>Додати знімок екрана</value>
+  </data>
+  <data name="Profile_ScreenshotFormats" xml:space="preserve">
+    <value>JPG, PNG або WebP · до 5 МБ</value>
+  </data>
+  <data name="Profile_ScreenshotAlt" xml:space="preserve">
+    <value>Прикріплений знімок екрана</value>
+  </data>
+  <data name="Profile_ScreenshotAttached" xml:space="preserve">
+    <value>Знімок екрана прикріплено</value>
+  </data>
+  <data name="Profile_RemoveScreenshot" xml:space="preserve">
+    <value>Видалити знімок екрана</value>
+  </data>
+  <data name="Profile_NoSecrets" xml:space="preserve">
+    <value>Не вказуйте пароль та інші конфіденційні дані.</value>
+  </data>
+  <data name="Profile_Sending" xml:space="preserve">
+    <value>Надсилаємо…</value>
+  </data>
+  <data name="Profile_Send" xml:space="preserve">
+    <value>Надіслати</value>
+  </data>
+  <data name="Profile_DeleteAccountTitle" xml:space="preserve">
+    <value>Видалення акаунта</value>
+  </data>
+  <data name="Profile_DeleteAccountQuestion" xml:space="preserve">
+    <value>Ви справді хочете видалити акаунт?</value>
+  </data>
+  <data name="Profile_DeleteAccountWarning" xml:space="preserve">
+    <value>Буде видалено профіль, плани, історію тренувань, прогрес, фотографії та всі дані користувача.</value>
+  </data>
+  <data name="Profile_DeleteForever" xml:space="preserve">
+    <value>Видалити назавжди</value>
+  </data>
+  <data name="Profile_DefaultName" xml:space="preserve">
+    <value>Користувач GPlanner</value>
+  </data>
+  <data name="Profile_Saved" xml:space="preserve">
+    <value>Профіль збережено.</value>
+  </data>
+  <data name="Profile_RestTimerRange" xml:space="preserve">
+    <value>Вкажіть час від 5 секунд до 60 хвилин.</value>
+  </data>
+  <data name="Profile_RestTimersApplied" xml:space="preserve">
+    <value>Налаштування таймерів відпочинку застосовано до всіх таймерів.</value>
+  </data>
+  <data name="Profile_SupportTooShort" xml:space="preserve">
+    <value>Опишіть проблему хоча б у 10 символах.</value>
+  </data>
+  <data name="Profile_SupportSent" xml:space="preserve">
+    <value>Повідомлення надіслано до технічної підтримки. Номер звернення: {0}.</value>
+  </data>
+  <data name="ProfileItem_ConnectedDevices" xml:space="preserve">
+    <value>Підключені пристрої</value>
+  </data>
+  <data name="ProfileItem_Units" xml:space="preserve">
+    <value>Одиниці вимірювання</value>
+  </data>
+  <data name="ProfileItem_WorkoutSettings" xml:space="preserve">
+    <value>Налаштування тренувань</value>
+  </data>
+  <data name="ProfileItem_Appearance" xml:space="preserve">
+    <value>Зовнішній вигляд</value>
+  </data>
+  <data name="ProfileItem_Export" xml:space="preserve">
+    <value>Експорт даних</value>
+  </data>
+  <data name="ProfileItem_Sync" xml:space="preserve">
+    <value>Синхронізація</value>
+  </data>
+  <data name="ProfileItem_Sessions" xml:space="preserve">
+    <value>Активні сеанси</value>
+  </data>
+  <data name="ProfileItem_Help" xml:space="preserve">
+    <value>Довідка</value>
+  </data>
+  <data name="ProfileItem_AboutApp" xml:space="preserve">
+    <value>Про GPlanner</value>
+  </data>
+  <data name="ProfileSoon_Units" xml:space="preserve">
+    <value>Налаштування одиниць вимірювання з'явиться в одному з найближчих оновлень.</value>
+  </data>
+  <data name="ProfileSoon_WorkoutSettings" xml:space="preserve">
+    <value>Налаштування тренувань з'являться в одному з найближчих оновлень.</value>
+  </data>
+  <data name="ProfileSoon_Notifications" xml:space="preserve">
+    <value>Налаштування сповіщень скоро будуть доступні тут.</value>
+  </data>
+  <data name="ProfileSoon_Appearance" xml:space="preserve">
+    <value>Налаштування зовнішнього вигляду скоро будуть доступні тут.</value>
+  </data>
+  <data name="ProfileSoon_Export" xml:space="preserve">
+    <value>Експорт даних скоро буде доступний тут.</value>
+  </data>
+  <data name="ProfileSoon_Sync" xml:space="preserve">
+    <value>Синхронізація з'явиться в одному з найближчих оновлень.</value>
+  </data>
+  <data name="ProfileSoon_Sessions" xml:space="preserve">
+    <value>Керування активними сеансами скоро буде доступне тут.</value>
+  </data>
+  <data name="ProfileSoon_Help" xml:space="preserve">
+    <value>Розділ довідки скоро буде доступний тут.</value>
+  </data>
+  <data name="ProfileSoon_Privacy" xml:space="preserve">
+    <value>Політику конфіденційності скоро буде опубліковано тут.</value>
+  </data>
+  <data name="ProfileAbout_Description" xml:space="preserve">
+    <value>GPlanner допомагає планувати тренування та відстежувати прогрес.</value>
+  </data>
+  <data name="ProfileSetting_NotFoundTitle" xml:space="preserve">
+    <value>Налаштування не знайдено</value>
+  </data>
+  <data name="ProfileSetting_NotFoundDescription" xml:space="preserve">
+    <value>Поверніться до профілю та оберіть потрібний розділ.</value>
+  </data>
+  <data name="ProfileSetting_BackToProfile" xml:space="preserve">
+    <value>Повернутися до профілю</value>
+  </data>
+  <data name="ProfileSetting_PersonalDescription" xml:space="preserve">
+    <value>Оновіть особисті дані, які використовуються у вашому профілі.</value>
+  </data>
+  <data name="ProfileSetting_ExportTitle" xml:space="preserve">
+    <value>Експорт і синхронізація</value>
+  </data>
+  <data name="ProfileSetting_ExportDescription" xml:space="preserve">
+    <value>Інструменти експорту даних і синхронізації будуть доступні в цьому розділі.</value>
+  </data>
+  <data name="ProfileSetting_SupportHint" xml:space="preserve">
+    <value>Щонайменше 10 символів. Не вказуйте пароль та інші конфіденційні дані.</value>
+  </data>
+  <data name="ProfileSetting_ScreenshotAttached" xml:space="preserve">
+    <value>Прикріплено файл: {0}</value>
+  </data>
+  <data name="ProfileSetting_LogoutHint" xml:space="preserve">
+    <value>Ви вийдете з акаунта на цьому пристрої.</value>
+  </data>
+  <data name="ProfileSetting_DeleteWarning" xml:space="preserve">
+    <value>Буде видалено профіль, плани, історію тренувань і всі дані користувача.</value>
+  </data>
+  <data name="ProfileSetting_DeleteIrreversible" xml:space="preserve">
+    <value>Цю дію не можна скасувати.</value>
+  </data>
+  <data name="ProfileSetting_InstagramFailed" xml:space="preserve">
+    <value>Не вдалося відкрити Instagram. Відкрийте посилання вручну: {0}</value>
+  </data>
+  <data name="Common_Continue" xml:space="preserve">
+    <value>Продовжити</value>
+  </data>
+  <data name="Watch_ConnectTitle" xml:space="preserve">
+    <value>Підключити годинник</value>
+  </data>
+  <data name="Watch_ConnectHint" xml:space="preserve">
+    <value>Створіть одноразовий код і введіть його в застосунку GPlanner на годиннику.</value>
+  </data>
+  <data name="Watch_PairingCode" xml:space="preserve">
+    <value>Код підключення</value>
+  </data>
+  <data name="Watch_PairingCodeSpeech" xml:space="preserve">
+    <value>Код підключення годинника: {0}</value>
+  </data>
+  <data name="Watch_CodeValidUntil" xml:space="preserve">
+    <value>Дійсний до {0}. Новий код скасує попередній.</value>
+  </data>
+  <data name="Watch_CreatingCode" xml:space="preserve">
+    <value>Створюємо код…</value>
+  </data>
+  <data name="Watch_CreateCode" xml:space="preserve">
+    <value>Створити код</value>
+  </data>
+  <data name="Watch_CreateNewCode" xml:space="preserve">
+    <value>Створити новий код</value>
+  </data>
+  <data name="Watch_YourDevices" xml:space="preserve">
+    <value>Ваші пристрої</value>
+  </data>
+  <data name="Watch_ConnectedTitle" xml:space="preserve">
+    <value>Підключені годинники</value>
+  </data>
+  <data name="Watch_RefreshList" xml:space="preserve">
+    <value>Оновити список годинників</value>
+  </data>
+  <data name="Watch_LoadingDevices" xml:space="preserve">
+    <value>Завантажуємо пристрої…</value>
+  </data>
+  <data name="Watch_ListUnavailable" xml:space="preserve">
+    <value>Список пристроїв недоступний</value>
+  </data>
+  <data name="Watch_ListUnavailableHint" xml:space="preserve">
+    <value>Перевірте з'єднання та спробуйте завантажити список знову.</value>
+  </data>
+  <data name="Watch_RetryLoad" xml:space="preserve">
+    <value>Повторити завантаження</value>
+  </data>
+  <data name="Watch_NoDevices" xml:space="preserve">
+    <value>Годинник ще не підключено</value>
+  </data>
+  <data name="Watch_NoDevicesHint" xml:space="preserve">
+    <value>Створіть код вище та введіть його на годиннику.</value>
+  </data>
+  <data name="Watch_Disconnect" xml:space="preserve">
+    <value>Відключити</value>
+  </data>
+  <data name="Watch_DisconnectAll" xml:space="preserve">
+    <value>Відключити всі годинники</value>
+  </data>
+  <data name="Watch_DisconnectTitle" xml:space="preserve">
+    <value>Відключити годинник?</value>
+  </data>
+  <data name="Watch_DisconnectAllWarning" xml:space="preserve">
+    <value>Усі підключені годинники втратять доступ до акаунта.</value>
+  </data>
+  <data name="Watch_DisconnectOneWarning" xml:space="preserve">
+    <value>Годинник «{0}» втратить доступ до акаунта.</value>
+  </data>
+  <data name="Watch_Disconnecting" xml:space="preserve">
+    <value>Відключаємо…</value>
+  </data>
+  <data name="Watch_CodeCreated" xml:space="preserve">
+    <value>Код створено. Введіть його на годиннику.</value>
+  </data>
+  <data name="Watch_NoDeviceSelected" xml:space="preserve">
+    <value>Не обрано годинник для відключення.</value>
+  </data>
+  <data name="Watch_AllDisconnected" xml:space="preserve">
+    <value>Усі годинники відключено.</value>
+  </data>
+  <data name="Watch_OneDisconnected" xml:space="preserve">
+    <value>Годинник «{0}» відключено.</value>
+  </data>
+  <data name="Watch_NeverSynced" xml:space="preserve">
+    <value>Ще не синхронізувалися</value>
+  </data>
+  <data name="Watch_LastSeen" xml:space="preserve">
+    <value>Остання активність: {0}</value>
+  </data>
+  <data name="WorkoutDetails_BackToTemplates" xml:space="preserve">
+    <value>До шаблонів</value>
+  </data>
+  <data name="WorkoutDetails_DefaultTitle" xml:space="preserve">
+    <value>Тренування</value>
+  </data>
+  <data name="WorkoutDetails_Loading" xml:space="preserve">
+    <value>Завантажуємо тренування…</value>
+  </data>
+  <data name="WorkoutDetails_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити тренування</value>
+  </data>
+  <data name="WorkoutDetails_NotFound" xml:space="preserve">
+    <value>Тренування не знайдено</value>
+  </data>
+  <data name="WorkoutDetails_NotFoundHint" xml:space="preserve">
+    <value>Поверніться до списку та оберіть інший шаблон.</value>
+  </data>
+  <data name="WorkoutDetails_AddExercise" xml:space="preserve">
+    <value>Додати вправу</value>
+  </data>
+  <data name="WorkoutDetails_CreateSuperset" xml:space="preserve">
+    <value>Створити суперсет</value>
+  </data>
+  <data name="WorkoutDetails_NoExercises" xml:space="preserve">
+    <value>Немає вправ</value>
+  </data>
+  <data name="WorkoutDetails_SupersetCardHint" xml:space="preserve">
+    <value>Суперсет {0}. Утримуйте картку, щоб відкрити меню суперсета.</value>
+  </data>
+  <data name="WorkoutDetails_SupersetSets" xml:space="preserve">
+    <value>Підходи суперсета</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWarmupTitle" xml:space="preserve">
+    <value>Розминковий підхід. Натисніть, щоб зробити робочим</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWorkingTitle" xml:space="preserve">
+    <value>Робочий підхід. Натисніть, щоб зробити розминковим</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWarmupSupersetLabel" xml:space="preserve">
+    <value>{0}, підхід {1}: розминковий. Зробити робочим</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWorkingSupersetLabel" xml:space="preserve">
+    <value>{0}, підхід {1}: робочий. Зробити розминковим</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWarmupLabel" xml:space="preserve">
+    <value>Підхід {0}: розминковий. Зробити робочим</value>
+  </data>
+  <data name="WorkoutDetails_ToggleWorkingLabel" xml:space="preserve">
+    <value>Підхід {0}: робочий. Зробити розминковим</value>
+  </data>
+  <data name="Common_WarmupLower" xml:space="preserve">
+    <value>розминковий</value>
+  </data>
+  <data name="Common_WorkingLower" xml:space="preserve">
+    <value>робочий</value>
+  </data>
+  <data name="WorkoutDetails_WarmupSet" xml:space="preserve">
+    <value>Розминковий підхід</value>
+  </data>
+  <data name="WorkoutDetails_WorkingSet" xml:space="preserve">
+    <value>Робочий підхід</value>
+  </data>
+  <data name="WorkoutDetails_OpenPhoto" xml:space="preserve">
+    <value>Відкрити фото вправи {0}</value>
+  </data>
+  <data name="WorkoutDetails_AddPhoto" xml:space="preserve">
+    <value>Додати фото вправи {0}</value>
+  </data>
+  <data name="WorkoutDetails_PhotoAlt" xml:space="preserve">
+    <value>Фото вправи {0}</value>
+  </data>
+  <data name="WorkoutDetails_ExerciseCardHint" xml:space="preserve">
+    <value>Вправа {0}. Утримуйте картку, щоб відкрити налаштування.</value>
+  </data>
+  <data name="WorkoutDetails_ExerciseSets" xml:space="preserve">
+    <value>Підходи вправи {0}</value>
+  </data>
+  <data name="WorkoutDetails_ManageExercise" xml:space="preserve">
+    <value>Керування вправою</value>
+  </data>
+  <data name="WorkoutDetails_DeleteExerciseQuestion" xml:space="preserve">
+    <value>Видалити вправу та всі її підходи із шаблона?</value>
+  </data>
+  <data name="WorkoutDetails_EditParameters" xml:space="preserve">
+    <value>Змінити параметри</value>
+  </data>
+  <data name="WorkoutDetails_DeleteExercise" xml:space="preserve">
+    <value>Видалити вправу</value>
+  </data>
+  <data name="WorkoutDetails_NewTemplateItem" xml:space="preserve">
+    <value>Новий елемент шаблона</value>
+  </data>
+  <data name="WorkoutDetails_TemplateParameters" xml:space="preserve">
+    <value>Параметри шаблона</value>
+  </data>
+  <data name="WorkoutDetails_NewExercise" xml:space="preserve">
+    <value>Нова вправа</value>
+  </data>
+  <data name="WorkoutDetails_EditExercise" xml:space="preserve">
+    <value>Редагування вправи</value>
+  </data>
+  <data name="WorkoutDetails_LibraryExercise" xml:space="preserve">
+    <value>Вправа з бібліотеки</value>
+  </data>
+  <data name="WorkoutDetails_NotSelected" xml:space="preserve">
+    <value>Не обрано</value>
+  </data>
+  <data name="WorkoutDetails_SelectLibraryExercise" xml:space="preserve">
+    <value>Обрати вправу з бібліотеки</value>
+  </data>
+  <data name="WorkoutDetails_SetsCount" xml:space="preserve">
+    <value>Кількість підходів</value>
+  </data>
+  <data name="WorkoutDetails_WeightKg" xml:space="preserve">
+    <value>Вага, кг</value>
+  </data>
+  <data name="WorkoutDetails_Reps" xml:space="preserve">
+    <value>Повторення</value>
+  </data>
+  <data name="WorkoutDetails_PhotoTitle" xml:space="preserve">
+    <value>Фотографія вправи</value>
+  </data>
+  <data name="WorkoutDetails_PhotoProcessing" xml:space="preserve">
+    <value>Обробляємо фотографію…</value>
+  </data>
+  <data name="WorkoutDetails_NoPhoto" xml:space="preserve">
+    <value>У цієї вправи поки немає фотографії.</value>
+  </data>
+  <data name="WorkoutDetails_PhotoHint" xml:space="preserve">
+    <value>JPG, PNG або WebP, не більше 5 МБ.</value>
+  </data>
+  <data name="WorkoutDetails_PickPhoto" xml:space="preserve">
+    <value>Обрати фото</value>
+  </data>
+  <data name="WorkoutDetails_TakePhoto" xml:space="preserve">
+    <value>Зробити знімок</value>
+  </data>
+  <data name="WorkoutDetails_CancelDelete" xml:space="preserve">
+    <value>Скасувати видалення</value>
+  </data>
+  <data name="WorkoutDetails_DeletePhoto" xml:space="preserve">
+    <value>Видалити фото</value>
+  </data>
+  <data name="WorkoutDetails_TemplateEyebrow" xml:space="preserve">
+    <value>Шаблон тренування</value>
+  </data>
+  <data name="WorkoutDetails_SupersetHint" xml:space="preserve">
+    <value>Оберіть дві вправи із шаблона.</value>
+  </data>
+  <data name="WorkoutDetails_ManageSuperset" xml:space="preserve">
+    <value>Керування суперсетом</value>
+  </data>
+  <data name="WorkoutDetails_DeleteSupersetQuestion" xml:space="preserve">
+    <value>Видалити обидві вправи із шаблона?</value>
+  </data>
+  <data name="WorkoutDetails_DeleteSuperset" xml:space="preserve">
+    <value>Видалити суперсет</value>
+  </data>
+  <data name="WorkoutDetails_SplitSuperset" xml:space="preserve">
+    <value>Роз'єднати суперсет</value>
+  </data>
+  <data name="WorkoutDetails_PickLibraryExerciseError" xml:space="preserve">
+    <value>Оберіть вправу з бібліотеки.</value>
+  </data>
+  <data name="WorkoutDetails_CheckSetsError" xml:space="preserve">
+    <value>Перевірте вагу та повторення кожного підходу.</value>
+  </data>
+  <data name="Common_RepsShort" xml:space="preserve">
+    <value>повт.</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Так</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>Ні</value>
+  </data>
+  <data name="Today_FreeWorkout" xml:space="preserve">
+    <value>Вільне тренування</value>
+  </data>
+  <data name="Today_FreeProgressAria" xml:space="preserve">
+    <value>Вільне тренування. Виконано {0} відсотків тренування</value>
+  </data>
+  <data name="Today_NoWorkout" xml:space="preserve">
+    <value>На сьогодні запланованого тренування немає</value>
+  </data>
+  <data name="Today_AddFirstExercise" xml:space="preserve">
+    <value>Додайте першу вправу.</value>
+  </data>
+  <data name="Today_PlanHasNoExercises" xml:space="preserve">
+    <value>У призначеному плані поки немає вправ.</value>
+  </data>
+  <data name="Today_ExerciseSetLabel" xml:space="preserve">
+    <value>{0}, підхід {1}</value>
+  </data>
+  <data name="Today_ExerciseSetCompleted" xml:space="preserve">
+    <value>{0}, підхід {1} виконано</value>
+  </data>
+  <data name="Today_MarkSetDone" xml:space="preserve">
+    <value>Позначити підхід виконаним</value>
+  </data>
+  <data name="Today_RestAfterPair" xml:space="preserve">
+    <value>Відпочинок після пари підходів</value>
+  </data>
+  <data name="Today_SupersetRating" xml:space="preserve">
+    <value>Оцінка суперсета</value>
+  </data>
+  <data name="Today_SelectSupersetRating" xml:space="preserve">
+    <value>Обрати оцінку суперсета</value>
+  </data>
+  <data name="Today_RestBetweenExercises" xml:space="preserve">
+    <value>Відпочинок між вправами</value>
+  </data>
+  <data name="Today_ExerciseCardHint" xml:space="preserve">
+    <value>Вправа {0}. Утримуйте заголовок, щоб відкрити меню тренування.</value>
+  </data>
+  <data name="Today_SetKinds" xml:space="preserve">
+    <value>Типи підходів</value>
+  </data>
+  <data name="Today_WarmupCount" xml:space="preserve">
+    <value>Розминкові: {0}</value>
+  </data>
+  <data name="Today_WorkingCount" xml:space="preserve">
+    <value>Робочі: {0}</value>
+  </data>
+  <data name="Today_NewExerciseCardHint" xml:space="preserve">
+    <value>Налаштувати нову вправу. Натисніть, щоб відкрити меню тренування.</value>
+  </data>
+  <data name="Today_TapCardHint" xml:space="preserve">
+    <value>Натисніть на картку та оберіть «Змінити тренування»</value>
+  </data>
+  <data name="Today_RestBetweenSets" xml:space="preserve">
+    <value>Відпочинок між підходами</value>
+  </data>
+  <data name="Today_ExerciseRating" xml:space="preserve">
+    <value>Оцінка вправи</value>
+  </data>
+  <data name="Today_SelectExerciseRating" xml:space="preserve">
+    <value>Обрати оцінку вправи</value>
+  </data>
+  <data name="Today_SavingWorkoutAria" xml:space="preserve">
+    <value>Зберігаємо тренування</value>
+  </data>
+  <data name="Today_HoldToFinishAria" xml:space="preserve">
+    <value>Утримуйте, щоб завершити тренування</value>
+  </data>
+  <data name="Today_SavingWorkout" xml:space="preserve">
+    <value>Зберігаємо тренування…</value>
+  </data>
+  <data name="Today_FinishWorkout" xml:space="preserve">
+    <value>Завершити тренування</value>
+  </data>
+  <data name="Today_HoldUntilAnimation" xml:space="preserve">
+    <value>Утримуйте кнопку до завершення анімації</value>
+  </data>
+  <data name="Today_RestTimer" xml:space="preserve">
+    <value>Таймер відпочинку</value>
+  </data>
+  <data name="Today_BetweenSets" xml:space="preserve">
+    <value>Між підходами</value>
+  </data>
+  <data name="Today_BetweenExercises" xml:space="preserve">
+    <value>Між вправами</value>
+  </data>
+  <data name="Today_RestSeconds" xml:space="preserve">
+    <value>Час відпочинку, с.</value>
+  </data>
+  <data name="Today_RestTimerHint" xml:space="preserve">
+    <value>Це значення змінить лише цей таймер. Загальні значення налаштовуються в профілі.</value>
+  </data>
+  <data name="Today_Restart" xml:space="preserve">
+    <value>Перезапустити</value>
+  </data>
+  <data name="Today_Queued" xml:space="preserve">
+    <value>У черзі</value>
+  </data>
+  <data name="Today_Start" xml:space="preserve">
+    <value>Запустити</value>
+  </data>
+  <data name="Today_Pause" xml:space="preserve">
+    <value>Пауза</value>
+  </data>
+  <data name="Today_CloseMenu" xml:space="preserve">
+    <value>Закрити меню</value>
+  </data>
+  <data name="Today_EditorHint" xml:space="preserve">
+    <value>Вагу, повторення й типи підходів налаштовують у редакторі тренування.</value>
+  </data>
+  <data name="Today_OpenPhoto" xml:space="preserve">
+    <value>Відкрити фото</value>
+  </data>
+  <data name="Today_AddPhoto" xml:space="preserve">
+    <value>Додати фото</value>
+  </data>
+  <data name="Today_EditWorkout" xml:space="preserve">
+    <value>Змінити тренування</value>
+  </data>
+  <data name="Today_AssignWorkout" xml:space="preserve">
+    <value>Призначити тренування</value>
+  </data>
+  <data name="Today_DeleteCard" xml:space="preserve">
+    <value>Видалити картку</value>
+  </data>
+  <data name="Today_ExerciseParameters" xml:space="preserve">
+    <value>Параметри вправи</value>
+  </data>
+  <data name="Today_CloseEditor" xml:space="preserve">
+    <value>Закрити редактор</value>
+  </data>
+  <data name="Today_PickExercise" xml:space="preserve">
+    <value>Оберіть вправу</value>
+  </data>
+  <data name="Today_MakeTemplateQuestion" xml:space="preserve">
+    <value>Зробити з сьогоднішнього тренування шаблон?</value>
+  </data>
+  <data name="Today_TemplateNote" xml:space="preserve">
+    <value>Шаблон відстежуватиметься в графіку прогресу. Якщо обрати «Ні», тренування збережеться лише в історії.</value>
+  </data>
+  <data name="Today_TemplateNameHint" xml:space="preserve">
+    <value>Він з'явиться в розділі «Шаблони тренувань», а результати — у графіках.</value>
+  </data>
+  <data name="Today_CreateTemplate" xml:space="preserve">
+    <value>Створити шаблон</value>
+  </data>
+  <data name="Today_WorkoutCompleted" xml:space="preserve">
+    <value>Тренування завершено</value>
+  </data>
+  <data name="Today_PickTwoExercises" xml:space="preserve">
+    <value>Оберіть дві вправи.</value>
+  </data>
+  <data name="Today_CloseSupersetMenu" xml:space="preserve">
+    <value>Закрити меню суперсета</value>
+  </data>
+  <data name="Today_DeleteSupersetQuestion" xml:space="preserve">
+    <value>Видалити обидві вправи з цього тренування?</value>
+  </data>
+  <data name="Today_SupersetActionHint" xml:space="preserve">
+    <value>Оберіть дію для об'єднаної картки.</value>
+  </data>
+  <data name="Today_ResultsSaved" xml:space="preserve">
+    <value>Результати тренування збережено в історії та графіках прогресу.</value>
+  </data>
+  <data name="Today_TimerRemaining" xml:space="preserve">
+    <value>Залишилося {0}</value>
+  </data>
+  <data name="Today_TimerAfterCurrent" xml:space="preserve">
+    <value>Після поточного таймера</value>
+  </data>
+  <data name="Today_TemplateNameRequired" xml:space="preserve">
+    <value>Введіть назву шаблона.</value>
+  </data>
+  <data name="Today_SavedWithTemplate" xml:space="preserve">
+    <value>Тренування збережено в історії, а шаблон «{0}» додано разом із графіками.</value>
+  </data>
+  <data name="Today_SavedHistoryOnly" xml:space="preserve">
+    <value>Вільне тренування збережено лише в історії — без календаря, шаблонів і графіків.</value>
+  </data>
+  <data name="Today_ConfigureAllExercises" xml:space="preserve">
+    <value>Налаштуйте всі додані вправи.</value>
+  </data>
+  <data name="Today_CheckWeightAndReps" xml:space="preserve">
+    <value>Перевірте вагу та повторення: {0}.</value>
+  </data>
+  <data name="Today_FreeWorkoutNotStarted" xml:space="preserve">
+    <value>Вільне тренування не розпочато.</value>
+  </data>
+  <data name="Splash_Loading" xml:space="preserve">
+    <value>Завантаження</value>
+  </data>
+  <data name="Splash_Aria" xml:space="preserve">
+    <value>Завантаження застосунку</value>
+  </data>
+  <data name="Landscape_Title" xml:space="preserve">
+    <value>Поверніть смартфон</value>
+  </data>
+  <data name="Landscape_Body" xml:space="preserve">
+    <value>Графік доступний у горизонтальному режимі — так дати та зміни читати легше.</value>
+  </data>
+  <data name="Chart_Last30Days" xml:space="preserve">
+    <value>Останні 30 днів</value>
+  </data>
+  <data name="Chart_NoData" xml:space="preserve">
+    <value>За останні 30 днів даних для графіка немає.</value>
+  </data>
+  <data name="Chart_Latest" xml:space="preserve">
+    <value>Останнє:</value>
+  </data>
+  <data name="Chart_Best" xml:space="preserve">
+    <value>Найкраще:</value>
+  </data>
+  <data name="Chart_ShowValues" xml:space="preserve">
+    <value>Показати точні значення</value>
+  </data>
+  <data name="Chart_TableCaption" xml:space="preserve">
+    <value>Дані графіка за останні 30 днів</value>
+  </data>
+  <data name="Chart_ColumnDate" xml:space="preserve">
+    <value>Дата</value>
+  </data>
+  <data name="Chart_ColumnChange" xml:space="preserve">
+    <value>Зміна</value>
+  </data>
+  <data name="Chart_Summary" xml:space="preserve">
+    <value>{0}. Період з {1} по {2}. Точок: {3}. Останнє значення {4}. Найкраще значення {5}.</value>
+  </data>
+  <data name="Welcome_Eyebrow" xml:space="preserve">
+    <value>Коротке знайомство · {0}/{1}</value>
+  </data>
+  <data name="Welcome_Dots" xml:space="preserve">
+    <value>Кадр {0} з {1}</value>
+  </data>
+  <data name="Welcome_OpenSlide" xml:space="preserve">
+    <value>Відкрити кадр {0}</value>
+  </data>
+  <data name="Welcome_Opening" xml:space="preserve">
+    <value>Відкриваємо…</value>
+  </data>
+  <data name="Welcome_Continue" xml:space="preserve">
+    <value>Продовжити</value>
+  </data>
+  <data name="Welcome_Next" xml:space="preserve">
+    <value>Далі</value>
+  </data>
+  <data name="Welcome_Fallback" xml:space="preserve">
+    <value>Знайомство</value>
+  </data>
+  <data name="FinalWelcome_Aria" xml:space="preserve">
+    <value>Ласкаво просимо до GymPlanner</value>
+  </data>
+  <data name="FinalWelcome_Prefix" xml:space="preserve">
+    <value>Ласкаво просимо до</value>
+  </data>
+  <data name="FinalWelcome_Repeat" xml:space="preserve">
+    <value>ПОВТОРИТИ</value>
+  </data>
+  <data name="CreatorIntro_Aria" xml:space="preserve">
+    <value>Звернення від творця GPlanner</value>
+  </data>
+  <data name="CreatorIntro_Signature" xml:space="preserve">
+    <value>— Творець</value>
+  </data>
+  <data name="CreatorIntro_P1" xml:space="preserve">
+    <value>Я створював GPlanner як застосунок, яким самому хотілося б користуватися на кожному тренуванні.</value>
+  </data>
+  <data name="CreatorIntro_P2" xml:space="preserve">
+    <value>Без зайвого шуму. Лише тренування, прогрес та інструменти, які справді допомагають у залі.</value>
+  </data>
+  <data name="CreatorIntro_P3" xml:space="preserve">
+    <value>Я сам багато років займаюся в залі, і саме цей досвід багато в чому став причиною появи GPlanner.</value>
+  </data>
+  <data name="CreatorIntro_P4" xml:space="preserve">
+    <value>Але цей застосунок створено не для того, щоб учити вас тренуватися, нав'язувати певні програми, техніки чи методики.</value>
+  </data>
+  <data name="CreatorIntro_P5" xml:space="preserve">
+    <value>Якраз навпаки.</value>
+  </data>
+  <data name="CreatorIntro_P6" xml:space="preserve">
+    <value>За роки тренувань я зрозумів, наскільки різними бувають цілі, звички та підходи до тренувального процесу. Тому мені хотілося створити інструмент, яким буде зручно користуватися незалежно від вашого досвіду та обраного підходу — чи ви новачок, чи тренуєтеся вже багато років.</value>
+  </data>
+  <data name="CreatorIntro_P7" xml:space="preserve">
+    <value>У кожного свій шлях, свої цілі та своє розуміння тренувального процесу.</value>
+  </data>
+  <data name="CreatorIntro_P8" xml:space="preserve">
+    <value>Завдання GPlanner — не змінювати їх і не казати вам, як потрібно тренуватися, а дати зручні інструменти, щоб ви могли тренуватися так, як зручно саме вам.</value>
+  </data>
+  <data name="CreatorIntro_P9" xml:space="preserve">
+    <value>Водночас я хочу, щоб GPlanner розвивався не лише завдяки моїм власним ідеям.</value>
+  </data>
+  <data name="CreatorIntro_P10" xml:space="preserve">
+    <value>Якщо вам чогось бракує, щось можна зробити зручніше або у вас з'явилася ідея нової функції — розкажіть про це.</value>
+  </data>
+  <data name="CreatorIntro_P11" xml:space="preserve">
+    <value>Я читатиму ваші пропозиції, розглядатиму їх і, якщо вони справді зможуть зробити застосунок кращим, поступово втілюватиму їх у GPlanner.</value>
+  </data>
+  <data name="CreatorIntro_P12" xml:space="preserve">
+    <value>Мені хочеться, щоб із часом застосунок ставав кращим разом із людьми, які ним користуються.</value>
+  </data>
+  <data name="CreatorIntro_P13" xml:space="preserve">
+    <value>Бо зрештою GPlanner створюється для людей, які справді тренуються.</value>
+  </data>
+  <data name="CreatorIntro_Typo1" xml:space="preserve">
+    <value>стрював</value>
+  </data>
+  <data name="CreatorIntro_Typo2" xml:space="preserve">
+    <value>зайовго</value>
+  </data>
+  <data name="CreatorIntro_Typo3" xml:space="preserve">
+    <value>займаюcя</value>
+  </data>
+  <data name="CreatorIntro_Typo4" xml:space="preserve">
+    <value>засотсунок</value>
+  </data>
+  <data name="CreatorIntro_Typo5" xml:space="preserve">
+    <value>навапки</value>
+  </data>
+  <data name="CreatorIntro_Typo6" xml:space="preserve">
+    <value>тренуваьного</value>
+  </data>
+  <data name="CreatorIntro_Typo7" xml:space="preserve">
+    <value>цiлi</value>
+  </data>
+  <data name="CreatorIntro_Typo8" xml:space="preserve">
+    <value>інструмнети</value>
+  </data>
+  <data name="CreatorIntro_Typo9" xml:space="preserve">
+    <value>розвиваьтся</value>
+  </data>
+  <data name="CreatorIntro_Typo10" xml:space="preserve">
+    <value>зручнше</value>
+  </data>
+  <data name="CreatorIntro_Typo11" xml:space="preserve">
+    <value>втілюват</value>
+  </data>
+  <data name="CreatorIntro_Typo12" xml:space="preserve">
+    <value>корситуються</value>
+  </data>
+  <data name="CreatorIntro_Typo13" xml:space="preserve">
+    <value>тренуютсья</value>
+  </data>
+  <data name="Help_Header" xml:space="preserve">
+    <value>Довідка щодо поточної сторінки</value>
+  </data>
+  <data name="Help_Close" xml:space="preserve">
+    <value>Закрити довідку</value>
+  </data>
+  <data name="Help_Open" xml:space="preserve">
+    <value>Відкрити довідку: {0}</value>
+  </data>
+  <data name="Welcome_Slide1_Title" xml:space="preserve">
+    <value>Найголовніше — за хвилину</value>
+  </data>
+  <data name="Welcome_Slide1_Message" xml:space="preserve">
+    <value>Покажемо найважливіше — це займе зовсім небагато часу. А далі знайомитимемося із застосунком по ходу справи.</value>
+  </data>
+  <data name="Welcome_Slide2_Title" xml:space="preserve">
+    <value>Довідка щодо поточної сторінки</value>
+  </data>
+  <data name="Welcome_Slide2_Message" xml:space="preserve">
+    <value>Якщо щось буде незрозуміло — шукай значок «?». Він є там, де може знадобитися пояснення. Натисни на нього, щоб відкрити коротку довідку щодо поточного розділу.</value>
+  </data>
+  <data name="Welcome_Slide3_Title" xml:space="preserve">
+    <value>Підтримка та зворотний зв'язок</value>
+  </data>
+  <data name="Welcome_Slide3_Message" xml:space="preserve">
+    <value>У профілі відкрий розділ підтримки. Там можна надіслати технічне питання команді, а також знайти доступний канал для пропозицій, покращень і зворотного зв'язку.</value>
+  </data>
+  <data name="Welcome_Slide4_Title" xml:space="preserve">
+    <value>Можна починати</value>
+  </data>
+  <data name="Welcome_Slide4_Message" xml:space="preserve">
+    <value>Ось і все! Бажаємо тобі чудових тренувань, нових досягнень і сильного прогресу. Побачимося в GPlanner!</value>
+  </data>
+  <data name="Help_Today_Title" xml:space="preserve">
+    <value>Тренування на сьогодні</value>
+  </data>
+  <data name="Help_Today_Intro" xml:space="preserve">
+    <value>На цій сторінці відбувається саме тренування: тут позначаються підходи, запускається відпочинок і зберігається результат.</value>
+  </data>
+  <data name="Help_Today_S1_Title" xml:space="preserve">
+    <value>Почати тренування</value>
+  </data>
+  <data name="Help_Today_S1_Text" xml:space="preserve">
+    <value>Тренування береться з плану, призначеного в календарі. Якщо плану на сьогодні немає, його можна скласти просто тут.</value>
+  </data>
+  <data name="Help_Today_S1_Step1" xml:space="preserve">
+    <value>Відкрийте вкладку «Сьогодні» — назву призначеного плану видно на плашці під заголовком.</value>
+  </data>
+  <data name="Help_Today_S1_Step2" xml:space="preserve">
+    <value>Якщо плану немає, натисніть «Вільне тренування» у правому верхньому куті.</value>
+  </data>
+  <data name="Help_Today_S1_Step3" xml:space="preserve">
+    <value>Картки вправ з'являться списком — з них і починається тренування.</value>
+  </data>
+  <data name="Help_Today_S2_Title" xml:space="preserve">
+    <value>Скласти вільне тренування</value>
+  </data>
+  <data name="Help_Today_S2_Text" xml:space="preserve">
+    <value>Вправи вільного тренування додаються на ходу й не втрачаються під час переходу між вкладками.</value>
+  </data>
+  <data name="Help_Today_S2_Step1" xml:space="preserve">
+    <value>Натисніть «Додати вправу» під списком карток.</value>
+  </data>
+  <data name="Help_Today_S2_Step2" xml:space="preserve">
+    <value>Виберіть вправу з бібліотеки та вкажіть кількість підходів.</value>
+  </data>
+  <data name="Help_Today_S2_Step3" xml:space="preserve">
+    <value>Задайте вагу та повторення для кожного підходу й натисніть «Додати вправу».</value>
+  </data>
+  <data name="Help_Today_S3_Title" xml:space="preserve">
+    <value>Позначити виконаний підхід</value>
+  </data>
+  <data name="Help_Today_S3_Text" xml:space="preserve">
+    <value>Доки підхід не позначено, він не потрапить ані в історію, ані в прогрес.</value>
+  </data>
+  <data name="Help_Today_S4_Title" xml:space="preserve">
+    <value>Запустити відпочинок</value>
+  </data>
+  <data name="Help_Today_S4_Text" xml:space="preserve">
+    <value>Плашка відпочинку стоїть між підходами та між вправами, а її тривалість береться з налаштувань профілю.</value>
+  </data>
+  <data name="Help_TodayWeb_Intro" xml:space="preserve">
+    <value>Тут відбувається тренування, яке ви заздалегідь призначили в календарі.</value>
+  </data>
+  <data name="Help_TodayWeb_S1_Text" xml:space="preserve">
+    <value>Тренування з'являється тут лише після того, як його призначено на сьогоднішню дату в календарі.</value>
+  </data>
+  <data name="Help_TodayWeb_S1_Step1" xml:space="preserve">
+    <value>Перевірте назву плану та список вправ.</value>
+  </data>
+  <data name="Help_TodayWeb_S1_Step2" xml:space="preserve">
+    <value>Звірте вагу та повторення з налаштуваннями шаблона.</value>
+  </data>
+  <data name="Help_TodayWeb_S1_Step3" xml:space="preserve">
+    <value>Якщо значення потрібно змінити, спершу відредагуйте шаблон у розділі «Тренування».</value>
+  </data>
+  <data name="Help_TodayWeb_S2_Text" xml:space="preserve">
+    <value>Позначайте виконані підходи та оцінюйте кожну вправу.</value>
+  </data>
+  <data name="Help_TodayWeb_S2_Step1" xml:space="preserve">
+    <value>Поставте позначку біля завершеного підходу.</value>
+  </data>
+  <data name="Help_TodayWeb_S2_Step2" xml:space="preserve">
+    <value>Натисніть кнопку оцінки під вправою та виберіть, наскільки важко вона далася.</value>
+  </data>
+  <data name="Help_TodayWeb_S2_Step3" xml:space="preserve">
+    <value>Натисніть «Завершити тренування», щоб зберегти результат в історії.</value>
+  </data>
+  <data name="Help_Workouts_Title" xml:space="preserve">
+    <value>Шаблони тренувань</value>
+  </data>
+  <data name="Help_Workouts_Intro" xml:space="preserve">
+    <value>Шаблон — це заготовка тренування: список вправ із підходами, вагою та повтореннями. Із шаблона тренування призначається на дату в календарі.</value>
+  </data>
+  <data name="Help_Workouts_S1_Title" xml:space="preserve">
+    <value>Створити шаблон</value>
+  </data>
+  <data name="Help_Workouts_S1_Text" xml:space="preserve">
+    <value>Новий шаблон створюється порожнім — вправи додаються вже всередині нього.</value>
+  </data>
+  <data name="Help_Workouts_S2_Title" xml:space="preserve">
+    <value>Наповнити шаблон вправами</value>
+  </data>
+  <data name="Help_Workouts_S2_Text" xml:space="preserve">
+    <value>Склад вправ редагується на окремій сторінці шаблона.</value>
+  </data>
+  <data name="Help_Workouts_S3_Title" xml:space="preserve">
+    <value>Перейменувати шаблон</value>
+  </data>
+  <data name="Help_Workouts_S3_Text" xml:space="preserve">
+    <value>Назву шаблона видно в календарі та в історії, тож варто тримати її зрозумілою.</value>
+  </data>
+  <data name="Help_Workouts_S4_Title" xml:space="preserve">
+    <value>Видалити шаблон</value>
+  </data>
+  <data name="Help_Workouts_S4_Text" xml:space="preserve">
+    <value>Видалення шаблона не стирає вже проведені тренування — вони залишаються в історії.</value>
+  </data>
+  <data name="Help_Calendar_Title" xml:space="preserve">
+    <value>Календар</value>
+  </data>
+  <data name="Help_Calendar_Intro" xml:space="preserve">
+    <value>Календар показує, на які дні призначено тренування. Саме звідси тренування потрапляє на сторінку «Сьогодні».</value>
+  </data>
+  <data name="Help_Calendar_S1_Title" xml:space="preserve">
+    <value>Призначити тренування на день</value>
+  </data>
+  <data name="Help_Calendar_S1_Text" xml:space="preserve">
+    <value>Тренування призначається з готового шаблона. Якщо шаблонів ще немає, спершу створіть їх у розділі «Тренування».</value>
+  </data>
+  <data name="Help_Calendar_S2_Title" xml:space="preserve">
+    <value>Перенести тренування на іншу дату</value>
+  </data>
+  <data name="Help_Calendar_S2_Text" xml:space="preserve">
+    <value>Перенесення зберігає склад тренування — змінюється лише дата.</value>
+  </data>
+  <data name="Help_Calendar_S3_Title" xml:space="preserve">
+    <value>Видалити призначене тренування</value>
+  </data>
+  <data name="Help_Calendar_S3_Text" xml:space="preserve">
+    <value>Видаляється лише призначення на день. Сам шаблон у розділі «Тренування» залишається.</value>
+  </data>
+  <data name="Help_CalendarWeb_S1_Text" xml:space="preserve">
+    <value>Тренування призначається з готового шаблона у два кроки: спершу відкривається день, потім обирається шаблон.</value>
+  </data>
+  <data name="Help_CalendarWeb_S2_Title" xml:space="preserve">
+    <value>Видалити призначене тренування</value>
+  </data>
+  <data name="Help_CalendarWeb_S2_Text" xml:space="preserve">
+    <value>Видаляється лише призначення на день. Сам шаблон у розділі «Тренування» залишається.</value>
+  </data>
+  <data name="Help_CalendarWeb_S3_Title" xml:space="preserve">
+    <value>Що показує вікно дня</value>
+  </data>
+  <data name="Help_CalendarWeb_S3_Text" xml:space="preserve">
+    <value>За вмістом вікна одразу видно стан дня.</value>
+  </data>
+  <data name="Help_History_Title" xml:space="preserve">
+    <value>Історія</value>
+  </data>
+  <data name="Help_History_Intro" xml:space="preserve">
+    <value>Сюди потрапляють завершені тренування з фактичними значеннями — тим, що ви справді зробили, а не тим, що планували.</value>
+  </data>
+  <data name="Help_History_S1_Title" xml:space="preserve">
+    <value>Відкрити запис тренування</value>
+  </data>
+  <data name="Help_History_S1_Text" xml:space="preserve">
+    <value>Записи йдуть від свіжих до старих. У старих може стояти позначка «Архівна» — деталі таких тренувань не збереглися.</value>
+  </data>
+  <data name="Help_History_S2_Title" xml:space="preserve">
+    <value>Розрізнити розминкові та робочі підходи</value>
+  </data>
+  <data name="Help_History_S2_Text" xml:space="preserve">
+    <value>У записі зберігається тип кожного підходу — за ним видно реальне навантаження, а не загальну кількість підходів.</value>
+  </data>
+  <data name="Help_History_S3_Title" xml:space="preserve">
+    <value>Видалити запис</value>
+  </data>
+  <data name="Help_History_S3_Text" xml:space="preserve">
+    <value>Видалення незворотне — відновити запис не можна.</value>
+  </data>
+  <data name="Help_Progress_Title" xml:space="preserve">
+    <value>Прогрес</value>
+  </data>
+  <data name="Help_Progress_Intro" xml:space="preserve">
+    <value>Розділ збирає динаміку за завершеними тренуваннями. Дані беруться з історії, тому графіки з'являються лише після перших завершених тренувань.</value>
+  </data>
+  <data name="Help_Progress_S1_Title" xml:space="preserve">
+    <value>Вибрати, що дивитися</value>
+  </data>
+  <data name="Help_Progress_S1_Text" xml:space="preserve">
+    <value>Розділів два, і вони відповідають на різні питання.</value>
+  </data>
+  <data name="Help_Progress_S2_Title" xml:space="preserve">
+    <value>Якщо графіків немає</value>
+  </data>
+  <data name="Help_Progress_S2_Text" xml:space="preserve">
+    <value>Порожній розділ майже завжди означає, що ще немає завершених тренувань, а не помилку.</value>
+  </data>
+  <data name="Help_Profile_Title" xml:space="preserve">
+    <value>Профіль</value>
+  </data>
+  <data name="Help_Profile_Intro" xml:space="preserve">
+    <value>Профіль — це зміст налаштувань: особисті дані, таймери відпочинку, пристрої, мова, безпека та підтримка.</value>
+  </data>
+  <data name="Help_Profile_S1_Title" xml:space="preserve">
+    <value>Змінити особисті дані</value>
+  </data>
+  <data name="Help_Profile_S1_Text" xml:space="preserve">
+    <value>Email змінити не можна — він прив'язаний до акаунта.</value>
+  </data>
+  <data name="Help_Profile_S2_Title" xml:space="preserve">
+    <value>Налаштувати таймери відпочинку</value>
+  </data>
+  <data name="Help_Profile_S2_Text" xml:space="preserve">
+    <value>Ці значення підставляються за замовчуванням у всі таймери відпочинку на сторінці «Сьогодні».</value>
+  </data>
+  <data name="Help_Profile_S3_Title" xml:space="preserve">
+    <value>Змінити мову</value>
+  </data>
+  <data name="Help_Profile_S3_Text" xml:space="preserve">
+    <value>Мова змінюється одразу, перезапускати застосунок не потрібно.</value>
+  </data>
+  <data name="Help_ProfileWeb_Intro" xml:space="preserve">
+    <value>У вебі профіль зібрано на одній сторінці: особисті дані, зміна пароля та повторення знайомства йдуть блоками згори вниз.</value>
+  </data>
+  <data name="Help_ProfileWeb_S1_Text" xml:space="preserve">
+    <value>Email у формі показано лише для довідки й він не редагується.</value>
+  </data>
+  <data name="Help_ProfileWeb_S2_Title" xml:space="preserve">
+    <value>Змінити пароль</value>
+  </data>
+  <data name="Help_ProfileWeb_S2_Text" xml:space="preserve">
+    <value>Після зміни пароля сеанси на інших пристроях перестають діяти.</value>
+  </data>
+  <data name="Help_ProfileWeb_S3_Title" xml:space="preserve">
+    <value>Повторити знайомство</value>
+  </data>
+  <data name="Help_ProfileWeb_S3_Text" xml:space="preserve">
+    <value>Знайомство — це короткі вступні екрани, які показуються після реєстрації.</value>
+  </data>
+  <data name="Auth_ContactFailed" xml:space="preserve">
+    <value>Не вдалося зв'язатися із сервером, щоб завершити сеанс.</value>
+  </data>
+  <data name="Auth_NetworkRetry" xml:space="preserve">
+    <value>Немає з'єднання із сервером. Перевірте мережу та повторіть спробу.</value>
+  </data>
+  <data name="Auth_LogoutQueued" xml:space="preserve">
+    <value>Немає з'єднання із сервером. Сеанс збережено для безпечного повторного виходу.</value>
+  </data>
+  <data name="Auth_InvalidSession" xml:space="preserve">
+    <value>Сервер повернув некоректний сеанс.</value>
+  </data>
+  <data name="Auth_InvalidResponse" xml:space="preserve">
+    <value>Сервер повернув некоректну відповідь авторизації.</value>
+  </data>
+  <data name="Photo_PickerUnavailable" xml:space="preserve">
+    <value>Вибір фотографій недоступний на цьому пристрої.</value>
+  </data>
+  <data name="Photo_Empty" xml:space="preserve">
+    <value>Обрана фотографія порожня.</value>
+  </data>
+  <data name="Photo_CameraUnavailable" xml:space="preserve">
+    <value>Камера недоступна на цьому пристрої.</value>
+  </data>
+  <data name="Photo_ReadFailed" xml:space="preserve">
+    <value>Не вдалося прочитати обрану фотографію.</value>
+  </data>
+  <data name="Photo_NoPermission" xml:space="preserve">
+    <value>Немає дозволу на доступ до фотографії.</value>
+  </data>
+  <data name="Photo_UnsupportedFormat" xml:space="preserve">
+    <value>Підтримуються лише фотографії JPG, PNG і WebP.</value>
+  </data>
+  <data name="Photo_TooLarge" xml:space="preserve">
+    <value>Розмір фотографії не має перевищувати 5 МБ.</value>
+  </data>
+  <data name="Photo_CameraPermission" xml:space="preserve">
+    <value>Дозвольте доступ до камери в налаштуваннях застосунку.</value>
+  </data>
+  <data name="Notify_ChannelName" xml:space="preserve">
+    <value>Нагадування про тренування</value>
+  </data>
+  <data name="Notify_ChannelDescription" xml:space="preserve">
+    <value>Локальні нагадування про заплановані тренування</value>
+  </data>
+  <data name="Notify_PushChannelName" xml:space="preserve">
+    <value>Сповіщення GPlanner</value>
+  </data>
+  <data name="Notify_ScheduledWorkout" xml:space="preserve">
+    <value>Заплановане тренування</value>
+  </data>
+  <data name="Notify_TimeToTrain" xml:space="preserve">
+    <value>Час тренуватися</value>
+  </data>
+  <data name="Notify_NewMessage" xml:space="preserve">
+    <value>Нове повідомлення</value>
+  </data>
+  <data name="Notify_PermissionRequired" xml:space="preserve">
+    <value>Дозвольте сповіщення в налаштуваннях застосунку.</value>
+  </data>
+  <data name="Notify_ServiceUnavailable" xml:space="preserve">
+    <value>Системна служба нагадувань недоступна.</value>
+  </data>
+  <data name="Notify_TimeInFuture" xml:space="preserve">
+    <value>Час нагадування має бути в майбутньому.</value>
+  </data>
+  <data name="Picker_Selected" xml:space="preserve">
+    <value>✓ {0}</value>
+  </data>
+  <data name="Web_MainMenu" xml:space="preserve">
+    <value>Головне меню</value>
+  </data>
+  <data name="Web_NotFound" xml:space="preserve">
+    <value>Я поки не знаю, що тут буде 😎</value>
+  </data>
+  <data name="Web_WelcomeSaveFailed" xml:space="preserve">
+    <value>Не вдалося зберегти завершення знайомства. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Today_NoWorkout" xml:space="preserve">
+    <value>На сьогодні тренування не призначено.</value>
+  </data>
+  <data name="Web_Today_NoWorkoutAlt" xml:space="preserve">
+    <value>Немає тренування</value>
+  </data>
+  <data name="Web_Today_Completed" xml:space="preserve">
+    <value>Виконано {0} з {1}</value>
+  </data>
+  <data name="Web_Rate_Easy" xml:space="preserve">
+    <value>😊 Легко</value>
+  </data>
+  <data name="Web_Rate_Medium" xml:space="preserve">
+    <value>😐 Середньо</value>
+  </data>
+  <data name="Web_Rate_Hard" xml:space="preserve">
+    <value>🥵 Важко</value>
+  </data>
+  <data name="Web_Rate_Max" xml:space="preserve">
+    <value>🤯 Межа</value>
+  </data>
+  <data name="Web_Today_RateTitle" xml:space="preserve">
+    <value>Оцініть виконання</value>
+  </data>
+  <data name="Web_Rate_EasyHint" xml:space="preserve">
+    <value>Великий запас сил</value>
+  </data>
+  <data name="Web_Rate_MediumHint" xml:space="preserve">
+    <value>Ще були сили</value>
+  </data>
+  <data name="Web_Rate_HardHint" xml:space="preserve">
+    <value>Останні повторення далися важко</value>
+  </data>
+  <data name="Web_Rate_MaxHint" xml:space="preserve">
+    <value>Майже відмова</value>
+  </data>
+  <data name="Web_Today_RateCancel" xml:space="preserve">
+    <value>❌ Скасувати</value>
+  </data>
+  <data name="Web_Today_NotRatedTitle" xml:space="preserve">
+    <value>⚠️ Не всі вправи оцінені</value>
+  </data>
+  <data name="Web_Today_NotRatedBody" xml:space="preserve">
+    <value>Будь ласка, оцініть усі вправи перед завершенням тренування.</value>
+  </data>
+  <data name="Web_Ok" xml:space="preserve">
+    <value>Зрозуміло</value>
+  </data>
+  <data name="Web_Today_Finished" xml:space="preserve">
+    <value>Тренування завершено!</value>
+  </data>
+  <data name="Web_Today_ExercisesLabel" xml:space="preserve">
+    <value>✅ Вправ:</value>
+  </data>
+  <data name="Web_Today_ProgressSaved" xml:space="preserve">
+    <value>📈 Прогрес збережено</value>
+  </data>
+  <data name="Web_Today_HistoryUpdated" xml:space="preserve">
+    <value>📚 Історію оновлено</value>
+  </data>
+  <data name="Web_Today_GreatJob" xml:space="preserve">
+    <value>Чудова робота 💪</value>
+  </data>
+  <data name="Web_Today_SetUpdatedFromWatch" xml:space="preserve">
+    <value>Підхід {0} вправи «{1}» оновлено з годинника.</value>
+  </data>
+  <data name="Web_Today_FinishedFromWatch" xml:space="preserve">
+    <value>Тренування завершено з годинника.</value>
+  </data>
+  <data name="Web_Today_RateAllFirst" xml:space="preserve">
+    <value>Оцініть усі вправи перед завершенням тренування</value>
+  </data>
+  <data name="Web_Today_FinishFailed" xml:space="preserve">
+    <value>Не вдалося завершити тренування. Оновіть сторінку та спробуйте знову.</value>
+  </data>
+  <data name="Web_Today_SaveSetFailed" xml:space="preserve">
+    <value>Не вдалося зберегти підхід. Оновіть сторінку та спробуйте знову.</value>
+  </data>
+  <data name="Web_Calendar_WorkoutLabel" xml:space="preserve">
+    <value>Тренування:</value>
+  </data>
+  <data name="Web_Calendar_NotAssigned" xml:space="preserve">
+    <value>Тренування не призначено</value>
+  </data>
+  <data name="Web_Calendar_PickWorkout" xml:space="preserve">
+    <value>Оберіть тренування</value>
+  </data>
+  <data name="Web_Calendar_AssignConfirm" xml:space="preserve">
+    <value>✅ Призначити</value>
+  </data>
+  <data name="Web_Workouts_Empty" xml:space="preserve">
+    <value>Шаблонів поки немає</value>
+  </data>
+  <data name="Web_Workouts_Add" xml:space="preserve">
+    <value>+ Додати шаблон</value>
+  </data>
+  <data name="Web_Workouts_AddExercisesHint" xml:space="preserve">
+    <value>Додайте вправи всередині шаблона</value>
+  </data>
+  <data name="Web_Details_SetupExercise" xml:space="preserve">
+    <value>Налаштувати вправу {0}</value>
+  </data>
+  <data name="Web_Details_OpenPhotoFull" xml:space="preserve">
+    <value>Відкрити фото вправи {0} у повному розмірі</value>
+  </data>
+  <data name="Web_Details_PhotoFullAlt" xml:space="preserve">
+    <value>Фото вправи {0} у повному розмірі</value>
+  </data>
+  <data name="Web_Details_CloseFullPhoto" xml:space="preserve">
+    <value>Закрити повнорозмірне фото</value>
+  </data>
+  <data name="Web_Details_ReplacePhoto" xml:space="preserve">
+    <value>Замінити фото</value>
+  </data>
+  <data name="Web_Details_Uploading" xml:space="preserve">
+    <value>Завантажуємо…</value>
+  </data>
+  <data name="Web_Details_SetWeightLabel" xml:space="preserve">
+    <value>Підхід {0} · вага, кг</value>
+  </data>
+  <data name="Web_Details_NotSelectedOption" xml:space="preserve">
+    <value>-- Не обрано --</value>
+  </data>
+  <data name="Web_Details_Adding" xml:space="preserve">
+    <value>Додаємо…</value>
+  </data>
+  <data name="Web_Details_Add" xml:space="preserve">
+    <value>Додати</value>
+  </data>
+  <data name="Web_Details_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити тренування. Оновіть сторінку та спробуйте знову.</value>
+  </data>
+  <data name="Web_Details_NameRequired" xml:space="preserve">
+    <value>Введіть назву вправи.</value>
+  </data>
+  <data name="Web_Details_CheckWeights" xml:space="preserve">
+    <value>Перевірте вагу в усіх підходах.</value>
+  </data>
+  <data name="Web_Details_AddFailed" xml:space="preserve">
+    <value>Не вдалося додати вправу. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Details_DeleteFailed" xml:space="preserve">
+    <value>Не вдалося видалити вправу. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Details_SetsRange" xml:space="preserve">
+    <value>Кількість підходів має бути від 1 до 10.</value>
+  </data>
+  <data name="Web_Details_CheckWeightsAndReps" xml:space="preserve">
+    <value>Перевірте вагу та повторення в усіх підходах.</value>
+  </data>
+  <data name="Web_Details_SaveFailed" xml:space="preserve">
+    <value>Не вдалося зберегти зміни. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Details_PhotoDeleteFailed" xml:space="preserve">
+    <value>Не вдалося видалити фото. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Details_PhotoInvalid" xml:space="preserve">
+    <value>Оберіть коректне зображення JPG, PNG або WebP до 5 МБ.</value>
+  </data>
+  <data name="Web_Details_PhotoSaveFailed" xml:space="preserve">
+    <value>Не вдалося зберегти фото. Перевірте розмір файлу та спробуйте знову.</value>
+  </data>
+  <data name="Web_Details_PhotoUpdateFailed" xml:space="preserve">
+    <value>Не вдалося оновити фото. Старе зображення збережено.</value>
+  </data>
+  <data name="Web_History_EmptyAlt" xml:space="preserve">
+    <value>Історія порожня</value>
+  </data>
+  <data name="Web_Progress_ChartSubtitle" xml:space="preserve">
+    <value>Останні 30 днів · зміна відносно першого тренування</value>
+  </data>
+  <data name="Web_Progress_SinglePoint" xml:space="preserve">
+    <value>Поки є лише одна точка. Крива з'явиться після другого збереженого тренування.</value>
+  </data>
+  <data name="Web_Progress_NoData" xml:space="preserve">
+    <value>Немає записів за останні 30 днів</value>
+  </data>
+  <data name="Web_Progress_ClearHistory" xml:space="preserve">
+    <value>🗑 Очистити історію</value>
+  </data>
+  <data name="Web_Progress_ExerciseCleared" xml:space="preserve">
+    <value>Історію вправи успішно видалено.</value>
+  </data>
+  <data name="Web_Progress_WorkoutCleared" xml:space="preserve">
+    <value>Історію успішно видалено.</value>
+  </data>
+  <data name="Web_Profile_SecurityTitle" xml:space="preserve">
+    <value>Налаштування безпеки</value>
+  </data>
+  <data name="Web_Profile_TrainingTitle" xml:space="preserve">
+    <value>Налаштування тренувань</value>
+  </data>
+  <data name="Web_Profile_TourHint" xml:space="preserve">
+    <value>Коротке знайомство з основними можливостями застосунку.</value>
+  </data>
+  <data name="Web_Profile_RepeatTour" xml:space="preserve">
+    <value>Повторити знайомство</value>
+  </data>
+  <data name="Web_Profile_RefreshList" xml:space="preserve">
+    <value>Оновити список</value>
+  </data>
+  <data name="Web_Profile_ConnectNewWatch" xml:space="preserve">
+    <value>Підключити новий годинник</value>
+  </data>
+  <data name="Web_Profile_CodeReady" xml:space="preserve">
+    <value>Код готовий</value>
+  </data>
+  <data name="Web_Profile_EnterCodeOnWatch" xml:space="preserve">
+    <value>Введіть цей код на годиннику.</value>
+  </data>
+  <data name="Web_Profile_CodeValidUntil" xml:space="preserve">
+    <value>Код дійсний до</value>
+  </data>
+  <data name="Web_Profile_CodeHint" xml:space="preserve">
+    <value>Код складається з шести цифр і діє обмежений час. Новий код скасує раніше створений.</value>
+  </data>
+  <data name="Web_Profile_ActiveCount" xml:space="preserve">
+    <value>{0} активних</value>
+  </data>
+  <data name="Web_Profile_DisconnectAll" xml:space="preserve">
+    <value>Відключити всі</value>
+  </data>
+  <data name="Web_Profile_LoadingWatches" xml:space="preserve">
+    <value>Завантажуємо підключені годинники…</value>
+  </data>
+  <data name="Web_Profile_NoWatches" xml:space="preserve">
+    <value>Немає підключених годинників</value>
+  </data>
+  <data name="Web_Profile_NoWatchesHint" xml:space="preserve">
+    <value>Створіть код і введіть його в застосунку на годиннику.</value>
+  </data>
+  <data name="Web_Profile_DeviceName" xml:space="preserve">
+    <value>Назва пристрою</value>
+  </data>
+  <data name="Web_Profile_StatusConnected" xml:space="preserve">
+    <value>Підключено</value>
+  </data>
+  <data name="Web_Profile_StatusDisconnected" xml:space="preserve">
+    <value>Відключено</value>
+  </data>
+  <data name="Web_Profile_Model" xml:space="preserve">
+    <value>Модель</value>
+  </data>
+  <data name="Web_Profile_ModelUnknown" xml:space="preserve">
+    <value>Не вказана</value>
+  </data>
+  <data name="Web_Profile_ModelUnknownLong" xml:space="preserve">
+    <value>Модель не вказана</value>
+  </data>
+  <data name="Web_Profile_LastSeen" xml:space="preserve">
+    <value>Остання активність</value>
+  </data>
+  <data name="Web_Profile_NeverSeen" xml:space="preserve">
+    <value>Ще не було</value>
+  </data>
+  <data name="Web_Profile_Rename" xml:space="preserve">
+    <value>Перейменувати</value>
+  </data>
+  <data name="Web_Profile_RevokedDevices" xml:space="preserve">
+    <value>Відключені пристрої ({0})</value>
+  </data>
+  <data name="Web_Profile_Sections" xml:space="preserve">
+    <value>Розділи профілю</value>
+  </data>
+  <data name="Web_Profile_WatchesTab" xml:space="preserve">
+    <value>Годинник</value>
+  </data>
+  <data name="Web_Profile_DeleteTitle" xml:space="preserve">
+    <value>⚠️ Видалення акаунта</value>
+  </data>
+  <data name="Web_Profile_DeleteWarning" xml:space="preserve">
+    <value>Буде видалено профіль, історію тренувань, прогрес і всі дані користувача.</value>
+  </data>
+  <data name="Web_Profile_DisconnectAllTitle" xml:space="preserve">
+    <value>Відключити всі годинники?</value>
+  </data>
+  <data name="Web_Profile_DisconnectAllBody" xml:space="preserve">
+    <value>Усі підключені годинники втратять доступ до акаунта. Для повторного підключення знадобиться новий код.</value>
+  </data>
+  <data name="Web_Profile_DisconnectOneBody" xml:space="preserve">
+    <value>Пристрій «{0}» втратить доступ до акаунта. Для повторного підключення знадобиться новий код.</value>
+  </data>
+  <data name="Web_Profile_NotFound" xml:space="preserve">
+    <value>Профіль не знайдено.</value>
+  </data>
+  <data name="Web_Profile_Saved" xml:space="preserve">
+    <value>Дані профілю збережено.</value>
+  </data>
+  <data name="Web_Profile_PasswordChanged" xml:space="preserve">
+    <value>Пароль змінено.</value>
+  </data>
+  <data name="Web_Profile_CodeFailed" xml:space="preserve">
+    <value>Не вдалося створити код підключення. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Profile_WatchesLoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити список годинників. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Profile_NameLength" xml:space="preserve">
+    <value>Введіть назву довжиною від 1 до 120 символів.</value>
+  </data>
+  <data name="Web_Profile_WatchAlreadyGone" xml:space="preserve">
+    <value>Годинник уже відключено або він більше недоступний.</value>
+  </data>
+  <data name="Web_Profile_WatchRenamed" xml:space="preserve">
+    <value>Назву годинника збережено.</value>
+  </data>
+  <data name="Web_Profile_RenameFailed" xml:space="preserve">
+    <value>Не вдалося перейменувати годинник. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Profile_WatchWasDisconnected" xml:space="preserve">
+    <value>Годинник уже було відключено.</value>
+  </data>
+  <data name="Web_Profile_DisconnectFailed" xml:space="preserve">
+    <value>Не вдалося відключити годинник. Спробуйте ще раз.</value>
+  </data>
+  <data name="Web_Profile_DeleteFailed" xml:space="preserve">
+    <value>Не вдалося видалити акаунт. Спробуйте ще раз.</value>
+  </data>
+  <data name="Validation_CurrentPasswordRequired" xml:space="preserve">
+    <value>Введіть поточний пароль.</value>
+  </data>
+  <data name="Validation_NewPasswordRequired" xml:space="preserve">
+    <value>Введіть новий пароль.</value>
+  </data>
+  <data name="Validation_PasswordMinLength" xml:space="preserve">
+    <value>Пароль має бути не коротшим за 6 символів.</value>
+  </data>
+  <data name="Password_Mismatch" xml:space="preserve">
+    <value>Поточний пароль вказано неправильно.</value>
+  </data>
+  <data name="Password_TooShort" xml:space="preserve">
+    <value>Пароль надто короткий.</value>
+  </data>
+  <data name="Password_RequiresDigit" xml:space="preserve">
+    <value>Пароль має містити щонайменше одну цифру.</value>
+  </data>
+  <data name="Password_RequiresLower" xml:space="preserve">
+    <value>Пароль має містити щонайменше одну малу латинську літеру.</value>
+  </data>
+  <data name="Password_RequiresUpper" xml:space="preserve">
+    <value>Пароль має містити щонайменше одну велику латинську літеру.</value>
+  </data>
+  <data name="Password_RequiresNonAlphanumeric" xml:space="preserve">
+    <value>Пароль має містити щонайменше один спеціальний символ.</value>
+  </data>
+  <data name="Web_Profile_WatchesHint" xml:space="preserve">
+    <value>Підключайте годинник і керуйте його доступом до вашого акаунта.</value>
+  </data>
+  <data name="Web_Profile_Refreshing" xml:space="preserve">
+    <value>Оновлюємо…</value>
+  </data>
+  <data name="Admin_SkipToContent" xml:space="preserve">
+    <value>До вмісту</value>
+  </data>
+  <data name="Admin_BrandHome" xml:space="preserve">
+    <value>GPlanner Admin — головна</value>
+  </data>
+  <data name="Admin_Sections" xml:space="preserve">
+    <value>Розділи адміністрування</value>
+  </data>
+  <data name="Admin_SignOut" xml:space="preserve">
+    <value>Вийти</value>
+  </data>
+  <data name="Admin_EntryDescription" xml:space="preserve">
+    <value>Панель керування системою</value>
+  </data>
+  <data name="Admin_Dashboard_Description" xml:space="preserve">
+    <value>Ключові показники продукту, активності та підтримки.</value>
+  </data>
+  <data name="Admin_Dashboard_Loading" xml:space="preserve">
+    <value>Завантажуємо показники</value>
+  </data>
+  <data name="Admin_Dashboard_LoadingHint" xml:space="preserve">
+    <value>Збираємо актуальну серверну статистику.</value>
+  </data>
+  <data name="Admin_Dashboard_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити Dashboard</value>
+  </data>
+  <data name="Admin_Dashboard_UsersTitle" xml:space="preserve">
+    <value>Користувачі</value>
+  </data>
+  <data name="Admin_Dashboard_UsersHint" xml:space="preserve">
+    <value>Реєстрації та фактична активність.</value>
+  </data>
+  <data name="Admin_Dashboard_OpenUsers" xml:space="preserve">
+    <value>Відкрити Users</value>
+  </data>
+  <data name="Admin_Metric_TotalUsers" xml:space="preserve">
+    <value>Усього користувачів</value>
+  </data>
+  <data name="Admin_Metric_New24" xml:space="preserve">
+    <value>Нові за 24 години</value>
+  </data>
+  <data name="Admin_Metric_New7" xml:space="preserve">
+    <value>Нові за 7 днів</value>
+  </data>
+  <data name="Admin_Metric_New30" xml:space="preserve">
+    <value>Нові за 30 днів</value>
+  </data>
+  <data name="Admin_Metric_Active24" xml:space="preserve">
+    <value>Активні за 24 години</value>
+  </data>
+  <data name="Admin_Metric_Active7" xml:space="preserve">
+    <value>Активні за 7 днів</value>
+  </data>
+  <data name="Admin_Metric_Active30" xml:space="preserve">
+    <value>Активні за 30 днів</value>
+  </data>
+  <data name="Admin_Metric_Inactive30" xml:space="preserve">
+    <value>Неактивні понад 30 днів</value>
+  </data>
+  <data name="Admin_Dashboard_ProductTitle" xml:space="preserve">
+    <value>Продукт і підтримка</value>
+  </data>
+  <data name="Admin_Dashboard_ProductHint" xml:space="preserve">
+    <value>Завершені тренування та черга звернень.</value>
+  </data>
+  <data name="Admin_Metric_Workouts24" xml:space="preserve">
+    <value>Тренування за 24 години</value>
+  </data>
+  <data name="Admin_Metric_Workouts7" xml:space="preserve">
+    <value>Тренування за 7 днів</value>
+  </data>
+  <data name="Admin_Metric_Workouts30" xml:space="preserve">
+    <value>Тренування за 30 днів</value>
+  </data>
+  <data name="Admin_Metric_OpenTickets" xml:space="preserve">
+    <value>Відкриті звернення</value>
+  </data>
+  <data name="Admin_Metric_NewTickets" xml:space="preserve">
+    <value>Нові звернення</value>
+  </data>
+  <data name="Admin_Metric_BackendErrors" xml:space="preserve">
+    <value>Помилки backend за 24 години</value>
+  </data>
+  <data name="Admin_Metric_NotWired" xml:space="preserve">
+    <value>Метрику не підключено</value>
+  </data>
+  <data name="Admin_TryAgain" xml:space="preserve">
+    <value>Спробуйте ще раз.</value>
+  </data>
+  <data name="Admin_StatsUnavailable" xml:space="preserve">
+    <value>Серверна статистика тимчасово недоступна.</value>
+  </data>
+  <data name="Admin_Users_Description" xml:space="preserve">
+    <value>Користувачі, активність і діагностична інформація без секретів.</value>
+  </data>
+  <data name="Admin_Users_SearchLabel" xml:space="preserve">
+    <value>Ім'я, email або UserId</value>
+  </data>
+  <data name="Admin_Users_SearchPlaceholder" xml:space="preserve">
+    <value>Пошук користувачів</value>
+  </data>
+  <data name="Admin_Find" xml:space="preserve">
+    <value>Знайти</value>
+  </data>
+  <data name="Admin_Users_Loading" xml:space="preserve">
+    <value>Завантажуємо користувачів</value>
+  </data>
+  <data name="Admin_Users_LoadingHint" xml:space="preserve">
+    <value>Виконується серверний запит.</value>
+  </data>
+  <data name="Admin_Users_LoadFailed" xml:space="preserve">
+    <value>Не вдалося завантажити Users</value>
+  </data>
+  <data name="Admin_Users_NotFound" xml:space="preserve">
+    <value>Користувачів не знайдено</value>
+  </data>
+  <data name="Admin_Users_NotFoundHint" xml:space="preserve">
+    <value>Змініть пошуковий запит або очистіть фільтр.</value>
+  </data>
+  <data name="Admin_Column_User" xml:space="preserve">
+    <value>Користувач</value>
+  </data>
+  <data name="Admin_Column_Registered" xml:space="preserve">
+    <value>Реєстрація</value>
+  </data>
+  <data name="Admin_Column_LastSeen" xml:space="preserve">
+    <value>Остання активність</value>
+  </data>
+  <data name="Admin_Column_Status" xml:space="preserve">
+    <value>Статус</value>
+  </data>
+  <data name="Admin_Column_Client" xml:space="preserve">
+    <value>Клієнт</value>
+  </data>
+  <data name="Admin_Column_Workouts" xml:space="preserve">
+    <value>Тренування</value>
+  </data>
+  <data name="Admin_VersionUnknown" xml:space="preserve">
+    <value>версія невідома</value>
+  </data>
+  <data name="Admin_TotalPage" xml:space="preserve">
+    <value>Усього: {0} · сторінка {1} з {2}</value>
+  </data>
+  <data name="Admin_Next" xml:space="preserve">
+    <value>Уперед</value>
+  </data>
+  <data name="Admin_Users_ListUnavailable" xml:space="preserve">
+    <value>Список користувачів тимчасово недоступний.</value>
+  </data>
+  <data name="Admin_NoData" xml:space="preserve">
+    <value>Немає даних</value>
+  </data>
+  <data name="Admin_Support_Description" xml:space="preserve">
+    <value>Основний робочий інтерфейс технічної підтримки GPlanner.</value>
+  </data>
+  <data name="Admin_Support_SearchLabel" xml:space="preserve">
+    <value>TicketNumber, користувач або email</value>
+  </data>
+  <data name="Admin_Support_SearchPlaceholder" xml:space="preserve">
+    <value>Пошук звернень</value>
+  </data>
+  <data name="Admin_Support_AllStatuses" xml:space="preserve">
+    <value>Усі статуси</value>
+  </data>
+  <data name="Admin_Apply" xml:space="preserve">
+    <value>Застосувати</value>
+  </data>
+  <data name="Admin_Support_Loading" xml:space="preserve">
+    <value>Завантажуємо звернення</value>
+  </data>
+  <data name="Admin_Support_Unavailable" xml:space="preserve">
+    <value>Support недоступний</value>
+  </data>
+  <data name="Admin_Support_NotFound" xml:space="preserve">
+    <value>Звернень не знайдено</value>
+  </data>
+  <data name="Admin_Support_NotFoundHint" xml:space="preserve">
+    <value>Черга порожня або звернення не відповідають фільтрам.</value>
+  </data>
+  <data name="Admin_Column_Ticket" xml:space="preserve">
+    <value>Звернення</value>
+  </data>
+  <data name="Admin_Column_Created" xml:space="preserve">
+    <value>Створено</value>
+  </data>
+  <data name="Admin_Column_Updated" xml:space="preserve">
+    <value>Оновлено</value>
+  </data>
+  <data name="Admin_Column_Screenshot" xml:space="preserve">
+    <value>Знімок екрана</value>
+  </data>
+  <data name="Admin_Yes" xml:space="preserve">
+    <value>Є</value>
+  </data>
+  <data name="Admin_Support_ListUnavailable" xml:space="preserve">
+    <value>Список звернень тимчасово недоступний.</value>
+  </data>
+  <data name="Admin_Ticket_Fallback" xml:space="preserve">
+    <value>Звернення</value>
+  </data>
+  <data name="Admin_Ticket_Description" xml:space="preserve">
+    <value>Історія листування та діагностичний контекст користувача.</value>
+  </data>
+  <data name="Admin_Ticket_Loading" xml:space="preserve">
+    <value>Завантажуємо звернення</value>
+  </data>
+  <data name="Admin_Ticket_NotFound" xml:space="preserve">
+    <value>Звернення не знайдено</value>
+  </data>
+  <data name="Admin_Ticket_Conversation" xml:space="preserve">
+    <value>Історія повідомлень</value>
+  </data>
+  <data name="Admin_Ticket_MessageCount" xml:space="preserve">
+    <value>{0} повідомлень</value>
+  </data>
+  <data name="Admin_Ticket_Support" xml:space="preserve">
+    <value>Підтримка</value>
+  </data>
+  <data name="Admin_Ticket_ReplyLabel" xml:space="preserve">
+    <value>Відповідь користувачу</value>
+  </data>
+  <data name="Admin_Ticket_ReplyPlaceholder" xml:space="preserve">
+    <value>Відповідь з'явиться в наявному Inbox користувача</value>
+  </data>
+  <data name="Admin_Ticket_StatusAfterSend" xml:space="preserve">
+    <value>Статус після надсилання</value>
+  </data>
+  <data name="Admin_Ticket_Sending" xml:space="preserve">
+    <value>Надсилаємо…</value>
+  </data>
+  <data name="Admin_Ticket_SendToInbox" xml:space="preserve">
+    <value>Надіслати в Inbox</value>
+  </data>
+  <data name="Admin_Ticket_UserPanel" xml:space="preserve">
+    <value>Користувач</value>
+  </data>
+  <data name="Admin_Field_Name" xml:space="preserve">
+    <value>Ім'я</value>
+  </data>
+  <data name="Admin_Field_Platform" xml:space="preserve">
+    <value>Платформа</value>
+  </data>
+  <data name="Admin_Field_Os" xml:space="preserve">
+    <value>ОС</value>
+  </data>
+  <data name="Admin_Field_Device" xml:space="preserve">
+    <value>Пристрій</value>
+  </data>
+  <data name="Admin_Ticket_ScreenshotAlt" xml:space="preserve">
+    <value>Знімок екрана користувача до звернення {0}</value>
+  </data>
+  <data name="Admin_Ticket_ChangeStatus" xml:space="preserve">
+    <value>Змінити статус</value>
+  </data>
+  <data name="Admin_Ticket_SaveStatus" xml:space="preserve">
+    <value>Зберегти статус</value>
+  </data>
+  <data name="Admin_Ticket_CheckNumber" xml:space="preserve">
+    <value>Перевірте номер звернення.</value>
+  </data>
+  <data name="Admin_Ticket_Unavailable" xml:space="preserve">
+    <value>Звернення тимчасово недоступне.</value>
+  </data>
+  <data name="Admin_Ticket_ReplySaved" xml:space="preserve">
+    <value>Відповідь збережено та надіслано в Inbox користувача.</value>
+  </data>
+  <data name="Admin_Ticket_ReplyFailed" xml:space="preserve">
+    <value>Не вдалося надіслати відповідь. Повторіть спробу.</value>
+  </data>
+  <data name="Admin_Ticket_StatusUpdated" xml:space="preserve">
+    <value>Статус звернення оновлено.</value>
+  </data>
+  <data name="Admin_Ticket_StatusFailed" xml:space="preserve">
+    <value>Не вдалося оновити статус.</value>
+  </data>
+  <data name="Admin_System_Description" xml:space="preserve">
+    <value>Безпечна базова діагностика серверних компонентів без розкриття конфігурації та секретів.</value>
+  </data>
+  <data name="Admin_Refresh" xml:space="preserve">
+    <value>Оновити</value>
+  </data>
+  <data name="Admin_System_Checking" xml:space="preserve">
+    <value>Перевіряємо систему</value>
+  </data>
+  <data name="Admin_System_Unavailable" xml:space="preserve">
+    <value>Діагностика недоступна</value>
+  </data>
+  <data name="Admin_System_CheckedAt" xml:space="preserve">
+    <value>Перевірено {0}</value>
+  </data>
+  <data name="Admin_System_ComponentsAria" xml:space="preserve">
+    <value>Стан компонентів</value>
+  </data>
+  <data name="Admin_System_RetryLater" xml:space="preserve">
+    <value>Повторіть перевірку пізніше.</value>
+  </data>
+  <data name="Admin_System_StateFailed" xml:space="preserve">
+    <value>Не вдалося отримати стан компонентів.</value>
+  </data>
+  <data name="Admin_UserCard_Title" xml:space="preserve">
+    <value>Картка користувача</value>
+  </data>
+  <data name="Admin_UserCard_Description" xml:space="preserve">
+    <value>Read-only діагностика. Паролі, токени, cookies та інші секрети не показуються.</value>
+  </data>
+  <data name="Admin_UserCard_Loading" xml:space="preserve">
+    <value>Завантажуємо користувача</value>
+  </data>
+  <data name="Admin_UserCard_NotFound" xml:space="preserve">
+    <value>Користувача не знайдено</value>
+  </data>
+  <data name="Admin_Field_AppVersion" xml:space="preserve">
+    <value>Версія GPlanner</value>
+  </data>
+  <data name="Admin_UserCard_Diagnostics" xml:space="preserve">
+    <value>Діагностика</value>
+  </data>
+  <data name="Admin_UserCard_DiagnosticsHint" xml:space="preserve">
+    <value>Без доступу до вмісту акаунта.</value>
+  </data>
+  <data name="Admin_Field_CompletedWorkouts" xml:space="preserve">
+    <value>Завершені тренування</value>
+  </data>
+  <data name="Admin_Field_SupportTickets" xml:space="preserve">
+    <value>Звернення підтримки</value>
+  </data>
+  <data name="Admin_Field_MobileSessions" xml:space="preserve">
+    <value>Активні Mobile-сеанси</value>
+  </data>
+  <data name="Admin_Field_EmailConfirmed" xml:space="preserve">
+    <value>Email підтверджено</value>
+  </data>
+  <data name="Admin_Field_LockoutUntil" xml:space="preserve">
+    <value>Блокування до</value>
+  </data>
+  <data name="Admin_UserCard_CheckUserId" xml:space="preserve">
+    <value>Перевірте UserId.</value>
+  </data>
+  <data name="Admin_UserCard_Unavailable" xml:space="preserve">
+    <value>Дані тимчасово недоступні.</value>
+  </data>
+  <data name="Admin_Publications_PageTitle" xml:space="preserve">
+    <value>Публікації — GPlanner Admin</value>
+  </data>
+  <data name="Admin_Publications_Back" xml:space="preserve">
+    <value>← Панель керування</value>
+  </data>
+  <data name="Admin_Publications_Title" xml:space="preserve">
+    <value>Публікації</value>
+  </data>
+  <data name="Admin_Publications_Subtitle" xml:space="preserve">
+    <value>Створюйте повідомлення, які з'являться в центрі сповіщень користувачів.</value>
+  </data>
+  <data name="Admin_Publications_Editor" xml:space="preserve">
+    <value>Редактор</value>
+  </data>
+  <data name="Admin_Publications_New" xml:space="preserve">
+    <value>Нова публікація</value>
+  </data>
+  <data name="Admin_Publications_RequiredHint" xml:space="preserve">
+    <value>Поля із зірочкою обов'язкові</value>
+  </data>
+  <data name="Admin_Publications_Type" xml:space="preserve">
+    <value>Тип</value>
+  </data>
+  <data name="Admin_Publications_Date" xml:space="preserve">
+    <value>Дата публікації</value>
+  </data>
+  <data name="Admin_Publications_TitleLabel" xml:space="preserve">
+    <value>Заголовок *</value>
+  </data>
+  <data name="Admin_Publications_TitlePlaceholder" xml:space="preserve">
+    <value>Коротко сформулюйте тему публікації</value>
+  </data>
+  <data name="Admin_Publications_BodyLabel" xml:space="preserve">
+    <value>Текст *</value>
+  </data>
+  <data name="Admin_Publications_BodyPlaceholder" xml:space="preserve">
+    <value>Напишіть повідомлення, яке побачать користувачі…</value>
+  </data>
+  <data name="Admin_Publications_Image" xml:space="preserve">
+    <value>Зображення</value>
+  </data>
+  <data name="Admin_Publications_Optional" xml:space="preserve">
+    <value>(необов'язково)</value>
+  </data>
+  <data name="Admin_Publications_ImageHint" xml:space="preserve">
+    <value>JPEG, PNG або WebP, до 5 МБ.</value>
+  </data>
+  <data name="Admin_Publications_HidePreview" xml:space="preserve">
+    <value>Сховати передперегляд</value>
+  </data>
+  <data name="Admin_Publications_Preview" xml:space="preserve">
+    <value>Передперегляд</value>
+  </data>
+  <data name="Admin_Publications_Publishing" xml:space="preserve">
+    <value>Публікуємо…</value>
+  </data>
+  <data name="Admin_Publications_Publish" xml:space="preserve">
+    <value>Опублікувати</value>
+  </data>
+  <data name="Admin_Publications_PreviewTitle" xml:space="preserve">
+    <value>Заголовок публікації</value>
+  </data>
+  <data name="Admin_Publications_PreviewImageAlt" xml:space="preserve">
+    <value>Передперегляд зображення публікації</value>
+  </data>
+  <data name="Admin_Publications_PreviewBody" xml:space="preserve">
+    <value>Текст публікації з'явиться тут.</value>
+  </data>
+  <data name="Admin_Publications_HistoryLabel" xml:space="preserve">
+    <value>Історія</value>
+  </data>
+  <data name="Admin_Publications_Recent" xml:space="preserve">
+    <value>Останні публікації</value>
+  </data>
+  <data name="Admin_Publications_Empty" xml:space="preserve">
+    <value>Публікацій поки немає.</value>
+  </data>
+  <data name="Admin_Publications_Published" xml:space="preserve">
+    <value>Опубліковано</value>
+  </data>
+  <data name="Admin_Publications_Scheduled" xml:space="preserve">
+    <value>Заплановано</value>
+  </data>
+  <data name="Admin_Publications_Saved" xml:space="preserve">
+    <value>Публікацію збережено.</value>
+  </data>
+  <data name="Admin_Publications_TitleRequired" xml:space="preserve">
+    <value>Введіть заголовок.</value>
+  </data>
+  <data name="Admin_Publications_TitleTooLong" xml:space="preserve">
+    <value>Не більше ніж 160 символів.</value>
+  </data>
+  <data name="Admin_Publications_BodyRequired" xml:space="preserve">
+    <value>Введіть текст.</value>
+  </data>
+  <data name="Admin_Publications_BodyTooLong" xml:space="preserve">
+    <value>Не більше ніж 8000 символів.</value>
+  </data>
+  <data name="Server_Support_MultipartRequired" xml:space="preserve">
+    <value>Форму звернення потрібно надіслати як multipart-запит.</value>
+  </data>
+  <data name="Server_Support_MessageTooShort" xml:space="preserve">
+    <value>Опишіть проблему хоча б у {0} символах.</value>
+  </data>
+  <data name="Server_Support_MessageTooLong" xml:space="preserve">
+    <value>Опис не має перевищувати {0} символів.</value>
+  </data>
+  <data name="Server_Support_ScreenshotTooLarge" xml:space="preserve">
+    <value>Розмір знімка екрана не має перевищувати 5 МБ.</value>
+  </data>
+  <data name="Server_Support_ScreenshotUnsupported" xml:space="preserve">
+    <value>Підтримуються лише коректні зображення JPG, PNG і WebP.</value>
+  </data>
+  <data name="Server_Support_MessageInvalid" xml:space="preserve">
+    <value>Введіть коректний опис проблеми.</value>
+  </data>
+  <data name="Server_Workout_NoExercises" xml:space="preserve">
+    <value>Додайте хоча б одну вправу.</value>
+  </data>
+  <data name="Server_Workout_CheckSets" xml:space="preserve">
+    <value>Перевірте оцінку та підходи кожної вправи.</value>
+  </data>
+  <data name="Server_Workout_SaveFailed" xml:space="preserve">
+    <value>Не вдалося зберегти тренування.</value>
+  </data>
+  <data name="Server_Plan_NameRequired" xml:space="preserve">
+    <value>Введіть назву тренування.</value>
+  </data>
+  <data name="Server_Plan_NameTaken" xml:space="preserve">
+    <value>Тренування з такою назвою вже є.</value>
+  </data>
+  <data name="Server_Plan_NotFound" xml:space="preserve">
+    <value>Тренування не знайдено.</value>
+  </data>
+  <data name="Server_Template_NameTaken" xml:space="preserve">
+    <value>Шаблон з такою назвою вже існує.</value>
+  </data>
+  <data name="Server_Template_NameLength" xml:space="preserve">
+    <value>Введіть назву шаблона довжиною до 120 символів.</value>
+  </data>
+  <data name="Server_Exercise_Missing" xml:space="preserve">
+    <value>Однієї з обраних вправ більше не існує.</value>
+  </data>
+  <data name="Server_Exercise_CheckSets" xml:space="preserve">
+    <value>Заповніть вправу та перевірте параметри кожного підходу.</value>
+  </data>
+  <data name="Server_FreeWorkout_Name" xml:space="preserve">
+    <value>Вільне тренування</value>
+  </data>
+  <data name="Server_FreeWorkout_SavedAsTemplate" xml:space="preserve">
+    <value>Вільне тренування · збережено в шаблони</value>
+  </data>
+  <data name="Server_Publication_InvalidType" xml:space="preserve">
+    <value>Неприпустимий тип публікації.</value>
+  </data>
+  <data name="Server_Publication_CheckFields" xml:space="preserve">
+    <value>Перевірте заголовок і текст публікації.</value>
+  </data>
+  <data name="Server_Image_TooLarge" xml:space="preserve">
+    <value>Зображення має бути не більшим за 5 МБ.</value>
+  </data>
+  <data name="Server_Image_UnsupportedFormat" xml:space="preserve">
+    <value>Дозволені лише JPEG, PNG і WebP.</value>
+  </data>
+  <data name="Server_Image_ContentMismatch" xml:space="preserve">
+    <value>Вміст файлу не відповідає формату зображення.</value>
+  </data>
+  <data name="Server_Image_Empty" xml:space="preserve">
+    <value>Зображення порожнє.</value>
+  </data>
+  <data name="Server_Starter_Upper1" xml:space="preserve">
+    <value>Верх 1</value>
+  </data>
+  <data name="Server_Starter_Lower1" xml:space="preserve">
+    <value>Низ 1</value>
+  </data>
+  <data name="Server_Starter_Upper2" xml:space="preserve">
+    <value>Верх 2</value>
+  </data>
+  <data name="Server_Starter_Lower2" xml:space="preserve">
+    <value>Низ 2</value>
+  </data>
+  <data name="Server_Account_UserNotFound" xml:space="preserve">
+    <value>Користувача не знайдено.</value>
+  </data>
+  <data name="Server_Inbox_SupportReplyTitle" xml:space="preserve">
+    <value>Відповідь від підтримки</value>
+  </data>
+  <data name="Push_SupportReply" xml:space="preserve">
+    <value>Вам надійшла відповідь від служби підтримки.</value>
+  </data>
+  <data name="Push_InboxMessage" xml:space="preserve">
+    <value>У вас нове повідомлення.</value>
+  </data>
+  <data name="Push_AppUpdate" xml:space="preserve">
+    <value>Для вас доступне нове оновлення.</value>
+  </data>
+  <data name="Push_AccountNotification" xml:space="preserve">
+    <value>У вас нове сповіщення акаунта.</value>
+  </data>
+  <data name="Web_Register_ConfirmPassword" xml:space="preserve">
+    <value>Підтвердження пароля</value>
+  </data>
+  <data name="Web_Register_Failed" xml:space="preserve">
+    <value>Не вдалося завершити реєстрацію. Спробуйте ще раз.</value>
+  </data>
+  <data name="Password_DuplicateEmail" xml:space="preserve">
+    <value>Користувач із таким Email уже зареєстрований.</value>
+  </data>
+  <data name="Web_Login_InvalidCredentials" xml:space="preserve">
+    <value>Невірний email або пароль.</value>
+  </data>
+  <data name="Web_AccessDenied_PageTitle" xml:space="preserve">
+    <value>Доступ заборонено — GPlanner Admin</value>
+  </data>
+  <data name="Web_AccessDenied_Title" xml:space="preserve">
+    <value>Доступ заборонено</value>
+  </data>
+  <data name="Web_AccessDenied_Body" xml:space="preserve">
+    <value>Для цього розділу потрібна роль адміністратора.</value>
+  </data>
+  <data name="Help_Today_S3_Step1" xml:space="preserve">
+    <value>Знайдіть рядок підходу: номер, поле «кг» і поле «повт.».</value>
+  </data>
+  <data name="Help_Today_S3_Step2" xml:space="preserve">
+    <value>Якщо фактичні значення відрізняються від плану, виправте їх просто в цих полях.</value>
+  </data>
+  <data name="Help_Today_S3_Step3" xml:space="preserve">
+    <value>Натисніть галочку праворуч у рядку — підхід позначиться виконаним.</value>
+  </data>
+  <data name="Help_Today_S3_Step4" xml:space="preserve">
+    <value>Унизу картки в полі «Оцінка вправи» виберіть, наскільки важко вона далася.</value>
+  </data>
+  <data name="Help_Today_S4_Step1" xml:space="preserve">
+    <value>Натисніть плашку «Відпочинок між підходами» під щойно виконаним підходом.</value>
+  </data>
+  <data name="Help_Today_S4_Step2" xml:space="preserve">
+    <value>За потреби змініть значення в полі «Час відпочинку, с.».</value>
+  </data>
+  <data name="Help_Today_S4_Step3" xml:space="preserve">
+    <value>Натисніть «Запустити», потім «Готово» — відлік триватиме й із закритим вікном.</value>
+  </data>
+  <data name="Help_Today_S5_Title" xml:space="preserve">
+    <value>Перемкнути розминковий і робочий підхід</value>
+  </data>
+  <data name="Help_Today_S5_Text" xml:space="preserve">
+    <value>Розминкові підходи не враховуються як робочі, коли застосунок рахує навантаження.</value>
+  </data>
+  <data name="Help_Today_S5_Step1" xml:space="preserve">
+    <value>Натисніть на номер підходу ліворуч у рядку.</value>
+  </data>
+  <data name="Help_Today_S5_Step2" xml:space="preserve">
+    <value>Номер змінить колір — підхід перемкнеться між розминковим і робочим.</value>
+  </data>
+  <data name="Help_Today_S6_Title" xml:space="preserve">
+    <value>Змінити або видалити вправу</value>
+  </data>
+  <data name="Help_Today_S6_Text" xml:space="preserve">
+    <value>Дії з карткою сховані за довгим натисканням, щоб не заважати під час тренування.</value>
+  </data>
+  <data name="Help_Today_S6_Step1" xml:space="preserve">
+    <value>Натисніть і утримуйте заголовок картки вправи.</value>
+  </data>
+  <data name="Help_Today_S6_Step2" xml:space="preserve">
+    <value>У вікні, що відкриється, виберіть «Змінити тренування», «Додати фото» або «Видалити картку».</value>
+  </data>
+  <data name="Help_Today_S7_Title" xml:space="preserve">
+    <value>Завершити тренування</value>
+  </data>
+  <data name="Help_Today_S7_Text" xml:space="preserve">
+    <value>Завершення переносить результат до «Історії». Кнопка спрацьовує від утримання, щоб її не можна було натиснути випадково.</value>
+  </data>
+  <data name="Help_Today_S7_Step1" xml:space="preserve">
+    <value>Натисніть і утримуйте «Завершити тренування» внизу сторінки, доки коло не замкнеться.</value>
+  </data>
+  <data name="Help_Today_S7_Step2" xml:space="preserve">
+    <value>Після вільного тренування дайте відповідь на запитання «Зробити з сьогоднішнього тренування шаблон?».</value>
+  </data>
+  <data name="Help_Today_S7_Step3" xml:space="preserve">
+    <value>Готовий результат відкриється у вкладці «Історія».</value>
+  </data>
+  <data name="Help_TodayWeb_S1_Title" xml:space="preserve">
+    <value>Початок тренування</value>
+  </data>
+  <data name="Help_TodayWeb_S2_Title" xml:space="preserve">
+    <value>Під час тренування</value>
+  </data>
+  <data name="Help_Workouts_S1_Step1" xml:space="preserve">
+    <value>Натисніть «Додати шаблон» унизу списку.</value>
+  </data>
+  <data name="Help_Workouts_S1_Step2" xml:space="preserve">
+    <value>Введіть назву в полі «Назва».</value>
+  </data>
+  <data name="Help_Workouts_S1_Step3" xml:space="preserve">
+    <value>Натисніть «Зберегти» — шаблон з'явиться у списку.</value>
+  </data>
+  <data name="Help_Workouts_S2_Step1" xml:space="preserve">
+    <value>Натисніть на картку шаблона у списку.</value>
+  </data>
+  <data name="Help_Workouts_S2_Step2" xml:space="preserve">
+    <value>Додайте вправи на сторінці, що відкриється.</value>
+  </data>
+  <data name="Help_Workouts_S2_Step3" xml:space="preserve">
+    <value>Поверніться назад кнопкою «До шаблонів».</value>
+  </data>
+  <data name="Help_Workouts_S3_Step1" xml:space="preserve">
+    <value>Натисніть кнопку налаштувань на картці шаблона.</value>
+  </data>
+  <data name="Help_Workouts_S3_Step2" xml:space="preserve">
+    <value>У вікні «Дії з шаблоном» виберіть «Змінити назву».</value>
+  </data>
+  <data name="Help_Workouts_S3_Step3" xml:space="preserve">
+    <value>Введіть нову назву й натисніть «Зберегти».</value>
+  </data>
+  <data name="Help_Workouts_S4_Step1" xml:space="preserve">
+    <value>Натисніть кнопку налаштувань на картці шаблона.</value>
+  </data>
+  <data name="Help_Workouts_S4_Step2" xml:space="preserve">
+    <value>Виберіть «Видалити шаблон».</value>
+  </data>
+  <data name="Help_Workouts_S4_Step3" xml:space="preserve">
+    <value>Підтвердьте дію кнопкою «Видалити».</value>
+  </data>
+  <data name="Help_WorkoutDetails_Title" xml:space="preserve">
+    <value>Вправи шаблона</value>
+  </data>
+  <data name="Help_WorkoutDetails_Intro" xml:space="preserve">
+    <value>Тут задається склад тренування: які вправи до нього входять, скільки підходів і з якою вагою.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Title" xml:space="preserve">
+    <value>Додати вправу</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Text" xml:space="preserve">
+    <value>Вправа береться з бібліотеки, а підходи задаються одразу під час додавання.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Step1" xml:space="preserve">
+    <value>Натисніть «Додати вправу» вгорі сторінки.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Step2" xml:space="preserve">
+    <value>У полі «Вправа з бібліотеки» виберіть потрібну.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Step3" xml:space="preserve">
+    <value>Вкажіть «Кількість підходів» — рядки підходів з'являться нижче.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S1_Step4" xml:space="preserve">
+    <value>Заповніть «Вага, кг» і «Повторення» для кожного підходу й натисніть «Зберегти».</value>
+  </data>
+  <data name="Help_WorkoutDetails_S2_Title" xml:space="preserve">
+    <value>Змінити або видалити вправу</value>
+  </data>
+  <data name="Help_WorkoutDetails_S2_Text" xml:space="preserve">
+    <value>Дії з вправою відкриваються довгим натисканням на її картку.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S2_Step1" xml:space="preserve">
+    <value>Натисніть і утримуйте картку вправи.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S2_Step2" xml:space="preserve">
+    <value>У вікні «Керування вправою» виберіть «Змінити параметри» або «Видалити вправу».</value>
+  </data>
+  <data name="Help_WorkoutDetails_S3_Title" xml:space="preserve">
+    <value>Розмітити розминкові підходи</value>
+  </data>
+  <data name="Help_WorkoutDetails_S3_Text" xml:space="preserve">
+    <value>Розминкові підходи підписані окремо й не вважаються робочими.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S3_Step1" xml:space="preserve">
+    <value>Натисніть на номер підходу в рядку.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S3_Step2" xml:space="preserve">
+    <value>Підпис поруч зміниться на «розминковий» або «робочий».</value>
+  </data>
+  <data name="Help_WorkoutDetails_S4_Title" xml:space="preserve">
+    <value>Додати фото вправи</value>
+  </data>
+  <data name="Help_WorkoutDetails_S4_Text" xml:space="preserve">
+    <value>Фото допомагає пригадати техніку або налаштування тренажера перед підходом.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S4_Step1" xml:space="preserve">
+    <value>Натисніть на плашку з фото в картці вправи.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S4_Step2" xml:space="preserve">
+    <value>Виберіть знімок із галереї або зробіть новий камерою.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Title" xml:space="preserve">
+    <value>Скласти суперсет</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Text" xml:space="preserve">
+    <value>Суперсет об'єднує дві вправи, які виконуються поспіль без відпочинку між ними.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step1" xml:space="preserve">
+    <value>Натисніть «Створити суперсет» вгорі сторінки.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step2" xml:space="preserve">
+    <value>Виберіть у списку дві вправи.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step3" xml:space="preserve">
+    <value>Підтвердьте — вправи об'єднаються в одну картку.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S1_Text" xml:space="preserve">
+    <value>Вправу можна взяти з бібліотеки або задати власною назвою.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S1_Step1" xml:space="preserve">
+    <value>Натисніть «Додати вправу» вгорі сторінки.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S1_Step2" xml:space="preserve">
+    <value>Виберіть варіант у списку «Вправа з бібліотеки» або впишіть своє в полі «Назва».</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S1_Step3" xml:space="preserve">
+    <value>Вкажіть «Кількість підходів» — поля ваги з'являться нижче.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S1_Step4" xml:space="preserve">
+    <value>Заповніть вагу для кожного підходу й натисніть «Додати».</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S2_Text" xml:space="preserve">
+    <value>Дії з вправою зібрані в меню на її картці.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S2_Step1" xml:space="preserve">
+    <value>Натисніть кнопку меню у правому верхньому куті картки вправи.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S2_Step2" xml:space="preserve">
+    <value>У вікні «Керування вправою» виберіть «Змінити параметри» або «Видалити вправу».</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S3_Text" xml:space="preserve">
+    <value>Фото допомагає пригадати техніку або налаштування тренажера перед підходом.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S3_Step1" xml:space="preserve">
+    <value>Натисніть плашку додавання фото в картці вправи.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S3_Step2" xml:space="preserve">
+    <value>Виберіть файл — знімок завантажиться й з'явиться в картці.</value>
+  </data>
+  <data name="Help_WorkoutDetailsWeb_S3_Step3" xml:space="preserve">
+    <value>Натисніть на фото, щоб відкрити його на весь екран.</value>
+  </data>
+  <data name="Help_Calendar_S1_Step1" xml:space="preserve">
+    <value>Стрілками біля назви місяця перейдіть до потрібного місяця.</value>
+  </data>
+  <data name="Help_Calendar_S1_Step2" xml:space="preserve">
+    <value>Натисніть на день у сітці — відкриється вікно «Обраний день».</value>
+  </data>
+  <data name="Help_Calendar_S1_Step3" xml:space="preserve">
+    <value>У списку «Призначити тренування» виберіть шаблон.</value>
+  </data>
+  <data name="Help_Calendar_S1_Step4" xml:space="preserve">
+    <value>Натисніть «Призначити».</value>
+  </data>
+  <data name="Help_Calendar_S2_Step1" xml:space="preserve">
+    <value>Натисніть на день із уже призначеним тренуванням.</value>
+  </data>
+  <data name="Help_Calendar_S2_Step2" xml:space="preserve">
+    <value>Виберіть «Перенести на іншу дату».</value>
+  </data>
+  <data name="Help_Calendar_S2_Step3" xml:space="preserve">
+    <value>Вкажіть нову дату у виборі, що відкриється.</value>
+  </data>
+  <data name="Help_Calendar_S3_Step1" xml:space="preserve">
+    <value>Натисніть на день із призначеним тренуванням.</value>
+  </data>
+  <data name="Help_Calendar_S3_Step2" xml:space="preserve">
+    <value>Натисніть «Видалити» у вікні дій.</value>
+  </data>
+  <data name="Help_Calendar_S4_Title" xml:space="preserve">
+    <value>Коли призначити не можна</value>
+  </data>
+  <data name="Help_Calendar_S4_Text" xml:space="preserve">
+    <value>Календар не дасть призначити тренування у двох випадках — це не помилка.</value>
+  </data>
+  <data name="Help_Calendar_S4_Step1" xml:space="preserve">
+    <value>На минулий день: з'явиться напис «Цей день уже минув».</value>
+  </data>
+  <data name="Help_Calendar_S4_Step2" xml:space="preserve">
+    <value>На сьогодні, доки триває вільне тренування: спершу завершіть або видаліть його.</value>
+  </data>
+  <data name="Help_CalendarWeb_Intro" xml:space="preserve">
+    <value>Календар показує, на які дні призначено тренування, і відкриває вікно дня після натискання на дату.</value>
+  </data>
+  <data name="Help_CalendarWeb_S1_Step1" xml:space="preserve">
+    <value>Стрілками біля назви місяця перейдіть до потрібного місяця.</value>
+  </data>
+  <data name="Help_CalendarWeb_S1_Step2" xml:space="preserve">
+    <value>Натисніть на день у сітці — відкриється вікно дня.</value>
+  </data>
+  <data name="Help_CalendarWeb_S1_Step3" xml:space="preserve">
+    <value>Натисніть «Призначити тренування» та виберіть шаблон у списку.</value>
+  </data>
+  <data name="Help_CalendarWeb_S1_Step4" xml:space="preserve">
+    <value>Підтвердьте вибір кнопкою «Призначити».</value>
+  </data>
+  <data name="Help_CalendarWeb_S2_Step1" xml:space="preserve">
+    <value>Натисніть на день із призначеним тренуванням.</value>
+  </data>
+  <data name="Help_CalendarWeb_S2_Step2" xml:space="preserve">
+    <value>Натисніть кнопку видалення у вікні дня.</value>
+  </data>
+  <data name="Help_CalendarWeb_S3_Step1" xml:space="preserve">
+    <value>«Тренування не призначено» — на цей день нічого не заплановано.</value>
+  </data>
+  <data name="Help_CalendarWeb_S3_Step2" xml:space="preserve">
+    <value>«Цей день уже минув» — призначити тренування заднім числом не можна.</value>
+  </data>
+  <data name="Help_History_S1_Step1" xml:space="preserve">
+    <value>Натисніть на картку тренування у списку.</value>
+  </data>
+  <data name="Help_History_S1_Step2" xml:space="preserve">
+    <value>У вікні перегляньте вправи, підходи, вагу та повторення.</value>
+  </data>
+  <data name="Help_History_S1_Step3" xml:space="preserve">
+    <value>Позначки біля підходів показують, які з них було виконано.</value>
+  </data>
+  <data name="Help_History_S2_Step1" xml:space="preserve">
+    <value>Відкрийте запис тренування.</value>
+  </data>
+  <data name="Help_History_S2_Step2" xml:space="preserve">
+    <value>Поруч із номером підходу стоїть підпис «розминковий» або «робочий».</value>
+  </data>
+  <data name="Help_History_S3_Step1" xml:space="preserve">
+    <value>Відкрийте запис і натисніть «Видалити запис».</value>
+  </data>
+  <data name="Help_History_S3_Step2" xml:space="preserve">
+    <value>Підтвердьте дію кнопкою «Видалити остаточно».</value>
+  </data>
+  <data name="Help_Progress_S1_Step1" xml:space="preserve">
+    <value>Натисніть «Вправи», щоб побачити динаміку окремої вправи.</value>
+  </data>
+  <data name="Help_Progress_S1_Step2" xml:space="preserve">
+    <value>Натисніть «Тренування», щоб побачити динаміку тренування загалом.</value>
+  </data>
+  <data name="Help_Progress_S2_Step1" xml:space="preserve">
+    <value>Завершіть хоча б одне тренування на сторінці «Сьогодні».</value>
+  </data>
+  <data name="Help_Progress_S2_Step2" xml:space="preserve">
+    <value>Поверніться до «Прогресу» — дані з'являться після завершення.</value>
+  </data>
+  <data name="Help_ProgressExercises_Title" xml:space="preserve">
+    <value>Прогрес вправ</value>
+  </data>
+  <data name="Help_ProgressExercises_Intro" xml:space="preserve">
+    <value>Показує, як змінювався результат у конкретній вправі відносно першого тренування з нею.</value>
+  </data>
+  <data name="Help_ProgressExercises_S1_Title" xml:space="preserve">
+    <value>Відкрити графік вправи</value>
+  </data>
+  <data name="Help_ProgressExercises_S1_Text" xml:space="preserve">
+    <value>Графік відкривається в альбомній орієнтації — екран повернеться сам, повертати телефон вручну не потрібно.</value>
+  </data>
+  <data name="Help_ProgressExercises_S1_Step1" xml:space="preserve">
+    <value>Знайдіть вправу у списку — під назвою підписано шаблон, до якого вона належить.</value>
+  </data>
+  <data name="Help_ProgressExercises_S1_Step2" xml:space="preserve">
+    <value>Натисніть на картку — відкриється графік за останні 30 днів.</value>
+  </data>
+  <data name="Help_ProgressExercises_S1_Step3" xml:space="preserve">
+    <value>Закрийте вікно, щоб повернутися — орієнтація повернеться назад.</value>
+  </data>
+  <data name="Help_ProgressExercises_S2_Title" xml:space="preserve">
+    <value>Прочитати графік</value>
+  </data>
+  <data name="Help_ProgressExercises_S2_Text" xml:space="preserve">
+    <value>Лінія показує зміну відносно першого тренування, а не абсолютну вагу.</value>
+  </data>
+  <data name="Help_ProgressExercises_S2_Step1" xml:space="preserve">
+    <value>Під графіком подивіться «Зростання», «Найкращий результат» і кількість тренувань.</value>
+  </data>
+  <data name="Help_ProgressExercises_S2_Step2" xml:space="preserve">
+    <value>Розгорніть «Показати точні значення», щоб побачити числа за датами.</value>
+  </data>
+  <data name="Help_ProgressExercises_S3_Title" xml:space="preserve">
+    <value>Очистити історію вправи</value>
+  </data>
+  <data name="Help_ProgressExercises_S3_Text" xml:space="preserve">
+    <value>Скидається лише прогрес. Історія завершених тренувань при цьому не видаляється.</value>
+  </data>
+  <data name="Help_ProgressExercises_S3_Step1" xml:space="preserve">
+    <value>Натисніть кнопку меню на картці вправи.</value>
+  </data>
+  <data name="Help_ProgressExercises_S3_Step2" xml:space="preserve">
+    <value>Підтвердьте очищення у вікні, що відкриється.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S1_Text" xml:space="preserve">
+    <value>У вебі вправи згруповані за тренуваннями, тому спершу відкривається тренування, а потім вправа.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S1_Step1" xml:space="preserve">
+    <value>Натисніть на картку тренування — відкриється список її вправ.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S1_Step2" xml:space="preserve">
+    <value>Натисніть на назву вправи у списку.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S1_Step3" xml:space="preserve">
+    <value>Відкриється графік за останні 30 днів.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S3_Step1" xml:space="preserve">
+    <value>У списку вправ натисніть кнопку меню біля потрібної.</value>
+  </data>
+  <data name="Help_ProgressExercisesWeb_S3_Step2" xml:space="preserve">
+    <value>Підтвердьте очищення у вікні, що відкриється.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_Title" xml:space="preserve">
+    <value>Прогрес тренувань</value>
+  </data>
+  <data name="Help_ProgressWorkouts_Intro" xml:space="preserve">
+    <value>Показує динаміку тренування загалом — сумарно за всіма вправами, що до нього входять.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S1_Title" xml:space="preserve">
+    <value>Відкрити графік тренування</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S1_Text" xml:space="preserve">
+    <value>Графік будується за завершеними тренуваннями цього шаблона.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S1_Step1" xml:space="preserve">
+    <value>Натисніть на картку тренування у списку.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S1_Step2" xml:space="preserve">
+    <value>Відкриється графік за останні 30 днів.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S2_Title" xml:space="preserve">
+    <value>Прочитати графік</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S2_Text" xml:space="preserve">
+    <value>Лінія показує зміну відносно першого тренування, а не абсолютний обсяг.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S2_Step1" xml:space="preserve">
+    <value>Під графіком подивіться «Зростання», «Найкращий результат» і кількість тренувань.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S2_Step2" xml:space="preserve">
+    <value>Розгорніть «Показати точні значення», щоб побачити числа за датами.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S3_Title" xml:space="preserve">
+    <value>Очистити історію тренування</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S3_Text" xml:space="preserve">
+    <value>Скидається лише прогрес. Історія завершених тренувань при цьому не видаляється.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S3_Step1" xml:space="preserve">
+    <value>Натисніть кнопку меню на картці тренування.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S3_Step2" xml:space="preserve">
+    <value>Виберіть очищення історії.</value>
+  </data>
+  <data name="Help_ProgressWorkouts_S3_Step3" xml:space="preserve">
+    <value>Підтвердьте дію у вікні, що відкриється.</value>
+  </data>
+  <data name="Help_Profile_S1_Step1" xml:space="preserve">
+    <value>Натисніть «Особиста інформація».</value>
+  </data>
+  <data name="Help_Profile_S1_Step2" xml:space="preserve">
+    <value>Змініть ім'я, прізвище, дату народження або стать.</value>
+  </data>
+  <data name="Help_Profile_S1_Step3" xml:space="preserve">
+    <value>Натисніть «Зберегти зміни».</value>
+  </data>
+  <data name="Help_Profile_S2_Step1" xml:space="preserve">
+    <value>Натисніть «Таймери відпочинку».</value>
+  </data>
+  <data name="Help_Profile_S2_Step2" xml:space="preserve">
+    <value>Задайте «Між підходами, с.» і «Між вправами, с.».</value>
+  </data>
+  <data name="Help_Profile_S2_Step3" xml:space="preserve">
+    <value>Натисніть «Застосувати до всіх таймерів».</value>
+  </data>
+  <data name="Help_Profile_S3_Step1" xml:space="preserve">
+    <value>Натисніть «Мова».</value>
+  </data>
+  <data name="Help_Profile_S3_Step2" xml:space="preserve">
+    <value>Виберіть російську, українську або англійську.</value>
+  </data>
+  <data name="Help_Profile_S4_Title" xml:space="preserve">
+    <value>Повідомити про проблему</value>
+  </data>
+  <data name="Help_Profile_S4_Text" xml:space="preserve">
+    <value>Звернення йде безпосередньо розробнику. Не додавайте паролі та коди з SMS.</value>
+  </data>
+  <data name="Help_Profile_S4_Step1" xml:space="preserve">
+    <value>Натисніть «Повідомити про проблему».</value>
+  </data>
+  <data name="Help_Profile_S4_Step2" xml:space="preserve">
+    <value>Опишіть, що сталося, у полі «Що сталося?».</value>
+  </data>
+  <data name="Help_Profile_S4_Step3" xml:space="preserve">
+    <value>За потреби натисніть «Додати знімок екрана».</value>
+  </data>
+  <data name="Help_Profile_S4_Step4" xml:space="preserve">
+    <value>Натисніть «Надіслати».</value>
+  </data>
+  <data name="Help_ProfileWeb_S1_Step1" xml:space="preserve">
+    <value>Заповніть ім'я, прізвище, дату народження та стать.</value>
+  </data>
+  <data name="Help_ProfileWeb_S1_Step2" xml:space="preserve">
+    <value>Натисніть «Зберегти зміни».</value>
+  </data>
+  <data name="Help_ProfileWeb_S2_Step1" xml:space="preserve">
+    <value>Введіть поточний пароль.</value>
+  </data>
+  <data name="Help_ProfileWeb_S2_Step2" xml:space="preserve">
+    <value>Введіть новий пароль і повторіть його в полі підтвердження.</value>
+  </data>
+  <data name="Help_ProfileWeb_S2_Step3" xml:space="preserve">
+    <value>Натисніть «Змінити пароль».</value>
+  </data>
+  <data name="Help_ProfileWeb_S3_Step1" xml:space="preserve">
+    <value>Натисніть «Повторити знайомство».</value>
+  </data>
+  <data name="Help_ProfileWeb_S3_Step2" xml:space="preserve">
+    <value>Екрани відкриються заново — пройдіть їх до кінця.</value>
+  </data>
+  <data name="Help_ChartSample" xml:space="preserve">
+    <value>Приклад графіка з демонстраційними даними</value>
+  </data>
 </root>

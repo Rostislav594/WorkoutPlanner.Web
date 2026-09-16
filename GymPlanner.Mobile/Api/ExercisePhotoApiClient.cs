@@ -1,3 +1,5 @@
+using GymPlanner.Mobile.Localization;
+using WorkoutPlanner.Localization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -35,13 +37,13 @@ public sealed class ExercisePhotoApiClient(HttpClient client) : IExercisePhotoAp
                 ExercisePhotoApiResponse>(cancellationToken);
             return value is null
                 ? ApiResult<ExercisePhotoApiResponse>.Failure(
-                    "Сервер не подтвердил сохранение фотографии.")
+                    ApiErrorMessages.Get(ApiErrorCodes.PhotoSaveFailed))
                 : ApiResult<ExercisePhotoApiResponse>.Success(value);
         }
         catch (HttpRequestException)
         {
             return ApiResult<ExercisePhotoApiResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -67,7 +69,7 @@ public sealed class ExercisePhotoApiClient(HttpClient client) : IExercisePhotoAp
             if (contentType is not ("image/jpeg" or "image/png" or "image/webp"))
             {
                 return OptionalApiResult<ExercisePhotoContent>.Failure(
-                    "Сервер вернул неподдерживаемый формат фотографии.");
+                    ApiErrorMessages.Get(ApiErrorCodes.PhotoUnsupportedFormat));
             }
 
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
@@ -77,7 +79,7 @@ public sealed class ExercisePhotoApiClient(HttpClient client) : IExercisePhotoAp
         catch (HttpRequestException)
         {
             return OptionalApiResult<ExercisePhotoContent>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -96,7 +98,7 @@ public sealed class ExercisePhotoApiClient(HttpClient client) : IExercisePhotoAp
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 

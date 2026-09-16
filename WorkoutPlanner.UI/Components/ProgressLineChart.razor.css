@@ -101,6 +101,31 @@
     height: 20px;
 }
 
+.chart-marker-hit-target {
+    position: absolute;
+    z-index: 4;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    touch-action: manipulation;
+    transform: translate(-50%, -50%);
+}
+
+.chart-marker-hit-target .chart-marker {
+    top: 50%;
+    left: 50%;
+}
+
+.chart-marker-hit-target:focus-visible {
+    border-radius: 50%;
+    outline: 2px solid #80d89b;
+    outline-offset: 1px;
+}
+
 .chart-value-label {
     position: absolute;
     z-index: 1;
@@ -145,6 +170,58 @@
 .chart-data-details summary { display: inline-flex; min-height: 44px; align-items: center; color: #80d89b; font-weight: 650; cursor: pointer; }
 .chart-data-details summary:focus-visible { border-radius: .35rem; outline: 2px solid #4fc46b; outline-offset: 2px; }
 .chart-data-scroll { max-height: 14rem; overflow: auto; }
+
+/* The mobile progress dialogs reveal the summaries first, then the axes, then
+   the existing 1.8-second curve drawing. Other chart consumers keep their timing. */
+.staged-reveal {
+    --scaffold-delay: 3.3s;
+    --plot-delay: 4s;
+}
+
+.staged-reveal .chart-heading,
+.staged-reveal .axis-label,
+.staged-reveal .zero-line {
+    animation: chart-scaffold-in .55s ease-out var(--scaffold-delay) backwards;
+}
+
+.staged-reveal .axis-line {
+    stroke-dasharray: 600;
+    animation: chart-axis-draw .65s ease-out var(--scaffold-delay) backwards;
+}
+
+.staged-reveal .curve-reveal {
+    animation-delay: var(--plot-delay);
+    animation-fill-mode: backwards;
+}
+
+.staged-reveal .chart-marker {
+    animation-delay: calc(var(--plot-delay) + var(--draw-delay, 0s));
+}
+
+.staged-reveal .chart-value-label {
+    animation-delay: calc(var(--plot-delay) + var(--draw-delay, 0s) + .1s);
+}
+
+.staged-reveal .chart-values,
+.staged-reveal .chart-data-details {
+    animation: chart-detail-in .4s ease-out 5.7s backwards;
+}
+
+@keyframes chart-scaffold-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes chart-axis-draw {
+    from { stroke-dashoffset: 600; opacity: 0; }
+    to { stroke-dashoffset: 0; opacity: 1; }
+}
+
+@keyframes chart-detail-in {
+    from { opacity: 0; visibility: hidden; }
+    to { opacity: 1; visibility: visible; }
+}
+
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 caption { padding: .25rem 0 .5rem; color: #aeb7c2; text-align: left; }
 th, td { padding: .55rem .45rem; border-bottom: 1px solid #343b45; text-align: left; }
@@ -163,12 +240,22 @@ th:last-child, td:last-child { text-align: right; }
         margin-top: .35rem;
     }
 
+    .compact-presentation .chart-frame {
+        height: clamp(9rem, 38dvh, 10.5rem);
+    }
+
     .chart-data-details {
         margin-top: .25rem;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .staged-reveal .chart-heading,
+    .staged-reveal .axis-label,
+    .staged-reveal .zero-line,
+    .staged-reveal .axis-line,
+    .staged-reveal .chart-values,
+    .staged-reveal .chart-data-details,
     .curve-reveal,
     .chart-marker,
     .chart-value-label {

@@ -1,13 +1,14 @@
-@page "/account/access-denied"
+﻿@page "/account/access-denied"
 @attribute [AllowAnonymous]
+@inject IAppText Text
 
-<PageTitle>Доступ запрещён — GPlanner Admin</PageTitle>
+<PageTitle>@Text["Web_AccessDenied_PageTitle"]</PageTitle>
 
 <main class="access-denied-page" role="alert">
     <section>
         <span class="material-symbols-rounded" aria-hidden="true">lock</span>
-        <h1>Доступ запрещён</h1>
-        <p>Для этого раздела требуется роль администратора.</p>
-        <a href="/account/logout">Выйти</a>
+        <h1>@Text["Web_AccessDenied_Title"]</h1>
+        <p>@Text["Web_AccessDenied_Body"]</p>
+        <a href="/account/logout">@Text["Admin_SignOut"]</a>
     </section>
 </main>

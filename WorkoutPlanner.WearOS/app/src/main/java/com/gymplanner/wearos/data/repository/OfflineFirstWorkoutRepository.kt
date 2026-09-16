@@ -1,6 +1,8 @@
 package com.gymplanner.wearos.data.repository
 
 import com.google.gson.Gson
+import com.gymplanner.wearos.R
+import com.gymplanner.wearos.data.localization.WatchStrings
 import com.gymplanner.wearos.data.local.DeviceSessionMetadata
 import com.gymplanner.wearos.data.local.LocalExercise
 import com.gymplanner.wearos.data.local.LocalWorkout
@@ -48,6 +50,7 @@ class OfflineFirstWorkoutRepository(
     private val syncQueueProcessor: SyncQueueProcessor,
     private val phoneLinkOpener: PhoneLinkOpener,
     private val gson: Gson,
+    private val strings: WatchStrings,
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
     private val elapsedRealtimeMillis: () -> Long = { System.nanoTime() / nanosPerMillisecond },
     scope: CoroutineScope = CoroutineScope(SupervisorJob()),
@@ -109,7 +112,7 @@ class OfflineFirstWorkoutRepository(
         when (val opened = phoneLinkOpener.open(start.approveUrl)) {
             PhoneLinkResult.Success -> Unit
             PhoneLinkResult.NoPhoneAvailable -> {
-                failPairing("Телефон недоступен")
+                failPairing(strings.get(R.string.error_phone_unavailable))
                 return
             }
             is PhoneLinkResult.Failure -> {
@@ -139,11 +142,11 @@ class OfflineFirstWorkoutRepository(
                     return
                 }
                 PhonePairingPollResult.Rejected -> {
-                    failPairing("Подключение отклонено на телефоне")
+                    failPairing(strings.get(R.string.error_pairing_declined))
                     return
                 }
                 PhonePairingPollResult.Expired -> {
-                    failPairing("Время подтверждения истекло. Попробуйте снова")
+                    failPairing(strings.get(R.string.error_confirmation_timeout))
                     return
                 }
                 is PhonePairingPollResult.Failure -> {
@@ -154,7 +157,7 @@ class OfflineFirstWorkoutRepository(
                 }
             }
         }
-        failPairing("Время подтверждения истекло. Попробуйте снова")
+        failPairing(strings.get(R.string.error_confirmation_timeout))
     }
 
     /**
@@ -271,15 +274,15 @@ class OfflineFirstWorkoutRepository(
 
     override suspend fun finishWorkout(): FinishWorkoutResult = mutationMutex.withLock {
         val snapshot = latestSnapshot ?: return FinishWorkoutResult.Failure(
-            "Активная тренировка не найдена",
+            strings.get(R.string.error_no_active_workout),
         )
         if (mutableState.value !is MockWorkoutState.ReadyToFinish) {
-            return FinishWorkoutResult.Failure("Сначала завершите все подходы")
+            return FinishWorkoutResult.Failure(strings.get(R.string.error_finish_sets_first))
         }
 
         if (syncQueueProcessor.drain() == QueueDrainResult.Retry) {
             return FinishWorkoutResult.Failure(
-                "Не удалось синхронизировать изменения. Проверьте подключение",
+                strings.get(R.string.error_sync_changes_failed),
             )
         }
         if (workoutDao.countOutstandingOperations() > 0) {

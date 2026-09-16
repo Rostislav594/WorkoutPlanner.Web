@@ -1,17 +1,18 @@
 @page "/"
 @attribute [Authorize]
+@inject IAppText Text
 
-<section class="home-container" aria-label="Главная">
+<section class="home-container" aria-label="@Text["Nav_Home"]">
     <div class="home-layout">
         <InboxPopover />
-        <nav class="desktop-shortcuts" aria-label="Инструменты">
+        <nav class="desktop-shortcuts" aria-label="@Text["Home_Tools"]">
             <a class="shortcut-tile" href="calendar">
                 <span class="material-symbols-rounded shortcut-icon" aria-hidden="true">calendar_month</span>
-                <span class="shortcut-title">Календарь</span>
+                <span class="shortcut-title">@Text["Home_Calendar"]</span>
             </a>
             <a class="shortcut-tile" href="notebook">
                 <span class="material-symbols-rounded shortcut-icon" aria-hidden="true">note_stack</span>
-                <span class="shortcut-title">Блокнот</span>
+                <span class="shortcut-title">@Text["Home_Notebook"]</span>
             </a>
         </nav>
         <div class="home-identity">

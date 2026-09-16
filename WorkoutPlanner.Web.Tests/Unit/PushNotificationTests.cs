@@ -4,6 +4,7 @@ using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Services.Push;
+using WorkoutPlanner.Localization;
 
 namespace WorkoutPlanner.Web.Tests.Unit;
 
@@ -48,7 +49,8 @@ public sealed class PushNotificationTests
         string expectedTitle,
         string expectedBody)
     {
-        var template = new PushNotificationTemplateProvider().Get(type);
+        var template = new PushNotificationTemplateProvider()
+            .Get(type, AppLanguages.Russian);
 
         Assert.Equal(expectedTitle, template.Title);
         Assert.Equal(expectedBody, template.Body);
@@ -81,6 +83,7 @@ public sealed class PushNotificationTests
         var service = new PushNotificationService(
             new PushNotificationTemplateProvider(),
             provider,
+            new StubUserLanguageProvider(),
             NullLogger<PushNotificationService>.Instance);
 
         await service.NotifyInboxMessageAsync(
@@ -111,6 +114,7 @@ public sealed class PushNotificationTests
         var service = new PushNotificationService(
             new PushNotificationTemplateProvider(),
             new ThrowingPushProvider(),
+            new StubUserLanguageProvider(),
             NullLogger<PushNotificationService>.Instance);
 
         await service.NotifyInboxMessageAsync(
@@ -140,4 +144,11 @@ public sealed class PushNotificationTests
             CancellationToken cancellationToken = default) =>
             throw new HttpRequestException("Push provider unavailable.");
     }
+}
+
+/// <summary>Язык получателя в тестах фиксирован: проверяется сам текст, а не выбор языка.</summary>
+internal sealed class StubUserLanguageProvider : IUserLanguageProvider
+{
+    public Task<string> GetAsync(string userId, CancellationToken cancellationToken = default) =>
+        Task.FromResult(AppLanguages.Russian);
 }

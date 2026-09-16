@@ -23,11 +23,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
+import com.gymplanner.wearos.R
 import androidx.wear.compose.material3.Text
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.ui.common.AnimatedCheckmark
@@ -75,7 +78,7 @@ fun CurrentSetScreen(
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            text = "Подход ${state.setNumber}",
+            text = stringResource(R.string.current_set_number, state.setNumber),
             color = WearColors.TextPrimary,
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
@@ -95,7 +98,7 @@ fun CurrentSetScreen(
         }
 
         HoldToConfirm(
-            label = "Закончить подход",
+            label = stringResource(R.string.current_set_finish),
             accent = WearColors.NeonGreen,
             onProgress = { holdProgress = it },
             onConfirmed = onComplete,
@@ -161,7 +164,9 @@ private fun SetMetrics(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MetricCell(
-            text = weightKilograms?.let { "${DecimalFormat("0.#").format(it)}кг" } ?: "—кг",
+            text = weightKilograms
+                ?.let { stringResource(R.string.weight_kilograms, DecimalFormat("0.#").format(it)) }
+                ?: stringResource(R.string.weight_kilograms_unknown),
             modifier = Modifier.weight(1f),
         )
         Box(
@@ -171,7 +176,7 @@ private fun SetMetrics(
                 .background(WearColors.Amber),
         )
         MetricCell(
-            text = "$totalSets ${setsWord(totalSets)}",
+            text = pluralStringResource(R.plurals.sets_count, totalSets, totalSets),
             modifier = Modifier.weight(1.5f),
         )
     }
@@ -188,17 +193,6 @@ private fun MetricCell(text: String, modifier: Modifier = Modifier) {
         maxLines = 1,
         softWrap = false,
     )
-}
-
-/** Русские числительные: 1 подход, 2 подхода, 5 подходов. */
-private fun setsWord(count: Int): String {
-    val mod100 = count % 100
-    if (mod100 in 11..14) return "подходов"
-    return when (count % 10) {
-        1 -> "подход"
-        2, 3, 4 -> "подхода"
-        else -> "подходов"
-    }
 }
 
 private const val checkmarkOverlayDp = 120

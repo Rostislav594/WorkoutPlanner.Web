@@ -1,8 +1,9 @@
-@page "/firstlaunch"
+﻿@page "/firstlaunch"
 @rendermode InteractiveServer
 @attribute [Authorize]
 @inject WorkoutPlanner.Web.Application.Abstractions.IWelcomeGuideStateService WelcomeGuideState
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <FinalWelcome IsBusy="_isBusy" ErrorMessage="@_error" OnCompleted="CompleteAsync" />
 
@@ -30,7 +31,7 @@
         }
         catch
         {
-            _error = "Не удалось сохранить завершение знакомства. Попробуйте ещё раз.";
+            _error = Text["Web_WelcomeSaveFailed"];
         }
         finally
         {

@@ -1,4 +1,4 @@
-@page "/profile"
+﻿@page "/profile"
 @rendermode InteractiveServer
 @implements IDisposable
 @using Microsoft.AspNetCore.Identity
@@ -14,6 +14,7 @@
 @inject WatchPairingService WatchPairingService
 @inject ILogger<Profile> Logger
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="profile-page">
     <div class="profile-help">
@@ -25,7 +26,7 @@
             {
                 <section class="profile-panel">
                     <div class="profile-heading">
-                        <p class="profile-kicker">Профиль пользователя</p>
+                        <p class="profile-kicker">@Text["ProfileSetup_Kicker"]</p>
                         <h1>@FullName</h1>
                         <p>@Email</p>
                     </div>
@@ -51,37 +52,37 @@
                             </div>
 
                             <div class="field">
-                                <label>Имя</label>
+                                <label>@Text["Common_FirstName"]</label>
                                 <InputText class="auth-input" @bind-Value="ProfileInputModel.FirstName" />
-                                <ValidationMessage For="@(() => ProfileInputModel.FirstName)" />
+                                <LocalizedValidationMessage For="@(() => ProfileInputModel.FirstName)" />
                             </div>
 
                             <div class="field">
-                                <label>Фамилия</label>
+                                <label>@Text["Common_LastName"]</label>
                                 <InputText class="auth-input" @bind-Value="ProfileInputModel.LastName" />
-                                <ValidationMessage For="@(() => ProfileInputModel.LastName)" />
+                                <LocalizedValidationMessage For="@(() => ProfileInputModel.LastName)" />
                             </div>
 
                             <div class="field">
-                                <label>Дата рождения</label>
+                                <label>@Text["Common_BirthDate"]</label>
                                 <InputDate class="auth-input" @bind-Value="ProfileInputModel.BirthDate" />
-                                <ValidationMessage For="@(() => ProfileInputModel.BirthDate)" />
+                                <LocalizedValidationMessage For="@(() => ProfileInputModel.BirthDate)" />
                             </div>
 
                             <div class="field">
-                                <label>Пол</label>
+                                <label>@Text["Common_Gender"]</label>
                                 <InputSelect class="auth-input" @bind-Value="ProfileInputModel.Gender">
-                                    <option value="">Выберите</option>
-                                    <option value="Мужской">Мужской</option>
-                                    <option value="Женский">Женский</option>
-                                    <option value="Не указывать">Не указывать</option>
+                                    <option value="">@Text["Common_Choose"]</option>
+                                    <option value="Мужской">@Text["Gender_Male"]</option>
+                                    <option value="Женский">@Text["Gender_Female"]</option>
+                                    <option value="Не указывать">@Text["Gender_Unspecified"]</option>
                                 </InputSelect>
-                                <ValidationMessage For="@(() => ProfileInputModel.Gender)" />
+                                <LocalizedValidationMessage For="@(() => ProfileInputModel.Gender)" />
                             </div>
                         </div>
 
                         <button class="finish-button auth-button profile-primary-action" type="submit">
-                            Сохранить изменения
+                            @Text["Profile_SaveChanges"]
                         </button>
 
                         <hr class="profile-divider" />
@@ -91,7 +92,7 @@
                             <button class="profile-danger-action"
                                     type="button"
                                     @onclick="ShowDeleteDialog">
-                                Удалить аккаунт
+                                @Text["ProfileItem_DeleteAccount"]
                             </button>
 
                         </div>
@@ -103,8 +104,8 @@
             {
                 <section class="profile-panel profile-actions-panel">
                     <div class="profile-heading">
-                        <p class="profile-kicker">Безопасность</p>
-                        <h1>Настройки безопасности</h1>
+                        <p class="profile-kicker">@Text["ProfileSection_Security"]</p>
+                        <h1>@Text["Web_Profile_SecurityTitle"]</h1>
                     </div>
 
                     @if (!string.IsNullOrWhiteSpace(PasswordMessage))
@@ -127,26 +128,26 @@
 
                         <div class="profile-form-grid">
                             <div class="field">
-                                <label>Текущий пароль</label>
+                                <label>@Text["Profile_CurrentPassword"]</label>
                                 <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.CurrentPassword" />
-                                <ValidationMessage For="@(() => PasswordInputModel.CurrentPassword)" />
+                                <LocalizedValidationMessage For="@(() => PasswordInputModel.CurrentPassword)" />
                             </div>
 
                             <div class="field">
-                                <label>Новый пароль</label>
+                                <label>@Text["Profile_NewPassword"]</label>
                                 <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.NewPassword" />
-                                <ValidationMessage For="@(() => PasswordInputModel.NewPassword)" />
+                                <LocalizedValidationMessage For="@(() => PasswordInputModel.NewPassword)" />
                             </div>
 
                             <div class="field">
-                                <label>Подтверждение нового пароля</label>
+                                <label>@Text["Profile_ConfirmNewPassword"]</label>
                                 <InputText class="auth-input" type="password" @bind-Value="PasswordInputModel.ConfirmPassword" />
-                                <ValidationMessage For="@(() => PasswordInputModel.ConfirmPassword)" />
+                                <LocalizedValidationMessage For="@(() => PasswordInputModel.ConfirmPassword)" />
                             </div>
                         </div>
 
                         <button class="profile-secondary-action" type="submit">
-                            Изменить пароль
+                            @Text["ProfileItem_ChangePassword"]
                         </button>
                     </EditForm>
 
@@ -158,14 +159,14 @@
                 <section class="profile-panel">
                     <div class="profile-heading">
 
-                        <h1>Настройки тренировок</h1>
-                        <p>Краткое знакомство с основными возможностями приложения.</p>
+                        <h1>@Text["Web_Profile_TrainingTitle"]</h1>
+                        <p>@Text["Web_Profile_TourHint"]</p>
                     </div>
 
                     <button class="profile-secondary-action"
                             type="button"
                             @onclick="RestartGuideAsync">
-                        Повторить знакомство
+                        @Text["Web_Profile_RepeatTour"]
                     </button>
 
                 </section>
@@ -177,15 +178,15 @@
                     <div class="profile-heading profile-heading-row">
                         <div>
                             <p class="profile-kicker">Wear OS</p>
-                            <h1>Подключённые часы</h1>
-                            <p>Подключайте часы и управляйте их доступом к вашему аккаунту.</p>
+                            <h1>@Text["Watch_ConnectedTitle"]</h1>
+                            <p>@Text["Web_Profile_WatchesHint"]</p>
                         </div>
                         <button class="watch-refresh-action"
                                 type="button"
                                 disabled="@IsLoadingWatchDevices"
                                 aria-busy="@IsLoadingWatchDevices"
                                 @onclick="LoadWatchDevicesAsync">
-                            @(IsLoadingWatchDevices ? "Обновляем…" : "Обновить список")
+                            @(IsLoadingWatchDevices ? Text["Web_Profile_Refreshing"] : Text["Web_Profile_RefreshList"])
                         </button>
                     </div>
 
@@ -201,7 +202,7 @@
 
                     <div class="watch-management-grid">
                     <div class="watch-pairing-card">
-                        <h2>Подключить новые часы</h2>
+                        <h2>@Text["Web_Profile_ConnectNewWatch"]</h2>
 
                         @if (!string.IsNullOrWhiteSpace(PairingCodeError))
                         {
@@ -213,16 +214,16 @@
                         @if (PairingCode is not null)
                         {
                             <div class="watch-pairing-success" role="status">
-                                <p class="watch-pairing-status">Код готов</p>
+                                <p class="watch-pairing-status">@Text["Web_Profile_CodeReady"]</p>
                                 <output class="watch-pairing-code"
-                                        aria-label="Код подключения часов: @FormatCodeForSpeech(PairingCode.Code)">
+                                        aria-label="@Text.Format("Watch_PairingCodeSpeech", FormatCodeForSpeech(PairingCode.Code))">
                                     @PairingCode.Code
                                 </output>
                                 <p class="watch-pairing-instruction">
-                                    Введите этот код на часах.
+                                    @Text["Web_Profile_EnterCodeOnWatch"]
                                 </p>
                                 <p class="watch-pairing-expiry">
-                                    Код действует до
+                                    @Text["Web_Profile_CodeValidUntil"]
                                     <time datetime="@PairingCode.ExpiresAtUtc.ToString("O")">
                                         @FormatExpiry(PairingCode.ExpiresAtUtc) UTC
                                     </time>.
@@ -232,8 +233,7 @@
                         else
                         {
                             <p class="watch-pairing-description">
-                                Код состоит из шести цифр и действует ограниченное время.
-                                Новый код отменит ранее созданный.
+                                @Text["Web_Profile_CodeHint"]
                             </p>
                         }
 
@@ -243,20 +243,20 @@
                                 aria-busy="@IsCreatingPairingCode"
                                 @onclick="CreatePairingCodeAsync">
                             @(IsCreatingPairingCode
-                                ? "Создаём код…"
+                                ? Text["Watch_CreatingCode"]
                                 : PairingCode is null
-                                    ? "Создать код"
-                                    : "Создать новый код")
+                                    ? Text["Watch_CreateCode"]
+                                    : Text["Watch_CreateNewCode"])
                         </button>
                     </div>
 
                     <div class="watch-devices-panel" aria-busy="@IsLoadingWatchDevices">
                         <div class="watch-devices-heading">
                             <div>
-                                <h2>Ваши устройства</h2>
+                                <h2>@Text["Watch_YourDevices"]</h2>
                                 @if (WatchDevicesLoaded)
                                 {
-                                    <p>@ActiveWatchDevices.Count активных</p>
+                                    <p>@Text.Format("Web_Profile_ActiveCount", ActiveWatchDevices.Count)</p>
                                 }
                             </div>
                             @if (ActiveWatchDevices.Count > 0)
@@ -265,7 +265,7 @@
                                         type="button"
                                         disabled="@IsManagingWatches"
                                         @onclick="ConfirmRevokeAllWatches">
-                                    Отключить все
+                                    @Text["Web_Profile_DisconnectAll"]
                                 </button>
                             }
                         </div>
@@ -273,7 +273,7 @@
                         @if (IsLoadingWatchDevices && !WatchDevicesLoaded)
                         {
                             <div class="watch-devices-state" role="status">
-                                Загружаем подключённые часы…
+                                @Text["Web_Profile_LoadingWatches"]
                             </div>
                         }
                         else if (!string.IsNullOrWhiteSpace(WatchDevicesError))
@@ -281,15 +281,15 @@
                             <div class="watch-devices-state watch-devices-state-error" role="alert">
                                 <p>@WatchDevicesError</p>
                                 <button class="watch-inline-action" type="button" @onclick="LoadWatchDevicesAsync">
-                                    Повторить
+                                    @Text["Common_Retry"]
                                 </button>
                             </div>
                         }
                         else if (ActiveWatchDevices.Count == 0)
                         {
                             <div class="watch-devices-state">
-                                <h3>Нет подключённых часов</h3>
-                                <p>Создайте код и введите его в приложении на часах.</p>
+                                <h3>@Text["Web_Profile_NoWatches"]</h3>
+                                <p>@Text["Web_Profile_NoWatchesHint"]</p>
                             </div>
                         }
                         else
@@ -302,7 +302,7 @@
                                             <div class="watch-device-title">
                                                 @if (EditingWatchDeviceId == device.DeviceId)
                                                 {
-                                                    <label for="watch-name-@device.Id">Название устройства</label>
+                                                    <label for="watch-name-@device.Id">@Text["Web_Profile_DeviceName"]</label>
                                                     <input id="watch-name-@device.Id"
                                                            class="watch-device-name-input"
                                                            maxlength="120"
@@ -321,20 +321,20 @@
                                                     <h3>@device.DisplayName</h3>
                                                 }
                                             </div>
-                                            <span class="watch-device-status watch-device-status-active">Подключены</span>
+                                            <span class="watch-device-status watch-device-status-active">@Text["Web_Profile_StatusConnected"]</span>
                                         </div>
 
                                         <dl class="watch-device-details">
                                             <div>
-                                                <dt>Модель</dt>
-                                                <dd>@(device.DeviceModel ?? "Не указана")</dd>
+                                                <dt>@Text["Web_Profile_Model"]</dt>
+                                                <dd>@(device.DeviceModel ?? Text["Web_Profile_ModelUnknown"])</dd>
                                             </div>
                                             <div>
-                                                <dt>Подключены</dt>
+                                                <dt>@Text["Web_Profile_StatusConnected"]</dt>
                                                 <dd><time datetime="@device.CreatedAtUtc.ToString("O")">@FormatDeviceDate(device.CreatedAtUtc)</time></dd>
                                             </div>
                                             <div>
-                                                <dt>Последняя активность</dt>
+                                                <dt>@Text["Web_Profile_LastSeen"]</dt>
                                                 <dd>
                                                     @if (device.LastSeenAtUtc is { } lastSeenAtUtc)
                                                     {
@@ -342,7 +342,7 @@
                                                     }
                                                     else
                                                     {
-                                                        <span>Ещё не было</span>
+                                                        <span>@Text["Web_Profile_NeverSeen"]</span>
                                                     }
                                                 </dd>
                                             </div>
@@ -356,13 +356,13 @@
                                                         disabled="@(ManagingWatchDeviceId == device.DeviceId || string.IsNullOrWhiteSpace(EditingWatchDisplayName))"
                                                         aria-busy="@(ManagingWatchDeviceId == device.DeviceId)"
                                                         @onclick="() => RenameWatchDeviceAsync(device)">
-                                                    @(ManagingWatchDeviceId == device.DeviceId ? "Сохраняем…" : "Сохранить")
+                                                    @(ManagingWatchDeviceId == device.DeviceId ? Text["Common_Saving"] : Text["Common_Save"])
                                                 </button>
                                                 <button class="watch-inline-action"
                                                         type="button"
                                                         disabled="@(ManagingWatchDeviceId == device.DeviceId)"
                                                         @onclick="CancelWatchRename">
-                                                    Отмена
+                                                    @Text["Common_Cancel"]
                                                 </button>
                                             }
                                             else
@@ -371,13 +371,13 @@
                                                         type="button"
                                                         disabled="@IsManagingWatches"
                                                         @onclick="() => BeginWatchRename(device)">
-                                                    Переименовать
+                                                    @Text["Web_Profile_Rename"]
                                                 </button>
                                                 <button class="watch-inline-action watch-inline-action-danger"
                                                         type="button"
                                                         disabled="@IsManagingWatches"
                                                         @onclick="() => ConfirmRevokeWatch(device)">
-                                                    Отключить
+                                                    @Text["Watch_Disconnect"]
                                                 </button>
                                             }
                                         </div>
@@ -389,16 +389,16 @@
                         @if (RevokedWatchDevices.Count > 0)
                         {
                             <details class="watch-revoked-devices">
-                                <summary>Отключённые устройства (@RevokedWatchDevices.Count)</summary>
+                                <summary>@Text.Format("Web_Profile_RevokedDevices", RevokedWatchDevices.Count)</summary>
                                 <div class="watch-revoked-list">
                                     @foreach (var device in RevokedWatchDevices)
                                     {
                                         <div class="watch-revoked-device">
                                             <div>
                                                 <strong>@device.DisplayName</strong>
-                                                <span>@(device.DeviceModel ?? "Модель не указана")</span>
+                                                <span>@(device.DeviceModel ?? Text["Web_Profile_ModelUnknownLong"])</span>
                                             </div>
-                                            <span class="watch-device-status">Отключены</span>
+                                            <span class="watch-device-status">@Text["Web_Profile_StatusDisconnected"]</span>
                                         </div>
                                     }
                                 </div>
@@ -410,29 +410,29 @@
             }
         </main>
 
-        <aside class="profile-sidebar" aria-label="Разделы профиля">
+        <aside class="profile-sidebar" aria-label="@Text["Web_Profile_Sections"]">
             <button class="profile-tab @(ActiveSection == ProfileSection.Profile ? "active" : "")"
                     type="button"
                     @onclick="() => SelectSectionAsync(ProfileSection.Profile)">
-                Профиль
+                @Text["Profile_Title"]
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Security ? "active" : "")"
                     type="button"
                     @onclick="() => SelectSectionAsync(ProfileSection.Security)">
-                Настройки безопасности
+                @Text["Web_Profile_SecurityTitle"]
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Training ? "active" : "")"
                     type="button"
                     @onclick="() => SelectSectionAsync(ProfileSection.Training)">
-                Настройки тренировок
+                @Text["Web_Profile_TrainingTitle"]
             </button>
 
             <button class="profile-tab @(ActiveSection == ProfileSection.Watches ? "active" : "")"
                     type="button"
                     @onclick="() => SelectSectionAsync(ProfileSection.Watches)">
-                Часы
+                @Text["Web_Profile_WatchesTab"]
             </button>
         </aside>
     </div>
@@ -444,27 +444,26 @@
 
         <div class="modal-window">
 
-            <h2>⚠️ Удаление аккаунта</h2>
+            <h2>@Text["Web_Profile_DeleteTitle"]</h2>
 
             <p>
-                Вы действительно хотите удалить аккаунт?
+                @Text["Profile_DeleteAccountQuestion"]
             </p>
 
             <p style="opacity:.8">
-                Будут удалены профиль, история тренировок,
-                прогресс и все пользовательские данные.
+                @Text["Web_Profile_DeleteWarning"]
             </p>
 
             <div class="history-buttons">
 
                 <button class="secondary-button"
                         @onclick="CloseDeleteDialog">
-                    Отмена
+                    @Text["Common_Cancel"]
                 </button>
 
                 <button class="danger-button"
                         @onclick="DeleteAccountAsync">
-                    Удалить
+                    @Text["Common_Delete"]
                 </button>
 
             </div>
@@ -482,16 +481,16 @@
              aria-modal="true"
              aria-labelledby="watch-revoke-title">
             <h2 id="watch-revoke-title">
-                @(RevokeAllWatchesRequested ? "Отключить все часы?" : "Отключить часы?")
+                @(RevokeAllWatchesRequested ? Text["Web_Profile_DisconnectAllTitle"] : Text["Watch_DisconnectTitle"])
             </h2>
             <p>
                 @if (RevokeAllWatchesRequested)
                 {
-                    <span>Все подключённые часы потеряют доступ к аккаунту. Для повторного подключения потребуется новый код.</span>
+                    <span>@Text["Web_Profile_DisconnectAllBody"]</span>
                 }
                 else
                 {
-                    <span>Устройство «@WatchPendingRevocation?.DisplayName» потеряет доступ к аккаунту. Для повторного подключения потребуется новый код.</span>
+                    <span>@Text.Format("Web_Profile_DisconnectOneBody", WatchPendingRevocation?.DisplayName ?? string.Empty)</span>
                 }
             </p>
             <div class="watch-confirmation-actions">
@@ -499,14 +498,14 @@
                         type="button"
                         disabled="@IsManagingWatches"
                         @onclick="CloseWatchRevokeConfirmation">
-                    Отмена
+                    @Text["Common_Cancel"]
                 </button>
                 <button class="danger-button"
                         type="button"
                         disabled="@IsManagingWatches"
                         aria-busy="@IsManagingWatches"
                         @onclick="RevokeConfirmedWatchesAsync">
-                    @(IsManagingWatches ? "Отключаем…" : "Отключить")
+                    @(IsManagingWatches ? Text["Watch_Disconnecting"] : Text["Watch_Disconnect"])
                 </button>
             </div>
         </div>
@@ -614,7 +613,7 @@
 
         if (CurrentProfile is null)
         {
-            ProfileError = "Профиль не найден.";
+            ProfileError = Text["Web_Profile_NotFound"];
             return;
         }
 
@@ -626,12 +625,12 @@
                 ProfileInputModel.Gender));
         if (!updated)
         {
-            ProfileError = "Профиль не найден.";
+            ProfileError = Text["Web_Profile_NotFound"];
             return;
         }
         await LoadAsync();
 
-        ProfileMessage = "Данные профиля сохранены.";
+        ProfileMessage = Text["Web_Profile_Saved"];
     }
 
     private async Task ChangePasswordAsync()
@@ -654,7 +653,7 @@
         PasswordInputModel.CurrentPassword = string.Empty;
         PasswordInputModel.NewPassword = string.Empty;
         PasswordInputModel.ConfirmPassword = string.Empty;
-        PasswordMessage = "Пароль изменен.";
+        PasswordMessage = Text["Web_Profile_PasswordChanged"];
     }
 
     private async Task RestartGuideAsync()
@@ -685,7 +684,7 @@
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to create a watch pairing code.");
-            PairingCodeError = "Не удалось создать код подключения. Попробуйте ещё раз.";
+            PairingCodeError = Text["Web_Profile_CodeFailed"];
         }
         finally
         {
@@ -722,7 +721,7 @@
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load watch devices.");
-            WatchDevicesError = "Не удалось загрузить список часов. Попробуйте ещё раз.";
+            WatchDevicesError = Text["Web_Profile_WatchesLoadFailed"];
         }
         finally
         {
@@ -754,7 +753,7 @@
         var displayName = EditingWatchDisplayName.Trim();
         if (displayName.Length is 0 or > 120)
         {
-            RenameValidationError = "Введите название длиной от 1 до 120 символов.";
+            RenameValidationError = Text["Web_Profile_NameLength"];
             return;
         }
 
@@ -772,7 +771,7 @@
                 pairingCodeCancellation.Token);
             if (renamed is null)
             {
-                WatchActionError = "Часы уже отключены или больше недоступны.";
+                WatchActionError = Text["Web_Profile_WatchAlreadyGone"];
                 await LoadWatchDevicesAsync();
                 return;
             }
@@ -781,7 +780,7 @@
                 .Select(x => x.DeviceId == renamed.DeviceId ? renamed : x)
                 .ToList();
             CancelWatchRename();
-            WatchSuccessMessage = "Название часов сохранено.";
+            WatchSuccessMessage = Text["Web_Profile_WatchRenamed"];
         }
         catch (OperationCanceledException) when (pairingCodeCancellation.IsCancellationRequested)
         {
@@ -790,7 +789,7 @@
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to rename watch device {WatchDeviceId}.", device.Id);
-            WatchActionError = "Не удалось переименовать часы. Попробуйте ещё раз.";
+            WatchActionError = Text["Web_Profile_RenameFailed"];
         }
         finally
         {
@@ -841,7 +840,7 @@
                 await WatchPairingService.RevokeAllAsync(
                     userId,
                     pairingCodeCancellation.Token);
-                WatchSuccessMessage = "Все часы отключены.";
+                WatchSuccessMessage = Text["Watch_AllDisconnected"];
             }
             else if (device is not null)
             {
@@ -850,8 +849,8 @@
                     device.DeviceId,
                     pairingCodeCancellation.Token);
                 WatchSuccessMessage = revoked
-                    ? $"Часы «{device.DisplayName}» отключены."
-                    : "Часы уже были отключены.";
+                    ? Text.Format("Watch_OneDisconnected", device.DisplayName)
+                    : Text["Web_Profile_WatchWasDisconnected"];
             }
 
             WatchPendingRevocation = null;
@@ -865,7 +864,7 @@
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to revoke watch access.");
-            WatchActionError = "Не удалось отключить часы. Попробуйте ещё раз.";
+            WatchActionError = Text["Web_Profile_DisconnectFailed"];
         }
         finally
         {
@@ -905,7 +904,7 @@
 
             if (!result.Succeeded)
             {
-                ProfileError = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
+                ProfileError = Text["Web_Profile_DeleteFailed"];
                 return;
             }
 
@@ -916,50 +915,51 @@
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to delete the current account.");
-            ProfileError = "Не удалось удалить аккаунт. Попробуйте ещё раз.";
+            ProfileError = Text["Web_Profile_DeleteFailed"];
         }
     }
 
     private sealed class ProfileInput
     {
-        [Required(ErrorMessage = "Введите имя.")]
-        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_FirstNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_FirstNameTooLong")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите фамилию.")]
-        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        [Required(ErrorMessage = "Validation_LastNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_LastNameTooLong")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Укажите дату рождения.")]
+        [Required(ErrorMessage = "Validation_BirthDateRequired")]
         public DateTime? BirthDate { get; set; }
 
-        [Required(ErrorMessage = "Выберите пол.")]
+        [Required(ErrorMessage = "Validation_GenderRequired")]
         public string Gender { get; set; } = string.Empty;
     }
 
     private sealed class PasswordInput
     {
-        [Required(ErrorMessage = "Введите текущий пароль.")]
+        [Required(ErrorMessage = "Validation_CurrentPasswordRequired")]
         public string CurrentPassword { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите новый пароль.")]
-        [MinLength(6, ErrorMessage = "Пароль должен быть не короче 6 символов.")]
+        [Required(ErrorMessage = "Validation_NewPasswordRequired")]
+        [MinLength(6, ErrorMessage = "Validation_PasswordMinLength")]
         public string NewPassword { get; set; } = string.Empty;
 
-        [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")]
+        [Compare(nameof(NewPassword), ErrorMessage = "Validation_PasswordsDoNotMatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
-    private static string TranslateIdentityError(IdentityError error)
+    private string TranslateIdentityError(IdentityError error)
     {
         return error.Code switch
         {
-            "PasswordMismatch" => "Текущий пароль указан неверно.",
-            "PasswordTooShort" => "Пароль слишком короткий.",
-            "PasswordRequiresDigit" => "Пароль должен содержать хотя бы одну цифру.",
-            "PasswordRequiresLower" => "Пароль должен содержать хотя бы одну строчную латинскую букву.",
-            "PasswordRequiresUpper" => "Пароль должен содержать хотя бы одну заглавную латинскую букву.",
-            "PasswordRequiresNonAlphanumeric" => "Пароль должен содержать хотя бы один специальный символ.",
+            "PasswordMismatch" => Text["Password_Mismatch"],
+            "PasswordTooShort" => Text["Password_TooShort"],
+            "PasswordRequiresDigit" => Text["Password_RequiresDigit"],
+            "PasswordRequiresLower" => Text["Password_RequiresLower"],
+            "PasswordRequiresUpper" => Text["Password_RequiresUpper"],
+            "PasswordRequiresNonAlphanumeric" => Text["Password_RequiresNonAlphanumeric"],
             _ => error.Description
         };
     }

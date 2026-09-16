@@ -101,6 +101,10 @@ public static class MauiProgram
 		var language = app.Services.GetRequiredService<Localization.IAppLanguageService>();
 		language.Initialize();
 		Localization.ApiErrorMessages.UseLanguage(() => language.Current);
+		// Строки для классов, которые создаёт не DI: платформенные сервисы
+		// уведомлений, выбора фото и системных списков.
+		Localization.AppTexts.Use(
+			app.Services.GetRequiredService<WorkoutPlanner.Localization.IAppText>());
 
 		return app;
 	}

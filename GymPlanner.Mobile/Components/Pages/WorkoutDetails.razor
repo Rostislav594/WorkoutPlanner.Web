@@ -4,19 +4,20 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IExercisePhotoApiClient PhotoClient
 @inject IMobilePhotoPicker PhotoPicker
+@inject IAppText Text
 
 <section class="workout-details-page" aria-busy="@_loading">
     <div class="workout-utility-row">
         <a class="back-link" href="/workouts">
             <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
-            К шаблонам
+            @Text["WorkoutDetails_BackToTemplates"]
         </a>
-        <HelpButton Topic="HelpContentCatalog.Workouts" />
+        <HelpButton Topic="HelpContentCatalog.WorkoutDetails" />
     </div>
 
     <header class="workout-header">
         <div class="workout-title-card">
-            <h1>@(_plan?.WorkoutName ?? "Тренировка")</h1>
+            <h1>@(_plan?.WorkoutName ?? Text["WorkoutDetails_DefaultTitle"])</h1>
             <div class="title-line"></div>
         </div>
     </header>
@@ -25,22 +26,22 @@
     {
         <div class="page-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем тренировку…</span>
+            <span>@Text["WorkoutDetails_Loading"]</span>
         </div>
     }
     else if (_loadErrors.Count > 0)
     {
         <div class="page-state page-state-error" role="alert">
-            <strong>Не удалось загрузить тренировку</strong>
+            <strong>@Text["WorkoutDetails_LoadFailed"]</strong>
             <span>@string.Join(" ", _loadErrors)</span>
-            <button class="secondary-button state-action" type="button" @onclick="LoadAsync">Повторить</button>
+            <button class="secondary-button state-action" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
         </div>
     }
     else if (_plan is null)
     {
         <div class="page-state">
-            <strong>Тренировка не найдена</strong>
-            <span>Вернитесь к списку и выберите другой шаблон.</span>
+            <strong>@Text["WorkoutDetails_NotFound"]</strong>
+            <span>@Text["WorkoutDetails_NotFoundHint"]</span>
         </div>
     }
     else
@@ -48,13 +49,13 @@
         <div class="workout-toolbar">
             <button class="compact-create-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
                 <span class="material-symbols-rounded" aria-hidden="true">add</span>
-                Добавить упражнение
+                @Text["WorkoutDetails_AddExercise"]
             </button>
             @if (SupersetCandidates.Count >= 2)
             {
                 <button class="secondary-button create-superset-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="OpenSupersetDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                    Создать суперсет
+                    @Text["WorkoutDetails_CreateSuperset"]
                 </button>
             }
         </div>
@@ -68,7 +69,7 @@
         {
             <div class="empty-exercises">
                 <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-                <h2>Нет упражнений</h2>
+                <h2>@Text["WorkoutDetails_NoExercises"]</h2>
             </div>
         }
         else
@@ -80,7 +81,7 @@
                     {
                         <article class="exercise-card template-superset-card edit-hold-target"
                                  tabindex="0"
-                                 aria-label="Суперсет @string.Join(" и ", group.Exercises.Select(x => x.Name)). Удерживайте карточку, чтобы открыть меню суперсета."
+                                 aria-label="@Text.Format("WorkoutDetails_SupersetCardHint", string.Join(Text["Common_AndSeparator"], group.Exercises.Select(x => x.Name)))"
                                  @onpointerdown="() => BeginSupersetHold(group)"
                                  @onpointerup="CancelSupersetHold"
                                  @onpointercancel="CancelSupersetHold"
@@ -91,7 +92,7 @@
                             <header class="template-superset-heading">
                                 <div class="template-superset-label">
                                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                                    <span>Суперсет</span>
+                                    <span>@Text["Common_Superset"]</span>
                                 </div>
                                 <div class="template-superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.Name))">
                                     @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
@@ -107,10 +108,10 @@
                             </header>
 
                             <div class="exercise-card-body template-superset-body">
-                                <div class="exercise-sets template-superset-rounds" aria-label="Подходы суперсета">
+                                <div class="exercise-sets template-superset-rounds" aria-label="@Text["WorkoutDetails_SupersetSets"]">
                                     @foreach (var roundNumber in GetSupersetRoundNumbers(group))
                                     {
-                                        <section class="template-superset-round" aria-label="Круг @roundNumber">
+                                        <section class="template-superset-round" aria-label="@Text.Format("History_Round", roundNumber)">
                                             @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                             {
                                                 var exercise = group.Exercises[exerciseIndex];
@@ -122,12 +123,12 @@
                                                     <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                                             type="button"
                                                             disabled="@_busy"
-                                                            title="@(set.IsWarmup ? "Разминочный подход. Нажмите, чтобы сделать рабочим" : "Рабочий подход. Нажмите, чтобы сделать разминочным")"
-                                                            aria-label="@(set.IsWarmup ? $"{exercise.Name}, подход {set.SetNumber}: разминочный. Сделать рабочим" : $"{exercise.Name}, подход {set.SetNumber}: рабочий. Сделать разминочным")"
+                                                            title="@(set.IsWarmup ? Text["WorkoutDetails_ToggleWarmupTitle"] : Text["WorkoutDetails_ToggleWorkingTitle"])"
+                                                            aria-label="@(set.IsWarmup ? Text.Format("WorkoutDetails_ToggleWarmupSupersetLabel", exercise.Name, set.SetNumber) : Text.Format("WorkoutDetails_ToggleWorkingSupersetLabel", exercise.Name, set.SetNumber))"
                                                             aria-pressed="@set.IsWarmup"
                                                             @onclick="() => ToggleSetKindAsync(exercise, set)">@set.SetNumber</button>
-                                                    <span class="set-name">@exercise.Name · @(set.IsWarmup ? "разминочный" : "рабочий")</span>
-                                                    <span class="set-value">@set.Weight кг × @set.Repetitions</span>
+                                                    <span class="set-name">@exercise.Name · @(set.IsWarmup ? Text["Common_WarmupLower"] : Text["Common_WorkingLower"])</span>
+                                                    <span class="set-value">@set.Weight @Text["Common_Kg"] × @set.Repetitions</span>
                                                 </div>
                                             }
                                         </section>
@@ -144,11 +145,11 @@
                                                     type="button"
                                                     @onpointerdown:stopPropagation="true"
                                                     aria-haspopup="dialog"
-                                                    aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
+                                                    aria-label="@(exercise.HasPhoto ? Text.Format("WorkoutDetails_OpenPhoto", exercise.Name) : Text.Format("WorkoutDetails_AddPhoto", exercise.Name))"
                                                     @onclick="() => OpenPhotoAsync(exercise)">
                                                 @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
                                                 {
-                                                    <img class="exercise-photo-thumb" src="@thumbnail" alt="Фото упражнения @exercise.Name" />
+                                                    <img class="exercise-photo-thumb" src="@thumbnail" alt="@Text.Format("WorkoutDetails_PhotoAlt", exercise.Name)" />
                                                 }
                                                 else
                                                 {
@@ -169,7 +170,7 @@
                     {
                     <article class="exercise-card edit-hold-target"
                              tabindex="0"
-                             aria-label="@($"Упражнение {exercise.Name}. Удерживайте карточку, чтобы открыть настройки.")"
+                             aria-label="@Text.Format("WorkoutDetails_ExerciseCardHint", exercise.Name)"
                              @onpointerdown="() => BeginExerciseHold(exercise)"
                              @onpointerup="CancelExerciseHold"
                              @onpointercancel="CancelExerciseHold"
@@ -180,24 +181,24 @@
                         <header class="exercise-card-header">
                             <div>
                                 <h2>@exercise.Name</h2>
-                                <span>@exercise.Sets.Count подходов</span>
+                                <span>@Text.Plural("Sets", exercise.Sets.Count)</span>
                             </div>
                         </header>
 
                         <div class="exercise-card-body">
-                            <div class="exercise-sets" aria-label="Подходы упражнения @exercise.Name">
+                            <div class="exercise-sets" aria-label="@Text.Format("WorkoutDetails_ExerciseSets", exercise.Name)">
                                 @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                                 {
                                     <div class="exercise-set-row" @onpointerdown:stopPropagation="true">
                                         <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                                 type="button"
                                                 disabled="@_busy"
-                                                title="@(set.IsWarmup ? "Разминочный подход. Нажмите, чтобы сделать рабочим" : "Рабочий подход. Нажмите, чтобы сделать разминочным")"
-                                                aria-label="@(set.IsWarmup ? $"Подход {set.SetNumber}: разминочный. Сделать рабочим" : $"Подход {set.SetNumber}: рабочий. Сделать разминочным")"
+                                                title="@(set.IsWarmup ? Text["WorkoutDetails_ToggleWarmupTitle"] : Text["WorkoutDetails_ToggleWorkingTitle"])"
+                                                aria-label="@(set.IsWarmup ? Text.Format("WorkoutDetails_ToggleWarmupLabel", set.SetNumber) : Text.Format("WorkoutDetails_ToggleWorkingLabel", set.SetNumber))"
                                                 aria-pressed="@set.IsWarmup"
                                                 @onclick="() => ToggleSetKindAsync(exercise, set)">@set.SetNumber</button>
-                                        <span class="set-name">@(set.IsWarmup ? "Разминочный подход" : "Рабочий подход")</span>
-                                        <span class="set-value">@set.Weight кг × @set.Repetitions</span>
+                                        <span class="set-name">@(set.IsWarmup ? Text["WorkoutDetails_WarmupSet"] : Text["WorkoutDetails_WorkingSet"])</span>
+                                        <span class="set-value">@set.Weight @Text["Common_Kg"] × @set.Repetitions</span>
                                     </div>
                                 }
                             </div>
@@ -207,11 +208,11 @@
                                         type="button"
                                         @onpointerdown:stopPropagation="true"
                                         aria-haspopup="dialog"
-                                        aria-label="@(exercise.HasPhoto ? $"Открыть фото упражнения {exercise.Name}" : $"Добавить фото упражнения {exercise.Name}")"
+                                        aria-label="@(exercise.HasPhoto ? Text.Format("WorkoutDetails_OpenPhoto", exercise.Name) : Text.Format("WorkoutDetails_AddPhoto", exercise.Name))"
                                         @onclick="() => OpenPhotoAsync(exercise)">
                                     @if (_photoThumbnails.TryGetValue(exercise.Id, out var thumbnail))
                                     {
-                                        <img class="exercise-photo-thumb" src="@thumbnail" alt="Фото упражнения @exercise.Name" />
+                                        <img class="exercise-photo-thumb" src="@thumbnail" alt="@Text.Format("WorkoutDetails_PhotoAlt", exercise.Name)" />
                                     }
                                     else
                                     {
@@ -243,21 +244,21 @@
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
                 <div>
-                    <span>Управление упражнением</span>
+                    <span>@Text["WorkoutDetails_ManageExercise"]</span>
                     <h2 id="exercise-actions-title">@_actionExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" autofocus @onclick="CloseActions">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus @onclick="CloseActions">×</button>
             </div>
 
             @if (_deleteExerciseId == _actionExercise.Id)
             {
                 <div class="modal-body delete-confirmation">
-                    <p>Удалить упражнение и все его подходы из шаблона?</p>
+                    <p>@Text["WorkoutDetails_DeleteExerciseQuestion"]</p>
                 </div>
                 <div class="modal-actions modal-footer">
-                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelDelete">Отмена</button>
+                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelDelete">@Text["Common_Cancel"]</button>
                     <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteAsync(_actionExercise.Id)">
-                        @(_busy ? "Удаляем…" : "Удалить")
+                        @(_busy ? Text["Common_Deleting"] : Text["Common_Delete"])
                     </button>
                 </div>
             }
@@ -267,11 +268,11 @@
                     <div class="exercise-action-list">
                         <button class="modal-action-button" type="button" @onclick="() => BeginEdit(_actionExercise)">
                             <span class="material-symbols-rounded" aria-hidden="true">edit</span>
-                            <span>Изменить параметры</span>
+                            <span>@Text["WorkoutDetails_EditParameters"]</span>
                         </button>
                         <button class="modal-action-button danger-action" type="button" @onclick="() => RequestDelete(_actionExercise.Id)">
                             <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                            <span>Удалить упражнение</span>
+                            <span>@Text["WorkoutDetails_DeleteExercise"]</span>
                         </button>
                     </div>
                 </div>
@@ -290,10 +291,10 @@
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
                 <div>
-                    <span>@(_editingId is null ? "Новый элемент шаблона" : "Параметры шаблона")</span>
-                    <h2 id="exercise-editor-title">@(_editingId is null ? "Новое упражнение" : "Редактирование упражнения")</h2>
+                    <span>@(_editingId is null ? Text["WorkoutDetails_NewTemplateItem"] : Text["WorkoutDetails_TemplateParameters"])</span>
+                    <h2 id="exercise-editor-title">@(_editingId is null ? Text["WorkoutDetails_NewExercise"] : Text["WorkoutDetails_EditExercise"])</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" disabled="@_busy" @onclick="CloseEditor">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseEditor">×</button>
             </div>
 
             <div class="modal-body">
@@ -303,19 +304,19 @@
                 }
 
                 <div class="form-field">
-                    <label for="definition">Упражнение из библиотеки</label>
+                    <label for="definition">@Text["WorkoutDetails_LibraryExercise"]</label>
                     <SystemChoiceField id="definition"
                                        class="form-control"
-                                       Title="Упражнение из библиотеки"
+                                       Title="@Text["WorkoutDetails_LibraryExercise"]"
                                        Options="DefinitionOptions"
                                        Value="@(_draft.DefinitionId?.ToString() ?? string.Empty)"
                                        ValueChanged="SetDefinition"
-                                       Placeholder="Не выбрано"
-                                       AriaLabel="Выбрать упражнение из библиотеки" />
+                                       Placeholder="@Text["WorkoutDetails_NotSelected"]"
+                                       AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
                 </div>
 
                 <div class="form-field">
-                    <label for="sets-count">Количество подходов</label>
+                    <label for="sets-count">@Text["WorkoutDetails_SetsCount"]</label>
                     <input id="sets-count"
                            class="form-control"
                            type="number"
@@ -329,13 +330,13 @@
                     @foreach (var set in _draft.Sets)
                     {
                         <fieldset>
-                            <legend>Подход @set.SetNumber</legend>
+                            <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
                             <label>
-                                <span>Вес, кг</span>
+                                <span>@Text["WorkoutDetails_WeightKg"]</span>
                                 <input class="form-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                             </label>
                             <label>
-                                <span>Повторения</span>
+                                <span>@Text["WorkoutDetails_Reps"]</span>
                                 <input class="form-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
                             </label>
                         </fieldset>
@@ -345,7 +346,7 @@
 
             <div class="modal-actions modal-footer">
                 <button class="primary-button" type="button" disabled="@_busy" @onclick="SaveAsync">
-                    @(_busy ? "Сохраняем…" : "Сохранить")
+                    @(_busy ? Text["Common_Saving"] : Text["Common_Save"])
                 </button>
             </div>
         </section>
@@ -362,10 +363,10 @@
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
                 <div>
-                    <span>Фотография упражнения</span>
+                    <span>@Text["WorkoutDetails_PhotoTitle"]</span>
                     <h2 id="photo-editor-title">@_photoExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" autofocus disabled="@_photoBusy" @onclick="ClosePhoto">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus disabled="@_photoBusy" @onclick="ClosePhoto">×</button>
             </div>
 
             <div class="modal-body">
@@ -378,43 +379,43 @@
                 {
                     <div class="photo-state" role="status">
                         <span class="loading-spinner" aria-hidden="true"></span>
-                        <span>Обрабатываем фотографию…</span>
+                        <span>@Text["WorkoutDetails_PhotoProcessing"]</span>
                     </div>
                 }
                 else if (_photoDataUri is not null)
                 {
-                    <img class="exercise-photo" src="@_photoDataUri" alt="Фото упражнения @_photoExercise.Name" />
+                    <img class="exercise-photo" src="@_photoDataUri" alt="@Text.Format("WorkoutDetails_PhotoAlt", _photoExercise.Name)" />
                 }
                 else
                 {
                     <div class="empty-photo">
                         <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                        <span>У этого упражнения пока нет фотографии.</span>
+                        <span>@Text["WorkoutDetails_NoPhoto"]</span>
                     </div>
                 }
 
-                <p class="photo-hint">JPG, PNG или WebP, не более 5 МБ.</p>
+                <p class="photo-hint">@Text["WorkoutDetails_PhotoHint"]</p>
 
                 <div class="photo-actions">
                     <button class="primary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
                         <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
-                        Выбрать фото
+                        @Text["WorkoutDetails_PickPhoto"]
                     </button>
                     <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
                         <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                        Сделать снимок
+                        @Text["WorkoutDetails_TakePhoto"]
                     </button>
 
                     @if (_photoExercise.HasPhoto)
                     {
                         @if (_confirmPhotoDelete)
                         {
-                            <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">Отмена удаления</button>
-                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">Удалить точно</button>
+                            <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">@Text["WorkoutDetails_CancelDelete"]</button>
+                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">@Text["History_DeleteConfirm"]</button>
                         }
                         else
                         {
-                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">Удалить фото</button>
+                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">@Text["WorkoutDetails_DeletePhoto"]</button>
                         }
                     }
 
@@ -430,13 +431,13 @@
         <section class="modal-window superset-window" role="dialog" aria-modal="true" aria-labelledby="template-superset-title" @onclick:stopPropagation="true">
             <div class="modal-heading">
                 <div>
-                    <span>Шаблон тренировки</span>
-                    <h2 id="template-superset-title">Создать суперсет</h2>
+                    <span>@Text["WorkoutDetails_TemplateEyebrow"]</span>
+                    <h2 id="template-superset-title">@Text["WorkoutDetails_CreateSuperset"]</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" disabled="@_busy" @onclick="CloseSupersetDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseSupersetDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
             <div class="modal-body">
-                <p class="superset-hint">Выберите два упражнения из шаблона.</p>
+                <p class="superset-hint">@Text["WorkoutDetails_SupersetHint"]</p>
                 <div class="superset-options">
                     @foreach (var exercise in _plan.Exercises)
                     {
@@ -451,7 +452,7 @@
             </div>
             <div class="modal-actions modal-footer">
                 <button class="primary-button" type="button" disabled="@(_busy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">
-                    @(_busy ? "Сохраняем…" : "Создать")
+                    @(_busy ? Text["Common_Saving"] : Text["Common_Create"])
                 </button>
             </div>
         </section>
@@ -468,19 +469,19 @@
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
                 <div>
-                    <span>Управление суперсетом</span>
+                    <span>@Text["WorkoutDetails_ManageSuperset"]</span>
                     <h2 id="template-superset-action-title">@string.Join(" / ", supersetActionGroup.Exercises.Select(x => x.Name))</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="() => CloseSupersetActions()"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" @onclick="() => CloseSupersetActions()"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
             @if (_supersetDeleteConfirmation)
             {
                 <div class="modal-body delete-confirmation">
-                    <p>Удалить оба упражнения из шаблона?</p>
+                    <p>@Text["WorkoutDetails_DeleteSupersetQuestion"]</p>
                 </div>
                 <div class="modal-actions modal-footer">
-                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelSupersetDelete">Отмена</button>
-                    <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">Удалить супер-сет</button>
+                    <button class="secondary-button" type="button" disabled="@_busy" @onclick="CancelSupersetDelete">@Text["Common_Cancel"]</button>
+                    <button class="danger-button" type="button" disabled="@_busy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">@Text["WorkoutDetails_DeleteSuperset"]</button>
                 </div>
             }
             else
@@ -489,11 +490,11 @@
                     <div class="exercise-action-list">
                         <button class="modal-action-button" type="button" disabled="@_busy" @onclick="() => SeparateSupersetAsync(supersetActionGroup)">
                             <span class="material-symbols-rounded" aria-hidden="true">link_off</span>
-                            <span>Разъединить супер-сет</span>
+                            <span>@Text["WorkoutDetails_SplitSuperset"]</span>
                         </button>
                         <button class="modal-action-button danger-action" type="button" disabled="@_busy" @onclick="RequestSupersetDelete">
                             <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                            <span>Удалить супер-сет</span>
+                            <span>@Text["WorkoutDetails_DeleteSuperset"]</span>
                         </button>
                     </div>
                 </div>
@@ -867,8 +868,8 @@
     private async Task SaveAsync()
     {
         if (_busy) return; _editorErrors.Clear();
-        if (_draft.DefinitionId is null || string.IsNullOrWhiteSpace(_draft.Name)) { _editorErrors.Add("Выберите упражнение из библиотеки."); return; }
-        if (_draft.Sets.Any(x => !double.IsFinite(x.Weight) || x.Weight is < 0 or > 2000 || x.Repetitions is < 1 or > 1000)) { _editorErrors.Add("Проверьте вес и повторения каждого подхода."); return; }
+        if (_draft.DefinitionId is null || string.IsNullOrWhiteSpace(_draft.Name)) { _editorErrors.Add(Text["WorkoutDetails_PickLibraryExerciseError"]); return; }
+        if (_draft.Sets.Any(x => !double.IsFinite(x.Weight) || x.Weight is < 0 or > 2000 || x.Repetitions is < 1 or > 1000)) { _editorErrors.Add(Text["WorkoutDetails_CheckSetsError"]); return; }
         _busy = true;
         try
         {

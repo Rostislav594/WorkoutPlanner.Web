@@ -5,6 +5,7 @@ using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services.Admin;
 
@@ -198,7 +199,7 @@ public sealed class AdminSupportService(
             UserId = ticket.UserId,
             SupportTicketId = ticket.Id,
             Type = InboxMessageType.SupportReply,
-            Title = "Ответ от поддержки",
+            Title = ServerTexts.Current["Server_Inbox_SupportReplyTitle"],
             Preview = CreatePreview(message),
             Body = message,
             CreatedAtUtc = now

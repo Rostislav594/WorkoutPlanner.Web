@@ -1,3 +1,4 @@
+using GymPlanner.Mobile.Localization;
 ﻿using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
@@ -36,7 +37,7 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         catch (HttpRequestException)
         {
             return ApiResult<IReadOnlyList<WorkoutDayApiResponse>>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -61,13 +62,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 cancellationToken);
             return day is null
                 ? ApiResult<WorkoutDayApiResponse>.Failure(
-                    "Сервер вернул пустой календарный день.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<WorkoutDayApiResponse>.Success(day);
         }
         catch (HttpRequestException)
         {
             return ApiResult<WorkoutDayApiResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -88,7 +89,7 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -108,12 +109,12 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
 
             var day = await response.Content.ReadFromJsonAsync<WorkoutDayApiResponse>(cancellationToken);
             return day is null
-                ? ApiResult<WorkoutDayApiResponse>.Failure("Сервер вернул пустую тренировку.")
+                ? ApiResult<WorkoutDayApiResponse>.Failure(ApiErrorMessages.EmptyResponse())
                 : ApiResult<WorkoutDayApiResponse>.Success(day);
         }
         catch (HttpRequestException)
         {
-            return ApiResult<WorkoutDayApiResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<WorkoutDayApiResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -140,13 +141,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 TodayWorkoutApiResponse>(cancellationToken);
             return workout is null
                 ? OptionalApiResult<TodayWorkoutApiResponse>.Failure(
-                    "Сервер вернул пустую тренировку.")
+                    ApiErrorMessages.EmptyResponse())
                 : OptionalApiResult<TodayWorkoutApiResponse>.Success(workout);
         }
         catch (HttpRequestException)
         {
             return OptionalApiResult<TodayWorkoutApiResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -170,13 +171,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 WorkoutHistoryApiResponse>(cancellationToken);
             return history is null
                 ? ApiResult<WorkoutHistoryApiResponse>.Failure(
-                    "Сервер вернул пустую запись истории.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<WorkoutHistoryApiResponse>.Success(history);
         }
         catch (HttpRequestException)
         {
             return ApiResult<WorkoutHistoryApiResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -201,13 +202,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 CompleteFreeWorkoutResponse>(cancellationToken);
             return result is null
                 ? ApiResult<CompleteFreeWorkoutResponse>.Failure(
-                    "Сервер вернул пустой результат свободной тренировки.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<CompleteFreeWorkoutResponse>.Success(result);
         }
         catch (HttpRequestException)
         {
             return ApiResult<CompleteFreeWorkoutResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -231,13 +232,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 FreeWorkoutDraftResponse>(cancellationToken);
             return draft is null
                 ? ApiResult<FreeWorkoutDraftResponse>.Failure(
-                    "Сервер вернул пустой черновик свободной тренировки.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<FreeWorkoutDraftResponse>.Success(draft);
         }
         catch (HttpRequestException)
         {
             return ApiResult<FreeWorkoutDraftResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -265,13 +266,13 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
                 FreeWorkoutDraftResponse>(cancellationToken);
             return draft is null
                 ? OptionalApiResult<FreeWorkoutDraftResponse>.Failure(
-                    "Сервер вернул пустой черновик свободной тренировки.")
+                    ApiErrorMessages.EmptyResponse())
                 : OptionalApiResult<FreeWorkoutDraftResponse>.Success(draft);
         }
         catch (HttpRequestException)
         {
             return OptionalApiResult<FreeWorkoutDraftResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -294,7 +295,7 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -321,7 +322,7 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         catch (HttpRequestException)
         {
             return ApiResult<IReadOnlyList<WorkoutHistoryApiResponse>>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -342,7 +343,7 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 }

@@ -1,113 +1,193 @@
 namespace WorkoutPlanner.UI.Components;
 
+/// <summary>
+/// Каталог контекстной помощи.
+/// </summary>
+/// <remarks>
+/// Хранит КЛЮЧИ ресурсов, а не готовый текст: каталог статический и строится
+/// один раз при загрузке типа, а язык пользователь переключает в любой момент.
+/// Переводит ключи тот компонент, который их показывает
+/// (<c>HelpDialog</c>, <c>HelpButton</c>, <c>WelcomeGuide</c>).
+/// </remarks>
 public static class HelpContentCatalog
 {
     public static IReadOnlyList<WelcomeGuideSlide> WelcomeSlides { get; } =
     [
         new(
-            "Самое главное — за минуту",
-            "Давай быстро покажем самое важное — это займёт совсем немного времени. А дальше будем знакомиться с приложением по ходу дела.",
+            "Welcome_Slide1_Title",
+            "Welcome_Slide1_Message",
             WelcomeGuideVisual.Orientation),
         new(
-            "Помощь по текущей странице",
-            "Если что-то будет непонятно — ищи значок «?». Он есть там, где может понадобиться объяснение. Нажми на него, чтобы открыть короткое руководство по текущему разделу.",
+            "Welcome_Slide2_Title",
+            "Welcome_Slide2_Message",
             WelcomeGuideVisual.ContextualHelp),
         new(
-            "Поддержка и обратная связь",
-            "В профиле открой раздел поддержки. Там можно отправить технический вопрос команде, а также найти доступный канал для предложений, улучшений и обратной связи.",
+            "Welcome_Slide3_Title",
+            "Welcome_Slide3_Message",
             WelcomeGuideVisual.Support),
         new(
-            "Можно начинать",
-            "Ну вот и всё! Желаем тебе отличных тренировок, новых достижений и сильного прогресса. Увидимся в GPlanner!",
+            "Welcome_Slide4_Title",
+            "Welcome_Slide4_Message",
             WelcomeGuideVisual.Finish)
     ];
 
     public static IReadOnlyList<WelcomeGuideSlide> WelcomeSlidesWeb { get; } = WelcomeSlides;
 
     public static HelpTopic Today { get; } = new(
-        "Тренировка на сегодня",
-        "Здесь проходит назначенная или свободная тренировка.",
+        "Help_Today_Title",
+        "Help_Today_Intro",
         [
-            new("Начало тренировки", "Назначь план в календаре или создай свободную тренировку прямо на странице «Сегодня».", ["Открой тренировку на сегодня.", "Проверь упражнения и значения подходов.", "При необходимости измени вес и повторения перед выполнением."]),
-            new("Во время тренировки", "Отмечай выполненные подходы. Таймер отдыха можно открыть между подходами и упражнениями.", ["Поставь отметку у завершённого подхода.", "Оцени упражнение после выполнения.", "Заверши тренировку, чтобы сохранить результат в истории."]),
-            new("Разминочный и рабочий подход", "Нажми на номер подхода, чтобы переключить его тип. Разминочный подход помогает подготовиться к нагрузке, рабочий учитывается как основной подход тренировки."),
-            new("Свободная тренировка", "Карточки свободной тренировки сохраняются при переходе между вкладками. Удерживай карточку упражнения, чтобы открыть доступные действия.")
+            new("Help_Today_S1_Title", "Help_Today_S1_Text", ["Help_Today_S1_Step1", "Help_Today_S1_Step2", "Help_Today_S1_Step3"]),
+            new("Help_Today_S2_Title", "Help_Today_S2_Text", ["Help_Today_S2_Step1", "Help_Today_S2_Step2", "Help_Today_S2_Step3"]),
+            new("Help_Today_S3_Title", "Help_Today_S3_Text", ["Help_Today_S3_Step1", "Help_Today_S3_Step2", "Help_Today_S3_Step3", "Help_Today_S3_Step4"]),
+            new("Help_Today_S4_Title", "Help_Today_S4_Text", ["Help_Today_S4_Step1", "Help_Today_S4_Step2", "Help_Today_S4_Step3"]),
+            new("Help_Today_S5_Title", "Help_Today_S5_Text", ["Help_Today_S5_Step1", "Help_Today_S5_Step2"]),
+            new("Help_Today_S6_Title", "Help_Today_S6_Text", ["Help_Today_S6_Step1", "Help_Today_S6_Step2"]),
+            new("Help_Today_S7_Title", "Help_Today_S7_Text", ["Help_Today_S7_Step1", "Help_Today_S7_Step2", "Help_Today_S7_Step3"])
         ]);
 
+    // У веба свои заголовки секций: свободных тренировок и таймеров отдыха там нет,
+    // поэтому мобильные секции сюда не подходят.
     public static HelpTopic TodayWeb { get; } = new(
-        "Тренировка на сегодня",
-        "Здесь проходит тренировка, которую ты заранее назначил в календаре.",
+        "Help_Today_Title",
+        "Help_TodayWeb_Intro",
         [
-            new("Начало тренировки", "Назначь тренировочный план на текущую дату в календаре, затем открой страницу «Сегодня».", ["Проверь название плана и список упражнений.", "Сверь вес и повторения с настройками шаблона.", "Если значения нужно изменить, сначала отредактируй шаблон в разделе «Тренировки»."]),
-            new("Во время тренировки", "Отмечай выполненные подходы и оцени каждое упражнение.", ["Поставь отметку у завершённого подхода.", "Выбери оценку нагрузки для каждого упражнения.", "Нажми «Завершить тренировку», чтобы сохранить результат в истории."])
+            new("Help_TodayWeb_S1_Title", "Help_TodayWeb_S1_Text", ["Help_TodayWeb_S1_Step1", "Help_TodayWeb_S1_Step2", "Help_TodayWeb_S1_Step3"]),
+            new("Help_TodayWeb_S2_Title", "Help_TodayWeb_S2_Text", ["Help_TodayWeb_S2_Step1", "Help_TodayWeb_S2_Step2", "Help_TodayWeb_S2_Step3"])
         ]);
 
+    /// <summary>Список шаблонов. Шаги совпадают на мобильном и в вебе.</summary>
     public static HelpTopic Workouts { get; } = new(
-        "Шаблоны тренировок",
-        "Создавай планы и заранее настраивай упражнения, подходы и рабочие значения.",
+        "Help_Workouts_Title",
+        "Help_Workouts_Intro",
         [
-            new("Создание плана", "Нажми «Добавить шаблон», введи название и открой созданную карточку."),
-            new("Упражнения и подходы", "Добавь упражнение из библиотеки, укажи количество подходов и настрой вес каждого подхода отдельно."),
-            new("Разминочный и рабочий подход", "Нажми на номер подхода, чтобы переключить его тип. Разминочные подходы используются для подготовки, а рабочие — для основной нагрузки."),
-            new("Редактирование", "Меню карточки позволяет переименовать или удалить шаблон. Внутри шаблона можно менять упражнения и объединять их в суперсеты, если действие доступно.")
+            new("Help_Workouts_S1_Title", "Help_Workouts_S1_Text", ["Help_Workouts_S1_Step1", "Help_Workouts_S1_Step2", "Help_Workouts_S1_Step3"]),
+            new("Help_Workouts_S2_Title", "Help_Workouts_S2_Text", ["Help_Workouts_S2_Step1", "Help_Workouts_S2_Step2", "Help_Workouts_S2_Step3"]),
+            new("Help_Workouts_S3_Title", "Help_Workouts_S3_Text", ["Help_Workouts_S3_Step1", "Help_Workouts_S3_Step2", "Help_Workouts_S3_Step3"]),
+            new("Help_Workouts_S4_Title", "Help_Workouts_S4_Text", ["Help_Workouts_S4_Step1", "Help_Workouts_S4_Step2", "Help_Workouts_S4_Step3"])
+        ]);
+
+    /// <summary>
+    /// Страница шаблона. Раньше обе страницы раздела делили одну тему «Workouts»,
+    /// из-за чего на странице упражнений открывалась помощь про список шаблонов.
+    /// </summary>
+    public static HelpTopic WorkoutDetails { get; } = new(
+        "Help_WorkoutDetails_Title",
+        "Help_WorkoutDetails_Intro",
+        [
+            new("Help_WorkoutDetails_S1_Title", "Help_WorkoutDetails_S1_Text", ["Help_WorkoutDetails_S1_Step1", "Help_WorkoutDetails_S1_Step2", "Help_WorkoutDetails_S1_Step3", "Help_WorkoutDetails_S1_Step4"]),
+            new("Help_WorkoutDetails_S2_Title", "Help_WorkoutDetails_S2_Text", ["Help_WorkoutDetails_S2_Step1", "Help_WorkoutDetails_S2_Step2"]),
+            new("Help_WorkoutDetails_S3_Title", "Help_WorkoutDetails_S3_Text", ["Help_WorkoutDetails_S3_Step1", "Help_WorkoutDetails_S3_Step2"]),
+            new("Help_WorkoutDetails_S4_Title", "Help_WorkoutDetails_S4_Text", ["Help_WorkoutDetails_S4_Step1", "Help_WorkoutDetails_S4_Step2"]),
+            new("Help_WorkoutDetails_S5_Title", "Help_WorkoutDetails_S5_Text", ["Help_WorkoutDetails_S5_Step1", "Help_WorkoutDetails_S5_Step2", "Help_WorkoutDetails_S5_Step3"])
+        ]);
+
+    // В вебе карточка упражнения открывает меню, а не реагирует на удержание,
+    // диалог добавления другой, а суперсетов на этой странице нет.
+    public static HelpTopic WorkoutDetailsWeb { get; } = new(
+        "Help_WorkoutDetails_Title",
+        "Help_WorkoutDetails_Intro",
+        [
+            new("Help_WorkoutDetails_S1_Title", "Help_WorkoutDetailsWeb_S1_Text", ["Help_WorkoutDetailsWeb_S1_Step1", "Help_WorkoutDetailsWeb_S1_Step2", "Help_WorkoutDetailsWeb_S1_Step3", "Help_WorkoutDetailsWeb_S1_Step4"]),
+            new("Help_WorkoutDetails_S2_Title", "Help_WorkoutDetailsWeb_S2_Text", ["Help_WorkoutDetailsWeb_S2_Step1", "Help_WorkoutDetailsWeb_S2_Step2"]),
+            new("Help_WorkoutDetails_S4_Title", "Help_WorkoutDetailsWeb_S3_Text", ["Help_WorkoutDetailsWeb_S3_Step1", "Help_WorkoutDetailsWeb_S3_Step2", "Help_WorkoutDetailsWeb_S3_Step3"])
         ]);
 
     public static HelpTopic Calendar { get; } = new(
-        "Календарь тренировок",
-        "Календарь связывает тренировочный план с выбранной датой.",
+        "Help_Calendar_Title",
+        "Help_Calendar_Intro",
         [
-            new("Назначение", "Выбери текущую или будущую дату, затем выбери один из тренировочных планов и нажми «Назначить»."),
-            new("Перенос и удаление", "Нажми дату с тренировкой, чтобы перенести её или удалить назначение."),
-            new("Важное условие", "Пока на сегодня активна свободная тренировка, назначить на эту дату плановую тренировку нельзя.")
+            new("Help_Calendar_S1_Title", "Help_Calendar_S1_Text", ["Help_Calendar_S1_Step1", "Help_Calendar_S1_Step2", "Help_Calendar_S1_Step3", "Help_Calendar_S1_Step4"]),
+            new("Help_Calendar_S2_Title", "Help_Calendar_S2_Text", ["Help_Calendar_S2_Step1", "Help_Calendar_S2_Step2", "Help_Calendar_S2_Step3"]),
+            new("Help_Calendar_S3_Title", "Help_Calendar_S3_Text", ["Help_Calendar_S3_Step1", "Help_Calendar_S3_Step2"]),
+            new("Help_Calendar_S4_Title", "Help_Calendar_S4_Text", ["Help_Calendar_S4_Step1", "Help_Calendar_S4_Step2"])
         ]);
 
+    // В вебе назначение идёт в два шага через отдельную кнопку в окне дня,
+    // а переноса на другую дату нет.
     public static HelpTopic CalendarWeb { get; } = new(
-        "Календарь тренировок",
-        "Календарь связывает тренировочный план с выбранной датой.",
+        "Help_Calendar_Title",
+        "Help_CalendarWeb_Intro",
         [
-            new("Назначение", "Выбери текущую или будущую дату, затем один из тренировочных планов и нажми «Назначить»."),
-            new("Изменение", "Открой дату с тренировкой, чтобы удалить назначение и при необходимости выбрать другой план."),
-            new("Прошедшие даты", "Назначать тренировку на уже прошедший день нельзя. Завершённые результаты остаются в истории.")
+            new("Help_Calendar_S1_Title", "Help_CalendarWeb_S1_Text", ["Help_CalendarWeb_S1_Step1", "Help_CalendarWeb_S1_Step2", "Help_CalendarWeb_S1_Step3", "Help_CalendarWeb_S1_Step4"]),
+            new("Help_CalendarWeb_S2_Title", "Help_CalendarWeb_S2_Text", ["Help_CalendarWeb_S2_Step1", "Help_CalendarWeb_S2_Step2"]),
+            new("Help_CalendarWeb_S3_Title", "Help_CalendarWeb_S3_Text", ["Help_CalendarWeb_S3_Step1", "Help_CalendarWeb_S3_Step2"])
         ]);
 
+    /// <summary>История. Шаги совпадают на мобильном и в вебе.</summary>
     public static HelpTopic History { get; } = new(
-        "История тренировок",
-        "После завершения тренировки здесь сохраняется её фактический результат.",
+        "Help_History_Title",
+        "Help_History_Intro",
         [
-            new("Что сохраняется", "История содержит упражнения, выполненные подходы, фактические веса, повторения и оценку нагрузки."),
-            new("Просмотр результата", "Открой карточку тренировки, чтобы увидеть подробный снимок на момент завершения."),
-            new("Удаление", "Если запись больше не нужна, используй действие удаления в карточке истории.")
+            new("Help_History_S1_Title", "Help_History_S1_Text", ["Help_History_S1_Step1", "Help_History_S1_Step2", "Help_History_S1_Step3"]),
+            new("Help_History_S2_Title", "Help_History_S2_Text", ["Help_History_S2_Step1", "Help_History_S2_Step2"]),
+            new("Help_History_S3_Title", "Help_History_S3_Text", ["Help_History_S3_Step1", "Help_History_S3_Step2"])
         ]);
 
+    /// <summary>Обзор раздела прогресса: только выбор между двумя подразделами.</summary>
     public static HelpTopic Progress { get; } = new(
-        "Прогресс",
-        "Графики строятся по завершённым тренировкам и фактическим значениям подходов.",
+        "Help_Progress_Title",
+        "Help_Progress_Intro",
         [
-            new("Прогресс упражнений", "Выбери упражнение, чтобы увидеть изменение рабочих значений по датам.", Illustration: HelpIllustration.ProgressExercise),
-            new("Прогресс тренировок", "График тренировки показывает изменение общего объёма выполненной работы. Горизонтальная ось — даты, вертикальная — рассчитанное значение прогресса.", Illustration: HelpIllustration.ProgressWorkout),
-            new("Как читать изменения", "Смотри на общую тенденцию за несколько тренировок. Одна отдельная точка может зависеть от состава подходов и самочувствия в конкретный день.")
+            new("Help_Progress_S1_Title", "Help_Progress_S1_Text", ["Help_Progress_S1_Step1", "Help_Progress_S1_Step2"]),
+            new("Help_Progress_S2_Title", "Help_Progress_S2_Text", ["Help_Progress_S2_Step1", "Help_Progress_S2_Step2"])
+        ]);
+
+    // Иллюстрация-пример графика переехала сюда с обзорной страницы: она
+    // поясняет именно чтение графика, а на обзоре пояснять было нечего.
+    public static HelpTopic ProgressExercises { get; } = new(
+        "Help_ProgressExercises_Title",
+        "Help_ProgressExercises_Intro",
+        [
+            new("Help_ProgressExercises_S1_Title", "Help_ProgressExercises_S1_Text", ["Help_ProgressExercises_S1_Step1", "Help_ProgressExercises_S1_Step2", "Help_ProgressExercises_S1_Step3"]),
+            new("Help_ProgressExercises_S2_Title", "Help_ProgressExercises_S2_Text", ["Help_ProgressExercises_S2_Step1", "Help_ProgressExercises_S2_Step2"], Illustration: HelpIllustration.ProgressExercise),
+            new("Help_ProgressExercises_S3_Title", "Help_ProgressExercises_S3_Text", ["Help_ProgressExercises_S3_Step1", "Help_ProgressExercises_S3_Step2"])
+        ]);
+
+    // В вебе упражнения сгруппированы по тренировкам, поэтому путь на шаг длиннее,
+    // а автоповорота экрана нет.
+    public static HelpTopic ProgressExercisesWeb { get; } = new(
+        "Help_ProgressExercises_Title",
+        "Help_ProgressExercises_Intro",
+        [
+            new("Help_ProgressExercises_S1_Title", "Help_ProgressExercisesWeb_S1_Text", ["Help_ProgressExercisesWeb_S1_Step1", "Help_ProgressExercisesWeb_S1_Step2", "Help_ProgressExercisesWeb_S1_Step3"]),
+            new("Help_ProgressExercises_S2_Title", "Help_ProgressExercises_S2_Text", ["Help_ProgressExercises_S2_Step1", "Help_ProgressExercises_S2_Step2"], Illustration: HelpIllustration.ProgressExercise),
+            new("Help_ProgressExercises_S3_Title", "Help_ProgressExercises_S3_Text", ["Help_ProgressExercisesWeb_S3_Step1", "Help_ProgressExercisesWeb_S3_Step2"])
+        ]);
+
+    /// <summary>Прогресс тренировок. Шаги совпадают на мобильном и в вебе.</summary>
+    public static HelpTopic ProgressWorkouts { get; } = new(
+        "Help_ProgressWorkouts_Title",
+        "Help_ProgressWorkouts_Intro",
+        [
+            new("Help_ProgressWorkouts_S1_Title", "Help_ProgressWorkouts_S1_Text", ["Help_ProgressWorkouts_S1_Step1", "Help_ProgressWorkouts_S1_Step2"]),
+            new("Help_ProgressWorkouts_S2_Title", "Help_ProgressWorkouts_S2_Text", ["Help_ProgressWorkouts_S2_Step1", "Help_ProgressWorkouts_S2_Step2"], Illustration: HelpIllustration.ProgressWorkout),
+            new("Help_ProgressWorkouts_S3_Title", "Help_ProgressWorkouts_S3_Text", ["Help_ProgressWorkouts_S3_Step1", "Help_ProgressWorkouts_S3_Step2", "Help_ProgressWorkouts_S3_Step3"])
         ]);
 
     public static HelpTopic Profile { get; } = new(
-        "Профиль и настройки",
-        "Здесь собраны данные аккаунта, настройки тренировок и поддержка.",
+        "Help_Profile_Title",
+        "Help_Profile_Intro",
         [
-            new("Личные данные", "Открой нужную строку, чтобы перейти на отдельную страницу настройки."),
-            new("Таймеры отдыха", "Значения таймеров станут настройками по умолчанию для новых таймеров между подходами и упражнениями."),
-            new("Поддержка", "Используй раздел поддержки для технического вопроса, предложения или обратной связи. Доступные способы связи показаны непосредственно в этом разделе.")
+            new("Help_Profile_S1_Title", "Help_Profile_S1_Text", ["Help_Profile_S1_Step1", "Help_Profile_S1_Step2", "Help_Profile_S1_Step3"]),
+            new("Help_Profile_S2_Title", "Help_Profile_S2_Text", ["Help_Profile_S2_Step1", "Help_Profile_S2_Step2", "Help_Profile_S2_Step3"]),
+            new("Help_Profile_S3_Title", "Help_Profile_S3_Text", ["Help_Profile_S3_Step1", "Help_Profile_S3_Step2"]),
+            new("Help_Profile_S4_Title", "Help_Profile_S4_Text", ["Help_Profile_S4_Step1", "Help_Profile_S4_Step2", "Help_Profile_S4_Step3", "Help_Profile_S4_Step4"])
         ]);
 
+    // В вебе профиль — одна страница блоками, без списка разделов и без
+    // таймеров отдыха и языка, которые есть только в мобильном приложении.
     public static HelpTopic ProfileWeb { get; } = new(
-        "Профиль и настройки",
-        "Здесь доступны личные данные, безопасность аккаунта и повторное знакомство с GPlanner.",
+        "Help_Profile_Title",
+        "Help_ProfileWeb_Intro",
         [
-            new("Личные данные", "Измени имя, фамилию, дату рождения или пол и нажми «Сохранить изменения»."),
-            new("Безопасность", "На вкладке безопасности можно сменить пароль после ввода текущего пароля."),
-            new("Знакомство", "В настройках можно повторно открыть короткий четырёхэкранный Welcome Guide.")
+            new("Help_Profile_S1_Title", "Help_ProfileWeb_S1_Text", ["Help_ProfileWeb_S1_Step1", "Help_ProfileWeb_S1_Step2"]),
+            new("Help_ProfileWeb_S2_Title", "Help_ProfileWeb_S2_Text", ["Help_ProfileWeb_S2_Step1", "Help_ProfileWeb_S2_Step2", "Help_ProfileWeb_S2_Step3"]),
+            new("Help_ProfileWeb_S3_Title", "Help_ProfileWeb_S3_Text", ["Help_ProfileWeb_S3_Step1", "Help_ProfileWeb_S3_Step2"])
         ]);
 }
 
-public sealed record WelcomeGuideSlide(string Title, string Message, WelcomeGuideVisual Visual);
+public sealed record WelcomeGuideSlide(string TitleKey, string MessageKey, WelcomeGuideVisual Visual);
 
 public enum WelcomeGuideVisual
 {
@@ -117,13 +197,14 @@ public enum WelcomeGuideVisual
     Finish
 }
 
-public sealed record HelpTopic(string Title, string Introduction, IReadOnlyList<HelpSection> Sections);
+public sealed record HelpTopic(string TitleKey, string IntroductionKey, IReadOnlyList<HelpSection> Sections);
+
 public sealed record HelpSection(
-    string Title,
-    string Text,
-    IReadOnlyList<string>? Steps = null,
+    string TitleKey,
+    string TextKey,
+    IReadOnlyList<string>? StepKeys = null,
     string? ImageSource = null,
-    string? ImageAlt = null,
+    string? ImageAltKey = null,
     HelpIllustration Illustration = HelpIllustration.None);
 
 public enum HelpIllustration

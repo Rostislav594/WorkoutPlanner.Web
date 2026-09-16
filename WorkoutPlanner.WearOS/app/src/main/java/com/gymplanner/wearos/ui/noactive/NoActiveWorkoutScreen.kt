@@ -7,8 +7,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.ui.common.GlowFrame
 import com.gymplanner.wearos.ui.common.NeonButton
@@ -34,14 +36,18 @@ fun NoActiveWorkoutScreen(
 
     GlowFrame {
         Text(
-            text = state.errorMessage ?: "Активной тренировки нет",
+            text = state.errorMessage ?: stringResource(R.string.no_active_workout),
             color = if (hasError) WearColors.Error else WearColors.TextPrimary,
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(6.dp))
         Text(
-            text = if (state.isRefreshing) "Проверяем…" else "Последняя проверка: $checkedAt",
+            text = if (state.isRefreshing) {
+                stringResource(R.string.no_active_checking)
+            } else {
+                stringResource(R.string.no_active_last_check, checkedAt)
+            },
             color = WearColors.TextMuted,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
@@ -49,9 +55,9 @@ fun NoActiveWorkoutScreen(
         Spacer(Modifier.height(10.dp))
         NeonButton(
             label = when {
-                state.isRefreshing -> "Обновляем…"
-                hasError -> "Повторить"
-                else -> "Обновить"
+                state.isRefreshing -> stringResource(R.string.no_active_refreshing)
+                hasError -> stringResource(R.string.common_retry)
+                else -> stringResource(R.string.no_active_refresh)
             },
             accent = WearColors.Amber,
             enabled = !state.isRefreshing,

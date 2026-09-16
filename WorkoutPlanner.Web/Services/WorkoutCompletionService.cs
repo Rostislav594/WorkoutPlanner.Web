@@ -1,10 +1,11 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Services.Auth;
 using DataExercise = WorkoutPlanner.Web.Models.Exercise;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -220,7 +221,7 @@ public sealed class WorkoutCompletionService(
         var now = timeProvider.GetLocalNow().DateTime;
         var workoutName = workout.SaveAsTemplate
             ? workout.TemplateName!.Trim()
-            : "Свободная тренировка";
+            : ServerTexts.Current["Server_FreeWorkout_Name"];
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         if (workout.SaveAsTemplate && await db.TrainingPlans.AnyAsync(
@@ -230,7 +231,7 @@ public sealed class WorkoutCompletionService(
             return new(
                 false,
                 FreeWorkoutCompletionFailure.TemplateNameConflict,
-                "Шаблон с таким названием уже существует.",
+                ServerTexts.Current["Server_Template_NameTaken"],
                 null,
                 null);
         }
@@ -248,7 +249,7 @@ public sealed class WorkoutCompletionService(
             return new(
                 false,
                 FreeWorkoutCompletionFailure.ExerciseDefinitionMissing,
-                "Одно из выбранных упражнений больше не существует.",
+                ServerTexts.Current["Server_Exercise_Missing"],
                 null,
                 null);
         }
@@ -265,8 +266,8 @@ public sealed class WorkoutCompletionService(
             WorkoutName = workoutName,
             Date = now,
             Summary = workout.SaveAsTemplate
-                ? "Свободная тренировка · сохранена в шаблоны"
-                : "Свободная тренировка",
+                ? ServerTexts.Current["Server_FreeWorkout_SavedAsTemplate"]
+                : ServerTexts.Current["Server_FreeWorkout_Name"],
             Details = JsonSerializer.Serialize(historySnapshot)
         };
 
@@ -340,7 +341,7 @@ public sealed class WorkoutCompletionService(
             return new(
                 false,
                 FreeWorkoutCompletionFailure.TemplateNameRequired,
-                "Введите название шаблона длиной до 120 символов.",
+                ServerTexts.Current["Server_Template_NameLength"],
                 null,
                 null);
         }
@@ -366,7 +367,7 @@ public sealed class WorkoutCompletionService(
         return new(
             false,
             FreeWorkoutCompletionFailure.InvalidWorkout,
-            "Заполните упражнение и проверьте параметры каждого подхода.",
+            ServerTexts.Current["Server_Exercise_CheckSets"],
             null,
             null);
     }

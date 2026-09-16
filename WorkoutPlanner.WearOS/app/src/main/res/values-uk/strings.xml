@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_channel_name">Активне тренування</string>
+    <string name="workout_in_progress">Тренування триває</string>
+    <string name="workout_rest_in_progress">Відпочинок</string>
+    <string name="workout_rest_finished">Відпочинок завершено</string>
+
+    <string name="common_retry">Повторити</string>
+    <string name="common_back">Назад</string>
+
+    <string name="pairing_title">Підключення</string>
+    <string name="pairing_opening_on_phone">Відкриваємо на телефоні…</string>
+    <string name="pairing_opening">Відкриваємо…</string>
+    <string name="pairing_confirm_on_phone">Підтвердити на телефоні</string>
+    <string name="pairing_enter_code">Ввести код</string>
+    <string name="pairing_confirm_title">Підтвердьте на телефоні</string>
+    <string name="pairing_confirm_hint">Відкрийте GymPlanner на телефоні та натисніть «Підключити годинник».</string>
+    <string name="pairing_waiting">Чекаємо на відповідь…</string>
+    <string name="pairing_enter_code_title">Введіть код</string>
+    <string name="pairing_checking_code">Перевіряємо код…</string>
+    <string name="pairing_connecting">Підключаємо…</string>
+    <string name="pairing_connect">Підключити</string>
+    <string name="pairing_code_description">Шестизначний код підключення</string>
+
+    <string name="current_set_number">Підхід %1$d</string>
+    <string name="current_set_finish">Закінчити підхід</string>
+    <string name="weight_kilograms">%1$sкг</string>
+    <string name="weight_kilograms_unknown">—кг</string>
+    <plurals name="sets_count">
+        <item quantity="one">%1$d підхід</item>
+        <item quantity="few">%1$d підходи</item>
+        <item quantity="many">%1$d підходів</item>
+        <item quantity="other">%1$d підходу</item>
+    </plurals>
+
+    <string name="no_active_workout">Активного тренування немає</string>
+    <string name="no_active_checking">Перевіряємо…</string>
+    <string name="no_active_last_check">Остання перевірка: %1$s</string>
+    <string name="no_active_refreshing">Оновлюємо…</string>
+    <string name="no_active_refresh">Оновити</string>
+
+    <string name="rest_skip_description">Відпочинок. Торкніться, щоб пропустити</string>
+    <string name="hold_to_confirm_description">%1$s. Утримуйте для підтвердження</string>
+
+    <string name="ambient_rest">Відпочинок</string>
+    <string name="ambient_all_sets_done">Усі підходи виконано</string>
+    <string name="ambient_workout_completed">Тренування завершено</string>
+    <string name="ambient_no_workout">Немає тренування</string>
+    <string name="ambient_not_connected">Не підключено</string>
+
+    <string name="completed_title">Тренування завершено</string>
+    <string name="completed_with_charts">Тренування додано до історії, а також до графіків прогресу!</string>
+    <string name="completed_open_app">Перейдіть до застосунку, щоб зробити наступну дію!</string>
+
+    <string name="ready_all_sets_done">Усі підходи виконано</string>
+    <string name="ready_finishing">Завершуємо…</string>
+    <string name="ready_finish_workout">Завершити тренування</string>
+
+    <string name="save_failed_retry">Не вдалося зберегти. Спробуйте ще раз</string>
+    <string name="pending_changes_wait">Є невідправлені зміни. Дочекайтеся зв\'язку</string>
+
+    <string name="error_no_connection">Немає зв\'язку із сервером</string>
+    <string name="error_secure_store_failed">Не вдалося безпечно зберегти доступ</string>
+    <string name="error_invalid_code">Невірний код</string>
+    <string name="error_watch_other_account">Годинник уже підключено до іншого акаунта</string>
+    <string name="error_code_expired">Термін дії коду минув</string>
+    <string name="error_server_unavailable">Сервер тимчасово недоступний</string>
+    <string name="error_pairing_failed">Не вдалося підключити годинник</string>
+    <string name="error_pairing_start_failed">Не вдалося почати підключення</string>
+    <string name="error_unknown_response">Невідома відповідь сервера</string>
+    <string name="error_no_access_returned">Сервер не повернув доступ</string>
+    <string name="error_session_invalid">Сеанс годинника недійсний</string>
+    <string name="error_session_refresh_failed">Не вдалося оновити сеанс</string>
+    <string name="error_session_expired">Сеанс годинника минув</string>
+    <string name="error_access_revoked">Доступ годинника відкликано</string>
+    <string name="error_load_failed">Помилка завантаження</string>
+    <string name="error_bad_payload">Некоректний payload операції</string>
+    <string name="error_update_missing_weight">В update відсутня вага</string>
+    <string name="error_update_missing_reps">В update відсутні повторення</string>
+    <string name="error_workout_not_ready">Тренування ще не готове до завершення</string>
+    <string name="error_finish_failed">Не вдалося завершити тренування</string>
+    <string name="error_set_changed_on_server">Підхід змінено на сервері</string>
+    <string name="error_operation_id_used">Operation ID уже використано</string>
+    <string name="error_operation_rejected">Операцію відхилено сервером</string>
+    <string name="error_set_sync_failed">Не вдалося синхронізувати підхід</string>
+    <string name="error_previous_operation_rejected">Попередню операцію підходу відхилено; оновіть тренування</string>
+    <string name="error_phone_unavailable">Телефон недоступний</string>
+    <string name="error_pairing_declined">Підключення відхилено на телефоні</string>
+    <string name="error_confirmation_timeout">Час підтвердження минув. Спробуйте знову</string>
+    <string name="error_no_active_workout">Активного тренування не знайдено</string>
+    <string name="error_finish_sets_first">Спочатку завершіть усі підходи</string>
+    <string name="error_sync_changes_failed">Не вдалося синхронізувати зміни. Перевірте підключення</string>
+</resources>

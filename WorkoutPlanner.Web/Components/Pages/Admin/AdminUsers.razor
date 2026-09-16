@@ -1,41 +1,42 @@
-@page "/admin/users"
+﻿@page "/admin/users"
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
 @inject IAdminUserService Users
+@inject IAppText Text
 
 <PageTitle>Users — GPlanner Admin</PageTitle>
 
 <div class="admin-page">
-    <AdminPageHeader Title="Users" Description="Пользователи, активность и диагностическая информация без секретов." />
+    <AdminPageHeader Title="Users" Description="@Text["Admin_Users_Description"]" />
 
     <div class="admin-toolbar" role="search">
         <div class="admin-field">
-            <label for="users-search">Имя, email или UserId</label>
-            <input id="users-search" class="admin-input" @bind="_search" @bind:event="oninput" placeholder="Поиск пользователей" />
+            <label for="users-search">@Text["Admin_Users_SearchLabel"]</label>
+            <input id="users-search" class="admin-input" @bind="_search" @bind:event="oninput" placeholder="@Text["Admin_Users_SearchPlaceholder"]" />
         </div>
         <button class="admin-button admin-button--primary" type="button" @onclick="SearchAsync" disabled="@_isLoading">
-            <span class="material-symbols-rounded" aria-hidden="true">search</span>Найти
+            <span class="material-symbols-rounded" aria-hidden="true">search</span>@Text["Admin_Find"]
         </button>
     </div>
 
     @if (_isLoading)
     {
-        <section class="admin-state" role="status"><h2>Загружаем пользователей</h2><p>Выполняется серверный запрос.</p></section>
+        <section class="admin-state" role="status"><h2>@Text["Admin_Users_Loading"]</h2><p>@Text["Admin_Users_LoadingHint"]</p></section>
     }
     else if (_error is not null)
     {
-        <section class="admin-state" role="alert"><h2>Не удалось загрузить Users</h2><p>@_error</p><button class="admin-button admin-button--secondary" @onclick="LoadAsync">Повторить</button></section>
+        <section class="admin-state" role="alert"><h2>@Text["Admin_Users_LoadFailed"]</h2><p>@_error</p><button class="admin-button admin-button--secondary" @onclick="LoadAsync">@Text["Common_Retry"]</button></section>
     }
     else if (_result is null || _result.Items.Count == 0)
     {
-        <section class="admin-state"><h2>Пользователи не найдены</h2><p>Измените поисковый запрос или очистите фильтр.</p></section>
+        <section class="admin-state"><h2>@Text["Admin_Users_NotFound"]</h2><p>@Text["Admin_Users_NotFoundHint"]</p></section>
     }
     else
     {
         <div class="admin-table-wrap">
             <table class="admin-table">
-                <thead><tr><th>Пользователь</th><th>Регистрация</th><th>Последняя активность</th><th>Статус</th><th>Клиент</th><th>Тренировки</th><th>Support</th></tr></thead>
+                <thead><tr><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Registered"]</th><th>@Text["Admin_Column_LastSeen"]</th><th>@Text["Admin_Column_Status"]</th><th>@Text["Admin_Column_Client"]</th><th>@Text["Admin_Column_Workouts"]</th><th>Support</th></tr></thead>
                 <tbody>
                     @foreach (var user in _result.Items)
                     {
@@ -44,7 +45,7 @@
                             <td>@FormatDate(user.RegisteredAtUtc)</td>
                             <td>@FormatDate(user.LastSeenAtUtc)</td>
                             <td><span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(user.ActivityStatus)</span></td>
-                            <td><span class="admin-table__primary">@(user.Platform ?? "—")</span><span class="admin-table__secondary">@(user.AppVersion is null ? "версия неизвестна" : $"GPlanner {user.AppVersion}")</span></td>
+                            <td><span class="admin-table__primary">@(user.Platform ?? "—")</span><span class="admin-table__secondary">@(user.AppVersion is null ? Text["Admin_VersionUnknown"] : $"GPlanner {user.AppVersion}")</span></td>
                             <td>@user.WorkoutCount</td>
                             <td>@user.SupportTicketCount</td>
                         </tr>
@@ -53,10 +54,10 @@
             </table>
         </div>
         <div class="admin-pagination">
-            <span>Всего: @_result.TotalCount · страница @_result.Page из @TotalPages</span>
+            <span>@Text.Format("Admin_TotalPage", _result.TotalCount, _result.Page, TotalPages)</span>
             <div class="admin-pagination__buttons">
-                <button class="admin-button admin-button--secondary" disabled="@(_page <= 1)" @onclick="PreviousAsync">Назад</button>
-                <button class="admin-button admin-button--secondary" disabled="@(_page >= TotalPages)" @onclick="NextAsync">Вперёд</button>
+                <button class="admin-button admin-button--secondary" disabled="@(_page <= 1)" @onclick="PreviousAsync">@Text["Common_Back"]</button>
+                <button class="admin-button admin-button--secondary" disabled="@(_page >= TotalPages)" @onclick="NextAsync">@Text["Admin_Next"]</button>
             </div>
         </div>
     }
@@ -79,11 +80,12 @@
     {
         _isLoading = true; _error = null;
         try { _result = await Users.GetPageAsync(new(_search, _page, PageSize)); }
-        catch { _error = "Список пользователей временно недоступен."; }
+        catch { _error = Text["Admin_Users_ListUnavailable"]; }
         finally { _isLoading = false; }
     }
 
-    private static string FormatDate(DateTime? value) => value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? "Нет данных";
+    private string FormatDate(DateTime? value) =>
+        value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? Text["Admin_NoData"];
     private static string StatusLabel(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "Active", AdminUserActivityStatus.Dormant => "Dormant", AdminUserActivityStatus.Inactive => "Inactive", _ => "Never active" };
     private static string StatusClass(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "admin-status--success", AdminUserActivityStatus.Dormant => "admin-status--warning", AdminUserActivityStatus.Inactive => "admin-status--danger", _ => string.Empty };
 }

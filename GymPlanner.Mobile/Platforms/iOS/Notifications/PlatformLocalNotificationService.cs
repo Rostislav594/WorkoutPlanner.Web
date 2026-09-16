@@ -1,6 +1,7 @@
 using Foundation;
 using UserNotifications;
 using WorkoutPlanner.Api.Contracts;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -18,7 +19,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         return result.Item1
             ? NotificationOperationResult.Success
             : NotificationOperationResult.Denied(
-                "Разрешите уведомления в настройках приложения.");
+                AppTexts.Get("Notify_PermissionRequired"));
     }
 
     public async Task<NotificationOperationResult> ScheduleAsync(
@@ -30,12 +31,12 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         if (seconds <= 0)
         {
             return NotificationOperationResult.Failure(
-                "Время напоминания должно быть в будущем.");
+                AppTexts.Get("Notify_TimeInFuture"));
         }
 
         var content = new UNMutableNotificationContent
         {
-            Title = "Пора тренироваться",
+            Title = AppTexts.Get("Notify_TimeToTrain"),
             Body = reminder.WorkoutName,
             Sound = UNNotificationSound.Default,
             UserInfo = NSDictionary.FromObjectAndKey(

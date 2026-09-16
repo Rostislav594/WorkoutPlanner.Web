@@ -1,9 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Русский — основной набор. Переводы лежат в values-uk и values-en; язык
+    выбирает система часов, поэтому язык из профиля в телефоне сюда не приходит.
+-->
 <resources>
     <string name="app_name">GPlanner</string>
     <string name="workout_channel_name">Активная тренировка</string>
     <string name="workout_in_progress">Тренировка идёт</string>
     <string name="workout_rest_in_progress">Отдых</string>
     <string name="workout_rest_finished">Отдых закончен</string>
-</resources>
 
+    <string name="common_retry">Повторить</string>
+    <string name="common_back">Назад</string>
+
+    <string name="pairing_title">Подключение</string>
+    <string name="pairing_opening_on_phone">Открываем на телефоне…</string>
+    <string name="pairing_opening">Открываем…</string>
+    <string name="pairing_confirm_on_phone">Подтвердить на телефоне</string>
+    <string name="pairing_enter_code">Ввести код</string>
+    <string name="pairing_confirm_title">Подтвердите на телефоне</string>
+    <string name="pairing_confirm_hint">Откройте GymPlanner на телефоне и нажмите «Подключить часы».</string>
+    <string name="pairing_waiting">Ждём ответа…</string>
+    <string name="pairing_enter_code_title">Введите код</string>
+    <string name="pairing_checking_code">Проверяем код…</string>
+    <string name="pairing_connecting">Подключаем…</string>
+    <string name="pairing_connect">Подключить</string>
+    <string name="pairing_code_description">Шестизначный код подключения</string>
+
+    <string name="current_set_number">Подход %1$d</string>
+    <string name="current_set_finish">Закончить подход</string>
+    <string name="weight_kilograms">%1$sкг</string>
+    <string name="weight_kilograms_unknown">—кг</string>
+    <plurals name="sets_count">
+        <item quantity="one">%1$d подход</item>
+        <item quantity="few">%1$d подхода</item>
+        <item quantity="many">%1$d подходов</item>
+        <item quantity="other">%1$d подхода</item>
+    </plurals>
+
+    <string name="no_active_workout">Активной тренировки нет</string>
+    <string name="no_active_checking">Проверяем…</string>
+    <string name="no_active_last_check">Последняя проверка: %1$s</string>
+    <string name="no_active_refreshing">Обновляем…</string>
+    <string name="no_active_refresh">Обновить</string>
+
+    <string name="rest_skip_description">Отдых. Коснитесь, чтобы пропустить</string>
+    <string name="hold_to_confirm_description">%1$s. Удерживайте для подтверждения</string>
+
+    <string name="ambient_rest">Отдых</string>
+    <string name="ambient_all_sets_done">Все подходы выполнены</string>
+    <string name="ambient_workout_completed">Тренировка завершена</string>
+    <string name="ambient_no_workout">Нет тренировки</string>
+    <string name="ambient_not_connected">Не подключено</string>
+
+    <string name="completed_title">Тренировка завершена</string>
+    <string name="completed_with_charts">Тренировка добавлена в историю, а также в графики прогресса!</string>
+    <string name="completed_open_app">Перейдите в приложение, чтобы сделать следующее действие!</string>
+
+    <string name="ready_all_sets_done">Все подходы выполнены</string>
+    <string name="ready_finishing">Завершаем…</string>
+    <string name="ready_finish_workout">Завершить тренировку</string>
+
+    <string name="save_failed_retry">Не удалось сохранить. Попробуйте ещё раз</string>
+    <string name="pending_changes_wait">Есть неотправленные изменения. Дождитесь связи</string>
+
+    <string name="error_no_connection">Нет связи с сервером</string>
+    <string name="error_secure_store_failed">Не удалось безопасно сохранить доступ</string>
+    <string name="error_invalid_code">Неверный код</string>
+    <string name="error_watch_other_account">Часы уже подключены к другому аккаунту</string>
+    <string name="error_code_expired">Срок действия кода истёк</string>
+    <string name="error_server_unavailable">Сервер временно недоступен</string>
+    <string name="error_pairing_failed">Не удалось подключить часы</string>
+    <string name="error_pairing_start_failed">Не удалось начать подключение</string>
+    <string name="error_unknown_response">Неизвестный ответ сервера</string>
+    <string name="error_no_access_returned">Сервер не вернул доступ</string>
+    <string name="error_session_invalid">Сессия часов недействительна</string>
+    <string name="error_session_refresh_failed">Не удалось обновить сессию</string>
+    <string name="error_session_expired">Сессия часов истекла</string>
+    <string name="error_access_revoked">Доступ часов отозван</string>
+    <string name="error_load_failed">Ошибка загрузки</string>
+    <string name="error_bad_payload">Некорректный payload операции</string>
+    <string name="error_update_missing_weight">В update отсутствует вес</string>
+    <string name="error_update_missing_reps">В update отсутствуют повторы</string>
+    <string name="error_workout_not_ready">Тренировка ещё не готова к завершению</string>
+    <string name="error_finish_failed">Не удалось завершить тренировку</string>
+    <string name="error_set_changed_on_server">Подход изменён на сервере</string>
+    <string name="error_operation_id_used">Operation ID уже использован</string>
+    <string name="error_operation_rejected">Операция отклонена сервером</string>
+    <string name="error_set_sync_failed">Не удалось синхронизировать подход</string>
+    <string name="error_previous_operation_rejected">Предыдущая операция подхода отклонена; обновите тренировку</string>
+    <string name="error_phone_unavailable">Телефон недоступен</string>
+    <string name="error_pairing_declined">Подключение отклонено на телефоне</string>
+    <string name="error_confirmation_timeout">Время подтверждения истекло. Попробуйте снова</string>
+    <string name="error_no_active_workout">Активная тренировка не найдена</string>
+    <string name="error_finish_sets_first">Сначала завершите все подходы</string>
+    <string name="error_sync_changes_failed">Не удалось синхронизировать изменения. Проверьте подключение</string>
+</resources>

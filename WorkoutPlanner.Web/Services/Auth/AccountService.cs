@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services.Auth;
 
@@ -26,7 +27,7 @@ public sealed class AccountService : IAccountService
         var signIn = scope.ServiceProvider.GetRequiredService<SignInManager<IdentityUser>>();
         var user = await users.FindByIdAsync(userId);
         if (user is null)
-            return OperationResult.Failure("Пользователь не найден.");
+            return OperationResult.Failure(ServerTexts.Current["Server_Account_UserNotFound"]);
         var result = await users.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
         if (!result.Succeeded)
             return new OperationResult(false, result.Errors.Select(TranslateIdentityError).ToList());
@@ -53,12 +54,12 @@ public sealed class AccountService : IAccountService
 
     private static string TranslateIdentityError(IdentityError error) => error.Code switch
     {
-        "PasswordMismatch" => "Текущий пароль указан неверно.",
-        "PasswordTooShort" => "Пароль слишком короткий.",
-        "PasswordRequiresDigit" => "Пароль должен содержать хотя бы одну цифру.",
-        "PasswordRequiresLower" => "Пароль должен содержать хотя бы одну строчную латинскую букву.",
-        "PasswordRequiresUpper" => "Пароль должен содержать хотя бы одну заглавную латинскую букву.",
-        "PasswordRequiresNonAlphanumeric" => "Пароль должен содержать хотя бы один специальный символ.",
+        "PasswordMismatch" => ServerTexts.Current["Password_Mismatch"],
+        "PasswordTooShort" => ServerTexts.Current["Password_TooShort"],
+        "PasswordRequiresDigit" => ServerTexts.Current["Password_RequiresDigit"],
+        "PasswordRequiresLower" => ServerTexts.Current["Password_RequiresLower"],
+        "PasswordRequiresUpper" => ServerTexts.Current["Password_RequiresUpper"],
+        "PasswordRequiresNonAlphanumeric" => ServerTexts.Current["Password_RequiresNonAlphanumeric"],
         _ => error.Description
     };
 }

@@ -7,14 +7,16 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IProgressApiClient ProgressClient
 @inject IScreenOrientationService OrientationService
+@inject IAppText Text
+@inject NavigationManager Navigation
 
 <section class="progress-workouts-page" aria-labelledby="progress-workouts-title" aria-busy="@_isLoading">
     <div class="page-heading">
-        <a class="back-button" href="/progress" aria-label="Вернуться к разделам прогресса">
+        <a class="back-button" href="/progress" aria-label="@Text["Progress_BackToSections"]">
             <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
         </a>
-        <h1 id="progress-workouts-title">Прогресс тренировок</h1>
-        <HelpButton Topic="HelpContentCatalog.Progress" />
+        <h1 id="progress-workouts-title">@Text["ProgressWorkouts_Title"]</h1>
+        <HelpButton Topic="HelpContentCatalog.ProgressWorkouts" />
     </div>
 
     @if (_errors.Count > 0)
@@ -29,16 +31,16 @@
     {
         <div class="loading-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем тренировки…</span>
+            <span>@Text["Progress_LoadingWorkouts"]</span>
         </div>
     }
     else if (_plans.Count == 0)
     {
         <div class="empty-state">
             <span class="material-symbols-rounded" aria-hidden="true">analytics</span>
-            <h2>Нет тренировок для анализа</h2>
-            <p>Создайте тренировочный план, чтобы отслеживать его динамику.</p>
-            <a class="primary-action" href="/workouts">Открыть тренировки</a>
+            <h2>@Text["ProgressWorkouts_EmptyTitle"]</h2>
+            <p>@Text["ProgressWorkouts_EmptyBody"]</p>
+            <a class="primary-action" href="/workouts">@Text["Progress_OpenWorkouts"]</a>
         </div>
     }
     else
@@ -55,7 +57,7 @@
                         </button>
                         <button class="card-menu-button"
                                 type="button"
-                                aria-label="Очистить историю тренировки @plan.WorkoutName"
+                                aria-label="@Text.Format("ProgressWorkouts_ClearHistory", plan.WorkoutName)"
                                 @onclick:stopPropagation="true"
                                 @onclick="() => AskToClear(plan)">
                             <span class="material-symbols-rounded" aria-hidden="true">more_vert</span>
@@ -78,9 +80,8 @@
             <header class="modal-heading">
                 <div>
                     <h2 id="workout-progress-title">@_selectedPlan.WorkoutName</h2>
-                    <p>Последние 30 дней · относительно первой тренировки</p>
                 </div>
-                <button class="modal-close" type="button" aria-label="Закрыть" disabled="@_isLoadingProgress" @onclick="CloseProgress">
+                <button class="modal-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isLoadingProgress" @onclick="CloseProgress">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -94,13 +95,17 @@
             {
                 <div class="loading-state compact" role="status">
                     <span class="loading-spinner" aria-hidden="true"></span>
-                    <span>Загружаем прогресс…</span>
+                    <span>@Text["Progress_Loading"]</span>
                 </div>
             }
             else if (_selectedProgress is not null && _selectedProgress.Chart.Count > 0)
             {
-                <div class="chart-page-content">
-                    <ProgressLineChart Title="Прогресс, %" Points="_selectedProgress.Chart" />
+                <div class="chart-page-content chart-page-content--staged">
+                    <ProgressLineChart Title="@Text["Progress_ChartTitle"]"
+                                       Points="_selectedProgress.Chart"
+                                       StagedReveal="true"
+                                       CompactPresentation="true"
+                                       PointSelected="OpenHistoryForPoint" />
 
                     <div class="progress-summary">
                         <article class="summary-card">
@@ -108,9 +113,9 @@
                                 <span class="material-symbols-rounded">moving</span>
                             </span>
                             <div class="card-content">
-                                <span class="card-title">Рост</span>
+                                <span class="card-title">@Text["Progress_Growth"]</span>
                                 <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
-                                <span class="card-subtitle">Относительно последней тренировки</span>
+                                <span class="card-subtitle">@Text["Progress_GrowthSubtitle"]</span>
                             </div>
                         </article>
 
@@ -119,9 +124,9 @@
                                 <span class="material-symbols-rounded">workspace_premium</span>
                             </span>
                             <div class="card-content">
-                                <span class="card-title">Лучший результат</span>
+                                <span class="card-title">@Text["Progress_Best"]</span>
                                 <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
-                                <span class="card-subtitle">Максимальный рост</span>
+                                <span class="card-subtitle">@Text["Progress_BestSubtitle"]</span>
                             </div>
                         </article>
 
@@ -130,9 +135,9 @@
                                 <span class="material-symbols-rounded">event_repeat</span>
                             </span>
                             <div class="card-content">
-                                <span class="card-title">Тренировок</span>
+                                <span class="card-title">@Text["Progress_WorkoutsCount"]</span>
                                 <strong class="card-value blue">@_selectedProgress.Snapshots.Count</strong>
-                                <span class="card-subtitle">Всего в истории</span>
+                                <span class="card-subtitle">@Text["Progress_WorkoutsTotalSubtitle"]</span>
                             </div>
                         </article>
                     </div>
@@ -142,8 +147,8 @@
             {
                 <div class="modal-empty">
                     <span class="material-symbols-rounded" aria-hidden="true">query_stats</span>
-                    <h3>Нет записей за последние 30 дней</h3>
-                    <p>Завершите тренировку, чтобы здесь появилась актуальная динамика.</p>
+                    <h3>@Text["Progress_NoRecordsTitle"]</h3>
+                    <p>@Text["ProgressWorkouts_NoRecordsBody"]</p>
                 </div>
             }
 
@@ -159,9 +164,9 @@
                  aria-modal="true"
                  aria-labelledby="clear-workout-progress-title"
                  @onclick:stopPropagation="true">
-            <h2 id="clear-workout-progress-title">Очистить историю тренировки?</h2>
-            <p>Будет удалена вся история тренировки <strong>«@_clearPlan.WorkoutName»</strong>.</p>
-            <p class="warning-copy">Это действие нельзя отменить. История завершённых тренировок не удаляется.</p>
+            <h2 id="clear-workout-progress-title">@Text["ProgressWorkouts_ClearTitle"]</h2>
+            <p>@Text["ProgressWorkouts_ClearBodyPrefix"] <strong>«@_clearPlan.WorkoutName»</strong>.</p>
+            <p class="warning-copy">@Text["Progress_ClearWarning"]</p>
 
             @if (_dialogErrors.Count > 0)
             {
@@ -169,9 +174,9 @@
             }
 
             <div class="dialog-buttons">
-                <button class="secondary-action" type="button" disabled="@_isBusy" @onclick="CloseClearDialog">Отмена</button>
+                <button class="secondary-action" type="button" disabled="@_isBusy" @onclick="CloseClearDialog">@Text["Common_Cancel"]</button>
                 <button class="danger-action" type="button" disabled="@_isBusy" @onclick="ClearProgressAsync">
-                    @(_isBusy ? "Удаляем…" : "Удалить")
+                    @(_isBusy ? Text["Common_Deleting"] : Text["Common_Delete"])
                 </button>
             </div>
         </section>
@@ -182,12 +187,13 @@
 {
     <div class="toast-success" role="status">
         <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
-        История успешно удалена
+        @Text["ProgressWorkouts_Cleared"]
     </div>
 }
 
 @code {
-    private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
+    // Проценты и числа форматируем в культуре выбранного языка.
+    private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
     private readonly List<TrainingPlanApiResponse> _plans = [];
     private readonly List<string> _errors = [];
     private readonly List<string> _progressErrors = [];
@@ -321,8 +327,19 @@
         }
     }
 
-    private static string SignedPercent(decimal value) =>
-        $"{(value > 0 ? "+" : string.Empty)}{value.ToString("0.##", RussianCulture)}%";
+    private string SignedPercent(decimal value) =>
+        $"{(value > 0 ? "+" : string.Empty)}{value.ToString("0.##", UiCulture)}%";
+
+    private void OpenHistoryForPoint(ProgressChartPointApiResponse point)
+    {
+        if (_selectedProgress is null)
+            return;
+
+        OrientationService.RestoreAutomaticOrientation();
+        var workout = Uri.EscapeDataString(_selectedProgress.WorkoutName);
+        var date = Uri.EscapeDataString(point.Date.ToString("O", CultureInfo.InvariantCulture));
+        Navigation.NavigateTo($"/history?workout={workout}&date={date}");
+    }
 
     public void Dispose()
     {

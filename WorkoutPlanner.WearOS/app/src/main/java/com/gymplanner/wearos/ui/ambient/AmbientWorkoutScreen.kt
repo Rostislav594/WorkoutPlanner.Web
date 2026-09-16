@@ -10,11 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import androidx.wear.compose.material3.TimeText
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 
 /**
@@ -58,15 +60,15 @@ private fun AmbientContent(state: MockWorkoutState) {
             // руку человек не поднял, и подробности ему сейчас не нужны.
             is MockWorkoutState.CurrentSet -> AmbientTitle(state.exerciseName)
 
-            is MockWorkoutState.Rest -> AmbientTitle("Отдых")
+            is MockWorkoutState.Rest -> AmbientTitle(stringResource(R.string.ambient_rest))
 
-            MockWorkoutState.ReadyToFinish -> AmbientTitle("Все подходы выполнены")
+            MockWorkoutState.ReadyToFinish -> AmbientTitle(stringResource(R.string.ambient_all_sets_done))
 
-            is MockWorkoutState.Completed -> AmbientTitle("Тренировка завершена")
+            is MockWorkoutState.Completed -> AmbientTitle(stringResource(R.string.ambient_workout_completed))
 
-            is MockWorkoutState.NoActiveWorkout -> AmbientTitle("Нет тренировки")
+            is MockWorkoutState.NoActiveWorkout -> AmbientTitle(stringResource(R.string.ambient_no_workout))
 
-            is MockWorkoutState.Pairing -> AmbientTitle("Не подключено")
+            is MockWorkoutState.Pairing -> AmbientTitle(stringResource(R.string.ambient_not_connected))
         }
     }
 }

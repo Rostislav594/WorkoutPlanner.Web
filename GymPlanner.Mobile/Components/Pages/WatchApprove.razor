@@ -2,43 +2,43 @@
 @layout MainLayout
 @inject IWatchManagementApiClient WatchClient
 @inject NavigationManager Navigation
+@inject IAppText Text
 
-<PageTitle>Подключение часов</PageTitle>
+<PageTitle>@Text["WatchApprove_PageTitle"]</PageTitle>
 
 <section class="watch-approve">
     @if (_loading)
     {
-        <p class="page-state" role="status">Загружаем заявку…</p>
+        <p class="page-state" role="status">@Text["WatchApprove_Loading"]</p>
     }
     else if (_completed is not null)
     {
         <div class="watch-approve__result" role="status">
             <h1>@_completed</h1>
-            <button class="primary-button" type="button" @onclick="GoToSettings">Готово</button>
+            <button class="primary-button" type="button" @onclick="GoToSettings">@Text["Common_Done"]</button>
         </div>
     }
     else if (_details is null)
     {
         <div class="watch-approve__result" role="alert">
-            <h1>Заявка недоступна</h1>
-            <p class="watch-approve__hint">@(_error ?? "Попробуйте начать подключение на часах заново.")</p>
-            <button class="secondary-button" type="button" @onclick="GoToSettings">Назад</button>
+            <h1>@Text["WatchApprove_Unavailable"]</h1>
+            <p class="watch-approve__hint">@(_error ?? Text["WatchApprove_RetryHint"])</p>
+            <button class="secondary-button" type="button" @onclick="GoToSettings">@Text["Common_Back"]</button>
         </div>
     }
     else
     {
-        <h1 class="watch-approve__title">Подключить часы?</h1>
+        <h1 class="watch-approve__title">@Text["WatchApprove_Title"]</h1>
         <p class="watch-approve__device">@_details.DisplayName</p>
         @if (!string.IsNullOrWhiteSpace(_details.DeviceModel))
         {
             <p class="watch-approve__model">@_details.DeviceModel</p>
         }
         <p class="watch-approve__hint">
-            Часы получат доступ к вашей активной тренировке: смогут отмечать подходы,
-            менять вес и повторы и завершать тренировку.
+            @Text["WatchApprove_Scope"]
         </p>
         <p class="watch-approve__warning">
-            Подтверждайте, только если запрос пришёл с ваших часов прямо сейчас.
+            @Text["WatchApprove_Warning"]
         </p>
 
         @if (!string.IsNullOrWhiteSpace(_error))
@@ -48,10 +48,10 @@
 
         <div class="watch-approve__actions">
             <button class="primary-button" type="button" disabled="@_busy" @onclick="ApproveAsync">
-                @(_busy ? "Подключаем…" : "Подключить")
+                @(_busy ? Text["WatchApprove_Connecting"] : Text["WatchApprove_Connect"])
             </button>
             <button class="secondary-button" type="button" disabled="@_busy" @onclick="RejectAsync">
-                Отклонить
+                @Text["WatchApprove_Reject"]
             </button>
         </div>
     }
@@ -83,7 +83,7 @@
         {
             // Заявку уже закрыли — на часах или в другом сеансе.
             _details = null;
-            _error = "На эту заявку уже ответили.";
+            _error = Text["WatchApprove_AlreadyAnswered"];
         }
 
         _loading = false;
@@ -92,12 +92,12 @@
     private Task ApproveAsync() =>
         DecideAsync(
             () => WatchClient.ApprovePairingRequestAsync(RequestId),
-            "Часы подключены");
+            Text["WatchApprove_Connected"]);
 
     private Task RejectAsync() =>
         DecideAsync(
             () => WatchClient.RejectPairingRequestAsync(RequestId),
-            "Запрос отклонён");
+            Text["WatchApprove_Rejected"]);
 
     private async Task DecideAsync(Func<Task<ApiResult>> action, string successMessage)
     {
@@ -112,7 +112,7 @@
         if (result.Succeeded)
             _completed = successMessage;
         else
-            _error = FirstError(result.Errors) ?? "Не удалось выполнить действие.";
+            _error = FirstError(result.Errors) ?? Text["WatchApprove_ActionFailed"];
     }
 
     private static string? FirstError(IReadOnlyList<string> errors) =>

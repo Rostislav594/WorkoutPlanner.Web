@@ -8,12 +8,13 @@
 
 @inject IProgressService ProgressService
 @inject ITrainingPlanService TrainingPlanService
+@inject IAppText Text
 
 <div class="page-content">
 
     <div class="progress-page-heading">
-        <h1>Прогресс тренировок</h1>
-        <HelpButton Topic="HelpContentCatalog.Progress" />
+        <h1>@Text["ProgressWorkouts_Title"]</h1>
+        <HelpButton Topic="HelpContentCatalog.ProgressWorkouts" />
     </div>
 
     @if (SelectedWorkoutMenu != null)
@@ -38,7 +39,7 @@
 
                         <button class="context-item"
                                 @onclick="OpenWorkoutClearDialog">
-                            🗑 Очистить историю
+                            @Text["Web_Progress_ClearHistory"]
                         </button>
 
                     </div>
@@ -76,16 +77,16 @@
                  @onclick:stopPropagation="true">
 
                 <h2>
-                    Очистить историю тренировки?
+                    @Text["ProgressWorkouts_ClearTitle"]
                 </h2>
 
                 <p>
-                    Будет удалена вся история тренировки
+                    @Text["ProgressWorkouts_ClearBodyPrefix"]
                     <strong>@WorkoutToClear</strong>.
                 </p>
 
                 <p style="margin-top:10px;color:#999;">
-                    Это действие нельзя отменить.
+                    @Text["ProfileSetting_DeleteIrreversible"]
                 </p>
 
                 <div class="dialog-buttons">
@@ -166,13 +167,13 @@
     ApexChartOptions<ProgressChartPoint> ChartOptions =
         ProgressChartOptionsFactory.Create(0, 5);
 
-    const string ChartSeriesName = "Прогресс, %";
-    const string SinglePointNote = "Пока есть только одна точка. Кривая появится после второй сохраненной тренировки.";
-    const string NoDataText = "Нет записей за последние 30 дней";
-    const string CloseButtonText = "Закрыть";
-    const string ChartSubtitle = "Последние 30 дней · изменение относительно первой тренировки";
-    const string DeleteButtonText = "Удалить";
-    const string CancelButtonText = "Отмена";
+    string ChartSeriesName => Text["Progress_ChartTitle"];
+    string SinglePointNote => Text["Web_Progress_SinglePoint"];
+    string NoDataText => Text["Web_Progress_NoData"];
+    string CloseButtonText => Text["Common_Close"];
+    string ChartSubtitle => Text["Web_Progress_ChartSubtitle"];
+    string DeleteButtonText => Text["Common_Delete"];
+    string CancelButtonText => Text["Common_Cancel"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -215,7 +216,7 @@
         }
 
         CloseClearDialog();
-        await ShowSuccessToast("История успешно удалена.");
+        await ShowSuccessToast(Text["Web_Progress_WorkoutCleared"]);
     }
 
     async Task ShowSuccessToast(string message)

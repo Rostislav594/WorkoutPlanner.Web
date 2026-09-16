@@ -1,9 +1,11 @@
 package com.gymplanner.wearos.data.sync
 
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.data.local.DeviceSessionMetadata
 import com.gymplanner.wearos.data.local.PendingSyncOperation
 import com.gymplanner.wearos.data.local.SyncOperationStatus
 import com.gymplanner.wearos.data.local.WorkoutDao
+import com.gymplanner.wearos.data.localization.WatchStrings
 import com.gymplanner.wearos.data.remote.CompletionResult
 import com.gymplanner.wearos.data.remote.SessionRefreshResult
 import com.gymplanner.wearos.data.remote.WatchRemoteDataSource
@@ -13,6 +15,7 @@ import kotlinx.coroutines.sync.withLock
 class SyncQueueProcessor(
     private val workoutDao: WorkoutDao,
     private val remoteDataSource: WatchRemoteDataSource,
+    private val strings: WatchStrings,
     private val wallClockMillis: () -> Long = System::currentTimeMillis,
 ) {
     private val drainMutex = Mutex()
@@ -61,7 +64,7 @@ class SyncQueueProcessor(
                     workoutDao.markFollowingOperationsConflicted(
                         operation.entityId,
                         operation.sequenceNumber,
-                        dependentConflictMessage,
+                        strings.get(R.string.error_previous_operation_rejected),
                     )
                 }
                 is CompletionResult.Unauthorized -> {
@@ -89,7 +92,7 @@ class SyncQueueProcessor(
                     workoutDao.markFollowingOperationsConflicted(
                         operation.entityId,
                         operation.sequenceNumber,
-                        dependentConflictMessage,
+                        strings.get(R.string.error_previous_operation_rejected),
                     )
                 }
             }
@@ -104,14 +107,9 @@ class SyncQueueProcessor(
         return when (remoteDataSource.refreshSession()) {
             SessionRefreshResult.Success -> remoteDataSource.sendSetMutation(operation)
             SessionRefreshResult.TransientFailure ->
-                CompletionResult.TransientFailure("Не удалось обновить сессию")
+                CompletionResult.TransientFailure(strings.get(R.string.error_session_refresh_failed))
             SessionRefreshResult.Invalid -> firstResult
         }
-    }
-
-    private companion object {
-        const val dependentConflictMessage =
-            "Предыдущая операция подхода отклонена; обновите тренировку"
     }
 }
 

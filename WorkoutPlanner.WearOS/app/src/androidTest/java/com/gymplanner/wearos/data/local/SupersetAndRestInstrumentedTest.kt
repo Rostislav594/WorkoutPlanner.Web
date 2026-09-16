@@ -4,6 +4,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.gson.Gson
+import com.gymplanner.wearos.data.localization.AndroidWatchStrings
 import com.gymplanner.wearos.data.remote.ActiveWorkoutResult
 import com.gymplanner.wearos.data.remote.CompletionResult
 import com.gymplanner.wearos.data.remote.FinishWorkoutRemoteResult
@@ -142,13 +143,17 @@ class SupersetAndRestInstrumentedTest {
         assertEquals(expectedSeconds, state.durationSeconds)
     }
 
+    // Инструментальный тест работает с настоящими ресурсами приложения.
+    private val strings = AndroidWatchStrings(ApplicationProvider.getApplicationContext())
+
     private fun newRepository() = OfflineFirstWorkoutRepository(
         workoutDao = dao,
         remoteDataSource = OfflineRemoteDataSource,
         syncScheduler = NoOpSyncScheduler,
-        syncQueueProcessor = SyncQueueProcessor(dao, OfflineRemoteDataSource),
+        syncQueueProcessor = SyncQueueProcessor(dao, OfflineRemoteDataSource, strings),
         phoneLinkOpener = NoPhoneLinkOpener,
         gson = Gson(),
+        strings = strings,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined),
     )
 

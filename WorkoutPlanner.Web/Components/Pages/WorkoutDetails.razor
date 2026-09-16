@@ -9,11 +9,12 @@
 @inject IExerciseDefinitionService ExerciseDefinitionService
 @inject IExercisePhotoService ExercisePhotoService
 @inject ILogger<WorkoutDetails> Logger
+@inject IAppText Text
 
 
 
 <section class="workout-details-page" aria-busy="@IsLoading">
-<div class="workout-utility-row"><HelpButton Topic="HelpContentCatalog.Workouts" /></div>
+<div class="workout-utility-row"><HelpButton Topic="HelpContentCatalog.WorkoutDetailsWeb" /></div>
 <div class="workout-header">
     <div class="workout-title-card">
 
@@ -31,7 +32,7 @@
 {
     <div class="page-state" role="status">
         <span class="loading-spinner" aria-hidden="true"></span>
-        Загружаем тренировку…
+        @Text["WorkoutDetails_Loading"]
     </div>
 }
 else if (!string.IsNullOrWhiteSpace(LoadError))
@@ -41,8 +42,8 @@ else if (!string.IsNullOrWhiteSpace(LoadError))
 else if (CurrentPlan == null)
 {
     <div class="page-state">
-        <strong>Тренировка не найдена</strong>
-        <span>Вернитесь к списку и выберите другой шаблон.</span>
+        <strong>@Text["WorkoutDetails_NotFound"]</strong>
+        <span>@Text["WorkoutDetails_NotFoundHint"]</span>
     </div>
 }
 else
@@ -52,7 +53,7 @@ else
                 type="button"
                 @onclick="OpenAddWindow">
             <span aria-hidden="true">＋</span>
-            Добавить упражнение
+            @Text["WorkoutDetails_AddExercise"]
         </button>
     </div>
 
@@ -67,7 +68,7 @@ else
                 <button class="card-menu-button"
                         type="button"
                         disabled="@IsPhotoBusy(exercise.Id)"
-                        aria-label="Настроить упражнение @exercise.Name"
+                        aria-label="@Text.Format("Web_Details_SetupExercise", exercise.Name)"
                         @onclick="() => SelectExercise(exercise)">
                     <span aria-hidden="true">⋯</span>
                 </button>
@@ -87,11 +88,11 @@ else
                 {
                     <button class="exercise-photo-button"
                             type="button"
-                            aria-label="Открыть фото упражнения @exercise.Name в полном размере"
+                            aria-label="@Text.Format("Web_Details_OpenPhotoFull", exercise.Name)"
                             @onclick="() => OpenPhoto(exercise)">
                         <img class="exercise-photo-thumb"
                              src="@exercise.PhotoPath"
-                             alt="Фото упражнения @exercise.Name"
+                             alt="@Text.Format("WorkoutDetails_PhotoAlt", exercise.Name)"
                              loading="lazy"
                              decoding="async" />
                     </button>
@@ -110,12 +111,12 @@ else
                         @if (IsPhotoBusy(exercise.Id))
                         {
                             <span class="button-spinner" aria-hidden="true"></span>
-                            <span>@(IsPhotoDeleting(exercise.Id) ? "Удаляем…" : "Загружаем…")</span>
+                            <span>@(IsPhotoDeleting(exercise.Id) ? Text["Common_Deleting"] : Text["Web_Details_Uploading"])</span>
                         }
                         else
                         {
                             <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                            <span>@(string.IsNullOrWhiteSpace(exercise.PhotoPath) ? "Добавить фото" : "Заменить фото")</span>
+                            <span>@(string.IsNullOrWhiteSpace(exercise.PhotoPath) ? Text["Today_AddPhoto"] : Text["Web_Details_ReplacePhoto"])</span>
                         }
                     </label>
 
@@ -126,7 +127,7 @@ else
                                 disabled="@IsPhotoBusy(exercise.Id)"
                                 @onclick="() => DeletePhoto(exercise)">
                             <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                            <span>Удалить</span>
+                            <span>@Text["Common_Delete"]</span>
                         </button>
                     }
                 </div>
@@ -143,11 +144,11 @@ else
                     <div class="exercise-set-row">
 
                         <span class="set-name">
-                            Подход @set.SetNumber
+                            @Text.Format("Common_SetNumber", set.SetNumber)
                         </span>
 
                         <span class="set-value">
-                            @set.Weight кг × @set.Repetitions
+                            @set.Weight @Text["Common_Kg"] × @set.Repetitions
                         </span>
 
                     </div>
@@ -163,7 +164,7 @@ else
 {
     <div class="empty-exercises">
         <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-        <h2>Нет упражнений</h2>
+        <h2>@Text["WorkoutDetails_NoExercises"]</h2>
     </div>
 }
 }
@@ -174,17 +175,17 @@ else
     <div class="photo-lightbox"
          role="dialog"
          aria-modal="true"
-         aria-label="Фото упражнения @FullscreenPhotoExercise.Name"
+         aria-label="@Text.Format("WorkoutDetails_PhotoAlt", FullscreenPhotoExercise.Name)"
          tabindex="0"
          @onkeydown="HandlePhotoKeyDown"
          @onclick="ClosePhoto">
         <button class="photo-lightbox-close"
                 type="button"
                 autofocus
-                aria-label="Закрыть полноразмерное фото"
+                aria-label="@Text["Web_Details_CloseFullPhoto"]"
                 @onclick="ClosePhoto">×</button>
         <img src="@fullscreenPhotoPath"
-             alt="Фото упражнения @FullscreenPhotoExercise.Name в полном размере"
+             alt="@Text.Format("Web_Details_PhotoFullAlt", FullscreenPhotoExercise.Name)"
              @onclick:stopPropagation="true" />
     </div>
 }
@@ -202,10 +203,10 @@ else
 
             <div class="modal-heading">
                 <div>
-                    <span>Управление упражнением</span>
+                    <span>@Text["WorkoutDetails_ManageExercise"]</span>
                     <h3 id="exercise-actions-title">@SelectedExercise.Name</h3>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CloseMenu">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseMenu">×</button>
             </div>
 
             <div class="exercise-action-list">
@@ -213,12 +214,12 @@ else
                         type="button"
                         @onclick="EditExercise">
                     <span class="material-symbols-rounded" aria-hidden="true">edit</span>
-                    <span>Изменить параметры</span>
+                    <span>@Text["WorkoutDetails_EditParameters"]</span>
                 </button>
 
                 <button class="modal-action-button danger-action" type="button" disabled="@IsDeletingExercise" @onclick="DeleteExercise">
                     <span class="material-symbols-rounded" aria-hidden="true">delete</span>
-                    <span>@(IsDeletingExercise ? "Удаляем…" : "Удалить упражнение")</span>
+                    <span>@(IsDeletingExercise ? Text["Common_Deleting"] : Text["WorkoutDetails_DeleteExercise"])</span>
                 </button>
 
             </div>
@@ -238,16 +239,16 @@ else
 
             <div class="modal-heading">
                 <div>
-                    <span>Параметры шаблона</span>
-                    <h3 id="edit-exercise-title">Редактирование упражнения</h3>
+                    <span>@Text["WorkoutDetails_TemplateParameters"]</span>
+                    <h3 id="edit-exercise-title">@Text["WorkoutDetails_EditExercise"]</h3>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CancelEditing">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" @onclick="CancelEditing">×</button>
             </div>
 
-            <label for="edit-exercise-name">Название</label>
+            <label for="edit-exercise-name">@Text["Common_Name"]</label>
             <input id="edit-exercise-name" @bind="EditName" />
 
-            <label for="edit-sets-count">Количество подходов</label>
+            <label for="edit-sets-count">@Text["WorkoutDetails_SetsCount"]</label>
             <input id="edit-sets-count"
                    type="number" min="1" max="10" @bind="EditSetsCount" />
 
@@ -255,9 +256,9 @@ else
             {
                 <div class="edit-set-block">
 
-                    <h4>Подход @set.SetNumber</h4>
+                    <h4>@Text.Format("Common_SetNumber", set.SetNumber)</h4>
 
-                    <label for="@($"edit-weight-{set.SetNumber}")">Вес, кг</label>
+                    <label for="@($"edit-weight-{set.SetNumber}")">@Text["WorkoutDetails_WeightKg"]</label>
 
                     <input id="@($"edit-weight-{set.SetNumber}")"
                            type="number"
@@ -265,7 +266,7 @@ else
                            step="0.5"
                            @bind="set.Weight" />
 
-                    <label for="@($"edit-reps-{set.SetNumber}")">Повторения</label>
+                    <label for="@($"edit-reps-{set.SetNumber}")">@Text["WorkoutDetails_Reps"]</label>
 
                     <input id="@($"edit-reps-{set.SetNumber}")"
                            type="number"
@@ -285,7 +286,7 @@ else
             <div class="modal-actions">
                 <button class="finish-button"
                         type="button" disabled="@IsSavingExercise" @onclick="SaveExercise">
-                    @(IsSavingExercise ? "Сохраняем…" : "Сохранить")
+                    @(IsSavingExercise ? Text["Common_Saving"] : Text["Common_Save"])
                 </button>
 
             </div>
@@ -305,21 +306,21 @@ else
 
             <div class="modal-heading">
                 <div>
-                    <span>Новый элемент шаблона</span>
-                    <h3 id="add-exercise-title">Новое упражнение</h3>
+                    <span>@Text["WorkoutDetails_NewTemplateItem"]</span>
+                    <h3 id="add-exercise-title">@Text["WorkoutDetails_NewExercise"]</h3>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="Закрыть" @onclick="CloseAddWindow">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseAddWindow">×</button>
             </div>
 
             <label for="exercise-library-select">
-                 Упражнение из библиотеки
+                 @Text["WorkoutDetails_LibraryExercise"]
             </label>
 
             <select id="exercise-library-select"
                     class="form-select"
                     @bind="SelectedExerciseDefinitionId">
 
-                <option value="">-- Не выбрано --</option>
+                <option value="">@Text["Web_Details_NotSelectedOption"]</option>
 
                 @foreach (var exercise in ExerciseLibrary)
                 {
@@ -331,13 +332,13 @@ else
             </select>
 
             <label for="new-exercise-name">
-                Название
+                @Text["Common_Name"]
             </label>
 
             <input id="new-exercise-name" @bind="NewExerciseName" />
 
             <label for="new-sets-count">
-                Количество подходов
+                @Text["WorkoutDetails_SetsCount"]
             </label>
 
             <input id="new-sets-count"
@@ -349,7 +350,7 @@ else
             @foreach (var set in Enumerable.Range(1, NewSetsCount))
             {
                 <div class="new-set-field">
-                    <label for="@($"new-set-{set}")">Подход @set · вес, кг</label>
+                    <label for="@($"new-set-{set}")">@Text.Format("Web_Details_SetWeightLabel", set)</label>
                     <input id="@($"new-set-{set}")"
                            type="number"
                            min="0"
@@ -365,7 +366,7 @@ else
 
             <div class="modal-actions">
                 <button class="finish-button" type="button" disabled="@IsCreatingExercise" @onclick="CreateExercise">
-                    @(IsCreatingExercise ? "Добавляем…" : "Добавить")
+                    @(IsCreatingExercise ? Text["Web_Details_Adding"] : Text["Web_Details_Add"])
                 </button>
 
             </div>
@@ -434,7 +435,7 @@ else
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to load workout {WorkoutId}.", Id);
-            LoadError = "Не удалось загрузить тренировку. Обновите страницу и попробуйте снова.";
+            LoadError = Text["Web_Details_LoadFailed"];
         }
         finally
         {
@@ -451,14 +452,14 @@ else
 
         if (string.IsNullOrWhiteSpace(NewExerciseName))
         {
-            CreateExerciseError = "Введите название упражнения.";
+            CreateExerciseError = Text["Web_Details_NameRequired"];
             return;
         }
 
         if (NewSetWeights.Count != NewSetsCount ||
             NewSetWeights.Any(x => !double.IsFinite(x) || x < 0))
         {
-            CreateExerciseError = "Проверьте вес во всех подходах.";
+            CreateExerciseError = Text["Web_Details_CheckWeights"];
             return;
         }
 
@@ -496,7 +497,7 @@ else
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to create exercise in workout {WorkoutId}.", Id);
-            CreateExerciseError = "Не удалось добавить упражнение. Попробуйте ещё раз.";
+            CreateExerciseError = Text["Web_Details_AddFailed"];
         }
         finally
         {
@@ -531,7 +532,7 @@ else
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to delete exercise {ExerciseId}.", exercise.Id);
-            PhotoErrors[exercise.Id] = "Не удалось удалить упражнение. Попробуйте ещё раз.";
+            PhotoErrors[exercise.Id] = Text["Web_Details_DeleteFailed"];
         }
         finally
         {
@@ -661,13 +662,13 @@ else
 
         if (string.IsNullOrWhiteSpace(EditName))
         {
-            EditRepsError = "Введите название упражнения.";
+            EditRepsError = Text["Web_Details_NameRequired"];
             return;
         }
 
         if (EditSetsCount is < 1 or > 10)
         {
-            EditRepsError = "Количество подходов должно быть от 1 до 10.";
+            EditRepsError = Text["Web_Details_SetsRange"];
             return;
         }
 
@@ -676,7 +677,7 @@ else
                               x.Weight < 0 ||
                               x.Repetitions is < 1 or > 1000))
         {
-            EditRepsError = "Проверьте вес и повторения во всех подходах.";
+            EditRepsError = Text["Web_Details_CheckWeightsAndReps"];
             return;
         }
 
@@ -707,7 +708,7 @@ else
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to save exercise {ExerciseId}.", SelectedExercise?.Id);
-            EditRepsError = "Не удалось сохранить изменения. Попробуйте ещё раз.";
+            EditRepsError = Text["Web_Details_SaveFailed"];
         }
         finally
         {
@@ -811,7 +812,7 @@ else
         {
             exercise.PhotoPath = previousPhotoPath;
             Logger.LogError(exception, "Failed to delete photo for exercise {ExerciseId}.", exercise.Id);
-            PhotoErrors[exercise.Id] = "Не удалось удалить фото. Попробуйте ещё раз.";
+            PhotoErrors[exercise.Id] = Text["Web_Details_PhotoDeleteFailed"];
         }
         finally
         {
@@ -857,17 +858,17 @@ else
         catch (InvalidDataException exception)
         {
             Logger.LogInformation(exception, "Rejected exercise photo for exercise {ExerciseId}.", exercise.Id);
-            PhotoErrors[exercise.Id] = "Выберите корректное изображение JPG, PNG или WebP до 5 МБ.";
+            PhotoErrors[exercise.Id] = Text["Web_Details_PhotoInvalid"];
         }
         catch (IOException exception)
         {
             Logger.LogWarning(exception, "Failed to store exercise photo for exercise {ExerciseId}.", exercise.Id);
-            PhotoErrors[exercise.Id] = "Не удалось сохранить фото. Проверьте размер файла и попробуйте снова.";
+            PhotoErrors[exercise.Id] = Text["Web_Details_PhotoSaveFailed"];
         }
         catch (Exception exception)
         {
             Logger.LogError(exception, "Failed to update photo for exercise {ExerciseId}.", exercise.Id);
-            PhotoErrors[exercise.Id] = "Не удалось обновить фото. Старое изображение сохранено.";
+            PhotoErrors[exercise.Id] = Text["Web_Details_PhotoUpdateFailed"];
         }
         finally
         {

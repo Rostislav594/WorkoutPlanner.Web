@@ -2,6 +2,7 @@ using Firebase.Messaging;
 using Android.App;
 using Android.Content;
 using Java.Lang;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -47,6 +48,6 @@ public sealed class FirebaseMessagingService : global::Firebase.Messaging.Fireba
         var data = message.Data;
         if (!data.ContainsKey(WorkoutPlanner.Api.Contracts.PushNotificationPayloadKeys.Type) ||
             !data.ContainsKey(WorkoutPlanner.Api.Contracts.PushNotificationPayloadKeys.InboxMessageId)) return;
-        AndroidNotificationSupport.ShowRemote(this, message.GetNotification()?.Title ?? "GPlanner", message.GetNotification()?.Body ?? "Новое сообщение", new Dictionary<string, string>(data));
+        AndroidNotificationSupport.ShowRemote(this, message.GetNotification()?.Title ?? "GPlanner", message.GetNotification()?.Body ?? AppTexts.Get("Notify_NewMessage"), new Dictionary<string, string>(data));
     }
 }

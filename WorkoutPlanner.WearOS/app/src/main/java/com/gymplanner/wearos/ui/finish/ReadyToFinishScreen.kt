@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import androidx.compose.ui.res.stringResource
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.ui.common.GlowFrame
 import com.gymplanner.wearos.ui.common.HoldToConfirm
 import com.gymplanner.wearos.ui.common.PerimeterProgress
@@ -39,7 +41,7 @@ fun ReadyToFinishScreen(
     Box(Modifier.fillMaxSize()) {
         GlowFrame {
             Text(
-                text = "Все подходы выполнены",
+                text = stringResource(R.string.ready_all_sets_done),
                 color = WearColors.TextPrimary,
                 style = MaterialTheme.typography.titleSmall,
                 textAlign = TextAlign.Center,
@@ -57,7 +59,11 @@ fun ReadyToFinishScreen(
             }
 
             HoldToConfirm(
-                label = if (isFinishing) "Завершаем…" else "Завершить тренировку",
+                label = if (isFinishing) {
+                    stringResource(R.string.ready_finishing)
+                } else {
+                    stringResource(R.string.ready_finish_workout)
+                },
                 accent = WearColors.NeonGreen,
                 enabled = !isFinishing,
                 holdMillis = finishHoldMillis,

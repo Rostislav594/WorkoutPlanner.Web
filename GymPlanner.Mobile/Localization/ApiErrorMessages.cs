@@ -66,4 +66,10 @@ internal static class ApiErrorMessages
 
     public static string NetworkUnavailable() =>
         Describe(ApiErrorCodes.NetworkUnavailable) ?? "No connection to the server.";
+
+    /// <summary>Текст по коду ошибки; запасной вариант — общее сообщение.</summary>
+    public static string Get(string errorCode) => Describe(errorCode) ?? Unknown();
+
+    public static string EmptyResponse() =>
+        Describe(ApiErrorCodes.EmptyResponse) ?? "The server returned an empty response.";
 }

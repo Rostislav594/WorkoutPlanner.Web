@@ -1,4 +1,5 @@
 using System.Text.Json;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -83,7 +84,7 @@ public sealed class LocalWorkoutReminderService(
             reminder.NotifyAt <= DateTimeOffset.Now)
         {
             return NotificationOperationResult.Failure(
-                "Время напоминания должно быть в будущем.");
+                AppTexts.Get("Notify_TimeInFuture"));
         }
 
         var result = await platform.ScheduleAsync(reminder, cancellationToken);

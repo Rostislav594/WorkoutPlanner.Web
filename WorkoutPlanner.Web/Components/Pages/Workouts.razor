@@ -6,9 +6,10 @@
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 @inject ITrainingPlanService TrainingPlanService
+@inject IAppText Text
 
 <div class="workouts-header">
-    <h1>Шаблоны тренировок</h1>
+    <h1>@Text["Workouts_Title"]</h1>
     <HelpButton Topic="HelpContentCatalog.Workouts" />
 </div>
 
@@ -23,7 +24,7 @@
 {
     <div class="empty-workout">
         <div class="empty-title">
-            Шаблонов пока нет
+            @Text["Web_Workouts_Empty"]
         </div>
 
     </div>
@@ -37,7 +38,7 @@ else
                  @onclick="() => OpenWorkout(workout)">
 
                 <button class="card-menu-button workout-card-menu"
-                        title="Настройки"
+                        title="@Text["Common_Settings"]"
                         @onclick:stopPropagation="true"
                         @onclick="() => ToggleTemplateMenu(workout.Id)">
                     ⋮
@@ -58,12 +59,12 @@ else
 
                         <button class="context-item"
                                 @onclick="() => OpenRenameDialog(workout)">
-                            Изменить название
+                            @Text["Workouts_Rename"]
                         </button>
 
                         <button class="context-item danger-context-item"
                                 @onclick="() => OpenDeleteDialog(workout)">
-                            Удалить шаблон
+                            @Text["Workouts_DeleteTemplate"]
                         </button>
 
                     </div>
@@ -76,7 +77,7 @@ else
 <div class="workouts-footer">
     <button class="finish-button add-template-button"
             @onclick="OpenCreateDialog">
-        + Добавить шаблон
+        @Text["Web_Workouts_Add"]
     </button>
 </div>
 
@@ -96,7 +97,7 @@ else
 
             <h3>@TemplateDialogTitle</h3>
 
-            <label>Название</label>
+            <label>@Text["Common_Name"]</label>
             <input class="form-control"
                    @bind="TemplateName"
                    @bind:event="oninput"
@@ -112,12 +113,12 @@ else
             <div class="template-dialog-buttons">
                 <button class="finish-button dialog-button"
                         @onclick="SaveTemplate">
-                    Сохранить
+                    @Text["Common_Save"]
                 </button>
 
                 <button class="secondary-button dialog-button"
                         @onclick="CloseTemplateDialog">
-                    Отмена
+                    @Text["Common_Cancel"]
                 </button>
             </div>
 
@@ -134,23 +135,22 @@ else
         <div class="modal-window"
              @onclick:stopPropagation="true">
 
-            <h3>Удалить шаблон?</h3>
+            <h3>@Text["Workouts_DeleteTitle"]</h3>
 
             <p>
-                Будет удалён шаблон
-                <strong>@TemplateToDelete.WorkoutName</strong>,
-                его упражнения, назначения в календаре и прогресс.
+                @Text["Workouts_DeletePrefix"]
+                <strong>@TemplateToDelete.WorkoutName</strong>@Text["Workouts_DeleteSuffix"]
             </p>
 
             <div class="template-dialog-buttons">
                 <button class="secondary-button dialog-button"
                         @onclick="CloseDeleteDialog">
-                    Отмена
+                    @Text["Common_Cancel"]
                 </button>
 
                 <button class="danger-button dialog-button"
                         @onclick="DeleteTemplate">
-                    Удалить
+                    @Text["Common_Delete"]
                 </button>
             </div>
 
@@ -170,8 +170,8 @@ else
 
     private string TemplateDialogTitle =>
         EditingTemplateId == null
-            ? "Новый шаблон"
-            : "Название шаблона";
+            ? Text["Workouts_NewTemplate"]
+            : Text["Workouts_TemplateName"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -267,12 +267,12 @@ else
         TemplateToDelete = null;
     }
 
-    private static string GetWorkoutDescription(TrainingPlan workout)
+    private string GetWorkoutDescription(TrainingPlan workout)
     {
         var exerciseCount = workout.Exercises?.Count ?? 0;
 
         return exerciseCount == 0
-            ? "Добавьте упражнения внутри шаблона"
-            : $"Упражнений: {exerciseCount}";
+            ? Text["Web_Workouts_AddExercisesHint"]
+            : Text.Plural("Exercises", exerciseCount);
     }
 }

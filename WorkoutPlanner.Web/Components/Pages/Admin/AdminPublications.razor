@@ -1,29 +1,30 @@
-@page "/admin/publications"
+﻿@page "/admin/publications"
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Models
 @inject IAdminPublicationService Publications
+@inject IAppText Text
 
-<PageTitle>Публикации — GPlanner Admin</PageTitle>
+<PageTitle>@Text["Admin_Publications_PageTitle"]</PageTitle>
 
 <div class="admin-publications">
     <header class="admin-publications__heading">
-        <a href="/admin">← Панель управления</a>
+        <a href="/admin">@Text["Admin_Publications_Back"]</a>
         <p>GPlanner Admin</p>
-        <h1>Публикации</h1>
-        <span>Создавайте сообщения, которые появятся в центре уведомлений пользователей.</span>
+        <h1>@Text["Admin_Publications_Title"]</h1>
+        <span>@Text["Admin_Publications_Subtitle"]</span>
     </header>
 
     <div class="admin-publications__layout">
         <section class="admin-panel admin-editor" aria-labelledby="new-publication-title">
             <div class="admin-panel__heading">
                 <div>
-                    <span>Редактор</span>
-                    <h2 id="new-publication-title">Новая публикация</h2>
+                    <span>@Text["Admin_Publications_Editor"]</span>
+                    <h2 id="new-publication-title">@Text["Admin_Publications_New"]</h2>
                 </div>
-                <small>Поля со звёздочкой обязательны</small>
+                <small>@Text["Admin_Publications_RequiredHint"]</small>
             </div>
             @if (!string.IsNullOrWhiteSpace(_error))
             {
@@ -38,40 +39,40 @@
                 <ValidationSummary class="admin-validation" />
                 <div class="admin-field-grid">
                     <div class="admin-field">
-                        <label for="publication-type">Тип</label>
+                        <label for="publication-type">@Text["Admin_Publications_Type"]</label>
                         <InputSelect id="publication-type" class="admin-input" @bind-Value="_form.Type">
-                            <option value="News">Новость</option><option value="Update">Обновление</option><option value="System">Системное</option>
+                            <option value="News">@Text["InboxType_News"]</option><option value="Update">@Text["InboxType_Update"]</option><option value="System">@Text["InboxType_System"]</option>
                         </InputSelect>
                     </div>
                     <div class="admin-field">
-                        <label for="publication-date">Дата публикации</label>
+                        <label for="publication-date">@Text["Admin_Publications_Date"]</label>
                         <input id="publication-date" class="admin-input" type="datetime-local" @bind="_publishedLocal" />
                     </div>
                 </div>
                 <div class="admin-field">
                     <div class="admin-field__label-row">
-                        <label for="publication-title">Заголовок *</label>
+                        <label for="publication-title">@Text["Admin_Publications_TitleLabel"]</label>
                         <span>@_form.Title.Length / 160</span>
                     </div>
-                    <input id="publication-title" class="admin-input" maxlength="160" placeholder="Коротко сформулируйте тему публикации" @bind="_form.Title" @bind:event="oninput" />
-                    <ValidationMessage For="() => _form.Title" />
+                    <input id="publication-title" class="admin-input" maxlength="160" placeholder="@Text["Admin_Publications_TitlePlaceholder"]" @bind="_form.Title" @bind:event="oninput" />
+                    <LocalizedValidationMessage For="() => _form.Title" />
                 </div>
                 <div class="admin-field">
                     <div class="admin-field__label-row">
-                        <label for="publication-body">Текст *</label>
+                        <label for="publication-body">@Text["Admin_Publications_BodyLabel"]</label>
                         <span>@_form.Body.Length / 8000</span>
                     </div>
-                    <textarea id="publication-body" class="admin-input admin-textarea" maxlength="8000" placeholder="Напишите сообщение, которое увидят пользователи…" @bind="_form.Body" @bind:event="oninput"></textarea>
-                    <ValidationMessage For="() => _form.Body" />
+                    <textarea id="publication-body" class="admin-input admin-textarea" maxlength="8000" placeholder="@Text["Admin_Publications_BodyPlaceholder"]" @bind="_form.Body" @bind:event="oninput"></textarea>
+                    <LocalizedValidationMessage For="() => _form.Body" />
                 </div>
                 <div class="admin-field">
-                    <label for="publication-image">Изображение <span>(необязательно)</span></label>
+                    <label for="publication-image">@Text["Admin_Publications_Image"] <span>@Text["Admin_Publications_Optional"]</span></label>
                     <InputFile id="publication-image" class="admin-file" OnChange="SelectImageAsync" accept="image/jpeg,image/png,image/webp" />
-                    <small>JPEG, PNG или WebP, до 5 МБ.</small>
+                    <small>@Text["Admin_Publications_ImageHint"]</small>
                 </div>
                 <div class="admin-actions">
-                    <button class="admin-button admin-button--secondary" type="button" @onclick="TogglePreview">@(_showPreview ? "Скрыть предпросмотр" : "Предпросмотр")</button>
-                    <button class="admin-button admin-button--primary" type="submit" disabled="@_isSaving">@(_isSaving ? "Публикуем…" : "Опубликовать")</button>
+                    <button class="admin-button admin-button--secondary" type="button" @onclick="TogglePreview">@(_showPreview ? Text["Admin_Publications_HidePreview"] : Text["Admin_Publications_Preview"])</button>
+                    <button class="admin-button admin-button--primary" type="submit" disabled="@_isSaving">@(_isSaving ? Text["Admin_Publications_Publishing"] : Text["Admin_Publications_Publish"])</button>
                 </div>
             </EditForm>
         </section>
@@ -84,27 +85,27 @@
                         <span>@TypeLabel(_form.Type)</span>
                         <time>@_publishedLocal.ToString("dd.MM.yyyy, HH:mm")</time>
                     </div>
-                    <h2 id="preview-title">@(string.IsNullOrWhiteSpace(_form.Title) ? "Заголовок публикации" : _form.Title)</h2>
+                    <h2 id="preview-title">@(string.IsNullOrWhiteSpace(_form.Title) ? Text["Admin_Publications_PreviewTitle"] : _form.Title)</h2>
                     @if (!string.IsNullOrWhiteSpace(_previewImageDataUrl))
                     {
-                        <img class="admin-preview__image" src="@_previewImageDataUrl" alt="Предпросмотр изображения публикации" />
+                        <img class="admin-preview__image" src="@_previewImageDataUrl" alt="@Text["Admin_Publications_PreviewImageAlt"]" />
                     }
-                    <p>@(string.IsNullOrWhiteSpace(_form.Body) ? "Текст публикации появится здесь." : _form.Body)</p>
+                    <p>@(string.IsNullOrWhiteSpace(_form.Body) ? Text["Admin_Publications_PreviewBody"] : _form.Body)</p>
                 </section>
             }
 
             <section class="admin-panel admin-recent" aria-labelledby="recent-title">
                 <div class="admin-panel__heading">
-                    <div><span>История</span><h2 id="recent-title">Последние публикации</h2></div>
+                    <div><span>@Text["Admin_Publications_HistoryLabel"]</span><h2 id="recent-title">@Text["Admin_Publications_Recent"]</h2></div>
                     <small>@_recent.Count</small>
                 </div>
-                @if (_recent.Count == 0) { <p class="admin-empty">Публикаций пока нет.</p> }
+                @if (_recent.Count == 0) { <p class="admin-empty">@Text["Admin_Publications_Empty"]</p> }
                 else
                 {
                     <div class="admin-publication-list">
                         @foreach (var item in _recent)
                         {
-                            <article><div><strong>@item.Title</strong><span>@TypeLabel(item.Type)</span></div><time datetime="@item.PublishedAtUtc.ToString("O")">@item.PublishedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time><small>@(item.PublishedAtUtc <= DateTime.UtcNow ? "Опубликовано" : "Запланировано")</small></article>
+                            <article><div><strong>@item.Title</strong><span>@TypeLabel(item.Type)</span></div><time datetime="@item.PublishedAtUtc.ToString("O")">@item.PublishedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time><small>@(item.PublishedAtUtc <= DateTime.UtcNow ? Text["Admin_Publications_Published"] : Text["Admin_Publications_Scheduled"])</small></article>
                         }
                     </div>
                 }
@@ -146,18 +147,24 @@
             PhotoUpload? upload = null;
             if (_image is not null) upload = new PhotoUpload(_image.OpenReadStream(5 * 1024 * 1024), _image.ContentType, _image.Size);
             await Publications.CreateAsync(new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload));
-            _success = "Публикация сохранена.";
+            _success = Text["Admin_Publications_Saved"];
             _form.Title = string.Empty; _form.Body = string.Empty; _image = null; _previewImageDataUrl = null;
             await ReloadAsync();
         }
         catch (Exception exception) when (exception is InvalidDataException or IOException) { _error = exception.Message; }
         finally { _isSaving = false; }
     }
-    private static string TypeLabel(InboxMessageType type) => type switch { InboxMessageType.News => "Новость", InboxMessageType.Update => "Обновление", _ => "Системное сообщение" };
+    private string TypeLabel(InboxMessageType type) => type switch
+    {
+        InboxMessageType.News => Text["InboxType_News"],
+        InboxMessageType.Update => Text["InboxType_Update"],
+        _ => Text["InboxType_System"]
+    };
     private sealed class FormModel
     {
         public InboxMessageType Type { get; set; } = InboxMessageType.News;
-        [Required(ErrorMessage = "Введите заголовок."), StringLength(160, ErrorMessage = "Не больше 160 символов.")] public string Title { get; set; } = string.Empty;
-        [Required(ErrorMessage = "Введите текст."), StringLength(8000, ErrorMessage = "Не больше 8000 символов.")] public string Body { get; set; } = string.Empty;
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Admin_Publications_TitleRequired"), StringLength(160, ErrorMessage = "Admin_Publications_TitleTooLong")] public string Title { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Admin_Publications_BodyRequired"), StringLength(8000, ErrorMessage = "Admin_Publications_BodyTooLong")] public string Body { get; set; } = string.Empty;
     }
 }

@@ -1,3 +1,5 @@
+﻿@inject IAppText Text
+
 <section class="welcome-guide" aria-labelledby="welcome-guide-title">
     <div class="welcome-guide__visual" aria-hidden="true" @key="_slideIndex">
         <div class="welcome-guide__visual-art welcome-guide__visual-art--@CurrentSlide.Visual.ToString().ToLowerInvariant()">
@@ -36,17 +38,17 @@
     </div>
 
     <div class="welcome-guide__content" aria-live="polite">
-        <p class="welcome-guide__eyebrow">Короткое знакомство · @(_slideIndex + 1)/@Slides.Count</p>
-        <h1 id="welcome-guide-title">@CurrentSlide.Title</h1>
-        <p class="welcome-guide__message">@CurrentSlide.Message</p>
+        <p class="welcome-guide__eyebrow">@Text.Format("Welcome_Eyebrow", _slideIndex + 1, Slides.Count)</p>
+        <h1 id="welcome-guide-title">@Text[CurrentSlide.TitleKey]</h1>
+        <p class="welcome-guide__message">@(CurrentSlide.MessageKey.Length == 0 ? string.Empty : Text[CurrentSlide.MessageKey])</p>
 
-        <div class="welcome-guide__dots" aria-label="Кадр @(_slideIndex + 1) из @Slides.Count">
+        <div class="welcome-guide__dots" aria-label="@Text.Format("Welcome_Dots", _slideIndex + 1, Slides.Count)">
             @for (var index = 0; index < Slides.Count; index++)
             {
                 var slideIndex = index;
                 <button type="button"
                         class="@(index == _slideIndex ? "is-active" : null)"
-                        aria-label="Открыть кадр @(index + 1)"
+                        aria-label="@Text.Format("Welcome_OpenSlide", index + 1)"
                         aria-current="@(index == _slideIndex ? "step" : null)"
                         disabled="@IsBusy"
                         @onclick="() => OpenSlide(slideIndex)"></button>
@@ -54,9 +56,11 @@
         </div>
 
         <div class="welcome-guide__actions">
-            <button class="welcome-guide__secondary" type="button" disabled="@(_slideIndex == 0 || IsBusy)" @onclick="Previous">Назад</button>
+            <button class="welcome-guide__secondary" type="button" disabled="@(_slideIndex == 0 || IsBusy)" @onclick="Previous">@Text["Common_Back"]</button>
             <button class="welcome-guide__primary" type="button" disabled="@IsBusy" @onclick="NextAsync">
-                @(IsBusy ? "Открываем…" : _slideIndex == Slides.Count - 1 ? "Продолжить" : "Далее")
+                @(IsBusy
+                    ? Text["Welcome_Opening"]
+                    : _slideIndex == Slides.Count - 1 ? Text["Welcome_Continue"] : Text["Welcome_Next"])
             </button>
         </div>
     </div>
@@ -69,7 +73,7 @@
 
     private int _slideIndex;
     private WelcomeGuideSlide CurrentSlide => Slides.Count == 0
-        ? new("Знакомство", string.Empty, WelcomeGuideVisual.Orientation)
+        ? new("Welcome_Fallback", string.Empty, WelcomeGuideVisual.Orientation)
         : Slides[Math.Clamp(_slideIndex, 0, Slides.Count - 1)];
 
     private void OpenSlide(int index) => _slideIndex = Math.Clamp(index, 0, Math.Max(0, Slides.Count - 1));

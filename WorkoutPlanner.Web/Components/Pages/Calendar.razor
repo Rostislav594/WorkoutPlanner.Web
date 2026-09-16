@@ -1,16 +1,17 @@
-@page "/calendar"
+﻿@page "/calendar"
 @rendermode InteractiveServer
 
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Services
 
+@inject IAppText Text
 @inject ITrainingPlanService TrainingPlanService
 @inject IWorkoutDayService WorkoutDayService
 
 <div class="page-content calendar-page">
     <div class="page-title-row">
-        <h1>Календарь</h1>
+        <h1>@Text["Calendar_Title"]</h1>
         <HelpButton Topic="HelpContentCatalog.CalendarWeb" />
     </div>
 
@@ -46,7 +47,7 @@
                             SelectedWorkoutDay.TrainingPlanId);
 
                     <p>
-                        Тренировка:
+                        @Text["Web_Calendar_WorkoutLabel"]
                     </p>
 
                     <h3>
@@ -58,14 +59,13 @@
                     @if (CanAssignWorkout)
                     {
                         <p>
-                            Тренировка не назначена
+                            @Text["Web_Calendar_NotAssigned"]
                         </p>
                     }
                     else
                     {
                         <p>
-                            Этот день уже прошёл.
-                            Назначить тренировку невозможно.
+                            @Text["Calendar_DayInPast"]
                         </p>
                     }
 
@@ -75,13 +75,13 @@
                         {
                             <button class="secondary-button"
                                     @onclick="OpenWorkoutPicker">
-                                Назначить тренировку
+                                @Text["Calendar_AssignWorkout"]
                             </button>
                         }
 
                         <button class="secondary-button"
                                 @onclick="CloseCalendarWindow">
-                            Закрыть
+                            @Text["Common_Close"]
                         </button>
 
                     </div>
@@ -94,7 +94,7 @@
                                     @bind="SelectedPlanId">
 
                                 <option value="0">
-                                    Выберите тренировку
+                                    @Text["Web_Calendar_PickWorkout"]
                                 </option>
 
                                 @foreach (var plan in TrainingPlans)
@@ -109,7 +109,7 @@
                             <button class="workout-select-button mt-3"
                                     disabled="@(SelectedPlanId == 0)"
                                     @onclick="AssignSelectedWorkout">
-                                ✅ Назначить
+                                @Text["Web_Calendar_AssignConfirm"]
                             </button>
 
                         </div>
@@ -142,7 +142,7 @@
                                 <div class="workout-picker-footer">
                                     <button class="secondary-button"
                                             @onclick="CloseWorkoutPicker">
-                                        Отмена
+                                        @Text["Common_Cancel"]
                                     </button>
                                 </div>
 
@@ -177,13 +177,11 @@
     </div>
 
         <div class="weekdays">
-            <div>Пн</div>
-            <div>Вт</div>
-            <div>Ср</div>
-            <div>Чт</div>
-            <div>Пт</div>
-            <div>Сб</div>
-            <div>Вс</div>
+            @* Сокращения дней берём из культуры выбранного языка. *@
+            @foreach (var dayName in WeekdayNames)
+            {
+                <div>@dayName</div>
+            }
         </div>
         
     @{
@@ -263,6 +261,18 @@
 
 @code
 {
+    // Сокращения дней недели даёт культура выбранного языка: в ru и uk
+    // шесть из семи совпадают, держать их в ресурсах незачем.
+    private string[] WeekdayNames =>
+    [
+        .. Enumerable.Range(0, 7).Select(offset =>
+        {
+            var culture = System.Globalization.CultureInfo.GetCultureInfo(Text.Language);
+            return culture.TextInfo.ToTitleCase(
+                culture.DateTimeFormat.AbbreviatedDayNames[((int)DayOfWeek.Monday + offset) % 7]);
+        })
+    ];
+
         DateTime SelectedDate = DateTime.Today;
         DateTime CurrentMonth = DateTime.Today;
 

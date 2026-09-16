@@ -1,3 +1,4 @@
+using GymPlanner.Mobile.Localization;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -16,7 +17,7 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             var plans = await response.Content.ReadFromJsonAsync<List<TrainingPlanApiResponse>>(cancellationToken);
             return ApiResult<IReadOnlyList<TrainingPlanApiResponse>>.Success(plans ?? []);
         }
-        catch (HttpRequestException) { return ApiResult<IReadOnlyList<TrainingPlanApiResponse>>.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult<IReadOnlyList<TrainingPlanApiResponse>>.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 
     public Task<ApiResult<TrainingPlanApiResponse>> GetPlanAsync(int id, CancellationToken cancellationToken = default) =>
@@ -35,7 +36,7 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             using var response = await client.DeleteAsync($"api/v1/training-plans/{id}", cancellationToken);
             return response.IsSuccessStatusCode ? ApiResult.Success : new(false, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
         }
-        catch (HttpRequestException) { return ApiResult.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 
     public async Task<ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>> GetExerciseDefinitionsAsync(CancellationToken cancellationToken = default)
@@ -48,7 +49,7 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             var definitions = await response.Content.ReadFromJsonAsync<List<ExerciseDefinitionApiResponse>>(cancellationToken);
             return ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>.Success(definitions ?? []);
         }
-        catch (HttpRequestException) { return ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 
     public Task<ApiResult<ExerciseApiResponse>> CreateExerciseAsync(int planId, SaveExerciseRequest request, CancellationToken cancellationToken = default) =>
@@ -64,7 +65,7 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             using var response = await client.DeleteAsync($"api/v1/exercises/{id}", cancellationToken);
             return response.IsSuccessStatusCode ? ApiResult.Success : new(false, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
         }
-        catch (HttpRequestException) { return ApiResult.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 
     private async Task<ApiResult<TrainingPlanApiResponse>> GetPlanResponseAsync(
@@ -78,9 +79,9 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             if (!response.IsSuccessStatusCode)
                 return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
             var plan = await response.Content.ReadFromJsonAsync<TrainingPlanApiResponse>(cancellationToken);
-            return plan is null ? ApiResult<TrainingPlanApiResponse>.Failure("Сервер вернул пустой план.") : ApiResult<TrainingPlanApiResponse>.Success(plan);
+            return plan is null ? ApiResult<TrainingPlanApiResponse>.Failure(ApiErrorMessages.EmptyResponse()) : ApiResult<TrainingPlanApiResponse>.Success(plan);
         }
-        catch (HttpRequestException) { return ApiResult<TrainingPlanApiResponse>.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult<TrainingPlanApiResponse>.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 
     private async Task<ApiResult<ExerciseApiResponse>> GetExerciseResponseAsync(
@@ -93,8 +94,8 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
             if (!response.IsSuccessStatusCode)
                 return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
             var exercise = await response.Content.ReadFromJsonAsync<ExerciseApiResponse>(cancellationToken);
-            return exercise is null ? ApiResult<ExerciseApiResponse>.Failure("Сервер вернул пустое упражнение.") : ApiResult<ExerciseApiResponse>.Success(exercise);
+            return exercise is null ? ApiResult<ExerciseApiResponse>.Failure(ApiErrorMessages.EmptyResponse()) : ApiResult<ExerciseApiResponse>.Success(exercise);
         }
-        catch (HttpRequestException) { return ApiResult<ExerciseApiResponse>.Failure("Нет соединения с сервером."); }
+        catch (HttpRequestException) { return ApiResult<ExerciseApiResponse>.Failure(ApiErrorMessages.NetworkUnavailable()); }
     }
 }

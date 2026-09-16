@@ -7,6 +7,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.gson.Gson
 import com.gymplanner.wearos.data.repository.OfflineFirstWorkoutRepository
 import com.gymplanner.wearos.data.remote.CompletionResult
+import com.gymplanner.wearos.data.localization.AndroidWatchStrings
 import com.gymplanner.wearos.data.remote.ActiveWorkoutResult
 import com.gymplanner.wearos.data.remote.AuthoritativeSetState
 import com.gymplanner.wearos.data.remote.PairingResult
@@ -53,6 +54,9 @@ class OfflineQueueInstrumentedTest {
      */
     private val repositoryScopes = mutableListOf<CoroutineScope>()
 
+    // Инструментальный тест работает с настоящими ресурсами приложения.
+    private val strings = AndroidWatchStrings(ApplicationProvider.getApplicationContext())
+
     @Before
     fun setUp() {
         database = Room.inMemoryDatabaseBuilder(
@@ -77,9 +81,10 @@ class OfflineQueueInstrumentedTest {
             workoutDao = dao,
             remoteDataSource = remote,
             syncScheduler = NoOpSyncScheduler,
-            syncQueueProcessor = SyncQueueProcessor(dao, remote),
+            syncQueueProcessor = SyncQueueProcessor(dao, remote, strings),
             phoneLinkOpener = NoPhoneLinkOpener,
             gson = Gson(),
+            strings = strings,
             scope = scope,
         )
     }
@@ -110,7 +115,7 @@ class OfflineQueueInstrumentedTest {
                 ),
             ),
         )
-        val processor = SyncQueueProcessor(dao, remote, wallClockMillis = { 2_000 })
+        val processor = SyncQueueProcessor(dao, remote, strings, wallClockMillis = { 2_000 })
 
         assertEquals(QueueDrainResult.Retry, processor.drain())
         val failedAttempt = dao.observeOperations().first().single()
@@ -139,11 +144,11 @@ class OfflineQueueInstrumentedTest {
             ),
         )
 
-        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote).drain())
+        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote, strings).drain())
         assertFalse(dao.getSet(firstSetId)!!.isCompleted)
         assertEquals(4, dao.getSet(firstSetId)!!.serverVersion)
         assertEquals(SyncOperationStatus.Conflict, dao.observeOperations().first().single().status)
-        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote).drain())
+        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote, strings).drain())
         assertEquals(1, remote.operationIds.size)
     }
 
@@ -224,7 +229,7 @@ class OfflineQueueInstrumentedTest {
             ),
         )
 
-        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote).drain())
+        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote, strings).drain())
 
         assertEquals(listOf("update-online"), remote.operationIds)
         assertEquals(listOf(SyncOperationType.UpdateWeight), remote.operationTypes)
@@ -254,7 +259,7 @@ class OfflineQueueInstrumentedTest {
             ),
         )
 
-        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote).drain())
+        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote, strings).drain())
 
         assertEquals(listOf("first-conflict"), remote.operationIds)
         val operations = dao.observeOperations().first()
@@ -273,7 +278,7 @@ class OfflineQueueInstrumentedTest {
             refreshResult = SessionRefreshResult.Invalid,
         )
 
-        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote).drain())
+        assertEquals(QueueDrainResult.Complete, SyncQueueProcessor(dao, remote, strings).drain())
         assertFalse(dao.observeDeviceSession().first()!!.isPaired)
         assertEquals(SyncOperationStatus.Failed, dao.observeOperations().first().single().status)
     }
@@ -288,7 +293,7 @@ class OfflineQueueInstrumentedTest {
                 ),
             ),
         )
-        val processor = SyncQueueProcessor(dao, remote)
+        val processor = SyncQueueProcessor(dao, remote, strings)
         val repository = createRepository(remote)
         withTimeout(2_000) {
             repository.state.first { it is MockWorkoutState.ReadyToFinish }

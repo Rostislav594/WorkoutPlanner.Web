@@ -4,6 +4,7 @@ using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Services.Auth;
 using TrainingPlanEntity = WorkoutPlanner.Web.Models.TrainingPlan;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -15,9 +16,10 @@ public sealed class FreeWorkoutDraftService(
     : IFreeWorkoutDraftService
 {
     /// <summary>
-    /// Имя черновика. Человеку оно видно на часах, поэтому осмысленное.
+    /// Имя черновика. Человеку оно видно на часах, поэтому осмысленное
+    /// и на языке запроса: имя сохраняется в план и позже не переводится.
     /// </summary>
-    private const string DraftName = "Свободная тренировка";
+    private static string DraftName => ServerTexts.Current["Server_FreeWorkout_Name"];
 
     public async Task<FreeWorkoutDraftResult> StartAsync(
         CancellationToken cancellationToken = default)

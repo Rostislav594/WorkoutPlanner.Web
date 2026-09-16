@@ -184,6 +184,14 @@
     background: var(--color-surface-hover);
 }
 
+.history-card--targeted {
+    border-color: var(--color-success);
+    background: var(--color-success-soft);
+    box-shadow: 0 0 0 2px rgba(63, 185, 80, .22), var(--shadow-card);
+    scroll-margin-block-start: calc(84px + env(safe-area-inset-top));
+    scroll-margin-block-end: calc(104px + env(safe-area-inset-bottom));
+}
+
 .history-card-content {
     min-width: 0;
     display: grid;

@@ -13,14 +13,15 @@ public class WorkoutHistoryExercise
     public List<string> Photos { get; set; } = new();
 
     [NotMapped]
-    public string StatusText =>
+    /// <summary>Ключ ресурса с подписью оценки: текст подставляет интерфейс.</summary>
+    public string StatusTextKey =>
             Status switch
             {
-                ExerciseStatus.Easy => "😊 Легко",
-                ExerciseStatus.Medium => "😐 Средне",
-                ExerciseStatus.Hard => "🥵 Тяжело",
-                ExerciseStatus.Max => "🤯 На пределе",
-                ExerciseStatus.NotCompleted => "Не выбрано",
+                ExerciseStatus.Easy => "Web_Rate_Easy",
+                ExerciseStatus.Medium => "Web_Rate_Medium",
+                ExerciseStatus.Hard => "Web_Rate_Hard",
+                ExerciseStatus.Max => "Web_Rate_Max",
+                ExerciseStatus.NotCompleted => "Difficulty_NotRated",
                 _ => ""
             };
 

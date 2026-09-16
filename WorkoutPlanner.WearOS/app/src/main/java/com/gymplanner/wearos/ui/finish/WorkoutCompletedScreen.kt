@@ -17,10 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.CompletedWorkoutKind
 import com.gymplanner.wearos.ui.theme.WearColors
 
@@ -55,7 +57,7 @@ fun WorkoutCompletedScreen(kind: CompletedWorkoutKind) {
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = "Тренировка завершена",
+            text = stringResource(R.string.completed_title),
             color = WearColors.TextPrimary,
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
@@ -64,9 +66,9 @@ fun WorkoutCompletedScreen(kind: CompletedWorkoutKind) {
         Text(
             text = when (kind) {
                 CompletedWorkoutKind.Scheduled ->
-                    "Тренировка добавлена в историю, а также в графики прогресса!"
+                    stringResource(R.string.completed_with_charts)
                 CompletedWorkoutKind.Free ->
-                    "Перейдите в приложение, чтобы сделать следующее действие!"
+                    stringResource(R.string.completed_open_app)
             },
             modifier = Modifier
                 .fillMaxWidth()

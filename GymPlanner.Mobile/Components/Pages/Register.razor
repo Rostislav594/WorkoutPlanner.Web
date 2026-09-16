@@ -4,6 +4,7 @@
 @using System.ComponentModel.DataAnnotations
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 @if (_showCreatorIntro)
 {
@@ -15,7 +16,7 @@ else
     <div class="auth-brand">
         <img src="_content/WorkoutPlanner.UI/images/Emblem.png" alt="GPlanner" />
     </div>
-    <h1 id="register-title" class="auth-title">Регистрация</h1>
+    <h1 id="register-title" class="auth-title">@Text["Register_Title"]</h1>
     
     @if (_errors.Count > 0)
     {
@@ -33,27 +34,27 @@ else
         <div class="auth-field">
             <label for="register-email">Email</label>
             <InputText id="register-email" class="auth-input" @bind-Value="_input.Email" autocomplete="username" inputmode="email" />
-            <ValidationMessage For="@(() => _input.Email)" />
+            <LocalizedValidationMessage For="@(() => _input.Email)" />
         </div>
 
         <div class="auth-field">
-            <label for="register-password">Пароль</label>
+            <label for="register-password">@Text["Common_Password"]</label>
             <InputText id="register-password" class="auth-input" type="password" @bind-Value="_input.Password" autocomplete="new-password" />
-            <ValidationMessage For="@(() => _input.Password)" />
+            <LocalizedValidationMessage For="@(() => _input.Password)" />
         </div>
 
         <div class="auth-field">
-            <label for="register-confirm-password">Повторите пароль</label>
+            <label for="register-confirm-password">@Text["Register_ConfirmPassword"]</label>
             <InputText id="register-confirm-password" class="auth-input" type="password" @bind-Value="_input.ConfirmPassword" autocomplete="new-password" />
-            <ValidationMessage For="@(() => _input.ConfirmPassword)" />
+            <LocalizedValidationMessage For="@(() => _input.ConfirmPassword)" />
         </div>
 
         <button class="auth-submit" type="submit" disabled="@_isBusy">
-            @(_isBusy ? "Создаём аккаунт…" : "Создать аккаунт")
+            @(_isBusy ? Text["Register_SubmitBusy"] : Text["Register_Submit"])
         </button>
     </EditForm>
 
-    <p class="auth-footer">Уже есть аккаунт? <a href="/account/login">Войти</a></p>
+    <p class="auth-footer">@Text["Register_HaveAccount"] <a href="/account/login">@Text["Register_SignIn"]</a></p>
 </section>
 }
 
@@ -102,15 +103,16 @@ else
 
     private sealed class RegisterInput
     {
-        [Required(ErrorMessage = "Введите email.")]
-        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_EmailRequired")]
+        [EmailAddress(ErrorMessage = "Validation_EmailInvalid")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите пароль.")]
-        [MinLength(6, ErrorMessage = "Пароль должен содержать не менее 6 символов.")]
+        [Required(ErrorMessage = "Validation_PasswordRequired")]
+        [MinLength(6, ErrorMessage = "Validation_PasswordTooShort")]
         public string Password { get; set; } = string.Empty;
 
-        [Compare(nameof(Password), ErrorMessage = "Пароли не совпадают.")]
+        [Compare(nameof(Password), ErrorMessage = "Validation_PasswordsDoNotMatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 }

@@ -1,4 +1,4 @@
-@page "/history"
+﻿@page "/history"
 @rendermode InteractiveServer
 
 @using WorkoutPlanner.Web.Application.Contracts
@@ -6,11 +6,12 @@
 @using WorkoutPlanner.Web.Services
 @using System.Text.Json
 
+@inject IAppText Text
 @inject IHistoryService HistoryService
 
 <div class="page-content">
     <div class="page-title-row">
-        <h1>История</h1>
+        <h1>@Text["History_Title"]</h1>
         <HelpButton Topic="HelpContentCatalog.History" />
     </div>
 
@@ -19,7 +20,7 @@
         <div class="history-empty">
             <img src="images/history-empty.png"
                  class="history-empty-image"
-                 alt="История пуста" />
+                 alt="@Text["Web_History_EmptyAlt"]" />
         </div>
     }
 else
@@ -79,7 +80,7 @@ else
 
                                     <div class="history-exercise-status"
                                          style="color:@exercise.StatusColor">
-                                        @exercise.StatusText
+                                        @(exercise.StatusTextKey.Length == 0 ? string.Empty : Text[exercise.StatusTextKey])
                                     </div>
 
                                     <div class="history-sets">
@@ -92,7 +93,7 @@ else
                                                        checked="@set.Completed"
                                                        disabled />
 
-                                                @set.Weight кг × @set.Repetitions
+                                                @set.Weight @Text["Common_Kg"] × @set.Repetitions
 
                                             </label>
                                         }
@@ -110,12 +111,12 @@ else
 
                 <button class="danger-button"
                         @onclick="DeleteHistory">
-                     Удалить
+                     @Text["Common_Delete"]
                 </button>
 
                 <button class="secondary-button"
                         @onclick="CloseWindow">
-                    Закрыть
+                    @Text["Common_Close"]
                 </button>
 
             </div>

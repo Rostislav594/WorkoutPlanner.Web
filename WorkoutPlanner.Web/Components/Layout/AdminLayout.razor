@@ -1,10 +1,11 @@
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
+@inject IAppText Text
 
-<a class="admin-skip-link" href="#admin-main">К содержимому</a>
+<a class="admin-skip-link" href="#admin-main">@Text["Admin_SkipToContent"]</a>
 
 <div class="admin-shell">
     <aside class="admin-navigation">
-        <a class="admin-navigation__brand" href="/admin" aria-label="GPlanner Admin — главная">
+        <a class="admin-navigation__brand" href="/admin" aria-label="@Text["Admin_BrandHome"]">
             <span class="material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>
             <span>
                 <strong>GPlanner</strong>
@@ -12,7 +13,7 @@
             </span>
         </a>
 
-        <nav class="admin-navigation__links" aria-label="Разделы администрирования">
+        <nav class="admin-navigation__links" aria-label="@Text["Admin_Sections"]">
             <NavLink href="/admin" Match="NavLinkMatch.All">
                 <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
                 <span>Dashboard</span>
@@ -38,7 +39,7 @@
         <div class="admin-navigation__footer">
             <a href="/account/logout">
                 <span class="material-symbols-rounded" aria-hidden="true">logout</span>
-                <span>Выйти</span>
+                <span>@Text["Admin_SignOut"]</span>
             </a>
         </div>
     </aside>

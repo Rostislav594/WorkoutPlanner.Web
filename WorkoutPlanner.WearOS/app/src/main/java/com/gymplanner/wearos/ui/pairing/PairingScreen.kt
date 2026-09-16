@@ -30,7 +30,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.Text
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.domain.model.PairingStatus
 import com.gymplanner.wearos.ui.common.GlowFrame
@@ -89,7 +91,7 @@ private fun PhoneConfirmationScreen(
 
     GlowFrame {
         Text(
-            text = "Подключение",
+            text = stringResource(R.string.pairing_title),
             color = WearColors.NeonGreen,
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
@@ -97,7 +99,8 @@ private fun PhoneConfirmationScreen(
         )
         // Подсказку показываем, только когда есть что сказать: на круглом
         // экране каждая лишняя строка выдавливает кнопки за кромку.
-        val hint = state.errorMessage ?: if (isConnecting) "Открываем на телефоне…" else null
+        val hint = state.errorMessage
+            ?: if (isConnecting) stringResource(R.string.pairing_opening_on_phone) else null
         hint?.let {
             Spacer(Modifier.height(4.dp))
             Text(
@@ -110,16 +113,16 @@ private fun PhoneConfirmationScreen(
         Spacer(Modifier.height(8.dp))
         NeonButton(
             label = when {
-                isError -> "Повторить"
-                isConnecting -> "Открываем…"
-                else -> "Подтвердить на телефоне"
+                isError -> stringResource(R.string.common_retry)
+                isConnecting -> stringResource(R.string.pairing_opening)
+                else -> stringResource(R.string.pairing_confirm_on_phone)
             },
             enabled = !isConnecting,
             onClick = if (isError) onRetry else onConfirmOnPhone,
         )
         Spacer(Modifier.height(6.dp))
         NeonButton(
-            label = "Ввести код",
+            label = stringResource(R.string.pairing_enter_code),
             primary = false,
             enabled = !isConnecting,
             onClick = onManualEntry,
@@ -131,21 +134,21 @@ private fun PhoneConfirmationScreen(
 private fun WaitingForPhoneScreen() {
     GlowFrame {
         Text(
-            text = "Подтвердите на телефоне",
+            text = stringResource(R.string.pairing_confirm_title),
             color = WearColors.Amber,
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Откройте GymPlanner на телефоне и нажмите «Подключить часы».",
+            text = stringResource(R.string.pairing_confirm_hint),
             color = WearColors.TextPrimary,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Ждём ответа…",
+            text = stringResource(R.string.pairing_waiting),
             color = WearColors.TextMuted,
             style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
@@ -167,7 +170,7 @@ private fun ManualCodeScreen(
 
     GlowFrame {
         Text(
-            text = "Введите код",
+            text = stringResource(R.string.pairing_enter_code_title),
             color = WearColors.NeonGreen,
             style = MaterialTheme.typography.titleSmall,
             textAlign = TextAlign.Center,
@@ -183,7 +186,8 @@ private fun ManualCodeScreen(
             onValueChange = onPairingCodeChange,
             onDone = onConnect,
         )
-        val hint = state.errorMessage ?: if (isConnecting) "Проверяем код…" else null
+        val hint = state.errorMessage
+            ?: if (isConnecting) stringResource(R.string.pairing_checking_code) else null
         hint?.let {
             Spacer(Modifier.height(4.dp))
             Text(
@@ -196,16 +200,16 @@ private fun ManualCodeScreen(
         Spacer(Modifier.height(2.dp))
         NeonButton(
             label = when {
-                isError -> "Повторить"
-                isConnecting -> "Подключаем…"
-                else -> "Подключить"
+                isError -> stringResource(R.string.common_retry)
+                isConnecting -> stringResource(R.string.pairing_connecting)
+                else -> stringResource(R.string.pairing_connect)
             },
             enabled = isError || (!isConnecting && pairingCode.length == pairingCodeLength),
             onClick = if (isError) onRetry else onConnect,
         )
         Spacer(Modifier.height(2.dp))
         NeonButton(
-            label = "Назад",
+            label = stringResource(R.string.common_back),
             primary = false,
             enabled = !isConnecting,
             onClick = onBack,
@@ -226,6 +230,7 @@ private fun PairingCodeField(
     onDone: () -> Unit,
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    val codeDescription = stringResource(R.string.pairing_code_description)
     val borderColor = when {
         isError -> WearColors.Error
         isFocused -> WearColors.NeonGreen
@@ -251,7 +256,7 @@ private fun PairingCodeField(
         modifier = Modifier
             .fillMaxWidth()
             .height(fieldHeightDp.dp)
-            .semantics { contentDescription = "Шестизначный код подключения" }
+            .semantics { contentDescription = codeDescription }
             .onFocusChanged { isFocused = it.isFocused },
         decorationBox = { innerTextField ->
             Box(

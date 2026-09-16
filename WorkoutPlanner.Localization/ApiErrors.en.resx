@@ -142,4 +142,22 @@
   <data name="watch_pairing.device_already_paired" xml:space="preserve">
     <value>This watch is already paired with another account.</value>
   </data>
+  <data name="support.rate_limited" xml:space="preserve">
+    <value>Too many tickets. Try sending the message later.</value>
+  </data>
+  <data name="support.send_failed" xml:space="preserve">
+    <value>The server did not confirm that the ticket was sent.</value>
+  </data>
+  <data name="photo.save_failed" xml:space="preserve">
+    <value>The server did not confirm that the photo was saved.</value>
+  </data>
+  <data name="photo.unsupported_format" xml:space="preserve">
+    <value>The server returned an unsupported photo format.</value>
+  </data>
+  <data name="common.incomplete_response" xml:space="preserve">
+    <value>The server returned an incomplete response.</value>
+  </data>
+  <data name="support.message_invalid" xml:space="preserve">
+    <value>Enter a valid description of the problem.</value>
+  </data>
 </root>

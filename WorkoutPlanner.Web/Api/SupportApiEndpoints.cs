@@ -5,6 +5,8 @@ using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Services.Support;
+using WorkoutPlanner.Web.Services.Localization;
+using WorkoutPlanner.Localization;
 
 namespace WorkoutPlanner.Web.Api;
 
@@ -43,10 +45,10 @@ public static class SupportApiEndpoints
     {
         if (!request.HasFormContentType)
         {
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-            {
-                ["message"] = ["Форма обращения должна быть отправлена как multipart-запрос."]
-            });
+            return ApiProblems.ValidationProblem(
+                "message",
+                ApiErrorCodes.SupportMessageInvalid,
+                ServerTexts.Current["Server_Support_MultipartRequired"]);
         }
 
         var form = await request.ReadFormAsync(cancellationToken);
@@ -55,8 +57,9 @@ public static class SupportApiEndpoints
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["message"] =
-                    [$"Опишите проблему хотя бы в {SupportTicketService.MinMessageLength} символах."]
+                ["message"] = [ServerTexts.Current.Format(
+                    "Server_Support_MessageTooShort",
+                    SupportTicketService.MinMessageLength)]
             });
         }
 
@@ -64,8 +67,9 @@ public static class SupportApiEndpoints
         {
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["message"] =
-                    [$"Описание не должно превышать {SupportTicketService.MaxMessageLength} символов."]
+                ["message"] = [ServerTexts.Current.Format(
+                    "Server_Support_MessageTooLong",
+                    SupportTicketService.MaxMessageLength)]
             });
         }
 
@@ -73,7 +77,7 @@ public static class SupportApiEndpoints
         if (file?.Length > SupportScreenshotStorage.MaxScreenshotSize)
         {
             return Results.Problem(
-                title: "Размер скриншота не должен превышать 5 МБ.",
+                title: ServerTexts.Current["Server_Support_ScreenshotTooLarge"],
                 statusCode: StatusCodes.Status413PayloadTooLarge);
         }
 
@@ -110,11 +114,11 @@ public static class SupportApiEndpoints
                 Results.ValidationProblem(new Dictionary<string, string[]>
                 {
                     ["screenshot"] =
-                        ["Поддерживаются только корректные изображения JPG, PNG и WebP."]
+                        [ServerTexts.Current["Server_Support_ScreenshotUnsupported"]]
                 }),
             _ => Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["message"] = ["Введите корректное описание проблемы."]
+                ["message"] = [ServerTexts.Current["Server_Support_MessageInvalid"]]
             })
         };
     }

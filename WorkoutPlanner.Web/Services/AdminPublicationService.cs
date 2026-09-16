@@ -6,6 +6,7 @@ using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -21,11 +22,11 @@ public sealed class AdminPublicationService(
         ArgumentNullException.ThrowIfNull(draft);
         var adminUserId = await GetRequiredAdminUserIdAsync();
         if (draft.Type is not (InboxMessageType.News or InboxMessageType.Update or InboxMessageType.System))
-            throw new InvalidDataException("Недопустимый тип публикации.");
+            throw new InvalidDataException(ServerTexts.Current["Server_Publication_InvalidType"]);
         var title = draft.Title.Trim();
         var body = draft.Body.Trim();
         if (title.Length is 0 or > 160 || body.Length is 0 or > 8000)
-            throw new InvalidDataException("Проверьте заголовок и текст публикации.");
+            throw new InvalidDataException(ServerTexts.Current["Server_Publication_CheckFields"]);
 
         string? imagePath = null;
         try

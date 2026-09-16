@@ -8,12 +8,13 @@
 @inject IProfileApiClient ProfileClient
 @inject IMobilePhotoPicker PhotoPicker
 @inject NavigationManager Navigation
+@inject IAppText Text
 @inject MobileBackNavigationService BackNavigation
 
 <section class="today-page" aria-busy="@_isLoading">
     <header class="today-header">
         <div class="today-heading">
-            <h1 class="today-title">Сегодня</h1>
+            <h1 class="today-title">@Text["Nav_Today"]</h1>
             <p class="today-date">@DateTime.Today.ToString("dd MMMM, dddd")</p>
         </div>
 
@@ -24,15 +25,15 @@
             {
                 <button class="free-workout-button" type="button" disabled="@_isBusy" @onclick="CreateFreeWorkoutAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
-                    <span>Свободная тренировка</span>
+                    <span>@Text["Today_FreeWorkout"]</span>
                 </button>
             }
             else if (!_isLoading)
             {
-                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%" aria-label="Свободная тренировка. Выполнено @ProgressPercent.ToString("0") процентов тренировки">
+                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%" aria-label="@Text.Format("Today_FreeProgressAria", ProgressPercent.ToString("0"))">
                     <div class="workout-progress-indicator__content">
                         <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
-                        <span>Свободная тренировка</span>
+                        <span>@Text["Today_FreeWorkout"]</span>
                     </div>
                 </div>
             }
@@ -40,7 +41,7 @@
             {
                 <button class="secondary-button superset-button" type="button" aria-haspopup="dialog" disabled="@_isBusy" @onclick="OpenSupersetDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                    Создать суперсет
+                    @Text["WorkoutDetails_CreateSuperset"]
                 </button>
             }
         </div>
@@ -63,18 +64,18 @@
     {
         <div class="page-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем тренировку…</span>
+            <span>@Text["WorkoutDetails_Loading"]</span>
         </div>
     }
     else if (_workout is null && !_isFreeWorkout)
     {
         <div class="no-workout-container">
             <div class="no-workout-copy">
-                <h2>На сегодня запланированной тренировки нет</h2>
+                <h2>@Text["Today_NoWorkout"]</h2>
                 @if (_errors.Count > 0)
                 {
                     <div class="empty-actions">
-                        <button class="secondary-button" type="button" @onclick="LoadAsync">Повторить</button>
+                        <button class="secondary-button" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
                     </div>
                 }
             </div>
@@ -90,8 +91,8 @@
         {
             <div class="page-state">
                 @(_isFreeWorkout
-                    ? "Добавьте первое упражнение."
-                    : "В назначенном плане пока нет упражнений.")
+                    ? Text["Today_AddFirstExercise"]
+                    : Text["Today_PlanHasNoExercises"])
             </div>
         }
 
@@ -102,7 +103,7 @@
                 {
                     <article class="exercise-card superset-exercise-card edit-hold-target"
                              tabindex="0"
-                             aria-label="Суперсет @string.Join(" и ", group.Exercises.Select(x => x.Name)). Удерживайте карточку, чтобы открыть меню суперсета."
+                             aria-label="@Text.Format("WorkoutDetails_SupersetCardHint", string.Join(Text["Common_AndSeparator"], group.Exercises.Select(x => x.Name)))"
                              @onpointerdown="() => BeginSupersetHold(group)"
                              @onpointerup="CancelSupersetHold"
                              @onpointercancel="CancelSupersetHold"
@@ -111,8 +112,8 @@
                              @oncontextmenu:preventDefault="true"
                              @onkeydown="eventArgs => HandleSupersetKeyDown(eventArgs, group)">
                         <header class="superset-header">
-                            <div class="superset-label"><span class="material-symbols-rounded" aria-hidden="true">link</span> Суперсет</div>
-                            <div class="superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.DisplayName))">
+                            <div class="superset-label"><span class="material-symbols-rounded" aria-hidden="true">link</span> @Text["Common_Superset"]</div>
+                            <div class="superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(DisplayNameOf))">
                                 @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                 {
                                     var exercise = group.Exercises[exerciseIndex];
@@ -120,7 +121,7 @@
                                     {
                                         <span class="superset-name-separator" aria-hidden="true">/</span>
                                     }
-                                    <span class="superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">@exercise.DisplayName</span>
+                                    <span class="superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">@DisplayNameOf(exercise)</span>
                                 }
                             </div>
                         </header>
@@ -129,7 +130,7 @@
                             <div class="superset-rounds">
                                 @foreach (var roundNumber in GetSupersetRoundNumbers(group))
                                 {
-                                    <section class="superset-round" aria-label="Круг @roundNumber">
+                                    <section class="superset-round" aria-label="@Text.Format("History_Round", roundNumber)">
                                         @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                         {
                                             var exercise = group.Exercises[exerciseIndex];
@@ -137,32 +138,32 @@
                                             if (set is null)
                                                 continue;
 
-                                            <fieldset class="set-row superset-set-row @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" aria-label="@exercise.Name, подход @set.SetNumber" @onpointerdown:stopPropagation="true">
-                                                <legend class="visually-hidden">@exercise.Name, подход @set.SetNumber</legend>
+                                            <fieldset class="set-row superset-set-row @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" aria-label="@Text.Format("Today_ExerciseSetLabel", exercise.Name, set.SetNumber)" @onpointerdown:stopPropagation="true">
+                                                <legend class="visually-hidden">@Text.Format("Today_ExerciseSetLabel", exercise.Name, set.SetNumber)</legend>
 
                                                 <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                                         type="button"
-                                                        title="@(set.IsWarmup ? "Разминочный подход. Нажмите, чтобы сделать рабочим" : "Рабочий подход. Нажмите, чтобы сделать разминочным")"
-                                                        aria-label="@(set.IsWarmup ? $"{exercise.Name}, подход {set.SetNumber}: разминочный. Сделать рабочим" : $"{exercise.Name}, подход {set.SetNumber}: рабочий. Сделать разминочным")"
+                                                        title="@(set.IsWarmup ? Text["WorkoutDetails_ToggleWarmupTitle"] : Text["WorkoutDetails_ToggleWorkingTitle"])"
+                                                        aria-label="@(set.IsWarmup ? Text.Format("WorkoutDetails_ToggleWarmupSupersetLabel", exercise.Name, set.SetNumber) : Text.Format("WorkoutDetails_ToggleWorkingSupersetLabel", exercise.Name, set.SetNumber))"
                                                         aria-pressed="@set.IsWarmup"
                                                         @onclick="() => ToggleSetKind(set)">@set.SetNumber</button>
 
                                                 <label class="set-value-control">
-                                                    <span>кг</span>
+                                                    <span>@Text["Common_Kg"]</span>
                                                     <input class="set-input" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                                                 </label>
 
                                                 <label class="set-value-control">
-                                                    <span>повт.</span>
+                                                    <span>@Text["Common_RepsShort"]</span>
                                                     <input class="set-input" type="number" min="1" max="1000" @bind="set.Repetitions" />
                                                 </label>
 
-                                                <label class="complete-control" title="Отметить подход выполненным">
+                                                <label class="complete-control" title="@Text["Today_MarkSetDone"]">
                                                     <input type="checkbox" checked="@set.Completed" @onchange="args => SetSupersetCompletedAsync(group, set, args)" />
                                                     <svg class="complete-checkmark" viewBox="0 0 24 24" aria-hidden="true">
                                                         <path d="M6.5 12.5 10.2 16 17.8 8.4" />
                                                     </svg>
-                                                    <span class="visually-hidden">@exercise.Name, подход @set.SetNumber выполнен</span>
+                                                    <span class="visually-hidden">@Text.Format("Today_ExerciseSetCompleted", exercise.Name, set.SetNumber)</span>
                                                 </label>
                                             </fieldset>
                                         }
@@ -173,7 +174,7 @@
                                          <button class="rest-timer-box superset-rest-timer" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)">
                                             <span class="material-symbols-rounded" aria-hidden="true">timer</span>
                                             <span>
-                                                <small>Отдых после пары подходов</small>
+                                                <small>@Text["Today_RestAfterPair"]</small>
                                                 <strong>@GetRestTimerLabel(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)</strong>
                                             </span>
                                             <span class="material-symbols-rounded rest-timer-edit" aria-hidden="true">edit</span>
@@ -186,20 +187,20 @@
 
                         <footer class="exercise-footer superset-footer">
                             <label class="status-control">
-                                <span>Оценка суперсета</span>
+                                <span>@Text["Today_SupersetRating"]</span>
                                 <SystemChoiceField class="status-select"
-                                                   Title="Оценка суперсета"
+                                                   Title="@Text["Today_SupersetRating"]"
                                                    Options="RatingOptions"
                                                    Value="@GetSupersetStatus(group)"
                                                    ValueChanged="value => SetSupersetStatus(group, value)"
-                                                   AriaLabel="Выбрать оценку суперсета" />
+                                                   AriaLabel="@Text["Today_SelectSupersetRating"]" />
                             </label>
                             @if (HasFollowingGroup(group))
                             {
                                 <button class="rest-timer-box rest-timer-box--exercise" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)">
                                     <span class="material-symbols-rounded" aria-hidden="true">timer</span>
                                     <span>
-                                        <small>Отдых между упражнениями</small>
+                                        <small>@Text["Today_RestBetweenExercises"]</small>
                                         <strong>@GetRestTimerLabel(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)</strong>
                                     </span>
                                     <span class="material-symbols-rounded rest-timer-edit" aria-hidden="true">edit</span>
@@ -215,7 +216,7 @@
                 <article class="exercise-card">
                     <header class="exercise-header edit-hold-target"
                             tabindex="0"
-                            aria-label="@($"Упражнение {exercise.Name}. Удерживайте заголовок, чтобы открыть меню тренировки.")"
+                            aria-label="@Text.Format("Today_ExerciseCardHint", exercise.Name)"
                             @onclick="() => HandleExerciseClick(exercise.Id)"
                             @onpointerdown="() => BeginExerciseHold(exercise.Id)"
                             @onpointerup="CancelExerciseHold"
@@ -225,20 +226,20 @@
                             @oncontextmenu:preventDefault="true"
                             @onkeydown="eventArgs => HandleExerciseKeyDown(eventArgs, exercise.Id)">
                         <div class="exercise-heading-copy">
-                            <h2>@exercise.DisplayName</h2>
+                            <h2>@DisplayNameOf(exercise)</h2>
                             @if (exercise.IsConfigured)
                             {
-                            <div class="set-kind-summary" aria-label="Типы подходов">
+                            <div class="set-kind-summary" aria-label="@Text["Today_SetKinds"]">
                                 @if (exercise.Sets.Any(x => x.IsWarmup))
                                 {
                                     <span class="set-kind-label warmup">
-                                        Разминочные: @exercise.Sets.Count(x => x.IsWarmup)
+                                        @Text.Format("Today_WarmupCount", exercise.Sets.Count(x => x.IsWarmup))
                                     </span>
                                 }
                                 @if (exercise.Sets.Any(x => !x.IsWarmup))
                                 {
                                     <span class="set-kind-label working">
-                                        Рабочие: @exercise.Sets.Count(x => !x.IsWarmup)
+                                        @Text.Format("Today_WorkingCount", exercise.Sets.Count(x => !x.IsWarmup))
                                     </span>
                                 }
                             </div>
@@ -251,7 +252,7 @@
                         <div class="free-exercise-placeholder edit-hold-target"
                              tabindex="0"
                              role="button"
-                             aria-label="Настроить новое упражнение. Нажмите, чтобы открыть меню тренировки."
+                             aria-label="@Text["Today_NewExerciseCardHint"]"
                              @onclick="() => HandleExerciseClick(exercise.Id)"
                              @onpointerdown="() => BeginExerciseHold(exercise.Id)"
                              @onpointerup="CancelExerciseHold"
@@ -260,7 +261,7 @@
                              @oncontextmenu="() => ShowEditWorkoutAction(exercise.Id)"
                              @oncontextmenu:preventDefault="true"
                              @onkeydown="eventArgs => HandleExerciseKeyDown(eventArgs, exercise.Id)">
-                             <span>Нажмите на карточку и выберите «Изменить тренировку»</span>
+                             <span>@Text["Today_TapCardHint"]</span>
                         </div>
                     }
                     else
@@ -269,32 +270,32 @@
                         <div class="sets-block">
                             @foreach (var set in exercise.Sets)
                             {
-                                <fieldset class="set-row" aria-label="Подход @set.SetNumber">
-                                    <legend class="visually-hidden">Подход @set.SetNumber</legend>
+                                <fieldset class="set-row" aria-label="@Text.Format("Common_SetNumber", set.SetNumber)">
+                                    <legend class="visually-hidden">@Text.Format("Common_SetNumber", set.SetNumber)</legend>
 
                                     <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                             type="button"
-                                            title="@(set.IsWarmup ? "Разминочный подход. Нажмите, чтобы сделать рабочим" : "Рабочий подход. Нажмите, чтобы сделать разминочным")"
-                                            aria-label="@(set.IsWarmup ? $"Подход {set.SetNumber}: разминочный. Сделать рабочим" : $"Подход {set.SetNumber}: рабочий. Сделать разминочным")"
+                                            title="@(set.IsWarmup ? Text["WorkoutDetails_ToggleWarmupTitle"] : Text["WorkoutDetails_ToggleWorkingTitle"])"
+                                            aria-label="@(set.IsWarmup ? Text.Format("WorkoutDetails_ToggleWarmupLabel", set.SetNumber) : Text.Format("WorkoutDetails_ToggleWorkingLabel", set.SetNumber))"
                                             aria-pressed="@set.IsWarmup"
                                             @onclick="() => ToggleSetKind(set)">@set.SetNumber</button>
 
                                     <label class="set-value-control">
-                                        <span>кг</span>
+                                        <span>@Text["Common_Kg"]</span>
                                         <input class="set-input" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                                     </label>
 
                                     <label class="set-value-control">
-                                        <span>повт.</span>
+                                        <span>@Text["Common_RepsShort"]</span>
                                         <input class="set-input" type="number" min="1" max="1000" @bind="set.Repetitions" />
                                     </label>
 
-                                    <label class="complete-control" title="Отметить подход выполненным">
+                                    <label class="complete-control" title="@Text["Today_MarkSetDone"]">
                                         <input type="checkbox" checked="@set.Completed" @onchange="args => SetCompletedAsync(exercise, set, args)" />
                                         <svg class="complete-checkmark" viewBox="0 0 24 24" aria-hidden="true">
                                             <path d="M6.5 12.5 10.2 16 17.8 8.4" />
                                         </svg>
-                                        <span class="visually-hidden">Выполнен</span>
+                                        <span class="visually-hidden">@Text["Common_SetCompleted"]</span>
                                     </label>
                                 </fieldset>
                                 @if (HasFollowingSet(exercise, set))
@@ -302,7 +303,7 @@
                                     <button class="rest-timer-box" type="button" @onclick="() => OpenRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)">
                                         <span class="material-symbols-rounded" aria-hidden="true">timer</span>
                                         <span>
-                                            <small>Отдых между подходами</small>
+                                            <small>@Text["Today_RestBetweenSets"]</small>
                                             <strong>@GetRestTimerLabel(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)</strong>
                                         </span>
                                         <span class="material-symbols-rounded rest-timer-edit" aria-hidden="true">edit</span>
@@ -315,19 +316,19 @@
 
                     <footer class="exercise-footer">
                         <label class="status-control">
-                            <span>Оценка упражнения</span>
+                            <span>@Text["Today_ExerciseRating"]</span>
                             <SystemChoiceField class="status-select"
-                                               Title="Оценка упражнения"
+                                               Title="@Text["Today_ExerciseRating"]"
                                                Options="RatingOptions"
                                                @bind-Value="exercise.Status"
-                                               AriaLabel="Выбрать оценку упражнения" />
+                                               AriaLabel="@Text["Today_SelectExerciseRating"]" />
                         </label>
                         @if (HasFollowingExercise(exercise))
                         {
                             <button class="rest-timer-box rest-timer-box--exercise" type="button" @onclick="() => OpenRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises)">
                                 <span class="material-symbols-rounded" aria-hidden="true">timer</span>
                                 <span>
-                                    <small>Отдых между упражнениями</small>
+                                    <small>@Text["Today_RestBetweenExercises"]</small>
                                     <strong>@GetRestTimerLabel(exercise.Id, 0, RestTimerKind.BetweenExercises)</strong>
                                 </span>
                                 <span class="material-symbols-rounded rest-timer-edit" aria-hidden="true">edit</span>
@@ -350,7 +351,7 @@
                         disabled="@_isBusy"
                         @onclick="BeginFreeExerciseCreateAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">add</span>
-                    Добавить упражнение
+                    @Text["WorkoutDetails_AddExercise"]
                 </button>
             </div>
         }
@@ -360,7 +361,7 @@
             <button class="finish-button finish-button--hold"
                     type="button"
                     disabled="@_isBusy"
-                    aria-label="@(_isBusy ? "Сохраняем тренировку" : "Удерживайте, чтобы завершить тренировку")"
+                    aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text["Today_HoldToFinishAria"])"
                     @onpointerdown="BeginFinishHoldAsync"
                     @onpointerup="CancelFinishHold"
                     @onpointercancel="CancelFinishHold"
@@ -368,7 +369,7 @@
                     @onkeydown="HandleFinishKeyDown"
                     @onkeyup="HandleFinishKeyUp"
                     @oncontextmenu:preventDefault="true">
-                <span class="finish-button-label">@(_isBusy ? "Сохраняем тренировку…" : "Завершить тренировку")</span>
+                <span class="finish-button-label">@(_isBusy ? Text["Today_SavingWorkout"] : Text["Today_FinishWorkout"])</span>
             </button>
         }
     }
@@ -391,7 +392,7 @@
             </svg>
         </div>
     </div>
-    <span class="visually-hidden" role="status">Удерживайте кнопку до завершения анимации</span>
+    <span class="visually-hidden" role="status">@Text["Today_HoldUntilAnimation"]</span>
 }
 
 @if (_selectedRestTimer is not null)
@@ -400,25 +401,25 @@
         <section class="modal-window rest-timer-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timer-title" @onclick:stopPropagation="true">
             <div class="editor-heading">
                 <div>
-                    <span>Таймер отдыха</span>
-                    <h2 id="rest-timer-title">@(_selectedRestTimer.Kind == RestTimerKind.BetweenSets ? "Между подходами" : "Между упражнениями")</h2>
+                    <span>@Text["Today_RestTimer"]</span>
+                    <h2 id="rest-timer-title">@(_selectedRestTimer.Kind == RestTimerKind.BetweenSets ? Text["Today_BetweenSets"] : Text["Today_BetweenExercises"])</h2>
                 </div>
-                <button class="quick-action-close editor-close" type="button" aria-label="Закрыть" @onclick="CloseRestTimer">
+                <button class="quick-action-close editor-close" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseRestTimer">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </div>
             <label class="editor-field">
-                <span>Время отдыха, сек.</span>
+                <span>@Text["Today_RestSeconds"]</span>
                 <input class="editor-control" type="number" min="5" max="3600" @bind="_selectedRestTimer.DurationSeconds" />
             </label>
-            <p class="rest-timer-dialog-hint">Это значение изменит только данный таймер. Общие значения настраиваются в профиле.</p>
+            <p class="rest-timer-dialog-hint">@Text["Today_RestTimerHint"]</p>
             <div class="editor-actions rest-timer-actions">
-                <button class="edit-workout-button" type="button" disabled="@_selectedRestTimer.IsQueued" @onclick="StartSelectedRestTimer">@(_selectedRestTimer.IsRunning ? "Перезапустить" : _selectedRestTimer.IsQueued ? "В очереди" : "Запустить")</button>
+                <button class="edit-workout-button" type="button" disabled="@_selectedRestTimer.IsQueued" @onclick="StartSelectedRestTimer">@(_selectedRestTimer.IsRunning ? Text["Today_Restart"] : _selectedRestTimer.IsQueued ? Text["Today_Queued"] : Text["Today_Start"])</button>
                 @if (_selectedRestTimer.IsRunning)
                 {
-                    <button class="secondary-button" type="button" @onclick="PauseSelectedRestTimer">Пауза</button>
+                    <button class="secondary-button" type="button" @onclick="PauseSelectedRestTimer">@Text["Today_Pause"]</button>
                 }
-                <button class="secondary-button" type="button" @onclick="CloseRestTimer">Готово</button>
+                <button class="secondary-button" type="button" @onclick="CloseRestTimer">@Text["Common_Done"]</button>
             </div>
         </section>
     </div>
@@ -434,12 +435,12 @@
                  @onclick:stopPropagation="true">
             <div class="editor-heading">
                 <div>
-                    <span>Фотография упражнения</span>
+                    <span>@Text["WorkoutDetails_PhotoTitle"]</span>
                     <h2 id="today-photo-title">@_photoExercise.Name</h2>
                 </div>
                 <button class="quick-action-close editor-close"
                         type="button"
-                        aria-label="Закрыть"
+                        aria-label="@Text["Common_Close"]"
                         disabled="@_photoBusy"
                         @onclick="ClosePhoto">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
@@ -455,43 +456,43 @@
             {
                 <div class="photo-state" role="status">
                     <span class="loading-spinner" aria-hidden="true"></span>
-                    <span>Обрабатываем фотографию…</span>
+                    <span>@Text["WorkoutDetails_PhotoProcessing"]</span>
                 </div>
             }
             else if (_photoDataUri is not null)
             {
-                <img class="exercise-photo" src="@_photoDataUri" alt="Фото упражнения @_photoExercise.Name" />
+                <img class="exercise-photo" src="@_photoDataUri" alt="@Text.Format("WorkoutDetails_PhotoAlt", _photoExercise.Name)" />
             }
             else
             {
                 <div class="empty-photo">
                     <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                    <span>У этого упражнения пока нет фотографии.</span>
+                    <span>@Text["WorkoutDetails_NoPhoto"]</span>
                 </div>
             }
 
-            <p class="photo-hint">JPG, PNG или WebP, не более 5 МБ.</p>
+            <p class="photo-hint">@Text["WorkoutDetails_PhotoHint"]</p>
 
             <div class="photo-actions">
                 <button class="primary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
                     <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
-                    Выбрать фото
+                    @Text["WorkoutDetails_PickPhoto"]
                 </button>
                 <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
                     <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                    Сделать снимок
+                    @Text["WorkoutDetails_TakePhoto"]
                 </button>
 
                 @if (_photoExercise.HasPhoto)
                 {
                     @if (_confirmPhotoDelete)
                     {
-                        <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">Отмена удаления</button>
-                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">Удалить точно</button>
+                        <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">@Text["WorkoutDetails_CancelDelete"]</button>
+                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">@Text["History_DeleteConfirm"]</button>
                     }
                     else
                     {
-                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">Удалить фото</button>
+                        <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">@Text["WorkoutDetails_DeletePhoto"]</button>
                     }
                 }
 
@@ -515,37 +516,37 @@
             <button class="quick-action-close"
                     type="button"
                     autofocus
-                    aria-label="Закрыть меню"
+                    aria-label="@Text["Today_CloseMenu"]"
                     @onclick="CloseEditWorkoutAction">
                 <span class="material-symbols-rounded" aria-hidden="true">close</span>
             </button>
             <span class="edit-workout-icon material-symbols-rounded" aria-hidden="true">edit</span>
-            <h2 id="edit-workout-action-title">@editActionExercise.DisplayName</h2>
+            <h2 id="edit-workout-action-title">@DisplayNameOf(editActionExercise)</h2>
             <p id="edit-workout-action-description">
-                Вес, повторения и типы подходов настраиваются в редакторе тренировки.
+                @Text["Today_EditorHint"]
             </p>
             <div class="edit-workout-actions">
                 @if (editActionExercise.IsConfigured)
                 {
                     <button class="secondary-button photo-menu-button" type="button" @onclick="() => OpenPhotoFromExerciseMenuAsync(editActionExercise)">
                         <span class="material-symbols-rounded" aria-hidden="true">@(editActionExercise.HasPhoto ? "image" : "add_a_photo")</span>
-                        <span>@(editActionExercise.HasPhoto ? "Открыть фото" : "Добавить фото")</span>
+                        <span>@(editActionExercise.HasPhoto ? Text["Today_OpenPhoto"] : Text["Today_AddPhoto"])</span>
                     </button>
                 }
                 @if (_isFreeWorkout)
                 {
                     <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="BeginFreeExerciseEditAsync">
-                        @(editActionExercise.IsConfigured ? "Изменить тренировку" : "Назначить тренировку")
+                        @(editActionExercise.IsConfigured ? Text["Today_EditWorkout"] : Text["Today_AssignWorkout"])
                     </button>
                     <button class="remove-free-exercise-button" type="button" @onclick="RemoveFreeExercise">
-                        Удалить карточку
+                        @Text["Today_DeleteCard"]
                     </button>
                 }
                 else if (_workout is not null)
                 {
                     <a class="edit-workout-button"
                        href="@($"/workouts/{_workout.TrainingPlan.Id}")">
-                        Изменить тренировку
+                        @Text["Today_EditWorkout"]
                     </a>
                 }
             </div>
@@ -563,12 +564,12 @@
                  @onclick:stopPropagation="true">
             <div class="editor-heading">
                 <div>
-                    <span>Свободная тренировка</span>
-                    <h2 id="free-exercise-editor-title">@(_isCreatingFreeExercise ? "Новое упражнение" : "Параметры упражнения")</h2>
+                    <span>@Text["Today_FreeWorkout"]</span>
+                    <h2 id="free-exercise-editor-title">@(_isCreatingFreeExercise ? Text["WorkoutDetails_NewExercise"] : Text["Today_ExerciseParameters"])</h2>
                 </div>
                 <button class="quick-action-close editor-close"
                         type="button"
-                        aria-label="Закрыть редактор"
+                        aria-label="@Text["Today_CloseEditor"]"
                         @onclick="CloseFreeExerciseEditor">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
@@ -580,18 +581,18 @@
             }
 
             <label class="editor-field">
-                <span>Упражнение</span>
+                <span>@Text["Common_Exercise"]</span>
                 <SystemChoiceField class="editor-control"
-                                   Title="Выберите упражнение"
+                                   Title="@Text["Today_PickExercise"]"
                                    Options="ExerciseDefinitionOptions"
                                    Value="@(_freeEditorDraft.ExerciseDefinitionId?.ToString() ?? string.Empty)"
                                    ValueChanged="SetFreeExerciseDefinition"
-                                   Placeholder="Выберите упражнение"
-                                   AriaLabel="Выбрать упражнение из библиотеки" />
+                                   Placeholder="@Text["Today_PickExercise"]"
+                                   AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
             </label>
 
             <label class="editor-field">
-                <span>Количество подходов</span>
+                <span>@Text["WorkoutDetails_SetsCount"]</span>
                 <input class="editor-control"
                        type="number"
                        min="1"
@@ -604,13 +605,13 @@
                 @foreach (var set in _freeEditorDraft.Sets)
                 {
                     <fieldset>
-                        <legend>Подход @set.SetNumber</legend>
+                        <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
                         <label>
-                            <span>Вес, кг</span>
+                            <span>@Text["WorkoutDetails_WeightKg"]</span>
                             <input class="editor-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                         </label>
                         <label>
-                            <span>Повторения</span>
+                            <span>@Text["WorkoutDetails_Reps"]</span>
                             <input class="editor-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
                         </label>
                     </fieldset>
@@ -619,7 +620,7 @@
 
             <div class="editor-actions">
                 <button class="edit-workout-button" type="button" @onclick="SaveFreeExerciseEdit">
-                    @(_isCreatingFreeExercise ? "Добавить упражнение" : "Сохранить")
+                    @(_isCreatingFreeExercise ? Text["WorkoutDetails_AddExercise"] : Text["Common_Save"])
                 </button>
             </div>
         </section>
@@ -635,9 +636,9 @@
                  aria-labelledby="free-template-question"
                  @onclick:stopPropagation="true">
             <span class="edit-workout-icon material-symbols-rounded" aria-hidden="true">bookmark_add</span>
-            <h2 id="free-template-question">Сделать из сегодняшней тренировки шаблон?</h2>
+            <h2 id="free-template-question">@Text["Today_MakeTemplateQuestion"]</h2>
             <div class="template-progress-note">
-                <p class="template-progress-note__text">Шаблон будет отслеживаться в графике прогресса. При выборе «Нет» тренировка сохранится только в истории.</p>
+                <p class="template-progress-note__text">@Text["Today_TemplateNote"]</p>
                 <span class="template-progress-note__mark material-symbols-rounded" aria-hidden="true">priority_high</span>
             </div>
             @if (_templateErrors.Count > 0)
@@ -645,8 +646,8 @@
                 <div class="editor-error" role="alert">@string.Join(" ", _templateErrors)</div>
             }
             <div class="prompt-actions">
-                <button class="edit-workout-button" type="button" @onclick="OpenTemplateNamePrompt">Да</button>
-                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithoutTemplateAsync">Нет</button>
+                <button class="edit-workout-button" type="button" @onclick="OpenTemplateNamePrompt">@Text["Common_Yes"]</button>
+                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithoutTemplateAsync">@Text["Common_No"]</button>
             </div>
         </section>
     </div>
@@ -660,14 +661,14 @@
                  aria-modal="true"
                  aria-labelledby="template-name-title"
                  @onclick:stopPropagation="true">
-            <h2 id="template-name-title">Название шаблона</h2>
-            <p>Он появится в разделе «Шаблоны тренировок», а результаты — в графиках.</p>
+            <h2 id="template-name-title">@Text["Workouts_TemplateName"]</h2>
+            <p>@Text["Today_TemplateNameHint"]</p>
             @if (_templateErrors.Count > 0)
             {
                 <div class="editor-error" role="alert">@string.Join(" ", _templateErrors)</div>
             }
             <label class="editor-field">
-                <span>Название</span>
+                <span>@Text["Common_Name"]</span>
                 <input class="editor-control"
                        maxlength="120"
                        autofocus
@@ -675,9 +676,9 @@
             </label>
             <div class="prompt-actions">
                 <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithTemplateAsync">
-                    @(_isBusy ? "Сохраняем…" : "Создать шаблон")
+                    @(_isBusy ? Text["Common_Saving"] : Text["Today_CreateTemplate"])
                 </button>
-                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseTemplateNamePrompt">Назад</button>
+                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseTemplateNamePrompt">@Text["Common_Back"]</button>
             </div>
         </section>
     </div>
@@ -692,9 +693,9 @@
                  aria-labelledby="completion-title"
                  @onclick:stopPropagation="true">
             <span class="completion-icon material-symbols-rounded" aria-hidden="true">check</span>
-            <h2 id="completion-title">Тренировка завершена</h2>
+            <h2 id="completion-title">@Text["Today_WorkoutCompleted"]</h2>
             <p>@_completionMessage</p>
-            <button class="finish-button modal-finish-button" type="button" @onclick="CloseCompletion">Готово</button>
+            <button class="finish-button modal-finish-button" type="button" @onclick="CloseCompletion">@Text["Common_Done"]</button>
         </section>
     </div>
 }
@@ -703,8 +704,8 @@
 {
     <div class="modal-overlay" @onclick="CloseSupersetDialog">
         <section class="modal-window superset-window" role="dialog" aria-modal="true" aria-labelledby="superset-title" @onclick:stopPropagation="true">
-            <h2 id="superset-title">Создать суперсет</h2>
-            <p>Выберите два упражнения.</p>
+            <h2 id="superset-title">@Text["WorkoutDetails_CreateSuperset"]</h2>
+            <p>@Text["Today_PickTwoExercises"]</p>
             <div class="superset-options">
                 @foreach (var exercise in _exercises)
                 {
@@ -717,8 +718,8 @@
                 }
             </div>
             <div class="superset-actions">
-                <button class="finish-button" type="button" disabled="@(_isBusy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">Создать</button>
-                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseSupersetDialog">Отмена</button>
+                <button class="finish-button" type="button" disabled="@(_isBusy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">@Text["Common_Create"]</button>
+                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseSupersetDialog">@Text["Common_Cancel"]</button>
             </div>
         </section>
     </div>
@@ -732,31 +733,31 @@
                  aria-modal="true"
                  aria-labelledby="superset-action-title"
                  @onclick:stopPropagation="true">
-            <button class="quick-action-close" type="button" aria-label="Закрыть меню суперсета" @onclick="() => CloseSupersetActions()">
+            <button class="quick-action-close" type="button" aria-label="@Text["Today_CloseSupersetMenu"]" @onclick="() => CloseSupersetActions()">
                 <span class="material-symbols-rounded" aria-hidden="true">close</span>
             </button>
             <span class="edit-workout-icon material-symbols-rounded" aria-hidden="true">link</span>
-            <h2 id="superset-action-title">@string.Join(" / ", supersetActionGroup.Exercises.Select(x => x.DisplayName))</h2>
+            <h2 id="superset-action-title">@string.Join(" / ", supersetActionGroup.Exercises.Select(DisplayNameOf))</h2>
             @if (_supersetDeleteConfirmation)
             {
-                <p>Удалить оба упражнения из этой тренировки?</p>
+                <p>@Text["Today_DeleteSupersetQuestion"]</p>
                 <div class="edit-workout-actions">
-                    <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">Удалить супер-сет</button>
+                    <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="() => DeleteSupersetAsync(supersetActionGroup)">@Text["WorkoutDetails_DeleteSuperset"]</button>
                 </div>
             }
             else
             {
-                <p>Выберите действие для объединённой карточки.</p>
+                <p>@Text["Today_SupersetActionHint"]</p>
                 <div class="edit-workout-actions">
                     @foreach (var exercise in supersetActionGroup.Exercises.Where(x => x.IsConfigured))
                     {
                         <button class="secondary-button photo-menu-button" type="button" disabled="@_isBusy" @onclick="() => OpenPhotoFromSupersetMenuAsync(exercise)">
                             <span class="material-symbols-rounded" aria-hidden="true">@(exercise.HasPhoto ? "image" : "add_a_photo")</span>
-                            <span>@(exercise.HasPhoto ? "Открыть фото" : "Добавить фото"): @exercise.DisplayName</span>
+                            <span>@(exercise.HasPhoto ? Text["Today_OpenPhoto"] : Text["Today_AddPhoto"]): @DisplayNameOf(exercise)</span>
                         </button>
                     }
-                    <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="() => SeparateSupersetAsync(supersetActionGroup)">Разъединить супер-сет</button>
-                    <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="RequestSupersetDelete">Удалить супер-сет</button>
+                    <button class="edit-workout-button" type="button" disabled="@_isBusy" @onclick="() => SeparateSupersetAsync(supersetActionGroup)">@Text["WorkoutDetails_SplitSuperset"]</button>
+                    <button class="remove-free-exercise-button" type="button" disabled="@_isBusy" @onclick="RequestSupersetDelete">@Text["WorkoutDetails_DeleteSuperset"]</button>
                 </div>
             }
         </section>
@@ -764,14 +765,21 @@
 }
 
 @code {
-    private static readonly IReadOnlyList<SystemChoiceOption> RatingOptions =
+    // Значение оценки уходит на сервер, поэтому остаётся английским кодом;
+    // переводится только подпись в списке.
+    private IReadOnlyList<SystemChoiceOption> RatingOptions =>
     [
-        new("NotCompleted", "Не оценено"),
-        new("Easy", "Легко"),
-        new("Medium", "Средне"),
-        new("Hard", "Тяжело"),
-        new("Max", "Предел")
+        new("NotCompleted", Text["Difficulty_NotRated"]),
+        new("Easy", Text["Difficulty_Easy"]),
+        new("Medium", Text["Difficulty_Medium"]),
+        new("Hard", Text["Difficulty_Hard"]),
+        new("Max", Text["Difficulty_Max"])
     ];
+
+    // Неназначенная карточка показывает общий заголовок: имя появится
+    // только после выбора упражнения из библиотеки.
+    private string DisplayNameOf(ExerciseDraft exercise) =>
+        exercise.IsConfigured ? exercise.Name : Text["WorkoutDetails_NewExercise"];
 
     private readonly List<ExerciseDraft> _exercises = [];
     private readonly List<ExerciseDefinitionApiResponse> _exerciseDefinitions = [];
@@ -1159,13 +1167,13 @@
 
         _freeEditorErrors.Clear();
         if (!_freeEditorDraft.IsConfigured)
-            _freeEditorErrors.Add("Выберите упражнение из библиотеки.");
+            _freeEditorErrors.Add(Text["WorkoutDetails_PickLibraryExerciseError"]);
         if (_freeEditorDraft.Sets.Any(x =>
                 !double.IsFinite(x.Weight) ||
                 x.Weight is < 0 or > 2000 ||
                 x.Repetitions is < 1 or > 1000))
         {
-            _freeEditorErrors.Add("Проверьте вес и повторения каждого подхода.");
+            _freeEditorErrors.Add(Text["WorkoutDetails_CheckSetsError"]);
         }
 
         if (_freeEditorErrors.Count > 0)
@@ -1173,7 +1181,7 @@
 
         if (_freeDraftPlanId is not { } planId)
         {
-            _freeEditorErrors.Add("Свободная тренировка не начата.");
+            _freeEditorErrors.Add(Text["Today_FreeWorkoutNotStarted"]);
             return;
         }
 
@@ -1499,7 +1507,7 @@
             }
 
             _completedHistory = completionResult.Value;
-            _completionMessage = "Результаты тренировки сохранены в истории и графиках прогресса.";
+            _completionMessage = Text["Today_ResultsSaved"];
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -1688,9 +1696,9 @@
         if (timer.IsCompleted)
             return "✓";
         return timer.IsRunning
-            ? $"Осталось {FormatDuration(timer.RemainingSeconds)}"
+            ? Text.Format("Today_TimerRemaining", FormatDuration(timer.RemainingSeconds))
             : timer.IsQueued
-                ? "После текущего таймера"
+                ? Text["Today_TimerAfterCurrent"]
                 : FormatDuration(timer.DurationSeconds);
     }
 
@@ -1857,7 +1865,7 @@
         _templateErrors.Clear();
         if (string.IsNullOrWhiteSpace(_templateName))
         {
-            _templateErrors.Add("Введите название шаблона.");
+            _templateErrors.Add(Text["Today_TemplateNameRequired"]);
             return;
         }
 
@@ -1895,8 +1903,8 @@
             BackNavigation.SetBackInterceptor(null);
             _completedHistory = result.Value!.History;
             _completionMessage = saveAsTemplate
-                ? $"Тренировка сохранена в истории, а шаблон «{templateName}» добавлен вместе с графиками."
-                : "Свободная тренировка сохранена только в истории — без календаря, шаблонов и графиков.";
+                ? Text.Format("Today_SavedWithTemplate", templateName ?? string.Empty)
+                : Text["Today_SavedHistoryOnly"];
             _isFreeWorkout = false;
             _exercises.Clear();
             // Черновик на сервере удаляется вместе с записью в историю, одной
@@ -2031,7 +2039,7 @@
     {
         if (!exercise.IsConfigured)
         {
-            _errors.Add("Настройте все добавленные упражнения.");
+            _errors.Add(Text["Today_ConfigureAllExercises"]);
             return false;
         }
 
@@ -2040,7 +2048,7 @@
                 x.Weight is < 0 or > 2000 ||
                 x.Repetitions is < 1 or > 1000))
         {
-            _errors.Add($"Проверьте вес и повторения: {exercise.Name}.");
+            _errors.Add(Text.Format("Today_CheckWeightAndReps", exercise.Name));
             return false;
         }
 
@@ -2091,7 +2099,6 @@
             (ExerciseDefinitionId is not null &&
              !string.IsNullOrWhiteSpace(Name) &&
              Sets.Count > 0);
-        public string DisplayName => IsConfigured ? Name : "Новое упражнение";
 
         public static ExerciseDraft CreateFree(int id)
         {

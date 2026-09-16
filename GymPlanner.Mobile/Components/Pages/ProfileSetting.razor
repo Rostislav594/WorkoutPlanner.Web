@@ -1,4 +1,4 @@
-@page "/profile/{Section}"
+﻿@page "/profile/{Section}"
 @attribute [Authorize]
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.Extensions.Logging
@@ -19,18 +19,18 @@
 
 <section class="profile-setting-page" aria-busy="@_isLoading">
     <header class="setting-header">
-        <a class="back-button" href="/profile" aria-label="Вернуться в профиль">
+        <a class="back-button" href="/profile" aria-label="@Text["ProfileSetting_BackToProfile"]">
             <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
         </a>
         <div>
-            <p class="setting-eyebrow">Профиль</p>
-            <h1>@Setting.Title</h1>
+            <p class="setting-eyebrow">@Text["Profile_Title"]</p>
+            <h1>@Text[Setting.TitleKey]</h1>
         </div>
     </header>
 
     @if (_isLoading)
     {
-        <div class="setting-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>Загружаем…</span></div>
+        <div class="setting-state" role="status"><span class="loading-spinner" aria-hidden="true"></span><span>@Text["Common_Loading"]</span></div>
     }
     else if (_errors.Count > 0)
     {
@@ -40,10 +40,10 @@
     {
         <article class="setting-card setting-card--placeholder">
             <span class="setting-icon material-symbols-rounded" aria-hidden="true">@Setting.Icon</span>
-            <span class="setting-soon" role="status">Скоро</span>
-            <h2>@Setting.Title</h2>
-            <p>@Setting.Description</p>
-            <a class="setting-secondary-action" href="/profile">Вернуться в профиль</a>
+            <span class="setting-soon" role="status">@Text["Common_Soon"]</span>
+            <h2>@Text[Setting.TitleKey]</h2>
+            <p>@Text[Setting.DescriptionKey]</p>
+            <a class="setting-secondary-action" href="/profile">@Text["ProfileSetting_BackToProfile"]</a>
         </article>
     }
     else if (Section == "personal-information")
@@ -51,15 +51,15 @@
         <EditForm class="setting-card" Model="_profileInput" OnValidSubmit="SaveProfileAsync">
             <DataAnnotationsValidator />
             <ValidationSummary class="validation-summary" />
-            <p class="setting-description">Обновите личные данные, которые используются в вашем профиле.</p>
+            <p class="setting-description">@Text["ProfileSetting_PersonalDescription"]</p>
             <div class="setting-form-grid">
                 <label>Email <input class="auth-input" value="@_profile?.Email" readonly /></label>
-                <label>Имя <InputText class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" /></label>
-                <label>Фамилия <InputText class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" /></label>
-                <label>Дата рождения <InputDate class="auth-input" @bind-Value="_profileInput.BirthDate" /></label>
-                <label>Пол <SystemChoiceField class="auth-input" Title="Пол" Options="GenderOptions" @bind-Value="_profileInput.Gender" AriaLabel="Выбрать пол" /></label>
+                <label>@Text["Common_FirstName"] <InputText class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" /></label>
+                <label>@Text["Common_LastName"] <InputText class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" /></label>
+                <label>@Text["Common_BirthDate"] <InputDate class="auth-input" @bind-Value="_profileInput.BirthDate" /></label>
+                <label>@Text["Common_Gender"] <SystemChoiceField class="auth-input" Title="@Text["Common_Gender"]" Options="GenderOptions" @bind-Value="_profileInput.Gender" AriaLabel="@Text["ProfileSetup_SelectGender"]" /></label>
             </div>
-            <button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Сохраняем…" : "Сохранить изменения")</button>
+            <button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? Text["Common_Saving"] : Text["Profile_SaveChanges"])</button>
         </EditForm>
     }
     else if (Section == "devices")
@@ -81,23 +81,22 @@
                     <span class="setting-icon material-symbols-rounded" aria-hidden="true">watch</span>
                     <div>
                         <p class="setting-eyebrow">Wear OS</p>
-                        <h2>Подключить часы</h2>
+                        <h2>@Text["Watch_ConnectTitle"]</h2>
                     </div>
                 </div>
                 <p class="setting-description">
-                    Создайте одноразовый код и введите его в приложении GPlanner на часах.
+                    @Text["Watch_ConnectHint"]
                 </p>
 
                 @if (_pairingCode is not null)
                 {
                     <div class="watch-pairing-result" role="status">
-                        <span>Код подключения</span>
-                        <output aria-label="Код подключения часов: @FormatCodeForSpeech(_pairingCode.Code)">
+                        <span>@Text["Watch_PairingCode"]</span>
+                        <output aria-label="@Text.Format("Watch_PairingCodeSpeech", FormatCodeForSpeech(_pairingCode.Code))">
                             @_pairingCode.Code
                         </output>
                         <small>
-                            Действует до @_pairingCode.ExpiresAtUtc.ToLocalTime().ToString("HH:mm").
-                            Новый код отменит предыдущий.
+                            @Text.Format("Watch_CodeValidUntil", _pairingCode.ExpiresAtUtc.ToLocalTime().ToString("HH:mm"))
                         </small>
                     </div>
                 }
@@ -105,19 +104,19 @@
                 <button class="setting-primary-action" type="button"
                         disabled="@_isBusy" @onclick="CreatePairingCodeAsync">
                     @(_isBusy
-                        ? "Создаём код…"
-                        : _pairingCode is null ? "Создать код" : "Создать новый код")
+                        ? Text["Watch_CreatingCode"]
+                        : _pairingCode is null ? Text["Watch_CreateCode"] : Text["Watch_CreateNewCode"])
                 </button>
             </article>
 
             <article class="setting-card watch-devices-card">
                 <div class="watch-list-heading">
                     <div>
-                        <p class="setting-eyebrow">Ваши устройства</p>
-                        <h2>Подключённые часы</h2>
+                        <p class="setting-eyebrow">@Text["Watch_YourDevices"]</p>
+                        <h2>@Text["Watch_ConnectedTitle"]</h2>
                     </div>
                     <button class="watch-refresh-button" type="button"
-                            aria-label="Обновить список часов"
+                            aria-label="@Text["Watch_RefreshList"]"
                             disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
                         <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
                     </button>
@@ -125,16 +124,16 @@
 
                 @if (_isBusy && !_watchDevicesLoaded)
                 {
-                    <div class="watch-list-state" role="status">Загружаем устройства…</div>
+                    <div class="watch-list-state" role="status">@Text["Watch_LoadingDevices"]</div>
                 }
                 else if (!_watchDevicesLoaded)
                 {
                     <div class="watch-list-state">
-                        <strong>Список устройств недоступен</strong>
-                        <span>Проверьте соединение и попробуйте загрузить список снова.</span>
+                        <strong>@Text["Watch_ListUnavailable"]</strong>
+                        <span>@Text["Watch_ListUnavailableHint"]</span>
                         <button class="watch-list-retry" type="button"
                                 disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
-                            Повторить загрузку
+                            @Text["Watch_RetryLoad"]
                         </button>
                     </div>
                 }
@@ -142,8 +141,8 @@
                 {
                     <div class="watch-list-state">
                         <span class="material-symbols-rounded" aria-hidden="true">watch_off</span>
-                        <strong>Часы пока не подключены</strong>
-                        <span>Создайте код выше и введите его на часах.</span>
+                        <strong>@Text["Watch_NoDevices"]</strong>
+                        <span>@Text["Watch_NoDevicesHint"]</span>
                     </div>
                 }
                 else
@@ -160,7 +159,7 @@
                                 <button class="watch-disconnect-button" type="button"
                                         disabled="@_isBusy"
                                         @onclick="() => ConfirmWatchRevocation(device)">
-                                    Отключить
+                                    @Text["Watch_Disconnect"]
                                 </button>
                             </section>
                         }
@@ -170,7 +169,7 @@
                     {
                         <button class="watch-disconnect-all" type="button"
                                 disabled="@_isBusy" @onclick="ConfirmAllWatchRevocations">
-                            Отключить все часы
+                            @Text["Watch_DisconnectAll"]
                         </button>
                     }
                 }
@@ -182,20 +181,20 @@
                          aria-labelledby="watch-confirmation-title"
                          aria-describedby="watch-confirmation-description">
                     <span class="material-symbols-rounded" aria-hidden="true">warning</span>
-                    <h2 id="watch-confirmation-title">Отключить часы?</h2>
+                    <h2 id="watch-confirmation-title">@Text["Watch_DisconnectTitle"]</h2>
                     <p id="watch-confirmation-description">
                         @(_revokeAllWatchesRequested
-                            ? "Все подключённые часы потеряют доступ к аккаунту."
-                            : $"Часы «{_watchPendingRevocation!.DisplayName}» потеряют доступ к аккаунту.")
+                            ? Text["Watch_DisconnectAllWarning"]
+                            : Text.Format("Watch_DisconnectOneWarning", _watchPendingRevocation!.DisplayName))
                     </p>
                     <div class="watch-confirmation-actions">
                         <button class="setting-secondary-action" type="button"
                                 disabled="@_isBusy" @onclick="CancelWatchRevocation">
-                            Отмена
+                            @Text["Common_Cancel"]
                         </button>
                         <button class="setting-danger-action" type="button"
                                 disabled="@_isBusy" @onclick="RevokeConfirmedWatchesAsync">
-                            @(_isBusy ? "Отключаем…" : "Отключить")
+                            @(_isBusy ? Text["Watch_Disconnecting"] : Text["Watch_Disconnect"])
                         </button>
                     </div>
                 </article>
@@ -204,23 +203,23 @@
     }
     else if (Section == "my-data")
     {
-        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">database</span><h2>Экспорт и синхронизация</h2><p class="setting-description">Инструменты экспорта данных и синхронизации будут доступны в этом разделе.</p></article>
+        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">database</span><h2>@Text["ProfileSetting_ExportTitle"]</h2><p class="setting-description">@Text["ProfileSetting_ExportDescription"]</p></article>
     }
     else if (Section == "rest-timers")
     {
         <div class="setting-card">
-            <p class="setting-description">Эти значения станут временем по умолчанию для всех таймеров отдыха.</p>
-            <div class="setting-form-grid"><label>Между подходами, сек.<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" /></label><label>Между упражнениями, сек.<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" /></label></div>
-            <button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="SaveRestTimersAsync">@(_isBusy ? "Сохраняем…" : "Применить ко всем таймерам")</button>
+            <p class="setting-description">@Text["Profile_RestTimersHint"]</p>
+            <div class="setting-form-grid"><label>@Text["Profile_RestBetweenSets"]<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" /></label><label>@Text["Profile_RestBetweenExercises"]<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" /></label></div>
+            <button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="SaveRestTimersAsync">@(_isBusy ? Text["Common_Saving"] : Text["Profile_ApplyToAllTimers"])</button>
         </div>
     }
     else if (Section == "change-password")
     {
-        <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>Текущий пароль <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>Новый пароль <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>Подтверждение нового пароля <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? "Выполняем…" : "Изменить пароль")</button></EditForm>
+        <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>@Text["Profile_CurrentPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>@Text["Profile_NewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>@Text["Profile_ConfirmNewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? Text["Profile_PasswordBusy"] : Text["ProfileItem_ChangePassword"])</button></EditForm>
     }
     else if (Section == "report-problem")
     {
-        <div class="setting-card"><label class="support-field">Что произошло?<textarea maxlength="2000" placeholder="Опишите, что произошло..." @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">Минимум 10 символов. Не указывайте пароль или другие конфиденциальные данные.</p><button class="setting-secondary-action" type="button" disabled="@_isBusy" @onclick="PickScreenshotAsync">Добавить скриншот</button>@if (_screenshot is not null) { <p class="setting-description">Прикреплён файл: @_screenshot.FileName</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? "Отправляем…" : "Отправить")</button></div>
+        <div class="setting-card"><label class="support-field">@Text["Profile_SupportQuestion"]<textarea maxlength="2000" placeholder="@Text["Profile_SupportPlaceholder"]" @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">@Text["ProfileSetting_SupportHint"]</p><button class="setting-secondary-action" type="button" disabled="@_isBusy" @onclick="PickScreenshotAsync">@Text["Profile_AddScreenshot"]</button>@if (_screenshot is not null) { <p class="setting-description">@Text.Format("ProfileSetting_ScreenshotAttached", _screenshot.FileName)</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? Text["Profile_Sending"] : Text["Profile_Send"])</button></div>
     }
     else if (Section == "suggest-idea")
     {
@@ -267,20 +266,22 @@
     }
     else if (Section == "logout")
     {
-        <article class="setting-card"><p class="setting-description">Вы выйдете из аккаунта на этом устройстве.</p><button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="LogoutAsync">Выйти из аккаунта</button></article>
+        <article class="setting-card"><p class="setting-description">@Text["ProfileSetting_LogoutHint"]</p><button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="LogoutAsync">@Text["ProfileItem_Logout"]</button></article>
     }
     else if (Section == "delete-account")
     {
-        <article class="setting-card setting-card--danger"><span class="setting-icon material-symbols-rounded" aria-hidden="true">warning</span><h2>Удаление аккаунта</h2><p>Будут удалены профиль, планы, история тренировок и все пользовательские данные.</p>@if (!_deleteConfirmed) { <button class="setting-danger-action" type="button" @onclick="() => _deleteConfirmed = true">Продолжить</button> } else { <p class="delete-confirmation">Это действие нельзя отменить.</p><button class="setting-danger-action" type="button" disabled="@_isBusy" @onclick="DeleteAccountAsync">@(_isBusy ? "Удаляем…" : "Удалить навсегда")</button> }</article>
+        <article class="setting-card setting-card--danger"><span class="setting-icon material-symbols-rounded" aria-hidden="true">warning</span><h2>@Text["Profile_DeleteAccountTitle"]</h2><p>@Text["ProfileSetting_DeleteWarning"]</p>@if (!_deleteConfirmed) { <button class="setting-danger-action" type="button" @onclick="() => _deleteConfirmed = true">@Text["Common_Continue"]</button> } else { <p class="delete-confirmation">@Text["ProfileSetting_DeleteIrreversible"]</p><button class="setting-danger-action" type="button" disabled="@_isBusy" @onclick="DeleteAccountAsync">@(_isBusy ? Text["Common_Deleting"] : Text["Profile_DeleteForever"])</button> }</article>
     }
 </section>
 
 @code {
-    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    // Значение остаётся русским: оно уходит на сервер и хранится в профиле.
+    // Переводится только подпись, которую видит пользователь.
+    private IReadOnlyList<SystemChoiceOption> GenderOptions =>
     [
-        new("Мужской", "Мужской"),
-        new("Женский", "Женский"),
-        new("Не указывать", "Не указывать")
+        new("Мужской", Text["Gender_Male"]),
+        new("Женский", Text["Gender_Female"]),
+        new("Не указывать", Text["Gender_Unspecified"])
     ];
 
     [Parameter] public string Section { get; set; } = string.Empty;
@@ -302,10 +303,12 @@
     private string? _watchMessage;
     private IEnumerable<WatchDeviceResponse> ActiveWatchDevices =>
         _watchDevices.Where(device => !device.IsRevoked);
-    private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting) ? setting : new("Настройка не найдена", "help", "Вернитесь в профиль и выберите нужный раздел.", false);
+    private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting)
+        ? setting
+        : new("ProfileSetting_NotFoundTitle", "help", "ProfileSetting_NotFoundDescription", false);
     private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
-        ["personal-information"] = new("Личная информация", "badge", "", true), ["rest-timers"] = new("Таймеры отдыха", "timer", "", true), ["change-password"] = new("Изменить пароль", "password", "", true), ["report-problem"] = new("Сообщить о проблеме", "bug_report", "", true), ["logout"] = new("Выйти из аккаунта", "logout", "", true), ["delete-account"] = new("Удалить аккаунт", "delete_forever", "", true), ["devices"] = new("Подключённые устройства", "devices", "", true), ["my-data"] = new("Мои данные", "database", "", true),
-        ["units"] = new("Единицы измерения", "scale", "Настройка единиц измерения появится в одном из ближайших обновлений.", false), ["workout-settings"] = new("Настройки тренировок", "exercise", "Настройки тренировок появятся в одном из ближайших обновлений.", false), ["notifications"] = new("Уведомления", "notifications", "Настройки уведомлений скоро будут доступны здесь.", false), ["appearance"] = new("Внешний вид", "palette", "Настройки внешнего вида скоро будут доступны здесь.", false), ["language"] = new("Язык", "language", "", true, RequiresProfile: false), ["export"] = new("Экспорт данных", "download", "Экспорт данных скоро будет доступен здесь.", false), ["sync"] = new("Синхронизация", "sync", "Синхронизация появится в одном из ближайших обновлений.", false), ["sessions"] = new("Активные сеансы", "devices_other", "Управление активными сеансами скоро будет доступно здесь.", false), ["help"] = new("Помощь", "help", "Раздел помощи скоро будет доступен здесь.", false), ["suggest-idea"] = new("Предложить идею", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("О GPlanner", "info", "GPlanner помогает планировать тренировки и отслеживать прогресс.", false), ["privacy"] = new("Политика конфиденциальности", "privacy_tip", "Политика конфиденциальности скоро будет опубликована здесь.", false) };
+        ["personal-information"] = new("ProfileItem_PersonalInformation", "badge", "", true), ["rest-timers"] = new("ProfileItem_RestTimers", "timer", "", true), ["change-password"] = new("ProfileItem_ChangePassword", "password", "", true), ["report-problem"] = new("ProfileItem_ReportProblem", "bug_report", "", true), ["logout"] = new("ProfileItem_Logout", "logout", "", true), ["delete-account"] = new("ProfileItem_DeleteAccount", "delete_forever", "", true), ["devices"] = new("ProfileItem_ConnectedDevices", "devices", "", true), ["my-data"] = new("ProfileItem_MyData", "database", "", true),
+        ["units"] = new("ProfileItem_Units", "scale", "ProfileSoon_Units", false), ["workout-settings"] = new("ProfileItem_WorkoutSettings", "exercise", "ProfileSoon_WorkoutSettings", false), ["notifications"] = new("ProfileItem_Notifications", "notifications", "ProfileSoon_Notifications", false), ["appearance"] = new("ProfileItem_Appearance", "palette", "ProfileSoon_Appearance", false), ["language"] = new("Profile_Language_Title", "language", "", true, RequiresProfile: false), ["export"] = new("ProfileItem_Export", "download", "ProfileSoon_Export", false), ["sync"] = new("ProfileItem_Sync", "sync", "ProfileSoon_Sync", false), ["sessions"] = new("ProfileItem_Sessions", "devices_other", "ProfileSoon_Sessions", false), ["help"] = new("ProfileItem_Help", "help", "ProfileSoon_Help", false), ["suggest-idea"] = new("Profile_SuggestIdea_Title", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("ProfileItem_AboutApp", "info", "ProfileAbout_Description", false), ["privacy"] = new("ProfileItem_Privacy", "privacy_tip", "ProfileSoon_Privacy", false) };
     protected override async Task OnInitializedAsync()
     {
         var replacementRoute = Section.ToLowerInvariant() switch
@@ -354,7 +357,7 @@
     private const string InstagramHandle = "gymplanner1";
     private const string InstagramUrl = $"https://www.instagram.com/{InstagramHandle}/";
     private string? _instagramError;
-    private async Task OpenInstagramAsync() { _instagramError = null; if (!await LinkOpener.OpenAsync(InstagramUrl)) _instagramError = $"Не удалось открыть Instagram. Откройте ссылку вручную: {InstagramUrl}"; }
+    private async Task OpenInstagramAsync() { _instagramError = null; if (!await LinkOpener.OpenAsync(InstagramUrl)) _instagramError = Text.Format("ProfileSetting_InstagramFailed", InstagramUrl); }
     private int _restBetweenSetsSeconds = 90; private int _restBetweenExercisesSeconds = 120;
     private async Task LoadWatchDevicesAsync()
     {
@@ -384,7 +387,7 @@
             }
 
             _pairingCode = result.Value;
-            _watchMessage = "Код создан. Введите его на часах.";
+            _watchMessage = Text["Watch_CodeCreated"];
         });
     }
 
@@ -420,7 +423,7 @@
             var result = revokeAll
                 ? await WatchClient.RevokeAllAsync()
                 : device is null
-                    ? ApiResult.Failure("Не выбраны часы для отключения.")
+                    ? ApiResult.Failure(Text["Watch_NoDeviceSelected"])
                     : await WatchClient.RevokeAsync(device.DeviceId);
             if (!result.Succeeded)
             {
@@ -435,8 +438,8 @@
                         ? item with { IsRevoked = true }
                         : item).ToArray();
             _watchMessage = revokeAll
-                ? "Все часы отключены."
-                : $"Часы «{device!.DisplayName}» отключены.";
+                ? Text["Watch_AllDisconnected"]
+                : Text.Format("Watch_OneDisconnected", device!.DisplayName);
             _watchPendingRevocation = null;
             _revokeAllWatchesRequested = false;
         });
@@ -463,12 +466,12 @@
         return string.IsNullOrWhiteSpace(metadata) ? "Wear OS" : metadata;
     }
 
-    private static string FormatLastSeen(DateTime? lastSeenAtUtc) =>
+    private string FormatLastSeen(DateTime? lastSeenAtUtc) =>
         lastSeenAtUtc is null
-            ? "Ещё не синхронизировались"
-            : $"Последняя активность: {lastSeenAtUtc.Value.ToLocalTime():dd.MM.yyyy HH:mm}";
+            ? Text["Watch_NeverSynced"]
+            : Text.Format("Watch_LastSeen", lastSeenAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm"));
     private async Task SaveProfileAsync() { await RunAsync(async () => { var r = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
-    private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add("Укажите время от 5 секунд до 60 минут."); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
+    private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add(Text["Profile_RestTimerRange"]); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
     private async Task ChangePasswordAsync() { await RunAsync(async () => { var r = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword)); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
     private async Task PickScreenshotAsync() { var r = await PhotoPicker.PickAsync(MobilePhotoSource.Library); if (r.Succeeded) _screenshot = r.Photo; else if (!r.Cancelled) _errors.AddRange(r.Errors); }
     private async Task SubmitSupportAsync() { await RunAsync(async () => { var r = await SupportClient.CreateAsync(_supportMessage.Trim(), _screenshot, GetDeviceContext()); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
@@ -477,6 +480,8 @@
     private async Task RunAsync(Func<Task> action) { if (_isBusy) return; _isBusy = true; _errors.Clear(); try { await action(); } finally { _isBusy = false; } }
     private SupportDeviceContext GetDeviceContext() { try { return new(AppInfo.Current.VersionString, DeviceInfo.Current.Platform.ToString(), DeviceInfo.Current.VersionString, $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}".Trim()); } catch (Exception exception) { Logger.LogDebug(exception, "Device context is unavailable for a support ticket."); return new(null, null, null, null); } }
     private sealed class ProfileInput { [Required, MaxLength(80)] public string FirstName { get; set; } = string.Empty; [Required, MaxLength(80)] public string LastName { get; set; } = string.Empty; [Required] public DateTime? BirthDate { get; set; } [Required] public string Gender { get; set; } = string.Empty; }
-    private sealed class PasswordInput { [Required] public string CurrentPassword { get; set; } = string.Empty; [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty; [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")] public string ConfirmPassword { get; set; } = string.Empty; }
-    private sealed record ProfileSettingInfo(string Title, string Icon, string Description, bool IsAvailable, bool RequiresProfile = true);
+    private sealed class PasswordInput { [Required] public string CurrentPassword { get; set; } = string.Empty; [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty; [Compare(nameof(NewPassword), ErrorMessage = "Validation_PasswordsDoNotMatch")] public string ConfirmPassword { get; set; } = string.Empty; }
+    // Каталог хранит КЛЮЧИ ресурсов, а не готовый текст: раздел выбирается
+    // по маршруту один раз, а язык пользователь может переключить в любой момент.
+    private sealed record ProfileSettingInfo(string TitleKey, string Icon, string DescriptionKey, bool IsAvailable, bool RequiresProfile = true);
 }

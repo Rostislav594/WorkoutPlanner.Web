@@ -18,12 +18,12 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
 
             var profile = await response.Content.ReadFromJsonAsync<ProfileResponse>(cancellationToken);
             return profile is null
-                ? ApiResult<ProfileResponse>.Failure("Сервер вернул пустой профиль.")
+                ? ApiResult<ProfileResponse>.Failure(ApiErrorMessages.EmptyResponse())
                 : ApiResult<ProfileResponse>.Success(profile);
         }
         catch (HttpRequestException)
         {
-            return ApiResult<ProfileResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<ProfileResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -40,12 +40,12 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
 
             var profile = await response.Content.ReadFromJsonAsync<ProfileResponse>(cancellationToken);
             return profile is null
-                ? ApiResult<ProfileResponse>.Failure("Сервер вернул пустой профиль.")
+                ? ApiResult<ProfileResponse>.Failure(ApiErrorMessages.EmptyResponse())
                 : ApiResult<ProfileResponse>.Success(profile);
         }
         catch (HttpRequestException)
         {
-            return ApiResult<ProfileResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<ProfileResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -61,12 +61,12 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
 
             var settings = await response.Content.ReadFromJsonAsync<RestTimerSettingsResponse>(cancellationToken);
             return settings is null
-                ? ApiResult<RestTimerSettingsResponse>.Failure("Сервер вернул пустые настройки таймера.")
+                ? ApiResult<RestTimerSettingsResponse>.Failure(ApiErrorMessages.EmptyResponse())
                 : ApiResult<RestTimerSettingsResponse>.Success(settings);
         }
         catch (HttpRequestException)
         {
-            return ApiResult<RestTimerSettingsResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<RestTimerSettingsResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -111,7 +111,7 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -129,7 +129,7 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -146,7 +146,7 @@ public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 }

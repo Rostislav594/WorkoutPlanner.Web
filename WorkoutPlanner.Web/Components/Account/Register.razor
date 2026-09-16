@@ -1,4 +1,4 @@
-@page "/account/register"
+﻿@page "/account/register"
 @attribute [AllowAnonymous]
 @using Microsoft.AspNetCore.Identity
 @inject UserManager<IdentityUser> UserManager
@@ -8,6 +8,7 @@
 @inject WorkoutPlanner.Web.Services.Activity.UserActivityService UserActivity
 @inject TimeProvider TimeProvider
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="auth-page">
 
@@ -19,7 +20,7 @@
                  alt="GPlanner"
                  class="login-logo" />
 
-            <h1>Регистрация</h1>
+            <h1>@Text["Register_Title"]</h1>
 
             <div class="title-line"></div>
 
@@ -51,40 +52,40 @@
                            @bind-Value="InputModel.Email"
                            autocomplete="username" />
 
-                <ValidationMessage For="@(() => InputModel.Email)" />
+                <LocalizedValidationMessage For="@(() => InputModel.Email)" />
 
             </div>
 
             <div class="field">
 
-                <label>Пароль</label>
+                <label>@Text["Common_Password"]</label>
 
                 <InputText class="auth-input"
                            type="password"
                            @bind-Value="InputModel.Password"
                            autocomplete="new-password" />
 
-                <ValidationMessage For="@(() => InputModel.Password)" />
+                <LocalizedValidationMessage For="@(() => InputModel.Password)" />
 
             </div>
 
             <div class="field">
 
-                <label>Подтверждение пароля</label>
+                <label>@Text["Web_Register_ConfirmPassword"]</label>
 
                 <InputText class="auth-input"
                            type="password"
                            @bind-Value="InputModel.ConfirmPassword"
                            autocomplete="new-password" />
 
-                <ValidationMessage For="@(() => InputModel.ConfirmPassword)" />
+                <LocalizedValidationMessage For="@(() => InputModel.ConfirmPassword)" />
 
             </div>
 
             <button class="finish-button auth-button"
                     type="submit">
 
-                Создать аккаунт
+                @Text["Register_Submit"]
 
             </button>
 
@@ -92,10 +93,10 @@
 
         <div class="auth-footer">
 
-            Уже есть аккаунт?
+            @Text["Register_HaveAccount"]
 
             <a href="/account/login">
-                Войти
+                @Text["Register_SignIn"]
             </a>
 
         </div>
@@ -163,7 +164,7 @@
                     user.Id);
             }
 
-            Errors.Add("Не удалось завершить регистрацию. Попробуйте ещё раз.");
+            Errors.Add(Text["Web_Register_Failed"]);
             return;
         }
 
@@ -173,39 +174,40 @@
 
     private sealed class RegisterInput
     {
-        [Required(ErrorMessage = "Введите email.")]
-        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_EmailRequired")]
+        [EmailAddress(ErrorMessage = "Validation_EmailInvalid")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите пароль.")]
-        [MinLength(6, ErrorMessage = "Пароль должен быть не короче 6 символов.")]
+        [Required(ErrorMessage = "Validation_PasswordRequired")]
+        [MinLength(6, ErrorMessage = "Validation_PasswordMinLength")]
         public string Password { get; set; } = string.Empty;
 
-        [Compare(nameof(Password), ErrorMessage = "Пароли не совпадают.")]
+        [Compare(nameof(Password), ErrorMessage = "Validation_PasswordsDoNotMatch")]
         public string ConfirmPassword { get; set; } = string.Empty;
     }
 
-    private static string TranslateIdentityError(IdentityError error)
+    private string TranslateIdentityError(IdentityError error)
     {
         return error.Code switch
         {
             "DuplicateEmail" or "DuplicateUserName"
-                => "Пользователь с таким Email уже зарегистрирован.",
+                => Text["Password_DuplicateEmail"],
 
             "PasswordRequiresDigit"
-                => "Пароль должен содержать хотя бы одну цифру.",
+                => Text["Password_RequiresDigit"],
 
             "PasswordRequiresLower"
-                => "Пароль должен содержать хотя бы одну строчную латинскую букву.",
+                => Text["Password_RequiresLower"],
 
             "PasswordRequiresUpper"
-                => "Пароль должен содержать хотя бы одну заглавную латинскую букву.",
+                => Text["Password_RequiresUpper"],
 
             "PasswordRequiresNonAlphanumeric"
-                => "Пароль должен содержать хотя бы один специальный символ.",
+                => Text["Password_RequiresNonAlphanumeric"],
 
             "PasswordTooShort"
-                => "Пароль слишком короткий.",
+                => Text["Password_TooShort"],
 
             _ => error.Description
         };

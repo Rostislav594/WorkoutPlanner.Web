@@ -8,6 +8,7 @@ namespace WorkoutPlanner.Web.Services.Push;
 public sealed class PushNotificationService(
     IPushNotificationTemplateProvider templates,
     IRemotePushProvider provider,
+    IUserLanguageProvider languages,
     ILogger<PushNotificationService> logger) : IPushNotificationService
 {
     public async Task NotifyInboxMessageAsync(
@@ -20,7 +21,8 @@ public sealed class PushNotificationService(
         if (inboxMessageId <= 0)
             throw new ArgumentOutOfRangeException(nameof(inboxMessageId));
 
-        var template = templates.Get(type);
+        var language = await languages.GetAsync(userId, cancellationToken);
+        var template = templates.Get(type, language);
         var data = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             [PushNotificationPayloadKeys.Type] =

@@ -1,5 +1,6 @@
-@page "/"
+﻿@page "/"
 @attribute [Authorize(Roles = "Admin")]
+@inject IAppText Text
 
 <PageTitle>GPlanner Admin</PageTitle>
 
@@ -12,6 +13,6 @@
             <h1 id="admin-entry-title">ADMIN</h1>
             <span class="admin-entry__arrow material-symbols-rounded" aria-hidden="true">arrow_forward</span>
         </a>
-        <p id="admin-entry-description" class="admin-entry__description">Панель управления системой</p>
+        <p id="admin-entry-description" class="admin-entry__description">@Text["Admin_EntryDescription"]</p>
     </section>
 </main>

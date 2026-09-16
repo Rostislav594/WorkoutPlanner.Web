@@ -1,4 +1,5 @@
 namespace GymPlanner.Mobile.SystemControls;
+using GymPlanner.Mobile.Localization;
 
 public sealed class MauiSystemChoicePicker : ISystemChoicePicker
 {
@@ -61,7 +62,7 @@ public sealed class MauiSystemChoicePicker : ISystemChoicePicker
             completion.TrySetResult(options[args.Which].Value);
             dialog?.Dismiss();
         });
-        builder.SetNegativeButton("Отмена", (_, _) => completion.TrySetResult(null));
+        builder.SetNegativeButton(AppTexts.Get("Common_Cancel"), (_, _) => completion.TrySetResult(null));
 
         var createdDialog = builder.Create();
         if (createdDialog is null)
@@ -85,19 +86,19 @@ public sealed class MauiSystemChoicePicker : ISystemChoicePicker
 
         var labels = options
             .Select(option => option.Value == selectedValue
-                ? $"✓ {option.Label}"
+                ? AppTexts.Format("Picker_Selected", option.Label)
                 : option.Label)
             .ToArray();
 
 #pragma warning disable CS0618
         var selectedLabel = await page.DisplayActionSheetAsync(
             title,
-            "Отмена",
+            AppTexts.Get("Common_Cancel"),
             null,
             labels);
 #pragma warning restore CS0618
 
-        if (string.IsNullOrEmpty(selectedLabel) || selectedLabel == "Отмена")
+        if (string.IsNullOrEmpty(selectedLabel) || selectedLabel == AppTexts.Get("Common_Cancel"))
             return null;
 
         var selectedIndex = Array.IndexOf(labels, selectedLabel);

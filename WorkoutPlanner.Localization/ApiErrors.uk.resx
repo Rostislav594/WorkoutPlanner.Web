@@ -142,4 +142,22 @@
   <data name="watch_pairing.device_already_paired" xml:space="preserve">
     <value>Цей годинник уже підключено до іншого облікового запису.</value>
   </data>
+  <data name="support.rate_limited" xml:space="preserve">
+    <value>Забагато звернень. Спробуйте надіслати повідомлення пізніше.</value>
+  </data>
+  <data name="support.send_failed" xml:space="preserve">
+    <value>Сервер не підтвердив надсилання звернення.</value>
+  </data>
+  <data name="photo.save_failed" xml:space="preserve">
+    <value>Сервер не підтвердив збереження фотографії.</value>
+  </data>
+  <data name="photo.unsupported_format" xml:space="preserve">
+    <value>Сервер повернув непідтримуваний формат фотографії.</value>
+  </data>
+  <data name="common.incomplete_response" xml:space="preserve">
+    <value>Сервер повернув неповну відповідь.</value>
+  </data>
+  <data name="support.message_invalid" xml:space="preserve">
+    <value>Введіть коректний опис проблеми.</value>
+  </data>
 </root>

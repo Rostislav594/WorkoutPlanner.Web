@@ -1,5 +1,7 @@
 package com.gymplanner.wearos.ui
 
+import com.gymplanner.wearos.R
+import com.gymplanner.wearos.data.localization.WatchStrings
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.domain.repository.FinishWorkoutResult
 import com.gymplanner.wearos.domain.repository.WorkoutRepository
@@ -47,7 +49,7 @@ class MinimalMvpViewModelTest {
     @Test
     fun successfulLocalCompletion_emitsHapticEventWithoutWaitingForStateFlow() = runTest(dispatcher) {
         val repository = CompletionRepository()
-        val viewModel = MinimalMvpViewModel(repository)
+        val viewModel = MinimalMvpViewModel(repository, TestStrings)
         val event = async { viewModel.events.first() }
 
         viewModel.completeCurrentSet()
@@ -59,7 +61,7 @@ class MinimalMvpViewModelTest {
     @Test
     fun rejectedCompletion_explainsFailureInsteadOfSilentlySucceeding() = runTest(dispatcher) {
         val repository = CompletionRepository(completionAccepted = false)
-        val viewModel = MinimalMvpViewModel(repository)
+        val viewModel = MinimalMvpViewModel(repository, TestStrings)
 
         viewModel.completeCurrentSet()
         advanceUntilIdle()
@@ -70,7 +72,7 @@ class MinimalMvpViewModelTest {
     @Test
     fun finish_callsRepositoryAndEmitsConfirmation() = runTest(dispatcher) {
         val repository = CompletionRepository(initialState = MockWorkoutState.ReadyToFinish)
-        val viewModel = MinimalMvpViewModel(repository)
+        val viewModel = MinimalMvpViewModel(repository, TestStrings)
         val event = async { viewModel.events.first() }
 
         viewModel.finishWorkout()
@@ -86,18 +88,21 @@ class MinimalMvpViewModelTest {
             initialState = MockWorkoutState.ReadyToFinish,
             finishResult = FinishWorkoutResult.UnresolvedOperations,
         )
-        val viewModel = MinimalMvpViewModel(repository)
+        val viewModel = MinimalMvpViewModel(repository, TestStrings)
 
         viewModel.finishWorkout()
         advanceUntilIdle()
 
-        assertTrue(viewModel.actionMessage.value!!.contains("неотправленные"))
+        assertEquals(
+            TestStrings.textFor(R.string.pending_changes_wait),
+            viewModel.actionMessage.value,
+        )
     }
 
     @Test
     fun confirmOnPhone_delegatesToRepository() = runTest(dispatcher) {
         val repository = CompletionRepository()
-        val viewModel = MinimalMvpViewModel(repository)
+        val viewModel = MinimalMvpViewModel(repository, TestStrings)
 
         viewModel.confirmOnPhone()
         advanceUntilIdle()
@@ -143,4 +148,15 @@ class MinimalMvpViewModelTest {
             weightKilograms = 120.0,
         )
     }
+}
+
+/**
+ * Ресурсы Android в JVM-тесте не поднимаются, поэтому строка подменяется
+ * идентификатором ресурса: тест проверяет, какой ключ запросила ViewModel,
+ * а не сам перевод.
+ */
+private object TestStrings : WatchStrings {
+    override fun get(id: Int, vararg args: Any): String = textFor(id)
+
+    fun textFor(id: Int): String = "string:$id"
 }

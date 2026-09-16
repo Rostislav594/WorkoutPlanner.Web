@@ -1,4 +1,5 @@
 namespace GymPlanner.Mobile.Photos;
+using GymPlanner.Mobile.Localization;
 
 public sealed class MauiPhotoPicker : IMobilePhotoPicker
 {
@@ -13,13 +14,13 @@ public sealed class MauiPhotoPicker : IMobilePhotoPicker
             if (source == MobilePhotoSource.Camera)
             {
                 if (!MediaPicker.Default.IsCaptureSupported)
-                    return PhotoPickResult.Failure("Камера недоступна на этом устройстве.");
+                    return PhotoPickResult.Failure(AppTexts.Get("Photo_CameraUnavailable"));
 
                 var permission = await Permissions.CheckStatusAsync<Permissions.Camera>();
                 if (permission != PermissionStatus.Granted)
                     permission = await Permissions.RequestAsync<Permissions.Camera>();
                 if (permission != PermissionStatus.Granted)
-                    return PhotoPickResult.Failure("Разрешите доступ к камере в настройках приложения.");
+                    return PhotoPickResult.Failure(AppTexts.Get("Photo_CameraPermission"));
             }
 
             cancellationToken.ThrowIfCancellationRequested();
@@ -41,7 +42,7 @@ public sealed class MauiPhotoPicker : IMobilePhotoPicker
             if (contentType is null)
             {
                 return PhotoPickResult.Failure(
-                    "Поддерживаются только фотографии JPG, PNG и WebP.");
+                    AppTexts.Get("Photo_UnsupportedFormat"));
             }
 
             await using var input = await result.OpenReadAsync();
@@ -54,13 +55,13 @@ public sealed class MauiPhotoPicker : IMobilePhotoPicker
                     break;
 
                 if (output.Length + read > MaxPhotoSize)
-                    return PhotoPickResult.Failure("Размер фотографии не должен превышать 5 МБ.");
+                    return PhotoPickResult.Failure(AppTexts.Get("Photo_TooLarge"));
 
                 await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
             }
 
             if (output.Length == 0)
-                return PhotoPickResult.Failure("Выбранная фотография пуста.");
+                return PhotoPickResult.Failure(AppTexts.Get("Photo_Empty"));
 
             var fileName = Path.GetFileName(result.FileName);
             if (string.IsNullOrWhiteSpace(fileName))
@@ -75,15 +76,15 @@ public sealed class MauiPhotoPicker : IMobilePhotoPicker
         }
         catch (PermissionException)
         {
-            return PhotoPickResult.Failure("Нет разрешения на доступ к фотографии.");
+            return PhotoPickResult.Failure(AppTexts.Get("Photo_NoPermission"));
         }
         catch (FeatureNotSupportedException)
         {
-            return PhotoPickResult.Failure("Выбор фотографий недоступен на этом устройстве.");
+            return PhotoPickResult.Failure(AppTexts.Get("Photo_PickerUnavailable"));
         }
         catch (IOException)
         {
-            return PhotoPickResult.Failure("Не удалось прочитать выбранную фотографию.");
+            return PhotoPickResult.Failure(AppTexts.Get("Photo_ReadFailed"));
         }
     }
 

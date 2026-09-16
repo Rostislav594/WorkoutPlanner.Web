@@ -1,3 +1,5 @@
+using GymPlanner.Mobile.Localization;
+using WorkoutPlanner.Localization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -44,13 +46,13 @@ public sealed class SupportApiClient(HttpClient client) : ISupportApiClient
                 if (response.StatusCode == HttpStatusCode.TooManyRequests)
                 {
                     return ApiResult<SupportTicketResponse>.Failure(
-                        "Слишком много обращений. Попробуйте отправить сообщение позже.");
+                        ApiErrorMessages.Get(ApiErrorCodes.SupportRateLimited));
                 }
 
                 if (response.StatusCode == HttpStatusCode.RequestEntityTooLarge)
                 {
                     return ApiResult<SupportTicketResponse>.Failure(
-                        "Размер скриншота не должен превышать 5 МБ.");
+                        ApiErrorMessages.Get(ApiErrorCodes.SupportScreenshotTooLarge));
                 }
 
                 return new(
@@ -64,13 +66,13 @@ public sealed class SupportApiClient(HttpClient client) : ISupportApiClient
                 SupportTicketResponse>(cancellationToken);
             return ticket is null
                 ? ApiResult<SupportTicketResponse>.Failure(
-                    "Сервер не подтвердил отправку обращения.")
+                    ApiErrorMessages.Get(ApiErrorCodes.SupportSendFailed))
                 : ApiResult<SupportTicketResponse>.Success(ticket);
         }
         catch (HttpRequestException)
         {
             return ApiResult<SupportTicketResponse>.Failure(
-                "Нет соединения с сервером. Проверьте интернет и повторите отправку.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 

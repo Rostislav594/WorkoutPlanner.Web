@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="workout_channel_name">Active workout</string>
+    <string name="workout_in_progress">Workout in progress</string>
+    <string name="workout_rest_in_progress">Rest</string>
+    <string name="workout_rest_finished">Rest is over</string>
+
+    <string name="common_retry">Retry</string>
+    <string name="common_back">Back</string>
+
+    <string name="pairing_title">Pairing</string>
+    <string name="pairing_opening_on_phone">Opening on the phone…</string>
+    <string name="pairing_opening">Opening…</string>
+    <string name="pairing_confirm_on_phone">Confirm on the phone</string>
+    <string name="pairing_enter_code">Enter a code</string>
+    <string name="pairing_confirm_title">Confirm on the phone</string>
+    <string name="pairing_confirm_hint">Open GymPlanner on the phone and tap “Connect the watch”.</string>
+    <string name="pairing_waiting">Waiting for an answer…</string>
+    <string name="pairing_enter_code_title">Enter the code</string>
+    <string name="pairing_checking_code">Checking the code…</string>
+    <string name="pairing_connecting">Connecting…</string>
+    <string name="pairing_connect">Connect</string>
+    <string name="pairing_code_description">Six-digit pairing code</string>
+
+    <string name="current_set_number">Set %1$d</string>
+    <string name="current_set_finish">Finish the set</string>
+    <string name="weight_kilograms">%1$s kg</string>
+    <string name="weight_kilograms_unknown">— kg</string>
+    <plurals name="sets_count">
+        <item quantity="one">%1$d set</item>
+        <item quantity="other">%1$d sets</item>
+    </plurals>
+
+    <string name="no_active_workout">No active workout</string>
+    <string name="no_active_checking">Checking…</string>
+    <string name="no_active_last_check">Last check: %1$s</string>
+    <string name="no_active_refreshing">Refreshing…</string>
+    <string name="no_active_refresh">Refresh</string>
+
+    <string name="rest_skip_description">Rest. Tap to skip</string>
+    <string name="hold_to_confirm_description">%1$s. Hold to confirm</string>
+
+    <string name="ambient_rest">Rest</string>
+    <string name="ambient_all_sets_done">All sets are done</string>
+    <string name="ambient_workout_completed">Workout finished</string>
+    <string name="ambient_no_workout">No workout</string>
+    <string name="ambient_not_connected">Not connected</string>
+
+    <string name="completed_title">Workout finished</string>
+    <string name="completed_with_charts">The workout is in your history and in the progress charts!</string>
+    <string name="completed_open_app">Open the app to take the next step!</string>
+
+    <string name="ready_all_sets_done">All sets are done</string>
+    <string name="ready_finishing">Finishing…</string>
+    <string name="ready_finish_workout">Finish the workout</string>
+
+    <string name="save_failed_retry">Could not save. Try again</string>
+    <string name="pending_changes_wait">Some changes are not sent yet. Wait for a connection</string>
+
+    <string name="error_no_connection">No connection to the server</string>
+    <string name="error_secure_store_failed">Could not store the access securely</string>
+    <string name="error_invalid_code">Wrong code</string>
+    <string name="error_watch_other_account">The watch is already paired with another account</string>
+    <string name="error_code_expired">The code has expired</string>
+    <string name="error_server_unavailable">The server is temporarily unavailable</string>
+    <string name="error_pairing_failed">Could not connect the watch</string>
+    <string name="error_pairing_start_failed">Could not start the pairing</string>
+    <string name="error_unknown_response">Unknown server response</string>
+    <string name="error_no_access_returned">The server returned no access</string>
+    <string name="error_session_invalid">The watch session is invalid</string>
+    <string name="error_session_refresh_failed">Could not refresh the session</string>
+    <string name="error_session_expired">The watch session has expired</string>
+    <string name="error_access_revoked">The watch access was revoked</string>
+    <string name="error_load_failed">Loading error</string>
+    <string name="error_bad_payload">Malformed operation payload</string>
+    <string name="error_update_missing_weight">The update has no weight</string>
+    <string name="error_update_missing_reps">The update has no repetitions</string>
+    <string name="error_workout_not_ready">The workout is not ready to finish</string>
+    <string name="error_finish_failed">Could not finish the workout</string>
+    <string name="error_set_changed_on_server">The set was changed on the server</string>
+    <string name="error_operation_id_used">The operation ID is already used</string>
+    <string name="error_operation_rejected">The server rejected the operation</string>
+    <string name="error_set_sync_failed">Could not sync the set</string>
+    <string name="error_previous_operation_rejected">The previous set operation was rejected; refresh the workout</string>
+    <string name="error_phone_unavailable">The phone is unavailable</string>
+    <string name="error_pairing_declined">The pairing was declined on the phone</string>
+    <string name="error_confirmation_timeout">The confirmation timed out. Try again</string>
+    <string name="error_no_active_workout">No active workout found</string>
+    <string name="error_finish_sets_first">Finish every set first</string>
+    <string name="error_sync_changes_failed">Could not sync the changes. Check the connection</string>
+</resources>

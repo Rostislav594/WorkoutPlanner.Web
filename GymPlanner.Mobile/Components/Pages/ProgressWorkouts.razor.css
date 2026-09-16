@@ -342,6 +342,19 @@
     margin-top: var(--space-4);
 }
 
+.chart-page-content--staged .summary-card {
+    animation: progress-summary-rise .48s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+
+.chart-page-content--staged .summary-card:nth-child(1) { animation-delay: 2.35s; }
+.chart-page-content--staged .summary-card:nth-child(2) { animation-delay: 2.55s; }
+.chart-page-content--staged .summary-card:nth-child(3) { animation-delay: 2.75s; }
+
+@keyframes progress-summary-rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .summary-card {
     box-sizing: border-box;
     display: flex;
@@ -567,6 +580,34 @@
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
+    .chart-page-content--staged {
+        display: block;
+    }
+
+    .chart-page-content--staged .progress-summary {
+        flex-direction: row;
+        gap: 8px;
+        margin-top: 6px;
+    }
+
+    .chart-page-content--staged .summary-card {
+        width: 100%;
+        min-width: 0;
+        flex: 1;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .chart-page-content--staged .card-icon {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .chart-page-content--staged .card-title { font-size: .86rem; }
+    .chart-page-content--staged .card-value { font-size: 1.2rem; }
+    .chart-page-content--staged .card-subtitle { display: none; }
+
     .modal-overlay {
         padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     }
@@ -577,16 +618,12 @@
     }
 
     .progress-modal .modal-heading {
-        margin-bottom: 10px;
-    }
-
-    .progress-modal .modal-heading p {
-        margin-top: 3px;
-        font-size: .8rem;
+        margin-bottom: 6px;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .chart-page-content--staged .summary-card { animation: none; }
     .progress-card,
     .loading-spinner,
     .toast-success {

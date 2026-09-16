@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Application.Mapping;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Services.Auth;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -65,12 +66,12 @@ public sealed class TrainingPlanService : ITrainingPlanService
         var normalizedName = NormalizeWorkoutName(workoutName);
 
         if (string.IsNullOrWhiteSpace(normalizedName))
-            return (false, "Введите название тренировки.");
+            return (false, ServerTexts.Current["Server_Plan_NameRequired"]);
 
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
 
         if (await ExistsAsync(db, normalizedName, userId, null, cancellationToken))
-            return (false, "Тренировка с таким названием уже есть.");
+            return (false, ServerTexts.Current["Server_Plan_NameTaken"]);
 
         db.TrainingPlans.Add(
             new Models.TrainingPlan
@@ -93,7 +94,7 @@ public sealed class TrainingPlanService : ITrainingPlanService
         var normalizedName = NormalizeWorkoutName(workoutName);
 
         if (string.IsNullOrWhiteSpace(normalizedName))
-            return (false, "Введите название тренировки.");
+            return (false, ServerTexts.Current["Server_Plan_NameRequired"]);
 
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var plan = await db.TrainingPlans.FirstOrDefaultAsync(
@@ -101,10 +102,10 @@ public sealed class TrainingPlanService : ITrainingPlanService
             cancellationToken);
 
         if (plan is null)
-            return (false, "Тренировка не найдена.");
+            return (false, ServerTexts.Current["Server_Plan_NotFound"]);
 
         if (await ExistsAsync(db, normalizedName, userId, id, cancellationToken))
-            return (false, "Тренировка с таким названием уже есть.");
+            return (false, ServerTexts.Current["Server_Plan_NameTaken"]);
 
         var previousName = plan.WorkoutName;
         plan.WorkoutName = normalizedName;

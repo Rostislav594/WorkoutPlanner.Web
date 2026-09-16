@@ -6,6 +6,8 @@ import com.google.gson.GsonBuilder
 import com.gymplanner.wearos.BuildConfig
 import com.gymplanner.wearos.data.local.WorkoutDatabase
 import com.gymplanner.wearos.data.phone.RemoteActivityPhoneLinkOpener
+import com.gymplanner.wearos.data.localization.AndroidWatchStrings
+import com.gymplanner.wearos.data.localization.WatchStrings
 import com.gymplanner.wearos.data.remote.RetrofitWatchRemoteDataSource
 import com.gymplanner.wearos.data.remote.SafeNetworkLoggingInterceptor
 import com.gymplanner.wearos.data.remote.WatchApiService
@@ -23,6 +25,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(context: Context) {
     val workoutDao = WorkoutDatabase.getInstance(context).workoutDao()
+    // Тексты ошибок и состояний берём из ресурсов: язык выбирает система часов.
+    val strings: WatchStrings = AndroidWatchStrings(context)
     private val gson: Gson = GsonBuilder().create()
     private val api = Retrofit.Builder()
         .baseUrl(BuildConfig.API_BASE_URL)
@@ -46,10 +50,11 @@ class AppContainer(context: Context) {
         sessionManager = sessionManager,
         deviceIdentityStore = DeviceIdentityStore(context),
         gson = gson,
+        strings = strings,
     )
     private val syncScheduler = WorkManagerSyncScheduler(context)
 
-    val syncQueueProcessor = SyncQueueProcessor(workoutDao, remoteDataSource)
+    val syncQueueProcessor = SyncQueueProcessor(workoutDao, remoteDataSource, strings)
     val workoutRepository: WorkoutRepository = OfflineFirstWorkoutRepository(
         workoutDao = workoutDao,
         remoteDataSource = remoteDataSource,
@@ -57,6 +62,7 @@ class AppContainer(context: Context) {
         syncQueueProcessor = syncQueueProcessor,
         phoneLinkOpener = RemoteActivityPhoneLinkOpener(context),
         gson = gson,
+        strings = strings,
     )
 
     private companion object {

@@ -1,3 +1,5 @@
+using GymPlanner.Mobile.Localization;
+using WorkoutPlanner.Localization;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -53,7 +55,7 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         }
         catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
         {
-            return ApiResult<T>.Failure("Нет соединения с сервером.");
+            return ApiResult<T>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -69,7 +71,7 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
         {
             return ApiResult<InboxUnreadCountResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -82,7 +84,7 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
         }
         catch (Exception exception) when (ShouldConvertToConnectionFailure(exception, cancellationToken))
         {
-            return ApiResult<InboxUnreadCountResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<InboxUnreadCountResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -101,7 +103,7 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
                 (await MobileApiErrorReader.ReadAsync(response, cancellationToken)).ToArray());
         var content = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
         return content is null
-            ? ApiResult<T>.Failure("Сервер вернул неполный ответ.")
+            ? ApiResult<T>.Failure(ApiErrorMessages.Get(ApiErrorCodes.IncompleteResponse))
             : ApiResult<T>.Success(content);
     }
 }

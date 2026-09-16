@@ -142,4 +142,22 @@
   <data name="watch_pairing.device_already_paired" xml:space="preserve">
     <value>Эти часы уже подключены к другому аккаунту.</value>
   </data>
+  <data name="support.rate_limited" xml:space="preserve">
+    <value>Слишком много обращений. Попробуйте отправить сообщение позже.</value>
+  </data>
+  <data name="support.send_failed" xml:space="preserve">
+    <value>Сервер не подтвердил отправку обращения.</value>
+  </data>
+  <data name="photo.save_failed" xml:space="preserve">
+    <value>Сервер не подтвердил сохранение фотографии.</value>
+  </data>
+  <data name="photo.unsupported_format" xml:space="preserve">
+    <value>Сервер вернул неподдерживаемый формат фотографии.</value>
+  </data>
+  <data name="common.incomplete_response" xml:space="preserve">
+    <value>Сервер вернул неполный ответ.</value>
+  </data>
+  <data name="support.message_invalid" xml:space="preserve">
+    <value>Введите корректное описание проблемы.</value>
+  </data>
 </root>

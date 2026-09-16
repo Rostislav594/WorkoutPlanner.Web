@@ -9,8 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.ui.common.GlowFrame
 import com.gymplanner.wearos.ui.theme.WearColors
@@ -33,6 +35,7 @@ fun RestTimerScreen(
     onSkip: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val skipHint = stringResource(R.string.rest_skip_description)
 
     GlowFrame(
         glowColor = WearColors.Amber,
@@ -42,7 +45,7 @@ fun RestTimerScreen(
                 indication = null,
                 onClick = onSkip,
             )
-            .semantics { contentDescription = "Отдых. Коснитесь, чтобы пропустить" },
+            .semantics { contentDescription = skipHint },
     ) {
         Text(
             text = formatTimer(remainingSeconds),

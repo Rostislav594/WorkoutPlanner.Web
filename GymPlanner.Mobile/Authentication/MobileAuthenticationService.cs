@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using WorkoutPlanner.Api.Contracts;
 using GymPlanner.Mobile.Infrastructure;
 using GymPlanner.Mobile.Notifications;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Authentication;
 
@@ -84,7 +85,7 @@ public sealed class MobileAuthenticationService : IDisposable
                 cancellationToken);
             if (!IsValidTokenResponse(tokenResponse))
             {
-                return MobileAuthResult.Failure("Сервер вернул некорректную сессию.");
+                return MobileAuthResult.Failure(AppTexts.Get("Auth_InvalidSession"));
             }
 
             var tokens = new MobileTokenSet(
@@ -109,11 +110,11 @@ public sealed class MobileAuthenticationService : IDisposable
         }
         catch (HttpRequestException)
         {
-            return MobileAuthResult.Failure("Нет соединения с сервером. Проверьте сеть и повторите попытку.");
+            return MobileAuthResult.Failure(AppTexts.Get("Auth_NetworkRetry"));
         }
         catch (JsonException)
         {
-            return MobileAuthResult.Failure("Сервер вернул некорректный ответ авторизации.");
+            return MobileAuthResult.Failure(AppTexts.Get("Auth_InvalidResponse"));
         }
     }
 
@@ -134,7 +135,7 @@ public sealed class MobileAuthenticationService : IDisposable
         }
         catch (HttpRequestException)
         {
-            return MobileAuthResult.Failure("Нет соединения с сервером. Проверьте сеть и повторите попытку.");
+            return MobileAuthResult.Failure(AppTexts.Get("Auth_NetworkRetry"));
         }
 
         return await LoginAsync(
@@ -176,7 +177,7 @@ public sealed class MobileAuthenticationService : IDisposable
             if (!IsAuthenticated)
                 return MobileAuthResult.Success;
 
-            return MobileAuthResult.Failure("Не удалось связаться с сервером для завершения сессии.");
+            return MobileAuthResult.Failure(AppTexts.Get("Auth_ContactFailed"));
         }
 
         try
@@ -196,7 +197,7 @@ public sealed class MobileAuthenticationService : IDisposable
         }
         catch (HttpRequestException)
         {
-            return MobileAuthResult.Failure("Нет соединения с сервером. Сессия сохранена для безопасного повтора выхода.");
+            return MobileAuthResult.Failure(AppTexts.Get("Auth_LogoutQueued"));
         }
 
         await ClearAsync(cancellationToken);

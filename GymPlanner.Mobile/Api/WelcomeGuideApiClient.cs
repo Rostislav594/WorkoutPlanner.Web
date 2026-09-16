@@ -1,3 +1,4 @@
+using GymPlanner.Mobile.Localization;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -23,14 +24,14 @@ public sealed class WelcomeGuideApiClient(HttpClient client) : IWelcomeGuideApiC
 
             var state = await response.Content.ReadFromJsonAsync<WelcomeGuideStateApiResponse>(cancellationToken);
             return state is null
-                ? ApiResult<WelcomeGuideStateApiResponse>.Failure("Сервер вернул пустое состояние приветствия.")
+                ? ApiResult<WelcomeGuideStateApiResponse>.Failure(ApiErrorMessages.EmptyResponse())
                 : ApiResult<WelcomeGuideStateApiResponse>.Success(state);
         }
         catch (Exception exception) when (
             exception is not OperationCanceledException ||
             !cancellationToken.IsCancellationRequested)
         {
-            return ApiResult<WelcomeGuideStateApiResponse>.Failure("Нет соединения с сервером.");
+            return ApiResult<WelcomeGuideStateApiResponse>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 }

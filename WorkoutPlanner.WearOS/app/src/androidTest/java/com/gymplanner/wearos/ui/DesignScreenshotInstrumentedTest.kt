@@ -1,6 +1,7 @@
 package com.gymplanner.wearos.ui
 
 import android.graphics.Bitmap
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.wear.compose.material3.MaterialTheme
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.domain.model.CompletedWorkoutKind
 import com.gymplanner.wearos.domain.model.MockWorkoutState
 import com.gymplanner.wearos.domain.model.PairingStatus
@@ -65,11 +67,11 @@ class DesignScreenshotInstrumentedTest {
             WorkoutPlannerWearTheme {
                 RestTimerScreen(
                     state = MockWorkoutState.Rest(
-                        completedExerciseName = "Жим штанги лежа",
+                        completedExerciseName = "Жим штанги лежачи",
                         completedSetNumber = 1,
                         durationSeconds = 120,
                         endsAtElapsedRealtimeMillis = 120_000,
-                        nextSet = SetPreview("Жим штанги лежа", 2),
+                        nextSet = SetPreview("Жим штанги лежачи", 2),
                     ),
                     remainingSeconds = 119,
                     onSkip = {},
@@ -128,7 +130,7 @@ class DesignScreenshotInstrumentedTest {
                 )
             }
         }
-        holdAndCapture("Закончить подход", 850, "shot-current-set-holding.png")
+        holdAndCapture(string(R.string.current_set_finish), 850, "shot-current-set-holding.png")
     }
 
     /** Завершение тренировки в момент удержания: полоса обегает контур экрана. */
@@ -143,7 +145,7 @@ class DesignScreenshotInstrumentedTest {
                 )
             }
         }
-        holdAndCapture("Завершить тренировку", 900, "shot-ready-to-finish-holding.png")
+        holdAndCapture(string(R.string.ready_finish_workout), 900, "shot-ready-to-finish-holding.png")
     }
 
     @Test
@@ -155,7 +157,7 @@ class DesignScreenshotInstrumentedTest {
     @Test
     fun capturePairingManualCode() {
         setPairingContent(MockWorkoutState.Pairing())
-        composeRule.onNodeWithText("Ввести код").performClick()
+        composeRule.onNodeWithText(string(R.string.pairing_enter_code)).performClick()
         capture("shot-pairing-manual.png")
     }
 
@@ -170,7 +172,7 @@ class DesignScreenshotInstrumentedTest {
         setPairingContent(
             MockWorkoutState.Pairing(
                 status = PairingStatus.Error,
-                errorMessage = "Телефон недоступен",
+                errorMessage = "Телефон недоступний",
             ),
         )
         capture("shot-pairing-error.png")
@@ -203,11 +205,11 @@ class DesignScreenshotInstrumentedTest {
             WorkoutPlannerWearTheme {
                 AmbientWorkoutScreen(
                     MockWorkoutState.Rest(
-                        completedExerciseName = "Жим штанги лежа",
+                        completedExerciseName = "Жим штанги лежачи",
                         completedSetNumber = 1,
                         durationSeconds = 120,
                         endsAtElapsedRealtimeMillis = 120_000,
-                        nextSet = SetPreview("Жим штанги лежа", 2),
+                        nextSet = SetPreview("Жим штанги лежачи", 2),
                     ),
                 )
             }
@@ -242,7 +244,7 @@ class DesignScreenshotInstrumentedTest {
 
     private fun currentSetState() = MockWorkoutState.CurrentSet(
         setId = 101,
-        exerciseName = "Жим штанги лежа",
+        exerciseName = "Жим штанги лежачи",
         exerciseNumber = 1,
         totalExercises = 2,
         setNumber = 1,
@@ -264,6 +266,14 @@ class DesignScreenshotInstrumentedTest {
         composeRule.onNodeWithText(label).performTouchInput { up() }
         composeRule.mainClock.autoAdvance = true
     }
+
+    /**
+     * Подписи кнопок берём из ресурсов, а не из литералов: язык на часах
+     * выбирает система, и на украинской локали поиск по русскому тексту
+     * не находит узел.
+     */
+    private fun string(@StringRes id: Int): String =
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(id)
 
     private fun capture(fileName: String) {
         composeRule.waitForIdle()

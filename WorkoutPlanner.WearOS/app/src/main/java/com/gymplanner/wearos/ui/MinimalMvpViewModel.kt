@@ -20,9 +20,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.min
+import com.gymplanner.wearos.R
+import com.gymplanner.wearos.data.localization.WatchStrings
 
 class MinimalMvpViewModel(
     private val repository: WorkoutRepository,
+    private val strings: WatchStrings,
     private val elapsedRealtimeMillis: () -> Long = { System.nanoTime() / nanosPerMillisecond },
 ) : ViewModel() {
     private val mutablePairingCode = MutableStateFlow("")
@@ -85,7 +88,7 @@ class MinimalMvpViewModel(
                 mutableActionMessage.value = null
                 mutableEvents.emit(UiEvent.SetCompleted)
             } else {
-                mutableActionMessage.value = mutationRejectedMessage
+                mutableActionMessage.value = strings.get(R.string.save_failed_retry)
             }
         }
     }
@@ -100,7 +103,7 @@ class MinimalMvpViewModel(
                     mutableEvents.emit(UiEvent.WorkoutFinished)
                 }
                 FinishWorkoutResult.UnresolvedOperations -> {
-                    mutableActionMessage.value = unresolvedOperationsMessage
+                    mutableActionMessage.value = strings.get(R.string.pending_changes_wait)
                 }
                 is FinishWorkoutResult.Failure -> {
                     mutableActionMessage.value = result.message
@@ -138,11 +141,12 @@ class MinimalMvpViewModel(
 
     class Factory(
         private val repository: WorkoutRepository,
+        private val strings: WatchStrings,
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(MinimalMvpViewModel::class.java))
-            return MinimalMvpViewModel(repository) as T
+            return MinimalMvpViewModel(repository, strings) as T
         }
     }
 
@@ -150,10 +154,6 @@ class MinimalMvpViewModel(
         private const val pairingCodeLength = 6
         private const val timerTickMillis = 250L
         private const val nanosPerMillisecond = 1_000_000L
-        private const val mutationRejectedMessage =
-            "Не удалось сохранить. Попробуйте ещё раз"
-        private const val unresolvedOperationsMessage =
-            "Есть неотправленные изменения. Дождитесь связи"
 
         internal fun remainingSeconds(remainingMillis: Long): Int =
             ((remainingMillis.coerceAtLeast(0L) + 999L) / 1_000L).toInt()

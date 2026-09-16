@@ -9,26 +9,27 @@
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
 @inject ILogger<Profile> Logger
+@inject IAppText Text
 
-<section class="profile-page" aria-busy="@_isLoading" aria-label="Профиль">
+<section class="profile-page" aria-busy="@_isLoading" aria-label="@Text["Profile_Title"]">
     @if (_isLoading)
     {
         <div class="profile-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем профиль…</span>
+            <span>@Text["Profile_Loading"]</span>
         </div>
     }
     else if (_loadErrors.Count > 0)
     {
         <div class="load-error">
             <div class="auth-error" role="alert">@string.Join(" ", _loadErrors)</div>
-            <button class="profile-secondary-action" type="button" @onclick="LoadAsync">Повторить</button>
+            <button class="profile-secondary-action" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
         </div>
     }
     else
     {
         <header class="profile-title-row page-title-row">
-            <h1 id="profile-title">Профиль</h1>
+            <h1 id="profile-title">@Text["Profile_Title"]</h1>
             <HelpButton Topic="HelpContentCatalog.Profile" />
         </header>
 
@@ -42,7 +43,7 @@
         }
 
         <article class="profile-identity-card">
-            <div class="profile-avatar" aria-label="Аватар пользователя">@ProfileInitials</div>
+            <div class="profile-avatar" aria-label="@Text["Profile_Avatar"]">@ProfileInitials</div>
             <div class="profile-identity-copy">
                 <h2>@DisplayName</h2>
                 <p>@DisplayEmail</p>
@@ -73,7 +74,7 @@
                             }
                             else
                             {
-                                <div class="@RowClass(item)" aria-label="@($"{item.Label}. Раздел пока не настроен.")">
+                                <div class="@RowClass(item)" aria-label="@Text.Format("Profile_SectionNotReady", item.Label)">
                                     <span class="settings-icon material-symbols-rounded" aria-hidden="true">@item.Icon</span>
                                     <span class="settings-label">@item.Label</span>
                                     @if (!string.IsNullOrWhiteSpace(item.Value))
@@ -100,10 +101,10 @@
         <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="edit-profile-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
-                    <p class="profile-eyebrow">Личные данные</p>
-                    <h2 id="edit-profile-title">Редактировать профиль</h2>
+                    <p class="profile-eyebrow">@Text["ProfileSection_PersonalData"]</p>
+                    <h2 id="edit-profile-title">@Text["Profile_EditTitle"]</h2>
                 </div>
-                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSaving" @onclick="CloseDialog">
+                <button class="dialog-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isSaving" @onclick="CloseDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -122,33 +123,33 @@
                         <input id="profile-email" class="auth-input" value="@DisplayEmail" readonly />
                     </div>
                     <div class="field">
-                        <label for="profile-first-name">Имя</label>
+                        <label for="profile-first-name">@Text["Common_FirstName"]</label>
                         <InputText id="profile-first-name" class="auth-input" @bind-Value="_profileInput.FirstName" autocomplete="given-name" />
                         <ValidationMessage For="@(() => _profileInput.FirstName)" />
                     </div>
                     <div class="field">
-                        <label for="profile-last-name">Фамилия</label>
+                        <label for="profile-last-name">@Text["Common_LastName"]</label>
                         <InputText id="profile-last-name" class="auth-input" @bind-Value="_profileInput.LastName" autocomplete="family-name" />
                         <ValidationMessage For="@(() => _profileInput.LastName)" />
                     </div>
                     <div class="field">
-                        <label for="profile-birth-date">Дата рождения</label>
+                        <label for="profile-birth-date">@Text["Common_BirthDate"]</label>
                         <InputDate id="profile-birth-date" class="auth-input" @bind-Value="_profileInput.BirthDate" />
                         <ValidationMessage For="@(() => _profileInput.BirthDate)" />
                     </div>
                     <div class="field">
-                        <label for="profile-gender">Пол</label>
+                        <label for="profile-gender">@Text["Common_Gender"]</label>
                         <SystemChoiceField id="profile-gender"
                                            class="auth-input"
-                                           Title="Пол"
+                                           Title="@Text["Common_Gender"]"
                                            Options="GenderOptions"
                                            @bind-Value="_profileInput.Gender"
-                                           AriaLabel="Выбрать пол" />
+                                           AriaLabel="@Text["ProfileSetup_SelectGender"]" />
                         <ValidationMessage For="@(() => _profileInput.Gender)" />
                     </div>
                 </div>
                 <button class="profile-primary-action" type="submit" disabled="@_isSaving">
-                    @(_isSaving ? "Сохраняем…" : "Сохранить изменения")
+                    @(_isSaving ? Text["Common_Saving"] : Text["Profile_SaveChanges"])
                 </button>
             </EditForm>
         </section>
@@ -161,10 +162,10 @@
         <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="change-password-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
-                    <p class="profile-eyebrow">Безопасность</p>
-                    <h2 id="change-password-title">Изменить пароль</h2>
+                    <p class="profile-eyebrow">@Text["ProfileSection_Security"]</p>
+                    <h2 id="change-password-title">@Text["ProfileItem_ChangePassword"]</h2>
                 </div>
-                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSecurityBusy" @onclick="CloseDialog">
+                <button class="dialog-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isSecurityBusy" @onclick="CloseDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -179,20 +180,20 @@
                 <ValidationSummary class="validation-summary" />
                 <div class="profile-form-grid">
                     <div class="field">
-                        <label for="current-password">Текущий пароль</label>
+                        <label for="current-password">@Text["Profile_CurrentPassword"]</label>
                         <InputText id="current-password" class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" />
                     </div>
                     <div class="field">
-                        <label for="new-password">Новый пароль</label>
+                        <label for="new-password">@Text["Profile_NewPassword"]</label>
                         <InputText id="new-password" class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" />
                     </div>
                     <div class="field">
-                        <label for="confirm-password">Подтверждение нового пароля</label>
+                        <label for="confirm-password">@Text["Profile_ConfirmNewPassword"]</label>
                         <InputText id="confirm-password" class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" />
                     </div>
                 </div>
                 <button class="profile-primary-action" type="submit" disabled="@_isSecurityBusy">
-                    @(_isSecurityBusy ? "Выполняем…" : "Изменить пароль")
+                    @(_isSecurityBusy ? Text["Profile_PasswordBusy"] : Text["ProfileItem_ChangePassword"])
                 </button>
             </EditForm>
         </section>
@@ -205,30 +206,30 @@
         <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timers-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
-                    <p class="profile-eyebrow">Тренировки</p>
-                    <h2 id="rest-timers-title">Таймеры отдыха</h2>
+                    <p class="profile-eyebrow">@Text["Nav_Workouts"]</p>
+                    <h2 id="rest-timers-title">@Text["ProfileItem_RestTimers"]</h2>
                 </div>
-                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSaving" @onclick="CloseDialog">
+                <button class="dialog-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isSaving" @onclick="CloseDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
-            <p class="timer-settings-hint">Эти значения станут временем по умолчанию для всех таймеров отдыха.</p>
+            <p class="timer-settings-hint">@Text["Profile_RestTimersHint"]</p>
             @if (_operationErrors.Count > 0)
             {
                 <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
             }
             <div class="profile-form-grid">
                 <label class="field" for="rest-between-sets">
-                    <span>Между подходами, сек.</span>
+                    <span>@Text["Profile_RestBetweenSets"]</span>
                     <input id="rest-between-sets" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" />
                 </label>
                 <label class="field" for="rest-between-exercises">
-                    <span>Между упражнениями, сек.</span>
+                    <span>@Text["Profile_RestBetweenExercises"]</span>
                     <input id="rest-between-exercises" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" />
                 </label>
             </div>
             <button class="profile-primary-action" type="button" disabled="@_isSaving" @onclick="SaveRestTimersAsync">
-                @(_isSaving ? "Сохраняем…" : "Применить ко всем таймерам")
+                @(_isSaving ? Text["Common_Saving"] : Text["Profile_ApplyToAllTimers"])
             </button>
         </section>
     </div>
@@ -240,10 +241,10 @@
         <section class="modal-window profile-dialog support-dialog" role="dialog" aria-modal="true" aria-labelledby="report-problem-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
-                    <p class="profile-eyebrow">Помощь и поддержка</p>
-                    <h2 id="report-problem-title">Сообщить о проблеме</h2>
+                    <p class="profile-eyebrow">@Text["Profile_SupportEyebrow"]</p>
+                    <h2 id="report-problem-title">@Text["ProfileItem_ReportProblem"]</h2>
                 </div>
-                <button class="dialog-close" type="button" aria-label="Закрыть" disabled="@_isSupportBusy" @onclick="CloseDialog">
+                <button class="dialog-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isSupportBusy" @onclick="CloseDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -254,15 +255,15 @@
             }
 
             <div class="support-field">
-                <label for="support-message">Что произошло?</label>
+                <label for="support-message">@Text["Profile_SupportQuestion"]</label>
                 <textarea id="support-message"
                           maxlength="2000"
-                          placeholder="Опишите, что произошло..."
+                          placeholder="@Text["Profile_SupportPlaceholder"]"
                           aria-describedby="support-message-hint support-privacy-note"
                           @bind="_supportMessage"
                           @bind:event="oninput"></textarea>
                 <div class="support-field-meta">
-                    <span id="support-message-hint">Минимум 10 символов</span>
+                    <span id="support-message-hint">@Text["Profile_SupportHint"]</span>
                     <span>@_supportMessage.Length / 2000</span>
                 </div>
             </div>
@@ -271,19 +272,19 @@
             {
                 <button class="support-attachment-button" type="button" disabled="@_isSupportBusy" @onclick="PickSupportScreenshotAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">add_photo_alternate</span>
-                    <span>Добавить скриншот</span>
-                    <small>JPG, PNG или WebP · до 5 МБ</small>
+                    <span>@Text["Profile_AddScreenshot"]</span>
+                    <small>@Text["Profile_ScreenshotFormats"]</small>
                 </button>
             }
             else
             {
                 <div class="support-attachment-preview">
-                    <img src="@SupportScreenshotDataUri" alt="Прикреплённый скриншот" />
+                    <img src="@SupportScreenshotDataUri" alt="@Text["Profile_ScreenshotAlt"]" />
                     <div>
-                        <strong>Скриншот прикреплён</strong>
+                        <strong>@Text["Profile_ScreenshotAttached"]</strong>
                         <span>@_supportScreenshot.FileName</span>
                     </div>
-                    <button type="button" aria-label="Удалить скриншот" disabled="@_isSupportBusy" @onclick="RemoveSupportScreenshot">
+                    <button type="button" aria-label="@Text["Profile_RemoveScreenshot"]" disabled="@_isSupportBusy" @onclick="RemoveSupportScreenshot">
                         <span class="material-symbols-rounded" aria-hidden="true">delete</span>
                     </button>
                 </div>
@@ -291,7 +292,7 @@
 
             <p id="support-privacy-note" class="support-privacy-note">
                 <span class="material-symbols-rounded" aria-hidden="true">shield</span>
-                <span>Не указывайте пароль и другие конфиденциальные данные.</span>
+                <span>@Text["Profile_NoSecrets"]</span>
             </p>
 
             <div class="support-dialog-actions">
@@ -299,12 +300,12 @@
                     @if (_isSupportBusy)
                     {
                         <span class="loading-spinner loading-spinner--small" aria-hidden="true"></span>
-                        <span>Отправляем…</span>
+                        <span>@Text["Profile_Sending"]</span>
                     }
                     else
                     {
                         <span class="material-symbols-rounded" aria-hidden="true">send</span>
-                        <span>Отправить</span>
+                        <span>@Text["Profile_Send"]</span>
                     }
                 </button>
             </div>
@@ -317,17 +318,17 @@
     <div class="modal-overlay" @onclick="CloseDeleteDialog">
         <section class="modal-window delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-account-title" aria-describedby="delete-account-description" @onclick:stopPropagation="true">
             <span class="delete-icon material-symbols-rounded" aria-hidden="true">warning</span>
-            <h2 id="delete-account-title">Удаление аккаунта</h2>
-            <p id="delete-account-description">Вы действительно хотите удалить аккаунт?</p>
-            <p class="warning-copy">Будут удалены профиль, планы, история тренировок, прогресс, фотографии и все пользовательские данные.</p>
+            <h2 id="delete-account-title">@Text["Profile_DeleteAccountTitle"]</h2>
+            <p id="delete-account-description">@Text["Profile_DeleteAccountQuestion"]</p>
+            <p class="warning-copy">@Text["Profile_DeleteAccountWarning"]</p>
             @if (_operationErrors.Count > 0)
             {
                 <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
             }
             <div class="dialog-actions">
-                <button class="profile-secondary-action" type="button" disabled="@_isSecurityBusy" @onclick="CloseDeleteDialog">Отмена</button>
+                <button class="profile-secondary-action" type="button" disabled="@_isSecurityBusy" @onclick="CloseDeleteDialog">@Text["Common_Cancel"]</button>
                 <button class="profile-danger-action" type="button" disabled="@_isSecurityBusy" @onclick="DeleteAccountAsync">
-                    @(_isSecurityBusy ? "Удаляем…" : "Удалить навсегда")
+                    @(_isSecurityBusy ? Text["Common_Deleting"] : Text["Profile_DeleteForever"])
                 </button>
             </div>
         </section>
@@ -335,24 +336,26 @@
 }
 
 @code {
-    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    // Значение остаётся русским: оно уходит на сервер и хранится в профиле.
+    // Переводится только подпись, которую видит пользователь.
+    private IReadOnlyList<SystemChoiceOption> GenderOptions =>
     [
-        new("Мужской", "Мужской"),
-        new("Женский", "Женский"),
-        new("Не указывать", "Не указывать")
+        new("Мужской", Text["Gender_Male"]),
+        new("Женский", Text["Gender_Female"]),
+        new("Не указывать", Text["Gender_Unspecified"])
     ];
 
     private IReadOnlyList<ProfileSection> ProfileSections =>
     [
-        new("personal-data", "Личные данные", [new("badge", "Личная информация", "/profile/personal-information")]),
-        new("training", "Тренировки", [new("timer", "Таймеры отдыха", "/profile/rest-timers")]),
-        new("devices", "Устройства", [new("watch", "Смарт-часы Wear OS", "/profile/devices")]),
-        new("application", "Приложение", [new("notifications", "Уведомления", "/profile/notifications"), new("language", "Язык", "/profile/language")]),
-        new("data", "Данные", [new("database", "Мои данные", "/profile/my-data")]),
-        new("security", "Безопасность", [new("password", "Изменить пароль", "/profile/change-password")]),
-        new("support", "Поддержка", [new("bug_report", "Сообщить о проблеме", "/profile/report-problem"), new("lightbulb", "Предложить идею", "/profile/suggest-idea")]),
-        new("about", "О приложении", [new("privacy_tip", "Политика конфиденциальности", "/profile/privacy"), new("tag", "Версия", "/profile/about", ShowChevron: false), new("logout", "Выйти из аккаунта", "/profile/logout", IsStandalone: true)]),
-        new("danger-zone", "Опасная зона", [new("delete_forever", "Удалить аккаунт", "/profile/delete-account", ShowChevron: false, IsDanger: true)])
+        new("personal-data", Text["ProfileSection_PersonalData"], [new("badge", Text["ProfileItem_PersonalInformation"], "/profile/personal-information")]),
+        new("training", Text["Nav_Workouts"], [new("timer", Text["ProfileItem_RestTimers"], "/profile/rest-timers")]),
+        new("devices", Text["ProfileSection_Devices"], [new("watch", Text["ProfileItem_Watch"], "/profile/devices")]),
+        new("application", Text["ProfileSection_Application"], [new("notifications", Text["ProfileItem_Notifications"], "/profile/notifications"), new("language", Text["Profile_Language_Title"], "/profile/language")]),
+        new("data", Text["ProfileSection_Data"], [new("database", Text["ProfileItem_MyData"], "/profile/my-data")]),
+        new("security", Text["ProfileSection_Security"], [new("password", Text["ProfileItem_ChangePassword"], "/profile/change-password")]),
+        new("support", Text["ProfileSection_Support"], [new("bug_report", Text["ProfileItem_ReportProblem"], "/profile/report-problem"), new("lightbulb", Text["Profile_SuggestIdea_Title"], "/profile/suggest-idea")]),
+        new("about", Text["ProfileSection_About"], [new("privacy_tip", Text["ProfileItem_Privacy"], "/profile/privacy"), new("tag", Text["ProfileItem_Version"], "/profile/about", ShowChevron: false), new("logout", Text["ProfileItem_Logout"], "/profile/logout", IsStandalone: true)]),
+        new("danger-zone", Text["ProfileSection_DangerZone"], [new("delete_forever", Text["ProfileItem_DeleteAccount"], "/profile/delete-account", ShowChevron: false, IsDanger: true)])
     ];
 
     private readonly ProfileInput _profileInput = new();
@@ -373,7 +376,7 @@
     private int _restBetweenSetsSeconds = 90;
     private int _restBetweenExercisesSeconds = 120;
     private string FullName => $"{_profileInput.FirstName} {_profileInput.LastName}".Trim();
-    private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? "Пользователь GPlanner" : FullName;
+    private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? Text["Profile_DefaultName"] : FullName;
     private string DisplayEmail => _profile?.Email ?? Authentication.CurrentEmail ?? string.Empty;
     private string? SupportScreenshotDataUri => _supportScreenshot is null
         ? null
@@ -425,7 +428,7 @@
             else
             {
                 _profile = result.Value;
-                _message = "Профиль сохранён.";
+                _message = Text["Profile_Saved"];
                 _dialog = ProfileDialog.None;
             }
         }
@@ -453,7 +456,7 @@
         if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600)
         {
             _operationErrors.Clear();
-            _operationErrors.Add("Укажите время от 5 секунд до 60 минут.");
+            _operationErrors.Add(Text["Profile_RestTimerRange"]);
             return;
         }
 
@@ -472,7 +475,7 @@
             _restBetweenExercisesSeconds = result.Value.RestBetweenExercisesSeconds;
             if (_profile is not null)
                 _profile = _profile with { RestBetweenSetsSeconds = _restBetweenSetsSeconds, RestBetweenExercisesSeconds = _restBetweenExercisesSeconds };
-            _message = "Настройки таймеров отдыха применены ко всем таймерам.";
+            _message = Text["Profile_RestTimersApplied"];
             _dialog = ProfileDialog.None;
         }
         finally { _isSaving = false; }
@@ -539,7 +542,7 @@
         var message = _supportMessage.Trim();
         if (message.Length < 10)
         {
-            _supportErrors.Add("Опишите проблему хотя бы в 10 символах.");
+            _supportErrors.Add(Text["Profile_SupportTooShort"]);
             return;
         }
 
@@ -559,7 +562,7 @@
             var ticketNumber = result.Value!.TicketNumber;
             ResetSupportDraft();
             _dialog = ProfileDialog.None;
-            _message = $"Сообщение отправлено в техническую поддержку. Номер обращения: {ticketNumber}.";
+            _message = Text.Format("Profile_SupportSent", ticketNumber);
         }
         finally
         {
@@ -663,7 +666,7 @@
     {
         [Required] public string CurrentPassword { get; set; } = string.Empty;
         [Required, MinLength(6)] public string NewPassword { get; set; } = string.Empty;
-        [Compare(nameof(NewPassword), ErrorMessage = "Пароли не совпадают.")] public string ConfirmPassword { get; set; } = string.Empty;
+        [Compare(nameof(NewPassword), ErrorMessage = "Validation_PasswordsDoNotMatch")] public string ConfirmPassword { get; set; } = string.Empty;
     }
 
     private sealed record ProfileSection(string Id, string Title, IReadOnlyList<ProfileItem> Items);

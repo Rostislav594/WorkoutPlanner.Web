@@ -1,15 +1,16 @@
-@using System.Globalization
+﻿@using System.Globalization
 @using WorkoutPlanner.Web.Application.Contracts
+@inject IAppText Text
 
 <details class="chart-data-details">
-    <summary>Показать точные значения</summary>
+    <summary>@Text["Chart_ShowValues"]</summary>
     <div class="chart-data-scroll">
         <table>
-            <caption>Данные графика за последние 30 дней</caption>
+            <caption>@Text["Chart_TableCaption"]</caption>
             <thead>
                 <tr>
-                    <th scope="col">Дата</th>
-                    <th scope="col">Изменение</th>
+                    <th scope="col">@Text["Chart_ColumnDate"]</th>
+                    <th scope="col">@Text["Chart_ColumnChange"]</th>
                 </tr>
             </thead>
             <tbody>

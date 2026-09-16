@@ -30,7 +30,7 @@ import com.gymplanner.wearos.ui.rest.RestTimerScreen
 fun WorkoutPlannerWearApp(
     appContainer: AppContainer,
     viewModel: MinimalMvpViewModel = viewModel(
-        factory = MinimalMvpViewModel.Factory(appContainer.workoutRepository),
+        factory = MinimalMvpViewModel.Factory(appContainer.workoutRepository, appContainer.strings),
     ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()

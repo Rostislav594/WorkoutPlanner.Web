@@ -1,6 +1,7 @@
 ﻿@using ApexCharts
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Components.Progress
+@inject IAppText Text
 
 <div class="modal-overlay"
      @onclick="OnClose">
@@ -53,7 +54,7 @@
                     <div class="card-content">
 
                         <div class="card-title">
-                            Рост
+                            @Text["Progress_Growth"]
                         </div>
 
                         <div class="card-value @GrowthColorClass">
@@ -61,7 +62,7 @@
                         </div>
 
                         <div class="card-subtitle">
-                            Относительно последней тренировки
+                            @Text["Progress_GrowthSubtitle"]
                         </div>
 
                     </div>
@@ -77,7 +78,7 @@
                     <div class="card-content">
 
                         <div class="card-title">
-                            Лучший результат
+                            @Text["Progress_Best"]
                         </div>
 
                         <div class="card-value purple">
@@ -85,7 +86,7 @@
                         </div>
 
                         <div class="card-subtitle">
-                            Максимальный рост
+                            @Text["Progress_BestSubtitle"]
                         </div>
 
                     </div>
@@ -101,7 +102,7 @@
                     <div class="card-content">
 
                         <div class="card-title">
-                            Тренировок
+                            @Text["Progress_WorkoutsCount"]
                         </div>
 
                         <div class="card-value blue">
@@ -109,7 +110,7 @@
                         </div>
 
                         <div class="card-subtitle">
-                            Всего в истории
+                            @Text["Progress_WorkoutsTotalSubtitle"]
                         </div>
 
                     </div>

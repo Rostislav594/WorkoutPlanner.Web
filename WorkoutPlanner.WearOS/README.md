@@ -97,6 +97,10 @@ adb shell am start -n com.gymplanner.wearos/.MainActivity
   headers или credentials;
 - `FakeWatchRemoteDataSource` остаётся только тестовым double и production DI его
   не использует.
+- тексты интерфейса и ошибок лежат в `res/values` (русский), `values-uk` и
+  `values-en`; Compose берёт их через `stringResource`, а слои без Compose —
+  через `WatchStrings` из `data/localization`. Язык выбирает система часов:
+  выбор языка в профиле телефона сюда не передаётся.
 
 Главный путь остаётся `Текущий подход → Выполнить → Отдых → следующий подход`.
 Вторичные экраны позволяют открыть обзор, изменить индивидуальный вес/повторы,

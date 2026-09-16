@@ -1,3 +1,4 @@
+﻿@inject IAppText Text
 <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
         <Found Context="routeData">
@@ -7,9 +8,9 @@
                         <Authorized Context="authenticatedUser">
                             <main class="access-denied" role="alert">
                                 <span class="material-symbols-rounded" aria-hidden="true">lock</span>
-                                <h1>Доступ запрещён</h1>
-                                <p>Для этого раздела требуется роль администратора.</p>
-                                <a href="/account/logout">Выйти</a>
+                                <h1>@Text["Web_AccessDenied_Title"]</h1>
+                                <p>@Text["Web_AccessDenied_Body"]</p>
+                                <a href="/account/logout">@Text["Admin_SignOut"]</a>
                             </main>
                         </Authorized>
                         <NotAuthorized Context="anonymousUser">

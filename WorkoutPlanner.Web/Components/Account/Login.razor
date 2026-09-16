@@ -1,10 +1,11 @@
-@page "/account/login"
+﻿@page "/account/login"
 @attribute [AllowAnonymous]
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 @inject WorkoutPlanner.Web.Services.Activity.UserActivityService UserActivity
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="auth-page">
 
@@ -16,7 +17,7 @@
                  alt="GPlanner"
                  class="login-logo" />
 
-            <h1>Вход</h1>
+            <h1>@Text["Login_Title"]</h1>
 
             <div class="title-line"></div>
 
@@ -49,7 +50,7 @@
 
             <div class="field">
 
-                <label>Пароль</label>
+                <label>@Text["Common_Password"]</label>
 
                 <InputText class="auth-input"
                            type="password"
@@ -61,7 +62,7 @@
             <button class="finish-button auth-button"
                     type="submit">
 
-                Войти
+                @Text["Login_Submit"]
 
             </button>
 
@@ -103,7 +104,7 @@
             return;
         }
 
-        ErrorMessage = "Неверный email или пароль.";
+        ErrorMessage = Text["Web_Login_InvalidCredentials"];
     }
 
     private string GetReturnUrl()
@@ -121,11 +122,12 @@
 
     private sealed class LoginInput
     {
-        [Required(ErrorMessage = "Введите email.")]
-        [EmailAddress(ErrorMessage = "Введите корректный email.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_EmailRequired")]
+        [EmailAddress(ErrorMessage = "Validation_EmailInvalid")]
         public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите пароль.")]
+        [Required(ErrorMessage = "Validation_PasswordRequired")]
         public string Password { get; set; } = string.Empty;
 
         public bool RememberMe { get; set; }

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Resources;
 using WorkoutPlanner.Localization;
 
@@ -153,8 +153,35 @@ public class ResourceCoverageTests
     /// </summary>
     private static readonly HashSet<(string Resource, string Language, string Key)> IdenticalByDesign =
     [
-        // «Назад» пишется одинаково в русском и украинском.
-        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Back")
+        // Слова, которые в украинском пишутся так же, как в русском.
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Back"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Password"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Done"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Kg"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_RepsShort"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Superset"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "History_SupersetLabel"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Difficulty_Easy"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Today_Pause"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Chart_ColumnDate"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Help_ChartDateAxis"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Picker_Selected"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Web_Rate_Easy"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Web_Profile_Model"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Column_Status"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Field_Platform"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Field_Os"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Publications_Editor"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Publications_Type"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Publications_TitleLabel"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Admin_Publications_BodyLabel"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Server_Starter_Upper1"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Server_Starter_Lower1"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Server_Starter_Upper2"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Server_Starter_Lower2"),
+
+        // «✓ {0}» — отметка выбранного пункта, она одинакова во всех языках.
+        (nameof(AppStrings), AppLanguages.English, "Picker_Selected")
     ];
 
     public static TheoryData<string, string> ResourceSets()

@@ -2,26 +2,27 @@
 @attribute [Authorize]
 @implements IDisposable
 @using System.Text.Json
+@inject IAppText Text
 
 <section class="notebook-page" aria-labelledby="notebook-title">
     <header class="notebook-header">
-        <a class="back-button" href="/" aria-label="На главную">
+        <a class="back-button" href="/" aria-label="@Text["Notebook_Back"]">
             <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
         </a>
         <div>
-            <h1 id="notebook-title">Блокнот</h1>
-            <p>Заметки сохраняются на этом устройстве.</p>
+            <h1 id="notebook-title">@Text["Home_Notebook"]</h1>
+            <p>@Text["Notebook_Subtitle"]</p>
         </div>
     </header>
 
-    <div class="tabs" role="tablist" aria-label="Вкладки блокнота">
+    <div class="tabs" role="tablist" aria-label="@Text["Notebook_Tabs"]">
         @foreach (var tab in _tabs)
         {
             <button class="tab-button @(tab.Id == _activeId ? "active" : null)"
                     type="button"
                     role="tab"
                     aria-selected="@(tab.Id == _activeId)"
-                    aria-label="@($"{tab.Name}. Удерживайте, чтобы переименовать.")"
+                    aria-label="@Text.Format("Notebook_TabHint", tab.Name)"
                     @onpointerdown="() => BeginRenameHold(tab.Id)"
                     @onpointerup="CancelRenameHold"
                     @onpointercancel="CancelRenameHold"
@@ -30,7 +31,7 @@
                     @oncontextmenu:preventDefault="true"
                     @onclick="() => SelectTab(tab.Id)">@tab.Name</button>
         }
-        <button class="add-tab-button" type="button" @onclick="OpenNewTab" aria-label="Добавить вкладку">
+        <button class="add-tab-button" type="button" @onclick="OpenNewTab" aria-label="@Text["Notebook_AddTab"]">
             <span class="material-symbols-rounded" aria-hidden="true">add</span>
         </button>
     </div>
@@ -38,12 +39,12 @@
     @if (ActiveTab is { } activeTab)
     {
         <label class="note-editor">
-            <span class="visually-hidden">Текст заметки @activeTab.Name</span>
-            <textarea @bind="activeTab.Content" @bind:event="oninput" placeholder="Начните писать…"></textarea>
+            <span class="visually-hidden">@Text.Format("Notebook_NoteText", activeTab.Name)</span>
+            <textarea @bind="activeTab.Content" @bind:event="oninput" placeholder="@Text["Notebook_Placeholder"]"></textarea>
         </label>
         <div class="notebook-actions">
-            <button class="primary-button" type="button" @onclick="Save">Сохранить</button>
-            <button class="danger-button" type="button" disabled="@(_tabs.Count == 1)" @onclick="DeleteActive">Удалить вкладку</button>
+            <button class="primary-button" type="button" @onclick="Save">@Text["Common_Save"]</button>
+            <button class="danger-button" type="button" disabled="@(_tabs.Count == 1)" @onclick="DeleteActive">@Text["Notebook_DeleteTab"]</button>
         </div>
     }
 </section>
@@ -52,9 +53,9 @@
 {
     <div class="modal-overlay" @onclick="CloseNewTab">
         <section class="modal-window" role="dialog" aria-modal="true" aria-labelledby="new-tab-title" @onclick:stopPropagation="true">
-            <h2 id="new-tab-title">Новая вкладка</h2>
+            <h2 id="new-tab-title">@Text["Notebook_NewTab"]</h2>
             <label>
-                Название
+                @Text["Common_Name"]
                 <input class="form-control" maxlength="40" @bind="_newTabName" />
             </label>
             @if (!string.IsNullOrEmpty(_error))
@@ -62,8 +63,8 @@
                 <p class="notebook-error" role="alert">@_error</p>
             }
             <div class="notebook-actions">
-                <button class="primary-button" type="button" @onclick="CreateTab">Создать</button>
-                <button class="secondary-button" type="button" @onclick="CloseNewTab">Отмена</button>
+                <button class="primary-button" type="button" @onclick="CreateTab">@Text["Common_Create"]</button>
+                <button class="secondary-button" type="button" @onclick="CloseNewTab">@Text["Common_Cancel"]</button>
             </div>
         </section>
     </div>
@@ -75,15 +76,15 @@
         <section class="modal-window" role="dialog" aria-modal="true" aria-labelledby="rename-tab-title" @onclick:stopPropagation="true">
             <div class="notebook-modal-heading">
                 <div>
-                    <span>Настройка вкладки</span>
-                    <h2 id="rename-tab-title">Переименовать вкладку</h2>
+                    <span>@Text["Notebook_TabSettings"]</span>
+                    <h2 id="rename-tab-title">@Text["Notebook_RenameTab"]</h2>
                 </div>
-                <button class="notebook-modal-close" type="button" aria-label="Закрыть" @onclick="CloseRenameTab">
+                <button class="notebook-modal-close" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseRenameTab">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </div>
             <label>
-                Новое название
+                @Text["Notebook_NewName"]
                 <input class="form-control" maxlength="40" autofocus @bind="_renameTabName" />
             </label>
             @if (!string.IsNullOrEmpty(_renameError))
@@ -91,7 +92,7 @@
                 <p class="notebook-error" role="alert">@_renameError</p>
             }
             <div class="notebook-actions">
-                <button class="primary-button" type="button" @onclick="RenameTab">Сохранить</button>
+                <button class="primary-button" type="button" @onclick="RenameTab">@Text["Common_Save"]</button>
             </div>
         </section>
     </div>
@@ -126,7 +127,7 @@
         }
 
         if (_tabs.Count == 0)
-            _tabs.Add(new NoteTab(Guid.NewGuid(), "Заметки", string.Empty));
+            _tabs.Add(new NoteTab(Guid.NewGuid(), Text["Notebook_DefaultTabName"], string.Empty));
         _activeId = _tabs[0].Id;
     }
 
@@ -177,8 +178,8 @@
     {
         if (_renameTabId is not { } id) return;
         var name = _renameTabName.Trim();
-        if (string.IsNullOrWhiteSpace(name)) { _renameError = "Введите название вкладки."; return; }
-        if (_tabs.Any(x => x.Id != id && string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _renameError = "Вкладка с таким названием уже есть."; return; }
+        if (string.IsNullOrWhiteSpace(name)) { _renameError = Text["Notebook_NameRequired"]; return; }
+        if (_tabs.Any(x => x.Id != id && string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _renameError = Text["Notebook_NameTaken"]; return; }
         var index = _tabs.FindIndex(x => x.Id == id);
         if (index < 0) { CloseRenameTab(); return; }
         var tab = _tabs[index];
@@ -190,8 +191,8 @@
     private void CreateTab()
     {
         var name = _newTabName.Trim();
-        if (string.IsNullOrWhiteSpace(name)) { _error = "Введите название вкладки."; return; }
-        if (_tabs.Any(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _error = "Вкладка с таким названием уже есть."; return; }
+        if (string.IsNullOrWhiteSpace(name)) { _error = Text["Notebook_NameRequired"]; return; }
+        if (_tabs.Any(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _error = Text["Notebook_NameTaken"]; return; }
         var tab = new NoteTab(Guid.NewGuid(), name, string.Empty);
         _tabs.Add(tab); _activeId = tab.Id; Save(); CloseNewTab();
     }

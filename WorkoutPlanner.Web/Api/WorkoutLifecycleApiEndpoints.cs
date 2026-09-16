@@ -1,8 +1,9 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Api;
 
@@ -319,7 +320,7 @@ public static class WorkoutLifecycleApiEndpoints
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
                 [nameof(request.Exercises)] =
-                    ["Добавьте хотя бы одно упражнение."]
+                    [ServerTexts.Current["Server_Workout_NoExercises"]]
             });
         }
 
@@ -336,7 +337,7 @@ public static class WorkoutLifecycleApiEndpoints
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
                     [nameof(request.Exercises)] =
-                        ["Проверьте оценку и подходы каждого упражнения."]
+                        [ServerTexts.Current["Server_Workout_CheckSets"]]
                 });
             }
 
@@ -379,7 +380,7 @@ public static class WorkoutLifecycleApiEndpoints
 
             return Results.ValidationProblem(new Dictionary<string, string[]>
             {
-                ["workout"] = [result.Error ?? "Не удалось сохранить тренировку."]
+                ["workout"] = [result.Error ?? ServerTexts.Current["Server_Workout_SaveFailed"]]
             });
         }
 

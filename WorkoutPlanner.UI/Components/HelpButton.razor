@@ -1,6 +1,8 @@
+﻿@inject IAppText Text
+
 <button class="context-help-button"
         type="button"
-        aria-label="Открыть помощь: @Topic.Title"
+        aria-label="@Text.Format("Help_Open", Text[Topic.TitleKey])"
         aria-haspopup="dialog"
         aria-expanded="@_isOpen"
         aria-controls="context-help-dialog"

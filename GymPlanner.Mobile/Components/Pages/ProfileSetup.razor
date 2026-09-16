@@ -4,6 +4,7 @@
 @using System.Globalization
 @inject IProfileApiClient ProfileClient
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <section class="profile-setup-page" aria-busy="@_isLoading">
     <div class="profile-setup-panel">
@@ -11,22 +12,22 @@
         {
             <div class="profile-setup-state" role="status">
                 <span class="loading-spinner" aria-hidden="true"></span>
-                <span>Проверяем профиль…</span>
+                <span>@Text["ProfileSetup_Checking"]</span>
             </div>
         }
         else if (_loadErrors.Count > 0)
         {
             <div class="profile-setup-state load-error">
                 <div class="auth-error" role="alert">@string.Join(" ", _loadErrors)</div>
-                <button class="profile-secondary-action" type="button" @onclick="LoadAsync">Повторить</button>
+                <button class="profile-secondary-action" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
             </div>
         }
         else
         {
             <header class="profile-heading">
-                <p class="profile-kicker">Профиль пользователя</p>
-                <h1>Настройка профиля</h1>
-                <p>Заполните основные данные, чтобы продолжить работу с GPlanner.</p>
+                <p class="profile-kicker">@Text["ProfileSetup_Kicker"]</p>
+                <h1>@Text["ProfileSetup_Title"]</h1>
+                <p>@Text["ProfileSetup_Subtitle"]</p>
             </header>
 
             @if (_operationErrors.Count > 0)
@@ -40,42 +41,42 @@
 
                 <div class="profile-form-grid">
                     <div class="field">
-                        <label for="setup-first-name">Имя</label>
+                        <label for="setup-first-name">@Text["Common_FirstName"]</label>
                         <InputText id="setup-first-name" class="auth-input" @bind-Value="_input.FirstName" autocomplete="given-name" />
-                        <ValidationMessage For="@(() => _input.FirstName)" />
+                        <LocalizedValidationMessage For="@(() => _input.FirstName)" />
                     </div>
 
                     <div class="field">
-                        <label for="setup-last-name">Фамилия</label>
+                        <label for="setup-last-name">@Text["Common_LastName"]</label>
                         <InputText id="setup-last-name" class="auth-input" @bind-Value="_input.LastName" autocomplete="family-name" />
-                        <ValidationMessage For="@(() => _input.LastName)" />
+                        <LocalizedValidationMessage For="@(() => _input.LastName)" />
                     </div>
 
                     <div class="field">
-                        <label for="setup-birth-date">Дата рождения</label>
+                        <label for="setup-birth-date">@Text["Common_BirthDate"]</label>
                         <InputText id="setup-birth-date"
                                    class="auth-input"
                                    @bind-Value="_input.BirthDateText"
                                    inputmode="numeric"
                                    autocomplete="bday"
-                                   placeholder="ДД.ММ.ГГГГ" />
-                        <ValidationMessage For="@(() => _input.BirthDateText)" />
+                                   placeholder="@Text["Common_BirthDatePlaceholder"]" />
+                        <LocalizedValidationMessage For="@(() => _input.BirthDateText)" />
                     </div>
 
                     <div class="field">
-                        <label for="setup-gender">Пол</label>
+                        <label for="setup-gender">@Text["Common_Gender"]</label>
                         <SystemChoiceField id="setup-gender"
                                            class="auth-input"
-                                           Title="Пол"
+                                           Title="@Text["Common_Gender"]"
                                            Options="GenderOptions"
                                            @bind-Value="_input.Gender"
-                                           AriaLabel="Выбрать пол" />
-                        <ValidationMessage For="@(() => _input.Gender)" />
+                                           AriaLabel="@Text["ProfileSetup_SelectGender"]" />
+                        <LocalizedValidationMessage For="@(() => _input.Gender)" />
                     </div>
                 </div>
 
                 <button class="profile-primary-action" type="submit" disabled="@_isSaving">
-                    @(_isSaving ? "Сохраняем…" : "Сохранить профиль")
+                    @(_isSaving ? Text["Common_Saving"] : Text["ProfileSetup_Save"])
                 </button>
             </EditForm>
         }
@@ -83,11 +84,13 @@
 </section>
 
 @code {
-    private static readonly IReadOnlyList<SystemChoiceOption> GenderOptions =
+    // Значение остаётся русским: оно уходит на сервер и хранится в профиле.
+    // Переводится только подпись, которую видит пользователь.
+    private IReadOnlyList<SystemChoiceOption> GenderOptions =>
     [
-        new("Мужской", "Мужской"),
-        new("Женский", "Женский"),
-        new("Не указывать", "Не указывать")
+        new("Мужской", Text["Gender_Male"]),
+        new("Женский", Text["Gender_Female"]),
+        new("Не указывать", Text["Gender_Unspecified"])
     ];
 
     private readonly ProfileInput _input = new();
@@ -129,13 +132,13 @@
                 DateTimeStyles.None,
                 out var birthDate))
         {
-            _operationErrors.Add("Введите дату рождения в формате ДД.ММ.ГГГГ.");
+            _operationErrors.Add(Text["Validation_BirthDateFormat"]);
             return;
         }
 
         if (birthDate.Date > DateTime.Today || birthDate.Year < 1900)
         {
-            _operationErrors.Add("Укажите корректную дату рождения.");
+            _operationErrors.Add(Text["Validation_BirthDateInvalid"]);
             return;
         }
 
@@ -164,18 +167,19 @@
 
     private sealed class ProfileInput
     {
-        [Required(ErrorMessage = "Введите имя.")]
-        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_FirstNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_FirstNameTooLong")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите фамилию.")]
-        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        [Required(ErrorMessage = "Validation_LastNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_LastNameTooLong")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Укажите дату рождения.")]
+        [Required(ErrorMessage = "Validation_BirthDateRequired")]
         public string BirthDateText { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Выберите пол.")]
+        [Required(ErrorMessage = "Validation_GenderRequired")]
         public string Gender { get; set; } = string.Empty;
     }
 }

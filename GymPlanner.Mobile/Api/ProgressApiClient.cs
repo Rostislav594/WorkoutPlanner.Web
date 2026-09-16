@@ -1,3 +1,4 @@
+using GymPlanner.Mobile.Localization;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -11,7 +12,7 @@ public sealed class ProgressApiClient(HttpClient client) : IProgressApiClient
         CancellationToken cancellationToken = default) =>
         GetAsync<WorkoutProgressApiResponse>(
             $"api/v1/progress/workouts/{trainingPlanId}",
-            "Сервер вернул пустой прогресс тренировки.",
+            ApiErrorMessages.EmptyResponse(),
             cancellationToken);
 
     public async Task<ApiResult<IReadOnlyList<string>>> GetWorkoutExercisesAsync(
@@ -20,7 +21,7 @@ public sealed class ProgressApiClient(HttpClient client) : IProgressApiClient
     {
         var result = await GetAsync<List<string>>(
             $"api/v1/progress/workouts/{trainingPlanId}/exercises",
-            "Сервер вернул пустой список упражнений.",
+            ApiErrorMessages.EmptyResponse(),
             cancellationToken);
         return result.Succeeded
             ? ApiResult<IReadOnlyList<string>>.Success(result.Value!)
@@ -33,7 +34,7 @@ public sealed class ProgressApiClient(HttpClient client) : IProgressApiClient
         CancellationToken cancellationToken = default) =>
         GetAsync<ExerciseProgressApiResponse>(
             $"api/v1/progress/workouts/{trainingPlanId}/exercises/chart?exerciseName={Uri.EscapeDataString(exerciseName)}",
-            "Сервер вернул пустой прогресс упражнения.",
+            ApiErrorMessages.EmptyResponse(),
             cancellationToken);
 
     public Task<ApiResult> ClearWorkoutProgressAsync(
@@ -78,7 +79,7 @@ public sealed class ProgressApiClient(HttpClient client) : IProgressApiClient
         }
         catch (HttpRequestException)
         {
-            return ApiResult<T>.Failure("Нет соединения с сервером.");
+            return ApiResult<T>.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -97,7 +98,7 @@ public sealed class ProgressApiClient(HttpClient client) : IProgressApiClient
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 }

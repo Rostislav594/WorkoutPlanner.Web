@@ -26,6 +26,7 @@ public static class ApiErrorCodes
     public const string Unauthorized = "common.unauthorized";
     public const string Forbidden = "common.forbidden";
     public const string NotFound = "common.not_found";
+    public const string IncompleteResponse = "common.incomplete_response";
 
     // --- Профиль ---
     public const string ProfileFirstNameRequired = "profile.first_name_required";
@@ -48,6 +49,13 @@ public static class ApiErrorCodes
     public const string SupportMessageTooLong = "support.message_too_long";
     public const string SupportScreenshotTooLarge = "support.screenshot_too_large";
     public const string SupportScreenshotUnsupported = "support.screenshot_unsupported";
+    public const string SupportRateLimited = "support.rate_limited";
+    public const string SupportSendFailed = "support.send_failed";
+    public const string SupportMessageInvalid = "support.message_invalid";
+
+    // --- Фотографии упражнений ---
+    public const string PhotoSaveFailed = "photo.save_failed";
+    public const string PhotoUnsupportedFormat = "photo.unsupported_format";
 
     // --- Тренировки ---
     public const string WorkoutNoExercises = "workout.no_exercises";

@@ -2,11 +2,12 @@
 @rendermode InteractiveServer
 
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="page-content">
 
     <div class="page-title-row">
-        <h1 class="progress-title">Прогресс</h1>
+        <h1 class="progress-title">@Text["Progress_Title"]</h1>
         <HelpButton Topic="HelpContentCatalog.Progress" />
     </div>
 
@@ -17,10 +18,10 @@
 
             <img src="images/progress-exercises.png"
                  class="progress-menu-image"
-                 alt="Упражнения" />
+                 alt="@Text["Progress_Exercises"]" />
 
             <div class="progress-menu-title">
-                Упражнения
+                @Text["Progress_Exercises"]
             </div>
 
         </div>
@@ -30,10 +31,10 @@
 
             <img src="images/progress-workouts.png"
                  class="progress-menu-image"
-                 alt="Тренировки" />
+                 alt="@Text["Progress_Workouts"]" />
 
             <div class="progress-menu-title">
-                Тренировки
+                @Text["Progress_Workouts"]
             </div>
         </div>
 

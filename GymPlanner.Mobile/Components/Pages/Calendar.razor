@@ -6,11 +6,12 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IWorkoutLifecycleApiClient LifecycleClient
 @inject ILocalWorkoutReminderService ReminderService
+@inject IAppText Text
 
 <section class="calendar-page" aria-busy="@_isLoading">
     <header class="calendar-header">
         <div class="page-title-row">
-            <h1>Календарь</h1>
+            <h1>@Text["Calendar_Title"]</h1>
             <HelpButton Topic="HelpContentCatalog.Calendar" />
         </div>
         <div class="header-line" aria-hidden="true"></div>
@@ -21,18 +22,18 @@
         <div class="calendar-error" role="alert">
             <span class="material-symbols-rounded" aria-hidden="true">error</span>
             <div>
-                <strong>Не удалось загрузить календарь</strong>
+                <strong>@Text["Calendar_LoadFailed"]</strong>
                 <p>@string.Join(" ", _errors)</p>
             </div>
         </div>
     }
 
     <div class="month-header">
-        <button class="month-button" type="button" disabled="@_isLoading" @onclick="PreviousMonthAsync" aria-label="Предыдущий месяц">
+        <button class="month-button" type="button" disabled="@_isLoading" @onclick="PreviousMonthAsync" aria-label="@Text["Calendar_PreviousMonth"]">
             <span class="material-symbols-rounded" aria-hidden="true">chevron_left</span>
         </button>
         <h2 class="month-title">@MonthTitle</h2>
-        <button class="month-button" type="button" disabled="@_isLoading" @onclick="NextMonthAsync" aria-label="Следующий месяц">
+        <button class="month-button" type="button" disabled="@_isLoading" @onclick="NextMonthAsync" aria-label="@Text["Calendar_NextMonth"]">
             <span class="material-symbols-rounded" aria-hidden="true">chevron_right</span>
         </button>
     </div>
@@ -41,7 +42,7 @@
     {
         <div class="calendar-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем календарь…</span>
+            <span>@Text["Calendar_Loading"]</span>
         </div>
     }
     else
@@ -98,7 +99,7 @@
             <section class="modal-window workout-action-dialog"
                      role="dialog"
                      aria-modal="true"
-                     aria-label="Действия с тренировкой"
+                     aria-label="@Text["Calendar_WorkoutActions"]"
                      @onclick:stopPropagation="true">
                 @if (_dialogErrors.Count > 0)
                 {
@@ -107,14 +108,14 @@
 
                 <div class="workout-action-list">
                     <button class="danger-button" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
-                        Удалить
+                        @Text["Common_Delete"]
                     </button>
                     <label class="move-date-action @(_isBusy ? "is-disabled" : null)">
-                        <span>Перенести на другую дату</span>
+                        <span>@Text["Calendar_MoveToAnotherDate"]</span>
                         <input type="date"
                                min="@DateTime.Today.ToString("yyyy-MM-dd")"
                                disabled="@_isBusy"
-                               aria-label="Выбрать новую дату тренировки"
+                               aria-label="@Text["Calendar_PickNewDate"]"
                                @bind="_moveDate"
                                @bind:after="MoveAsync" />
                     </label>
@@ -128,13 +129,13 @@
             <section class="modal-window calendar-day-dialog" role="dialog" aria-modal="true" aria-labelledby="selected-day-title" @onclick:stopPropagation="true">
             <header class="calendar-modal-header">
                 <div>
-                    <span class="modal-eyebrow">Выбранный день</span>
+                    <span class="modal-eyebrow">@Text["Calendar_SelectedDay"]</span>
                     <h2 id="selected-day-title">
                         <span class="material-symbols-rounded" aria-hidden="true">calendar_month</span>
-                        @_selectedDate.Value.ToString("dd MMMM yyyy", RussianCulture)
+                        @_selectedDate.Value.ToString("dd MMMM yyyy", UiCulture)
                     </h2>
                 </div>
-                <button class="icon-close-button" type="button" disabled="@_isBusy" @onclick="CloseDay" aria-label="Закрыть">
+                <button class="icon-close-button" type="button" disabled="@_isBusy" @onclick="CloseDay" aria-label="@Text["Common_Close"]">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -150,14 +151,14 @@
                 {
                     <div class="past-day-hint" role="status">
                         <span class="material-symbols-rounded" aria-hidden="true">block</span>
-                        <p>Сначала завершите или удалите свободную тренировку на сегодня.</p>
+                        <p>@Text["Calendar_FinishFreeWorkoutFirst"]</p>
                     </div>
                 }
                 <section class="workout-picker" aria-labelledby="workout-picker-title">
-                    <h3 id="workout-picker-title">Назначить тренировку</h3>
+                    <h3 id="workout-picker-title">@Text["Calendar_AssignWorkout"]</h3>
                     @if (_plans.Count == 0)
                     {
-                        <p class="empty-hint">Сначала создайте тренировочный план.</p>
+                        <p class="empty-hint">@Text["Calendar_CreatePlanFirst"]</p>
                     }
                     else
                     {
@@ -184,7 +185,7 @@
             {
                 <div class="past-day-hint">
                     <span class="material-symbols-rounded" aria-hidden="true">history</span>
-                    <p>Этот день уже прошёл. Назначить тренировку невозможно.</p>
+                    <p>@Text["Calendar_DayInPast"]</p>
                 </div>
             }
 
@@ -192,7 +193,7 @@
                 @if (_selectedDate.Value.Date >= DateTime.Today)
                 {
                     <button class="primary-button" type="button" disabled="@(_isBusy || _selectedPlanId == 0 || IsTodayBlockedByFreeWorkout)" @onclick="ScheduleAsync">
-                        @(_isBusy ? "Сохраняем…" : "Назначить")
+                        @(_isBusy ? Text["Common_Saving"] : Text["Calendar_Assign"])
                     </button>
                 }
             </div>
@@ -202,8 +203,15 @@
 }
 
 @code {
-    private static readonly CultureInfo RussianCulture = CultureInfo.GetCultureInfo("ru-RU");
-    private static readonly string[] WeekdayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+    // Даты и сокращения дней недели берём из культуры выбранного языка.
+    // Держать названия дней в ресурсах смысла нет: в ru и uk шесть из семи
+    // совпадают, а культура даёт их для всех трёх языков сразу.
+    private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
+    private string[] WeekdayNames =>
+    [
+        .. Enumerable.Range(0, 7).Select(offset => UiCulture.TextInfo.ToTitleCase(
+            UiCulture.DateTimeFormat.AbbreviatedDayNames[((int)DayOfWeek.Monday + offset) % 7]))
+    ];
     private readonly List<TrainingPlanApiResponse> _plans = [];
     private readonly List<WorkoutDayApiResponse> _workoutDays = [];
     private readonly List<string> _errors = [];
@@ -230,7 +238,7 @@
     private bool IsTodayBlockedByFreeWorkout =>
         _selectedDate?.Date == DateTime.Today && _hasFreeWorkoutDraft;
 
-    private string MonthTitle => _currentMonth.ToString("MMMM yyyy", RussianCulture);
+    private string MonthTitle => _currentMonth.ToString("MMMM yyyy", UiCulture);
 
     private IEnumerable<DateTime?> CalendarCells
     {
@@ -351,7 +359,7 @@
         if (IsTodayBlockedByFreeWorkout)
         {
             _dialogErrors.Clear();
-            _dialogErrors.Add("Сначала завершите или удалите свободную тренировку на сегодня.");
+            _dialogErrors.Add(Text["Calendar_FinishFreeWorkoutFirst"]);
             return;
         }
 
@@ -448,7 +456,7 @@
         if (_moveDate.Date < DateTime.Today || _moveDate.Date == day.Date.Date)
         {
             _dialogErrors.Clear();
-            _dialogErrors.Add("Выберите другую текущую или будущую дату.");
+            _dialogErrors.Add(Text["Calendar_PickFutureDate"]);
             return;
         }
 
@@ -526,7 +534,7 @@
                 DateTimeStyles.None,
                 out var time))
         {
-            _reminderErrors.Add("Укажите корректное время напоминания.");
+            _reminderErrors.Add(Text["Calendar_ReminderTimeInvalid"]);
             return;
         }
 
@@ -535,7 +543,7 @@
             DateTimeKind.Unspecified);
         if (TimeZoneInfo.Local.IsInvalidTime(localDateTime))
         {
-            _reminderErrors.Add("Это время пропускается при переходе на летнее время.");
+            _reminderErrors.Add(Text["Calendar_ReminderTimeSkipped"]);
             return;
         }
 
@@ -544,7 +552,7 @@
             TimeZoneInfo.Local.GetUtcOffset(localDateTime));
         if (notifyAt <= DateTimeOffset.Now)
         {
-            _reminderErrors.Add("Время напоминания должно быть в будущем.");
+            _reminderErrors.Add(Text["Calendar_ReminderTimeInPast"]);
             return;
         }
 
@@ -627,16 +635,16 @@
     private static string GetWorkoutMarkerClass(TrainingPlanApiResponse plan) =>
         $"marker-custom-{Math.Abs(plan.Id) % 6}";
 
-    private static string GetDayLabel(
+    private string GetDayLabel(
         DateTime date,
         TrainingPlanApiResponse? plan,
         WorkoutDayApiResponse? day)
     {
-        var label = date.ToString("dd MMMM yyyy", RussianCulture);
+        var label = date.ToString("dd MMMM yyyy", UiCulture);
         if (plan is not null)
             label += $", {plan.WorkoutName}";
         if (day?.IsCompleted == true)
-            label += ", завершена";
+            label += Text["Calendar_CompletedSuffix"];
         return label;
     }
 

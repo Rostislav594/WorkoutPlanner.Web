@@ -1,3 +1,4 @@
+using GymPlanner.Mobile.Localization;
 using System.Net.Http.Json;
 using GymPlanner.Mobile.Authentication;
 using WorkoutPlanner.Api.Contracts;
@@ -22,13 +23,13 @@ public sealed class WatchManagementApiClient(HttpClient client) : IWatchManageme
                 .ReadFromJsonAsync<CreateWatchPairingCodeResponse>(cancellationToken);
             return pairingCode is null
                 ? ApiResult<CreateWatchPairingCodeResponse>.Failure(
-                    "Сервер вернул пустой код подключения.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<CreateWatchPairingCodeResponse>.Success(pairingCode);
         }
         catch (HttpRequestException)
         {
             return ApiResult<CreateWatchPairingCodeResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -45,13 +46,13 @@ public sealed class WatchManagementApiClient(HttpClient client) : IWatchManageme
                 .ReadFromJsonAsync<List<WatchDeviceResponse>>(cancellationToken);
             return devices is null
                 ? ApiResult<IReadOnlyList<WatchDeviceResponse>>.Failure(
-                    "Сервер вернул пустой список устройств.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<IReadOnlyList<WatchDeviceResponse>>.Success(devices);
         }
         catch (HttpRequestException)
         {
             return ApiResult<IReadOnlyList<WatchDeviceResponse>>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -85,13 +86,13 @@ public sealed class WatchManagementApiClient(HttpClient client) : IWatchManageme
                 .ReadFromJsonAsync<WatchPairingRequestDetailsResponse>(cancellationToken);
             return details is null
                 ? ApiResult<WatchPairingRequestDetailsResponse>.Failure(
-                    "Сервер вернул пустую заявку.")
+                    ApiErrorMessages.EmptyResponse())
                 : ApiResult<WatchPairingRequestDetailsResponse>.Success(details);
         }
         catch (HttpRequestException)
         {
             return ApiResult<WatchPairingRequestDetailsResponse>.Failure(
-                "Нет соединения с сервером.");
+                ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -123,7 +124,7 @@ public sealed class WatchManagementApiClient(HttpClient client) : IWatchManageme
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 
@@ -140,7 +141,7 @@ public sealed class WatchManagementApiClient(HttpClient client) : IWatchManageme
         }
         catch (HttpRequestException)
         {
-            return ApiResult.Failure("Нет соединения с сервером.");
+            return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable());
         }
     }
 }

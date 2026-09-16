@@ -3,6 +3,8 @@ package com.gymplanner.wearos.data.remote
 import android.os.Build
 import com.google.gson.Gson
 import com.gymplanner.wearos.BuildConfig
+import com.gymplanner.wearos.R
+import com.gymplanner.wearos.data.localization.WatchStrings
 import com.gymplanner.wearos.data.local.PendingSyncOperation
 import com.gymplanner.wearos.data.local.SetMutationPayload
 import com.gymplanner.wearos.data.local.SyncOperationType
@@ -18,6 +20,7 @@ class RetrofitWatchRemoteDataSource(
     private val sessionManager: WatchSessionManager,
     private val deviceIdentityStore: DeviceIdentityStore,
     private val gson: Gson,
+    private val strings: WatchStrings,
 ) : WatchRemoteDataSource {
     override suspend fun pair(pairingCode: String): PairingResult {
         val response = try {
@@ -33,7 +36,7 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return PairingResult.Failure("Нет связи с сервером", retryable = true)
+            return PairingResult.Failure(strings.get(R.string.error_no_connection), retryable = true)
         }
 
         val tokens = response.body()
@@ -43,18 +46,18 @@ class RetrofitWatchRemoteDataSource(
                 PairingResult.Success
             } catch (_: Exception) {
                 sessionManager.clear()
-                PairingResult.Failure("Не удалось безопасно сохранить доступ", retryable = true)
+                PairingResult.Failure(strings.get(R.string.error_secure_store_failed), retryable = true)
             }
         }
 
         val problem = parseProblem(response)
         return when (response.code()) {
-            400 -> PairingResult.Failure("Неверный код", retryable = false)
-            409 -> PairingResult.Failure("Часы уже подключены к другому аккаунту", retryable = false)
-            410 -> PairingResult.Failure("Срок действия кода истёк", retryable = false)
-            408, 429 -> PairingResult.Failure(problem.detail ?: "Сервер временно недоступен", true)
-            in 500..599 -> PairingResult.Failure("Сервер временно недоступен", true)
-            else -> PairingResult.Failure(problem.detail ?: "Не удалось подключить часы", false)
+            400 -> PairingResult.Failure(strings.get(R.string.error_invalid_code), retryable = false)
+            409 -> PairingResult.Failure(strings.get(R.string.error_watch_other_account), retryable = false)
+            410 -> PairingResult.Failure(strings.get(R.string.error_code_expired), retryable = false)
+            408, 429 -> PairingResult.Failure(problem.detail ?: strings.get(R.string.error_server_unavailable), true)
+            in 500..599 -> PairingResult.Failure(strings.get(R.string.error_server_unavailable), true)
+            else -> PairingResult.Failure(problem.detail ?: strings.get(R.string.error_pairing_failed), false)
         }
     }
 
@@ -71,7 +74,7 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return StartPhonePairingResult.Failure("Нет связи с сервером", retryable = true)
+            return StartPhonePairingResult.Failure(strings.get(R.string.error_no_connection), retryable = true)
         }
 
         val body = response.body()
@@ -86,15 +89,15 @@ class RetrofitWatchRemoteDataSource(
         val problem = parseProblem(response)
         return when (response.code()) {
             408, 429 -> StartPhonePairingResult.Failure(
-                problem.detail ?: "Сервер временно недоступен",
+                problem.detail ?: strings.get(R.string.error_server_unavailable),
                 retryable = true,
             )
             in 500..599 -> StartPhonePairingResult.Failure(
-                "Сервер временно недоступен",
+                strings.get(R.string.error_server_unavailable),
                 retryable = true,
             )
             else -> StartPhonePairingResult.Failure(
-                problem.detail ?: "Не удалось начать подключение",
+                problem.detail ?: strings.get(R.string.error_pairing_start_failed),
                 retryable = false,
             )
         }
@@ -109,7 +112,7 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return PhonePairingPollResult.Failure("Нет связи с сервером", retryable = true)
+            return PhonePairingPollResult.Failure(strings.get(R.string.error_no_connection), retryable = true)
         }
 
         val body = response.body()
@@ -120,7 +123,7 @@ class RetrofitWatchRemoteDataSource(
                 WatchPairingStatuses.EXPIRED -> PhonePairingPollResult.Expired
                 WatchPairingStatuses.APPROVED -> acceptTokens(body.tokens)
                 else -> PhonePairingPollResult.Failure(
-                    "Неизвестный ответ сервера",
+                    strings.get(R.string.error_unknown_response),
                     retryable = false,
                 )
             }
@@ -130,19 +133,19 @@ class RetrofitWatchRemoteDataSource(
         return when (response.code()) {
             404 -> PhonePairingPollResult.Expired
             409 -> PhonePairingPollResult.Failure(
-                "Часы уже подключены к другому аккаунту",
+                strings.get(R.string.error_watch_other_account),
                 retryable = false,
             )
             408, 429 -> PhonePairingPollResult.Failure(
-                problem.detail ?: "Сервер временно недоступен",
+                problem.detail ?: strings.get(R.string.error_server_unavailable),
                 retryable = true,
             )
             in 500..599 -> PhonePairingPollResult.Failure(
-                "Сервер временно недоступен",
+                strings.get(R.string.error_server_unavailable),
                 retryable = true,
             )
             else -> PhonePairingPollResult.Failure(
-                problem.detail ?: "Не удалось подключить часы",
+                problem.detail ?: strings.get(R.string.error_pairing_failed),
                 retryable = false,
             )
         }
@@ -151,7 +154,7 @@ class RetrofitWatchRemoteDataSource(
     private fun acceptTokens(tokens: WatchTokenResponse?): PhonePairingPollResult {
         if (tokens == null) {
             return PhonePairingPollResult.Failure(
-                "Сервер не вернул доступ",
+                strings.get(R.string.error_no_access_returned),
                 retryable = false,
             )
         }
@@ -161,7 +164,7 @@ class RetrofitWatchRemoteDataSource(
         } catch (_: Exception) {
             sessionManager.clear()
             PhonePairingPollResult.Failure(
-                "Не удалось безопасно сохранить доступ",
+                strings.get(R.string.error_secure_store_failed),
                 retryable = true,
             )
         }
@@ -173,23 +176,23 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return ActiveWorkoutResult.Failure("Нет связи с сервером", true)
-        } ?: return ActiveWorkoutResult.Unauthorized("Сессия часов недействительна")
+            return ActiveWorkoutResult.Failure(strings.get(R.string.error_no_connection), true)
+        } ?: return ActiveWorkoutResult.Unauthorized(strings.get(R.string.error_session_invalid))
 
         var response = executeActiveWorkout(token)
-        if (response == null) return ActiveWorkoutResult.Failure("Нет связи с сервером", true)
+        if (response == null) return ActiveWorkoutResult.Failure(strings.get(R.string.error_no_connection), true)
         if (response.code() == 401) {
             val refreshed = refreshSession()
             if (refreshed == SessionRefreshResult.TransientFailure) {
-                return ActiveWorkoutResult.Failure("Не удалось обновить сессию", true)
+                return ActiveWorkoutResult.Failure(strings.get(R.string.error_session_refresh_failed), true)
             }
             if (refreshed == SessionRefreshResult.Invalid) {
-                return ActiveWorkoutResult.Unauthorized("Сессия часов истекла")
+                return ActiveWorkoutResult.Unauthorized(strings.get(R.string.error_session_expired))
             }
             val refreshedToken = sessionManager.getAccessToken()
-                ?: return ActiveWorkoutResult.Unauthorized("Сессия часов истекла")
+                ?: return ActiveWorkoutResult.Unauthorized(strings.get(R.string.error_session_expired))
             response = executeActiveWorkout(refreshedToken)
-                ?: return ActiveWorkoutResult.Failure("Нет связи с сервером", true)
+                ?: return ActiveWorkoutResult.Failure(strings.get(R.string.error_no_connection), true)
         }
 
         response.body()?.takeIf { response.isSuccessful }?.let {
@@ -198,14 +201,14 @@ class RetrofitWatchRemoteDataSource(
         return when (response.code()) {
             404 -> ActiveWorkoutResult.NoActiveWorkout()
             410 -> ActiveWorkoutResult.NoActiveWorkout(finished = true)
-            401 -> ActiveWorkoutResult.Unauthorized("Сессия часов истекла")
+            401 -> ActiveWorkoutResult.Unauthorized(strings.get(R.string.error_session_expired))
             403 -> {
                 sessionManager.clear()
-                ActiveWorkoutResult.Unauthorized("Доступ часов отозван")
+                ActiveWorkoutResult.Unauthorized(strings.get(R.string.error_access_revoked))
             }
-            408, 429 -> ActiveWorkoutResult.Failure("Сервер временно недоступен", true)
-            in 500..599 -> ActiveWorkoutResult.Failure("Сервер временно недоступен", true)
-            else -> ActiveWorkoutResult.Failure(parseProblem(response).detail ?: "Ошибка загрузки", false)
+            408, 429 -> ActiveWorkoutResult.Failure(strings.get(R.string.error_server_unavailable), true)
+            in 500..599 -> ActiveWorkoutResult.Failure(strings.get(R.string.error_server_unavailable), true)
+            else -> ActiveWorkoutResult.Failure(parseProblem(response).detail ?: strings.get(R.string.error_load_failed), false)
         }
     }
 
@@ -215,11 +218,11 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return CompletionResult.TransientFailure("Нет связи с сервером")
-        } ?: return CompletionResult.Unauthorized("Сессия часов недействительна")
+            return CompletionResult.TransientFailure(strings.get(R.string.error_no_connection))
+        } ?: return CompletionResult.Unauthorized(strings.get(R.string.error_session_invalid))
         val payload = runCatching {
             gson.fromJson(operation.payloadJson, SetMutationPayload::class.java)
-        }.getOrNull() ?: return CompletionResult.PermanentFailure("Некорректный payload операции")
+        }.getOrNull() ?: return CompletionResult.PermanentFailure(strings.get(R.string.error_bad_payload))
 
         return try {
             val authorization = "Bearer $token"
@@ -253,9 +256,9 @@ class RetrofitWatchRemoteDataSource(
                 SyncOperationType.UpdateReps,
                 -> {
                     val weight = payload.weightKilograms
-                        ?: return CompletionResult.PermanentFailure("В update отсутствует вес")
+                        ?: return CompletionResult.PermanentFailure(strings.get(R.string.error_update_missing_weight))
                     val repetitions = payload.repetitions
-                        ?: return CompletionResult.PermanentFailure("В update отсутствуют повторы")
+                        ?: return CompletionResult.PermanentFailure(strings.get(R.string.error_update_missing_reps))
                     val apiResponse = api.updateSet(
                         authorization = authorization,
                         setId = operation.entityId,
@@ -273,7 +276,7 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            CompletionResult.TransientFailure("Нет связи с сервером")
+            CompletionResult.TransientFailure(strings.get(R.string.error_no_connection))
         }
     }
 
@@ -283,45 +286,45 @@ class RetrofitWatchRemoteDataSource(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: IOException) {
-            return FinishWorkoutRemoteResult.TransientFailure("Нет связи с сервером")
-        } ?: return FinishWorkoutRemoteResult.Unauthorized("Сессия часов недействительна")
+            return FinishWorkoutRemoteResult.TransientFailure(strings.get(R.string.error_no_connection))
+        } ?: return FinishWorkoutRemoteResult.Unauthorized(strings.get(R.string.error_session_invalid))
 
         var response = executeFinishWorkout(workoutId, token)
-            ?: return FinishWorkoutRemoteResult.TransientFailure("Нет связи с сервером")
+            ?: return FinishWorkoutRemoteResult.TransientFailure(strings.get(R.string.error_no_connection))
         if (response.code() == 401) {
             when (refreshSession()) {
                 SessionRefreshResult.TransientFailure ->
-                    return FinishWorkoutRemoteResult.TransientFailure("Не удалось обновить сессию")
+                    return FinishWorkoutRemoteResult.TransientFailure(strings.get(R.string.error_session_refresh_failed))
                 SessionRefreshResult.Invalid ->
-                    return FinishWorkoutRemoteResult.Unauthorized("Сессия часов истекла")
+                    return FinishWorkoutRemoteResult.Unauthorized(strings.get(R.string.error_session_expired))
                 SessionRefreshResult.Success -> Unit
             }
             val refreshedToken = sessionManager.getAccessToken()
-                ?: return FinishWorkoutRemoteResult.Unauthorized("Сессия часов истекла")
+                ?: return FinishWorkoutRemoteResult.Unauthorized(strings.get(R.string.error_session_expired))
             response = executeFinishWorkout(workoutId, refreshedToken)
-                ?: return FinishWorkoutRemoteResult.TransientFailure("Нет связи с сервером")
+                ?: return FinishWorkoutRemoteResult.TransientFailure(strings.get(R.string.error_no_connection))
         }
 
         response.body()?.takeIf { response.isSuccessful }?.let {
             return FinishWorkoutRemoteResult.Success(it.alreadyFinished)
         }
         return when (response.code()) {
-            401 -> FinishWorkoutRemoteResult.Unauthorized("Сессия часов истекла")
+            401 -> FinishWorkoutRemoteResult.Unauthorized(strings.get(R.string.error_session_expired))
             403 -> {
                 sessionManager.clear()
-                FinishWorkoutRemoteResult.Unauthorized("Доступ часов отозван")
+                FinishWorkoutRemoteResult.Unauthorized(strings.get(R.string.error_access_revoked))
             }
             408, 429 -> FinishWorkoutRemoteResult.TransientFailure(
-                "Сервер временно недоступен",
+                strings.get(R.string.error_server_unavailable),
             )
             in 500..599 -> FinishWorkoutRemoteResult.TransientFailure(
-                "Сервер временно недоступен",
+                strings.get(R.string.error_server_unavailable),
             )
             409 -> FinishWorkoutRemoteResult.PermanentFailure(
-                parseProblem(response).detail ?: "Тренировка ещё не готова к завершению",
+                parseProblem(response).detail ?: strings.get(R.string.error_workout_not_ready),
             )
             else -> FinishWorkoutRemoteResult.PermanentFailure(
-                parseProblem(response).detail ?: "Не удалось завершить тренировку",
+                parseProblem(response).detail ?: strings.get(R.string.error_finish_failed),
             )
         }
     }
@@ -338,26 +341,26 @@ class RetrofitWatchRemoteDataSource(
             return if (conflict?.code == "WORKOUT_SET_CONFLICT") {
                 CompletionResult.Conflict(
                     set = conflict.set?.toAuthoritativeState(),
-                    message = conflict.detail ?: "Подход изменён на сервере",
+                    message = conflict.detail ?: strings.get(R.string.error_set_changed_on_server),
                 )
             } else {
                 CompletionResult.PermanentFailure(
-                    conflict?.detail ?: "Operation ID уже использован",
+                    conflict?.detail ?: strings.get(R.string.error_operation_id_used),
                 )
             }
         }
         return when (response.code()) {
-            401 -> CompletionResult.Unauthorized("Сессия часов истекла")
-            408, 429 -> CompletionResult.TransientFailure("Сервер временно недоступен")
-            in 500..599 -> CompletionResult.TransientFailure("Сервер временно недоступен")
+            401 -> CompletionResult.Unauthorized(strings.get(R.string.error_session_expired))
+            408, 429 -> CompletionResult.TransientFailure(strings.get(R.string.error_server_unavailable))
+            in 500..599 -> CompletionResult.TransientFailure(strings.get(R.string.error_server_unavailable))
             403 -> {
                 sessionManager.clear()
-                CompletionResult.Unauthorized("Доступ часов отозван")
+                CompletionResult.Unauthorized(strings.get(R.string.error_access_revoked))
             }
             400, 404, 410 -> CompletionResult.PermanentFailure(
-                parseProblem(response).detail ?: "Операция отклонена сервером",
+                parseProblem(response).detail ?: strings.get(R.string.error_operation_rejected),
             )
-            else -> CompletionResult.PermanentFailure("Не удалось синхронизировать подход")
+            else -> CompletionResult.PermanentFailure(strings.get(R.string.error_set_sync_failed))
         }
     }
 

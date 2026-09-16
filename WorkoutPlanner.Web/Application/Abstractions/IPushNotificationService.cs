@@ -5,7 +5,17 @@ namespace WorkoutPlanner.Web.Application.Abstractions;
 
 public interface IPushNotificationTemplateProvider
 {
-    PushNotificationTemplate Get(PushNotificationType type);
+    /// <param name="language">
+    /// Язык получателя из его профиля: push формируется на сервере, а читает
+    /// его пользователь, поэтому культура запроса здесь не подходит.
+    /// </param>
+    PushNotificationTemplate Get(PushNotificationType type, string language);
+}
+
+/// <summary>Язык интерфейса пользователя по его идентификатору.</summary>
+public interface IUserLanguageProvider
+{
+    Task<string> GetAsync(string userId, CancellationToken cancellationToken = default);
 }
 
 public interface IRemotePushProvider

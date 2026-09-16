@@ -1,0 +1,59 @@
+@* Сообщения валидации на языке пользователя.
+
+   ValidationMessage печатает текст из DataAnnotations как есть, а
+   ErrorMessageResourceType разрешает ресурс по CultureInfo.CurrentUICulture —
+   в BlazorWebView она фиксируется при старте процесса и язык не меняет.
+   Поэтому в атрибутах лежит ключ ресурса, а перевод подставляется здесь,
+   через IAppText. Неизвестный ключ AppText возвращает как есть, поэтому
+   непереведённые сообщения продолжают показываться прежним текстом. *@
+@typeparam TValue
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@implements IDisposable
+@inject IAppText Text
+
+@foreach (var message in Messages)
+{
+    <div class="validation-message">@Text[message]</div>
+}
+
+@code {
+    private EditContext? _editContext;
+    private FieldIdentifier _field;
+
+    [CascadingParameter] private EditContext? CurrentEditContext { get; set; }
+
+    [Parameter, EditorRequired] public Expression<Func<TValue>> For { get; set; } = default!;
+
+    private IEnumerable<string> Messages =>
+        _editContext?.GetValidationMessages(_field) ?? [];
+
+    protected override void OnParametersSet()
+    {
+        if (CurrentEditContext is null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(LocalizedValidationMessage<TValue>)} требует EditForm.");
+        }
+
+        var field = FieldIdentifier.Create(For);
+        if (ReferenceEquals(_editContext, CurrentEditContext) && _field.Equals(field))
+            return;
+
+        Unsubscribe();
+        _editContext = CurrentEditContext;
+        _field = field;
+        _editContext.OnValidationStateChanged += OnValidationStateChanged;
+    }
+
+    private void OnValidationStateChanged(object? sender, ValidationStateChangedEventArgs args) =>
+        StateHasChanged();
+
+    private void Unsubscribe()
+    {
+        if (_editContext is not null)
+            _editContext.OnValidationStateChanged -= OnValidationStateChanged;
+    }
+
+    public void Dispose() => Unsubscribe();
+}

@@ -1,3 +1,5 @@
+﻿@inject IAppText Text
+
 <div class="orientation-gate" role="status" aria-live="polite">
     <div class="orientation-illustration" aria-hidden="true">
         <svg viewBox="0 0 240 150" focusable="false">
@@ -9,8 +11,8 @@
             <line class="phone-detail landscape-detail" x1="69" y1="76" x2="69" y2="92" />
         </svg>
     </div>
-    <h3>Поверните смартфон</h3>
-    <p>График доступен в горизонтальном режиме — так даты и изменения будет легче читать.</p>
+    <h3>@Text["Landscape_Title"]</h3>
+    <p>@Text["Landscape_Body"]</p>
 </div>
 
 <div class="landscape-chart-content">

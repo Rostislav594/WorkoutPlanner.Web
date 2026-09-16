@@ -1,5 +1,6 @@
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -13,14 +14,14 @@ public sealed class PublicationImageStorage(IWebHostEnvironment environment) : I
         ArgumentNullException.ThrowIfNull(upload);
         await using var input = upload.Content;
         if (upload.Length <= 0 || upload.Length > MaxImageSize)
-            throw new InvalidDataException("Изображение должно быть не больше 5 МБ.");
+            throw new InvalidDataException(ServerTexts.Current["Server_Image_TooLarge"]);
 
         var extension = upload.ContentType.ToLowerInvariant() switch
         {
             "image/jpeg" => ".jpg",
             "image/png" => ".png",
             "image/webp" => ".webp",
-            _ => throw new InvalidDataException("Разрешены только JPEG, PNG и WebP.")
+            _ => throw new InvalidDataException(ServerTexts.Current["Server_Image_UnsupportedFormat"])
         };
         var folder = Path.Combine(environment.ContentRootPath, "App_Data", "PublicationImages");
         Directory.CreateDirectory(folder);
@@ -33,7 +34,7 @@ public sealed class PublicationImageStorage(IWebHostEnvironment environment) : I
                 await CopyWithLimitAsync(input, output, cancellationToken);
             }
             if (!await HasExpectedSignatureAsync(filePath, extension, cancellationToken))
-                throw new InvalidDataException("Содержимое файла не соответствует формату изображения.");
+                throw new InvalidDataException(ServerTexts.Current["Server_Image_ContentMismatch"]);
             return $"{PublicPrefix}{fileName}";
         }
         catch
@@ -63,10 +64,10 @@ public sealed class PublicationImageStorage(IWebHostEnvironment environment) : I
         while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
         {
             total += read;
-            if (total > MaxImageSize) throw new InvalidDataException("Изображение должно быть не больше 5 МБ.");
+            if (total > MaxImageSize) throw new InvalidDataException(ServerTexts.Current["Server_Image_TooLarge"]);
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
         }
-        if (total == 0) throw new InvalidDataException("Изображение пустое.");
+        if (total == 0) throw new InvalidDataException(ServerTexts.Current["Server_Image_Empty"]);
     }
 
     private static async Task<bool> HasExpectedSignatureAsync(string path, string extension, CancellationToken cancellationToken)

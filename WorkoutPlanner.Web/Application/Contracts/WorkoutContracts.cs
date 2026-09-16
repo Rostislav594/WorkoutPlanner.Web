@@ -26,13 +26,14 @@ public sealed class Exercise
     public IEnumerable<int> Repetitions => Sets
         .OrderBy(x => x.SetNumber)
         .Select(x => x.Repetitions);
-    public string StatusText => Status switch
+    /// <summary>Ключ ресурса с подписью оценки: текст подставляет интерфейс.</summary>
+    public string StatusTextKey => Status switch
     {
-        ExerciseStatus.Easy => "Легко",
-        ExerciseStatus.Medium => "Средне",
-        ExerciseStatus.Hard => "Тяжело",
-        ExerciseStatus.Max => "На пределе",
-        ExerciseStatus.NotCompleted => "Не выбрано",
+        ExerciseStatus.Easy => "Difficulty_Easy",
+        ExerciseStatus.Medium => "Difficulty_Medium",
+        ExerciseStatus.Hard => "Difficulty_Hard",
+        ExerciseStatus.Max => "Difficulty_Max",
+        ExerciseStatus.NotCompleted => "Difficulty_NotRated",
         _ => string.Empty
     };
     public string StatusColor => Status switch

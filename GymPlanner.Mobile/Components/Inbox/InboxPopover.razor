@@ -2,11 +2,12 @@
 @inject IInboxApiClient InboxApi
 @inject InboxNotificationState InboxState
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="inbox-popover">
     <button class="inbox-trigger"
             type="button"
-            aria-label="Открыть уведомления"
+            aria-label="@Text["Inbox_Open"]"
             aria-expanded="@_isOpen"
             @onclick="ToggleAsync">
         <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
@@ -19,38 +20,38 @@
     @if (_isOpen)
     {
         <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
-        <section class="inbox-menu" aria-label="Центр уведомлений"
+        <section class="inbox-menu" aria-label="@Text["Inbox_Center"]"
                  @onclick:stopPropagation="true"
                  @onpointerdown="BeginClearHistoryHold"
                  @onpointerup="CancelClearHistoryHold"
                  @onpointercancel="CancelClearHistoryHold"
                  @onpointerleave="CancelClearHistoryHold">
             <header class="inbox-menu__header">
-                <p class="inbox-menu__clear-hint">Удерживайте, чтобы очистить историю</p>
+                <p class="inbox-menu__clear-hint">@Text["Inbox_ClearHint"]</p>
                 <div class="inbox-menu__header-actions">
                     @if (_messages.Any(x => x.ReadAtUtc is null))
                     {
-                        <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">Прочитать все</button>
+                        <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
                     }
                 </div>
             </header>
 
             @if (_isLoading)
             {
-                <div class="inbox-menu__state" role="status">Загружаем…</div>
+                <div class="inbox-menu__state" role="status">@Text["Common_Loading"]</div>
             }
             else if (!string.IsNullOrWhiteSpace(_error))
             {
                 <div class="inbox-menu__state inbox-menu__state--error" role="alert">
                     <span>@_error</span>
-                    <button type="button" @onclick="LoadAsync">Повторить</button>
+                    <button type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
                 </div>
             }
             else if (_messages.Count == 0)
             {
                 <div class="inbox-menu__state">
                     <span class="material-symbols-rounded" aria-hidden="true">notifications_none</span>
-                    <span>Новых сообщений нет</span>
+                    <span>@Text["Inbox_Empty"]</span>
                 </div>
             }
             else
@@ -61,13 +62,13 @@
                         <div class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)" role="listitem">
                             <button class="inbox-menu__item-open" type="button" @onclick="() => OpenMessageAsync(message)">
                                 <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
-                                <span>@GetTypeLabel(message.Type)</span>
+                                <span>@Text[InboxMessageTypes.KeyFor(message.Type)]</span>
                                 @if (message.ReadAtUtc is null)
                                 {
-                                    <span class="inbox-menu__dot" aria-label="Не прочитано"></span>
+                                    <span class="inbox-menu__dot" aria-label="@Text["Inbox_UnreadDot"]"></span>
                                 }
                             </button>
-                            <button class="inbox-menu__delete" type="button" aria-label="Удалить сообщение" title="Удалить сообщение" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
+                            <button class="inbox-menu__delete" type="button" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
                                 <span class="material-symbols-rounded" aria-hidden="true">delete</span>
                             </button>
                         </div>
@@ -88,16 +89,16 @@
                  aria-describedby="inbox-clear-description"
                  @onclick:stopPropagation="true">
             <span class="material-symbols-rounded inbox-clear-dialog__icon" aria-hidden="true">delete_sweep</span>
-            <h2 id="inbox-clear-title">Очистить историю уведомлений?</h2>
-            <p id="inbox-clear-description">Все сообщения будут удалены без возможности восстановления.</p>
+            <h2 id="inbox-clear-title">@Text["Inbox_ClearTitle"]</h2>
+            <p id="inbox-clear-description">@Text["Inbox_ClearDescription"]</p>
             @if (!string.IsNullOrWhiteSpace(_clearHistoryError))
             {
                 <p class="inbox-clear-dialog__error" role="alert">@_clearHistoryError</p>
             }
             <div class="inbox-clear-dialog__actions">
-                <button class="inbox-clear-dialog__cancel" type="button" disabled="@_isClearingHistory" @onclick="CancelClearHistory">Отмена</button>
+                <button class="inbox-clear-dialog__cancel" type="button" disabled="@_isClearingHistory" @onclick="CancelClearHistory">@Text["Common_Cancel"]</button>
                 <button class="inbox-clear-dialog__confirm" type="button" disabled="@_isClearingHistory" @onclick="DeleteAllAsync">
-                    @(_isClearingHistory ? "Удаляем…" : "Очистить")
+                    @(_isClearingHistory ? Text["Inbox_Clearing"] : Text["Inbox_Clear"])
                 </button>
             </div>
         </section>
@@ -133,7 +134,7 @@
         _error = null;
         var result = await InboxApi.GetMessagesAsync();
         if (result.Value is null)
-            _error = result.Errors.FirstOrDefault() ?? "Не удалось загрузить уведомления.";
+            _error = result.Errors.FirstOrDefault() ?? Text["Inbox_LoadFailed"];
         else
         {
             _messages = result.Value.Messages.ToList();
@@ -211,7 +212,7 @@
             : await InboxApi.DeleteMessageAsync(message.Id);
         if (result.Value is null)
         {
-            _error = result.Errors.FirstOrDefault() ?? "Не удалось удалить сообщение.";
+            _error = result.Errors.FirstOrDefault() ?? Text["Inbox_DeleteFailed"];
             return;
         }
         _messages.RemoveAll(x => x.Id == message.Id && x.IsPublication == message.IsPublication);
@@ -228,7 +229,7 @@
         var result = await InboxApi.DeleteAllAsync();
         if (result.Value is null)
         {
-            _clearHistoryError = result.Errors.FirstOrDefault() ?? "Не удалось удалить историю.";
+            _clearHistoryError = result.Errors.FirstOrDefault() ?? Text["Inbox_ClearFailed"];
             _isClearingHistory = false;
             return;
         }
@@ -242,9 +243,8 @@
     private void OnInboxChanged() => _ = InvokeAsync(StateHasChanged);
 
     private string GetUnreadBadge() => InboxState.UnreadCount > 99 ? "99+" : InboxState.UnreadCount.ToString();
-    private string GetUnreadLabel() => $"{InboxState.UnreadCount} непрочитанных уведомлений";
+    private string GetUnreadLabel() => Text.Plural("Inbox_UnreadCount", InboxState.UnreadCount);
     private static string GetIcon(string type) => type switch { "SupportReply" => "support_agent", "News" => "campaign", "Update" => "new_releases", _ => "info" };
-    private static string GetTypeLabel(string type) => type switch { "SupportReply" => "Техподдержка", "News" => "Новости", "Update" => "Обновление", _ => "Системное сообщение" };
     private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
 
     public void Dispose()

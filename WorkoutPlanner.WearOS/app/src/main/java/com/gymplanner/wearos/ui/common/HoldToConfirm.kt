@@ -19,11 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
+import com.gymplanner.wearos.R
 import com.gymplanner.wearos.ui.theme.WearColors
 
 /**
@@ -73,6 +75,8 @@ fun HoldToConfirm(
         }
     }
 
+    val holdHint = stringResource(R.string.hold_to_confirm_description, label)
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -95,7 +99,7 @@ fun HoldToConfirm(
                     },
                 )
             }
-            .semantics { contentDescription = "$label. Удерживайте для подтверждения" }
+            .semantics { contentDescription = holdHint }
             .padding(horizontal = labelPaddingDp.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {

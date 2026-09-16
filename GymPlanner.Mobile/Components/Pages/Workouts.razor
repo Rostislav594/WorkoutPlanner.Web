@@ -2,10 +2,11 @@
 @attribute [Authorize]
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutApiClient WorkoutClient
+@inject IAppText Text
 
 <section class="workouts-page" aria-busy="@_isLoading">
     <header class="workouts-header page-title-row">
-        <h1>Шаблоны тренировок</h1>
+        <h1>@Text["Workouts_Title"]</h1>
         <HelpButton Topic="HelpContentCatalog.Workouts" />
     </header>
 
@@ -18,7 +19,7 @@
     {
         <div class="workouts-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем шаблоны…</span>
+            <span>@Text["Workouts_Loading"]</span>
         </div>
     }
     else if (_plans.Count == 0)
@@ -32,15 +33,15 @@
                 <article class="workout-card @(_menuPlanId == plan.Id ? "menu-open" : null)">
                     <a class="workout-card-link"
                        href="@($"/workouts/{plan.Id}")"
-                       aria-label="Открыть шаблон @plan.WorkoutName">
+                       aria-label="@Text.Format("Workouts_OpenTemplate", plan.WorkoutName)">
                         <span class="workout-name">@plan.WorkoutName</span>
-                        <span class="workout-description">Упражнений: @plan.Exercises.Count</span>
+                        <span class="workout-description">@Text.Plural("Exercises", plan.Exercises.Count)</span>
                     </a>
 
                     <button class="card-menu-button workout-card-menu"
                             type="button"
-                            title="Настройки"
-                            aria-label="Настройки шаблона @plan.WorkoutName"
+                            title="@Text["Common_Settings"]"
+                            aria-label="@Text.Format("Workouts_TemplateSettings", plan.WorkoutName)"
                             aria-haspopup="dialog"
                             aria-controls="workout-template-actions-title"
                             aria-expanded="@(_menuPlanId == plan.Id)"
@@ -59,7 +60,7 @@
                 disabled="@_isBusy"
                 @onclick="OpenCreateDialog">
             <span class="material-symbols-rounded" aria-hidden="true">add</span>
-            Добавить шаблон
+            @Text["Workouts_AddTemplate"]
         </button>
     </footer>
 </section>
@@ -73,17 +74,17 @@
                  aria-labelledby="workout-template-actions-title"
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
-                <h2 id="workout-template-actions-title">Действия с шаблоном</h2>
+                <h2 id="workout-template-actions-title">@Text["Workouts_TemplateActions"]</h2>
                 <button class="icon-close-button"
                         type="button"
-                        aria-label="Закрыть"
+                        aria-label="@Text["Common_Close"]"
                         @onclick="CloseMenu">×</button>
             </div>
             <div class="modal-body workout-template-actions-body">
                 <p>@MenuPlan.WorkoutName</p>
                 <div class="workout-template-action-buttons">
-                    <button class="secondary-button" type="button" @onclick="() => BeginEdit(MenuPlan)">Изменить название</button>
-                    <button class="danger-button" type="button" @onclick="() => ConfirmDelete(MenuPlan)">Удалить шаблон</button>
+                    <button class="secondary-button" type="button" @onclick="() => BeginEdit(MenuPlan)">@Text["Workouts_Rename"]</button>
+                    <button class="danger-button" type="button" @onclick="() => ConfirmDelete(MenuPlan)">@Text["Workouts_DeleteTemplate"]</button>
                 </div>
             </div>
         </section>
@@ -99,16 +100,16 @@
                  aria-labelledby="plan-dialog-title"
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
-                <h2 id="plan-dialog-title">@(_isCreateOpen ? "Новый шаблон" : "Название шаблона")</h2>
+                <h2 id="plan-dialog-title">@(_isCreateOpen ? Text["Workouts_NewTemplate"] : Text["Workouts_TemplateName"])</h2>
                 <button class="icon-close-button"
                         type="button"
-                        aria-label="Закрыть"
+                        aria-label="@Text["Common_Close"]"
                         disabled="@_isBusy"
                         @onclick="ClosePlanDialog">×</button>
             </div>
 
             <div class="modal-body">
-                <label for="plan-name">Название</label>
+                <label for="plan-name">@Text["Common_Name"]</label>
                 @if (_isCreateOpen)
                 {
                     <input id="plan-name"
@@ -143,7 +144,7 @@
                             type="button"
                             disabled="@(_isBusy || string.IsNullOrWhiteSpace(_newName))"
                             @onclick="CreateAsync">
-                        @(_isBusy ? "Сохраняем…" : "Сохранить")
+                        @(_isBusy ? Text["Common_Saving"] : Text["Common_Save"])
                     </button>
                 }
                 else if (_editingId is int editingId)
@@ -152,7 +153,7 @@
                             type="button"
                             disabled="@(_isBusy || string.IsNullOrWhiteSpace(_editName))"
                             @onclick="() => RenameAsync(editingId)">
-                        @(_isBusy ? "Сохраняем…" : "Сохранить")
+                        @(_isBusy ? Text["Common_Saving"] : Text["Common_Save"])
                     </button>
                 }
 
@@ -171,17 +172,16 @@
                  aria-describedby="delete-dialog-description"
                  @onclick:stopPropagation="true">
             <div class="modal-heading">
-                <h2 id="delete-dialog-title">Удалить шаблон?</h2>
+                <h2 id="delete-dialog-title">@Text["Workouts_DeleteTitle"]</h2>
                 <button class="icon-close-button"
                         type="button"
-                        aria-label="Закрыть"
+                        aria-label="@Text["Common_Close"]"
                         disabled="@_isBusy"
                         @onclick="CloseDeleteDialog">×</button>
             </div>
             <div class="modal-body">
                 <p id="delete-dialog-description">
-                    Будет удалён шаблон <strong>@_deleteTarget.WorkoutName</strong>,
-                    его упражнения, назначения в календаре и прогресс.
+                    @Text["Workouts_DeletePrefix"] <strong>@_deleteTarget.WorkoutName</strong>@Text["Workouts_DeleteSuffix"]
                 </p>
                 @if (_errors.Count > 0)
                 {
@@ -193,7 +193,7 @@
                         type="button"
                         disabled="@_isBusy"
                         @onclick="DeleteAsync">
-                    @(_isBusy ? "Удаляем…" : "Удалить")
+                    @(_isBusy ? Text["Common_Deleting"] : Text["Common_Delete"])
                 </button>
             </div>
         </section>

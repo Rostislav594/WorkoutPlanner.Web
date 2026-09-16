@@ -1,8 +1,10 @@
+﻿@inject IAppText Text
+
 @implements IDisposable
 
-<section class="final-welcome" aria-label="Добро пожаловать в GymPlanner">
+<section class="final-welcome" aria-label="@Text["FinalWelcome_Aria"]">
     <div class="final-welcome__content @(_isLeaving ? "final-welcome__content--leaving" : null)" role="status">
-        <p>Добро пожаловать в</p>
+        <p>@Text["FinalWelcome_Prefix"]</p>
         <strong>GymPlanner</strong>
     </div>
 
@@ -10,7 +12,7 @@
     {
         <div class="final-welcome__error" role="alert">
             <span>@ErrorMessage</span>
-            <button class="primary-button" type="button" disabled="@IsBusy" @onclick="CompleteAsync">ПОВТОРИТЬ</button>
+            <button class="primary-button" type="button" disabled="@IsBusy" @onclick="CompleteAsync">@Text["FinalWelcome_Repeat"]</button>
         </div>
     }
 </section>

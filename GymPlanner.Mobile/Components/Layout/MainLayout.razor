@@ -5,18 +5,19 @@
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 @inject PushRegistrationCoordinator PushRegistration
+@inject IAppText Text
 
 <div class="mobile-shell @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)">
     @if (!HidesApplicationNavigation)
     {
         <header class="mobile-header">
-            <a class="mobile-brand" href="/" aria-label="GymPlanner — главная">
+            <a class="mobile-brand" href="/" aria-label="@Text["Layout_BrandHome"]">
                 <span>GPlanner</span>
             </a>
             <AuthorizeView>
                 <Authorized>
                     <div class="header-actions">
-                        <a class="profile-button" href="profile" aria-label="Открыть профиль">
+                        <a class="profile-button" href="profile" aria-label="@Text["Layout_OpenProfile"]">
                             <span class="material-symbols-rounded" aria-hidden="true">person</span>
                         </a>
                     </div>
@@ -34,26 +35,26 @@
     </main>
     @if (!HidesApplicationNavigation)
     {
-        <nav class="mobile-navigation" aria-label="Основная навигация">
+        <nav class="mobile-navigation" aria-label="@Text["Nav_Main"]">
             <NavLink href="today">
                 <span class="material-symbols-rounded" aria-hidden="true">home</span>
-                <span class="navigation-label">Сегодня</span>
+                <span class="navigation-label">@Text["Nav_Today"]</span>
             </NavLink>
             <NavLink href="workouts">
                 <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-                <span class="navigation-label">Тренировки</span>
+                <span class="navigation-label">@Text["Nav_Workouts"]</span>
             </NavLink>
             <NavLink href="/" Match="NavLinkMatch.All">
                 <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
-                <span class="navigation-label">Главная</span>
+                <span class="navigation-label">@Text["Nav_Home"]</span>
             </NavLink>
             <NavLink href="history">
                 <span class="material-symbols-rounded" aria-hidden="true">history</span>
-                <span class="navigation-label">История</span>
+                <span class="navigation-label">@Text["Nav_History"]</span>
             </NavLink>
             <NavLink href="progress">
                 <span class="material-symbols-rounded" aria-hidden="true">monitoring</span>
-                <span class="navigation-label">Прогресс</span>
+                <span class="navigation-label">@Text["Nav_Progress"]</span>
             </NavLink>
         </nav>
     }

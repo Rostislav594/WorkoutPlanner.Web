@@ -4,11 +4,13 @@
 @using System.Globalization
 @using WorkoutPlanner.Api.Contracts
 @inject IWorkoutLifecycleApiClient LifecycleClient
+@inject IAppText Text
+@inject NavigationManager Navigation
 
 <section class="history-page" aria-busy="@_isLoading">
     <header class="history-page-header">
         <div class="page-title-row">
-            <h1>История</h1>
+            <h1>@Text["History_Title"]</h1>
             <HelpButton Topic="HelpContentCatalog.History" />
         </div>
         <div class="header-line" aria-hidden="true"></div>
@@ -19,7 +21,7 @@
         <div class="history-error" role="alert">
             <span class="material-symbols-rounded" aria-hidden="true">error</span>
             <div>
-                <strong>Не удалось загрузить историю</strong>
+                <strong>@Text["History_LoadFailed"]</strong>
                 <p>@string.Join(" ", _errors)</p>
             </div>
         </div>
@@ -29,7 +31,7 @@
     {
         <div class="history-state" role="status">
             <span class="loading-spinner" aria-hidden="true"></span>
-            <span>Загружаем историю…</span>
+            <span>@Text["History_Loading"]</span>
         </div>
     }
     else if (_history.Count == 0)
@@ -38,11 +40,11 @@
             <div class="history-empty-visual" aria-hidden="true">
                 <span class="material-symbols-rounded">history_toggle_off</span>
             </div>
-            <h2>История пока пуста</h2>
-            <p>Завершённые тренировки и их результаты появятся здесь.</p>
+            <h2>@Text["History_EmptyTitle"]</h2>
+            <p>@Text["History_EmptyBody"]</p>
             @if (_errors.Count > 0)
             {
-                <button class="secondary-button retry-button" type="button" @onclick="LoadAsync">Повторить</button>
+                <button class="secondary-button retry-button" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
             }
         </div>
     }
@@ -51,22 +53,29 @@
         <div class="history-list">
             @foreach (var item in _history)
             {
-                <button class="history-card" type="button" @onclick="() => OpenHistory(item)" aria-label="Открыть историю тренировки @item.WorkoutName">
+                var isTarget = item.Id == _targetHistoryId;
+                <button class="history-card @(isTarget ? "history-card--targeted" : null)"
+                        id="history-card-@item.Id"
+                        type="button"
+                        autofocus="@isTarget"
+                        aria-current="@(isTarget ? "true" : null)"
+                        @onclick="() => OpenHistory(item)"
+                        aria-label="@Text.Format("History_Open", item.WorkoutName)">
                     <span class="history-card-content">
                         <span class="history-title">@item.WorkoutName</span>
                         <span class="history-date">
                             <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
-                            @item.Date.ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                            @item.Date.ToString("dd MMMM yyyy, HH:mm", UiCulture)
                         </span>
                     </span>
                     <span class="history-card-aside">
                         @if (item.SnapshotAvailable)
                         {
-                            <span class="card-meta">@item.Exercises.Count @GetExerciseCountLabel(item.Exercises.Count)</span>
+                            <span class="card-meta">@Text.Plural("Exercises", item.Exercises.Count)</span>
                         }
                         else
                         {
-                            <span class="legacy-label">Архивная</span>
+                            <span class="legacy-label">@Text["History_Legacy"]</span>
                         }
                         <span class="material-symbols-rounded card-chevron" aria-hidden="true">chevron_right</span>
                     </span>
@@ -85,10 +94,10 @@
                     <h2 id="history-title">@_selected.WorkoutName</h2>
                     <p>
                         <span class="material-symbols-rounded" aria-hidden="true">calendar_today</span>
-                        @_selected.Date.ToString("dd MMMM yyyy, HH:mm", RussianCulture)
+                        @_selected.Date.ToString("dd MMMM yyyy, HH:mm", UiCulture)
                     </p>
                 </div>
-                <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="Закрыть историю">
+                <button class="close-button" type="button" disabled="@_isBusy" @onclick="CloseHistory" aria-label="@Text["History_Close"]">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </header>
@@ -102,8 +111,8 @@
             {
                 <div class="snapshot-unavailable" role="status">
                     <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
-                    <h3>Детали архивной записи недоступны</h3>
-                    <p>Исходные данные сохранены на сервере без изменений и не будут перезаписаны.</p>
+                    <h3>@Text["History_SnapshotUnavailableTitle"]</h3>
+                    <p>@Text["History_SnapshotUnavailableBody"]</p>
                 </div>
             }
             else
@@ -114,11 +123,11 @@
                         @if (group.IsSuperset)
                         {
                             var supersetStatus = GetSupersetStatus(group);
-                            <article class="history-exercise history-superset" aria-label="Суперсет @string.Join(" и ", group.Exercises.Select(x => x.Name))">
+                            <article class="history-exercise history-superset" aria-label="@Text.Format("History_SupersetLabel", string.Join(Text["Common_AndSeparator"], group.Exercises.Select(x => x.Name)))">
                                 <header class="history-superset-heading">
                                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
                                     <div class="history-superset-title">
-                                        <span class="history-superset-kicker">Суперсет</span>
+                                        <span class="history-superset-kicker">@Text["Common_Superset"]</span>
                                         <div class="history-superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.Name))">
                                             @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                             {
@@ -131,13 +140,13 @@
                                             }
                                         </div>
                                     </div>
-                                    <span class="status-badge status-@supersetStatus.ToLowerInvariant()">@GetStatusText(supersetStatus)</span>
+                                    <span class="status-badge status-@supersetStatus.ToLowerInvariant()">@Text[WorkoutDifficulties.KeyFor(supersetStatus)]</span>
                                 </header>
 
                                 <div class="history-sets history-superset-rounds">
                                     @foreach (var roundNumber in GetSupersetRoundNumbers(group))
                                     {
-                                        <section class="history-superset-round" aria-label="Круг @roundNumber">
+                                        <section class="history-superset-round" aria-label="@Text.Format("History_Round", roundNumber)">
                                             @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                             {
                                                 var exercise = group.Exercises[exerciseIndex];
@@ -146,17 +155,17 @@
                                                     continue;
 
                                                 <div class="history-set history-superset-set @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">
-                                                    <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
+                                                    <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? Text["Common_SetCompleted"] : Text["Common_SetNotCompleted"])">
                                                         <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
                                                     </span>
                                                     <span class="history-set-label">
-                                                        <span class="history-superset-exercise-name">@exercise.Name · подход @set.SetNumber</span>
+                                                        <span class="history-superset-exercise-name">@Text.Format("History_SupersetSetName", exercise.Name, set.SetNumber)</span>
                                                         <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
-                                                            @(set.IsWarmup ? "Разминочный" : "Рабочий")
+                                                            @(set.IsWarmup ? Text["Common_WarmupSet"] : Text["Common_WorkingSet"])
                                                         </span>
                                                     </span>
                                                     <strong>
-                                                        <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
+                                                        <span>@set.Weight.ToString("0.##", UiCulture) @Text["Common_Kg"]</span>
                                                         <span aria-hidden="true">×</span>
                                                         <span>@set.Repetitions</span>
                                                     </strong>
@@ -173,26 +182,26 @@
                             <article class="history-exercise">
                                 <div class="exercise-heading">
                                     <div>
-                                        <span class="exercise-index">Упражнение</span>
+                                        <span class="exercise-index">@Text["Common_Exercise"]</span>
                                         <h3>@exercise.Name</h3>
                                     </div>
-                                    <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@GetStatusText(exercise.Status)</span>
+                                    <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@Text[WorkoutDifficulties.KeyFor(exercise.Status)]</span>
                                 </div>
                                 <div class="history-sets">
                                     @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                                     {
                                         <div class="history-set">
-                                            <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? "Выполнен" : "Не выполнен")">
+                                            <span class="completion-mark @(set.Completed ? "done" : null)" aria-label="@(set.Completed ? Text["Common_SetCompleted"] : Text["Common_SetNotCompleted"])">
                                                 <span class="material-symbols-rounded" aria-hidden="true">@(set.Completed ? "check" : "remove")</span>
                                             </span>
                                             <span class="history-set-label">
-                                                <span>Подход @set.SetNumber</span>
+                                                <span>@Text.Format("Common_SetNumber", set.SetNumber)</span>
                                                 <span class="set-kind @(set.IsWarmup ? "warmup" : "working")">
-                                                    @(set.IsWarmup ? "Разминочный" : "Рабочий")
+                                                    @(set.IsWarmup ? Text["Common_WarmupSet"] : Text["Common_WorkingSet"])
                                                 </span>
                                             </span>
                                             <strong>
-                                                <span>@set.Weight.ToString("0.##", RussianCulture) кг</span>
+                                                <span>@set.Weight.ToString("0.##", UiCulture) @Text["Common_Kg"]</span>
                                                 <span aria-hidden="true">×</span>
                                                 <span>@set.Repetitions</span>
                                             </strong>
@@ -216,15 +225,15 @@
             <div class="dialog-actions">
                 @if (_confirmDelete)
                 {
-                    <p class="delete-warning">Удалить эту запись истории без возможности восстановления?</p>
+                    <p class="delete-warning">@Text["History_DeleteWarning"]</p>
                     <button class="danger-button" type="button" disabled="@_isBusy" @onclick="DeleteAsync">
-                        @(_isBusy ? "Удаляем…" : "Удалить точно")
+                        @(_isBusy ? Text["Common_Deleting"] : Text["History_DeleteConfirm"])
                     </button>
-                    <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CancelDelete">Отмена</button>
+                    <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CancelDelete">@Text["Common_Cancel"]</button>
                 }
                 else
                 {
-                    <button class="danger-button" type="button" @onclick="ConfirmDelete">Удалить запись</button>
+                    <button class="danger-button" type="button" @onclick="ConfirmDelete">@Text["History_DeleteEntry"]</button>
                 }
             </div>
         </section>
@@ -232,8 +241,8 @@
 }
 
 @code {
-    private static readonly CultureInfo RussianCulture =
-        CultureInfo.GetCultureInfo("ru-RU");
+    // Даты и вес показываем в культуре выбранного языка.
+    private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
     private readonly List<WorkoutHistoryApiResponse> _history = [];
     private readonly List<string> _errors = [];
     private readonly List<string> _dialogErrors = [];
@@ -242,6 +251,15 @@
     private bool _isLoading = true;
     private bool _isBusy;
     private bool _confirmDelete;
+    private int? _targetHistoryId;
+    private bool _targetScrollPending;
+
+    [Parameter, SupplyParameterFromQuery(Name = "workout")]
+    public string? TargetWorkout { get; set; }
+
+    [Parameter, SupplyParameterFromQuery(Name = "date")]
+    public DateTime? TargetDate { get; set; }
+
     private IReadOnlyList<HistoryExerciseGroup> SelectedExerciseGroups =>
         (_selected?.Exercises ?? [])
             .Select((exercise, index) => new { Exercise = exercise, Index = index })
@@ -271,6 +289,7 @@
             _history.Clear();
             _history.AddRange(result.Value!
                 .OrderByDescending(x => x.Date));
+            UpdateTargetHistory();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -279,6 +298,48 @@
         {
             _isLoading = false;
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!_isLoading)
+            UpdateTargetHistory();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!_targetScrollPending || _targetHistoryId is not { } targetId)
+            return;
+
+        _targetScrollPending = false;
+        var uriWithoutFragment = Navigation.Uri.Split('#', 2)[0];
+        Navigation.NavigateTo(
+            $"{uriWithoutFragment}#history-card-{targetId}",
+            replace: true);
+    }
+
+    private void UpdateTargetHistory()
+    {
+        if (string.IsNullOrWhiteSpace(TargetWorkout) || TargetDate is null)
+        {
+            _targetHistoryId = null;
+            _targetScrollPending = false;
+            return;
+        }
+
+        var targetHistoryId = _history
+            .Where(item =>
+                string.Equals(item.WorkoutName, TargetWorkout, StringComparison.Ordinal) &&
+                item.Date.Date == TargetDate.Value.Date)
+            .OrderBy(item => Math.Abs((item.Date - TargetDate.Value).Ticks))
+            .Select(item => (int?)item.Id)
+            .FirstOrDefault();
+
+        if (_targetHistoryId == targetHistoryId)
+            return;
+
+        _targetHistoryId = targetHistoryId;
+        _targetScrollPending = targetHistoryId is not null;
     }
 
     private void OpenHistory(WorkoutHistoryApiResponse item)
@@ -333,15 +394,6 @@
         }
     }
 
-    private static string GetStatusText(string status) => status switch
-    {
-        "Easy" => "Легко",
-        "Medium" => "Средне",
-        "Hard" => "Тяжело",
-        "Max" => "Предел",
-        _ => "Не оценено"
-    };
-
     private static IReadOnlyList<int> GetSupersetRoundNumbers(HistoryExerciseGroup group) =>
         group.Exercises
             .SelectMany(exercise => exercise.Sets)
@@ -354,20 +406,6 @@
     {
         var status = group.Exercises[0].Status;
         return group.Exercises.All(exercise => exercise.Status == status) ? status : "NotCompleted";
-    }
-
-    private static string GetExerciseCountLabel(int count)
-    {
-        var remainder100 = count % 100;
-        if (remainder100 is >= 11 and <= 14)
-            return "упражнений";
-
-        return (count % 10) switch
-        {
-            1 => "упражнение",
-            >= 2 and <= 4 => "упражнения",
-            _ => "упражнений"
-        };
     }
 
     public void Dispose()

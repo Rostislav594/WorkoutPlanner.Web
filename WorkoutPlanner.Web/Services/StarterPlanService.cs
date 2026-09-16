@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Localization;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -9,10 +10,10 @@ public sealed class StarterPlanService : IStarterPlanService
 {
     private static readonly string[] StarterPlanNames =
     [
-        "Верх 1",
-        "Низ 1",
-        "Верх 2",
-        "Низ 2"
+        ServerTexts.Current["Server_Starter_Upper1"],
+        ServerTexts.Current["Server_Starter_Lower1"],
+        ServerTexts.Current["Server_Starter_Upper2"],
+        ServerTexts.Current["Server_Starter_Lower2"]
     ];
 
     private readonly IDbContextFactory<WorkoutDbContext> _dbFactory;

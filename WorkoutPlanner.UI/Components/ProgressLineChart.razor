@@ -1,15 +1,19 @@
-@using System.Globalization
+﻿@using System.Globalization
 @using System.Text
 @using WorkoutPlanner.Api.Contracts
+@inject IAppText Text
 
-<section class="progress-chart" aria-label="@Title">
+<section class="progress-chart @(StagedReveal ? "staged-reveal" : null) @(CompactPresentation ? "compact-presentation" : null)" aria-label="@Title">
     <div class="chart-heading">
         <h3>@Title</h3>
-        <span>Последние 30 дней</span>
+        @if (!CompactPresentation)
+        {
+            <span>@Text["Chart_Last30Days"]</span>
+        }
     </div>
     @if (Points.Count == 0)
     {
-        <p class="empty">За последние 30 дней данных для графика нет.</p>
+        <p class="empty">@Text["Chart_NoData"]</p>
     }
     else
     {
@@ -72,40 +76,57 @@
                     continue;
 
                 var point = Points[index];
-                <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)"
-                      style="@MarkerStyle(point)"
-                      title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"></span>
+                if (PointSelected.HasDelegate)
+                {
+                    <button class="chart-marker-hit-target"
+                            type="button"
+                            style="@MarkerStyle(point)"
+                            title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"
+                            aria-label="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"
+                            @onclick="() => PointSelected.InvokeAsync(point)">
+                        <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)" aria-hidden="true"></span>
+                    </button>
+                }
+                else
+                {
+                    <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)"
+                          style="@MarkerStyle(point)"
+                          title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"></span>
+                }
             }
         </div>
 
-        <div class="chart-values">
-            <span>Последнее: <strong>@FormatPercent(Points[^1].Percent)</strong></span>
-            <span>Лучшее: <strong>@FormatPercent(Points.Max(x => x.Percent))</strong></span>
-        </div>
-
-        <details class="chart-data-details">
-            <summary>Показать точные значения</summary>
-            <div class="chart-data-scroll">
-                <table>
-                    <caption>Данные графика за последние 30 дней</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Дата</th>
-                            <th scope="col">Изменение</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var point in Points)
-                        {
-                            <tr>
-                                <td>@point.Date.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)</td>
-                                <td>@FormatSignedPercent(point.Percent)</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+        @if (!CompactPresentation)
+        {
+            <div class="chart-values">
+                <span>@Text["Chart_Latest"] <strong>@FormatPercent(Points[^1].Percent)</strong></span>
+                <span>@Text["Chart_Best"] <strong>@FormatPercent(Points.Max(x => x.Percent))</strong></span>
             </div>
-        </details>
+
+            <details class="chart-data-details">
+                <summary>@Text["Chart_ShowValues"]</summary>
+                <div class="chart-data-scroll">
+                    <table>
+                        <caption>@Text["Chart_TableCaption"]</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">@Text["Chart_ColumnDate"]</th>
+                                <th scope="col">@Text["Chart_ColumnChange"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var point in Points)
+                            {
+                                <tr>
+                                    <td>@point.Date.ToString("dd.MM.yyyy", CultureInfo.CurrentCulture)</td>
+                                    <td>@FormatSignedPercent(point.Percent)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        }
     }
 </section>
 
@@ -135,6 +156,15 @@
 
     [Parameter]
     public IReadOnlyList<ProgressChartPointApiResponse> Points { get; set; } = [];
+
+    [Parameter]
+    public bool StagedReveal { get; set; }
+
+    [Parameter]
+    public bool CompactPresentation { get; set; }
+
+    [Parameter]
+    public EventCallback<ProgressChartPointApiResponse> PointSelected { get; set; }
 
     private DateTime StartDate => Points.Min(x => x.Date).Date;
     private DateTime EndDate => Points.Max(x => x.Date).Date;
@@ -300,10 +330,14 @@
         }
     }
 
-    private string AccessibleSummary =>
-        $"{Title}. Период с {StartDate:dd.MM.yyyy} по {EndDate:dd.MM.yyyy}. " +
-        $"Точек: {Points.Count}. Последнее значение {FormatPercent(Points[^1].Percent)}. " +
-        $"Лучшее значение {FormatPercent(Points.Max(x => x.Percent))}.";
+    private string AccessibleSummary => Text.Format(
+        "Chart_Summary",
+        Title,
+        StartDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+        EndDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+        Points.Count,
+        FormatPercent(Points[^1].Percent),
+        FormatPercent(Points.Max(x => x.Percent)));
 
     private double X(DateTime date)
     {

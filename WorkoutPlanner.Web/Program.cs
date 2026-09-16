@@ -267,6 +267,8 @@ if (builder.Configuration.GetValue<bool>("Push:Enabled"))
     builder.Services.AddFirebasePush(builder.Configuration);
     builder.Services.AddScoped<FirebaseRemotePushProvider>();
 }
+builder.Services.AddScoped<IUserLanguageProvider,
+    WorkoutPlanner.Web.Services.Localization.UserLanguageProvider>();
 builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<IInboxService, InboxService>();
 builder.Services.Configure<UserActivityOptions>(

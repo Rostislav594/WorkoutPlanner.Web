@@ -1,3 +1,5 @@
+﻿@inject IAppText Text
+
 <div class="help-overlay" @onclick="CloseAsync">
     <span class="help-focus-sentinel" tabindex="0" @onfocus="FocusCloseAsync"></span>
     <section class="help-dialog"
@@ -11,15 +13,15 @@
              @onclick:stopPropagation="true">
         <header class="help-dialog__header">
             <div>
-                <p>Помощь по текущей странице</p>
-                <h2 id="context-help-title">@Topic.Title</h2>
+                <p>@Text["Help_Header"]</p>
+                <h2 id="context-help-title">@Text[Topic.TitleKey]</h2>
             </div>
-            <button type="button" aria-label="Закрыть руководство" @ref="_closeButton" @onclick="CloseAsync"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
+            <button type="button" aria-label="@Text["Help_Close"]" @ref="_closeButton" @onclick="CloseAsync"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
         </header>
 
         <div class="help-dialog__intro">
             <span class="help-dialog__intro-icon" aria-hidden="true">?</span>
-            <p id="context-help-introduction">@Topic.Introduction</p>
+            <p id="context-help-introduction">@Text[Topic.IntroductionKey]</p>
         </div>
 
         <div class="help-dialog__sections">
@@ -27,34 +29,40 @@
             {
                 var section = Topic.Sections[index];
                 <article class="help-section">
-                    <h3>@section.Title</h3>
-                    <p>@section.Text</p>
+                    <h3>@Text[section.TitleKey]</h3>
+                    <p>@Text[section.TextKey]</p>
                     @if (!string.IsNullOrWhiteSpace(section.ImageSource))
                     {
-                        <img class="help-section__image" src="@section.ImageSource" alt="@(section.ImageAlt ?? string.Empty)" />
+                        <img class="help-section__image" src="@section.ImageSource" alt="@(section.ImageAltKey is null ? string.Empty : Text[section.ImageAltKey])" />
                     }
                     @if (section.Illustration is HelpIllustration.ProgressExercise or HelpIllustration.ProgressWorkout)
                     {
-                        <figure class="help-chart" aria-label="@(section.Illustration == HelpIllustration.ProgressExercise ? "Пример графика динамики упражнения по датам" : "Пример графика общего прогресса тренировки по датам")">
-                            <div class="help-chart__legend">
-                                <span>@(section.Illustration == HelpIllustration.ProgressExercise ? "Рабочее значение" : "Объём тренировки")</span>
-                                <strong>+12%</strong>
+                        @* Рисуем настоящий ProgressLineChart с демонстрационным рядом,
+                           а не его копию: нарисованная отдельно иллюстрация расходится
+                           с интерфейсом при первой же правке дизайна графика. *@
+                        <figure class="help-chart">
+                            @* Иллюстрация скрыта от скринридера целиком: у графика есть
+                               собственный заголовок, и в дереве доступности он встаёт
+                               в один ряд с заголовками секций руководства, ломая их
+                               порядок. Содержание секции полностью передают шаги,
+                               а о самой картинке сообщает подпись ниже.
+                               Фокусируемых элементов внутри нет: CompactPresentation
+                               убирает таблицу значений, а маркеры точек без
+                               PointSelected рисуются как span. *@
+                            <div class="help-chart__frame" aria-hidden="true">
+                                <ProgressLineChart Title="@Text["Progress_ChartTitle"]"
+                                                   Points="SampleChartPoints"
+                                                   CompactPresentation="true" />
                             </div>
-                            <svg viewBox="0 0 520 190" role="img" aria-hidden="true" preserveAspectRatio="none">
-                                <path class="help-chart__grid" d="M48 25H500 M48 75H500 M48 125H500 M48 175H500 M48 18V175" />
-                                <path class="help-chart__area" d="M48 151 C112 143, 130 116, 190 123 S284 81, 342 91 S420 48, 500 35 L500 175 L48 175 Z" />
-                                <path class="help-chart__line" d="M48 151 C112 143, 130 116, 190 123 S284 81, 342 91 S420 48, 500 35" />
-                                <g class="help-chart__points"><circle cx="48" cy="151" r="5"/><circle cx="190" cy="123" r="5"/><circle cx="342" cy="91" r="5"/><circle cx="500" cy="35" r="5"/></g>
-                            </svg>
-                            <div class="help-chart__axis"><span>Раньше</span><span>Дата →</span><span>Сейчас</span></div>
+                            <figcaption class="help-chart__caption">@Text["Help_ChartSample"]</figcaption>
                         </figure>
                     }
-                    @if (section.Steps is { Count: > 0 })
+                    @if (section.StepKeys is { Count: > 0 })
                     {
                         <ol>
-                            @foreach (var step in section.Steps)
+                            @foreach (var stepKey in section.StepKeys)
                             {
-                                <li>@step</li>
+                                <li>@Text[stepKey]</li>
                             }
                         </ol>
                     }
@@ -68,6 +76,25 @@
 @code {
     [Parameter, EditorRequired] public HelpTopic Topic { get; set; } = null!;
     [Parameter] public EventCallback OnClose { get; set; }
+
+    // Демонстрационный ряд для иллюстрации: пять точек за месяц, привязанные к
+    // сегодняшней дате, чтобы подписи оси выглядели так же, как в разделе
+    // «Прогресс», а не как застывший прошлогодний период.
+    private IReadOnlyList<WorkoutPlanner.Api.Contracts.ProgressChartPointApiResponse> SampleChartPoints { get; } =
+        BuildSampleChartPoints();
+
+    private static IReadOnlyList<WorkoutPlanner.Api.Contracts.ProgressChartPointApiResponse> BuildSampleChartPoints()
+    {
+        var today = DateTime.Today;
+        return
+        [
+            new(today.AddDays(-28), 0m),
+            new(today.AddDays(-21), 3.5m),
+            new(today.AddDays(-14), 6m),
+            new(today.AddDays(-7), 5m),
+            new(today, 12m)
+        ];
+    }
 
     private ElementReference _closeButton;
     private bool _focused;

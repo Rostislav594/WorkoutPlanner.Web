@@ -4,6 +4,7 @@ using Android.OS;
 using Microsoft.Maui.ApplicationModel;
 using System.Text.Json;
 using WorkoutPlanner.Api.Contracts;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -23,7 +24,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         return status == PermissionStatus.Granted
             ? NotificationOperationResult.Success
             : NotificationOperationResult.Denied(
-                "Разрешите уведомления в настройках приложения.");
+                AppTexts.Get("Notify_PermissionRequired"));
     }
 
     public Task<NotificationOperationResult> ScheduleAsync(
@@ -35,7 +36,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         if (!AndroidNotificationSupport.TryScheduleAlarm(context, reminder))
         {
             return Task.FromResult(NotificationOperationResult.Failure(
-                "Системная служба напоминаний недоступна."));
+                AppTexts.Get("Notify_ServiceUnavailable")));
         }
 
         AndroidReminderStore.Save(context, reminder);
@@ -52,7 +53,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         if (alarmManager is null)
         {
             return Task.FromResult(NotificationOperationResult.Failure(
-                "Системная служба напоминаний недоступна."));
+                AppTexts.Get("Notify_ServiceUnavailable")));
         }
 
         var pendingIntent = AndroidNotificationSupport.CreateAlarmIntent(
@@ -76,7 +77,7 @@ public sealed class PlatformLocalNotificationService : ILocalNotificationPlatfor
         if (alarmManager is null)
         {
             return Task.FromResult(NotificationOperationResult.Failure(
-                "Системная служба напоминаний недоступна."));
+                AppTexts.Get("Notify_ServiceUnavailable")));
         }
 
         var notificationManager =
@@ -131,7 +132,7 @@ internal static class AndroidNotificationSupport
     {
         var intent = new Intent(context, typeof(WorkoutReminderReceiver));
         intent.PutExtra(RouteExtra, reminder.Route);
-        intent.PutExtra(TitleExtra, "Пора тренироваться");
+        intent.PutExtra(TitleExtra, AppTexts.Get("Notify_TimeToTrain"));
         intent.PutExtra(BodyExtra, reminder.WorkoutName);
         intent.PutExtra(WorkoutDayIdExtra, reminder.WorkoutDayId);
         return PendingIntent.GetBroadcast(
@@ -184,7 +185,7 @@ internal static class AndroidNotificationSupport
 
         var notification = builder
             .SetContentTitle(intent.GetStringExtra(TitleExtra) ?? "GymPlanner")
-            .SetContentText(intent.GetStringExtra(BodyExtra) ?? "Запланированная тренировка")
+            .SetContentText(intent.GetStringExtra(BodyExtra) ?? AppTexts.Get("Notify_ScheduledWorkout"))
             .SetSmallIcon(Android.Resource.Drawable.IcDialogInfo)
             .SetAutoCancel(true)
             .SetContentIntent(contentIntent)
@@ -239,10 +240,10 @@ internal static class AndroidNotificationSupport
 
         var channel = new NotificationChannel(
             ChannelId,
-            "Напоминания о тренировках",
+            AppTexts.Get("Notify_ChannelName"),
             NotificationImportance.Default)
         {
-            Description = "Локальные напоминания о запланированных тренировках"
+            Description = AppTexts.Get("Notify_ChannelDescription")
         };
         manager.CreateNotificationChannel(channel);
     }
@@ -254,7 +255,7 @@ internal static class AndroidNotificationSupport
         (context.GetSystemService(Context.NotificationService) as NotificationManager)
             ?.CreateNotificationChannel(new NotificationChannel(
                 RemoteChannelId,
-                "Уведомления GPlanner",
+                AppTexts.Get("Notify_PushChannelName"),
                 NotificationImportance.Default));
     }
 
@@ -263,7 +264,7 @@ internal static class AndroidNotificationSupport
         if (OperatingSystem.IsAndroidVersionAtLeast(26))
             manager.CreateNotificationChannel(new NotificationChannel(
                 RemoteChannelId,
-                "Уведомления GPlanner",
+                AppTexts.Get("Notify_PushChannelName"),
                 NotificationImportance.Default));
     }
 }

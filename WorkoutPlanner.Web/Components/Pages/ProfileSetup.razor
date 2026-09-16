@@ -1,16 +1,17 @@
-@page "/profile/setup"
+﻿@page "/profile/setup"
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
 @inject IProfileService ProfileService
 @inject NavigationManager Navigation
+@inject IAppText Text
 
 <div class="profile-page">
     <section class="profile-panel profile-setup-panel">
         <div class="profile-heading">
-            <p class="profile-kicker">Профиль пользователя</p>
-            <h1>Настройка профиля</h1>
-            <p>Заполните основные данные, чтобы продолжить работу с GPlanner.</p>
+            <p class="profile-kicker">@Text["ProfileSetup_Kicker"]</p>
+            <h1>@Text["ProfileSetup_Title"]</h1>
+            <p>@Text["ProfileSetup_Subtitle"]</p>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(Message))
@@ -24,37 +25,37 @@
 
             <div class="profile-form-grid">
                 <div class="field">
-                    <label>Имя</label>
+                    <label>@Text["Common_FirstName"]</label>
                     <InputText class="auth-input" @bind-Value="InputModel.FirstName" />
-                    <ValidationMessage For="@(() => InputModel.FirstName)" />
+                    <LocalizedValidationMessage For="@(() => InputModel.FirstName)" />
                 </div>
 
                 <div class="field">
-                    <label>Фамилия</label>
+                    <label>@Text["Common_LastName"]</label>
                     <InputText class="auth-input" @bind-Value="InputModel.LastName" />
-                    <ValidationMessage For="@(() => InputModel.LastName)" />
+                    <LocalizedValidationMessage For="@(() => InputModel.LastName)" />
                 </div>
 
                 <div class="field">
-                    <label>Дата рождения</label>
+                    <label>@Text["Common_BirthDate"]</label>
                     <InputDate class="auth-input" @bind-Value="InputModel.BirthDate" />
-                    <ValidationMessage For="@(() => InputModel.BirthDate)" />
+                    <LocalizedValidationMessage For="@(() => InputModel.BirthDate)" />
                 </div>
 
                 <div class="field">
-                    <label>Пол</label>
+                    <label>@Text["Common_Gender"]</label>
                     <InputSelect class="auth-input" @bind-Value="InputModel.Gender">
-                        <option value="">Выберите</option>
-                        <option value="Мужской">Мужской</option>
-                        <option value="Женский">Женский</option>
-                        <option value="Не указывать">Не указывать</option>
+                        <option value="">@Text["Common_Choose"]</option>
+                        <option value="Мужской">@Text["Gender_Male"]</option>
+                        <option value="Женский">@Text["Gender_Female"]</option>
+                        <option value="Не указывать">@Text["Gender_Unspecified"]</option>
                     </InputSelect>
-                    <ValidationMessage For="@(() => InputModel.Gender)" />
+                    <LocalizedValidationMessage For="@(() => InputModel.Gender)" />
                 </div>
             </div>
 
             <button class="finish-button auth-button profile-primary-action" type="submit">
-                Сохранить профиль
+                @Text["ProfileSetup_Save"]
             </button>
         </EditForm>
     </section>
@@ -95,18 +96,19 @@
 
     private sealed class ProfileInput
     {
-        [Required(ErrorMessage = "Введите имя.")]
-        [MaxLength(80, ErrorMessage = "Имя слишком длинное.")]
+        // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
+        [Required(ErrorMessage = "Validation_FirstNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_FirstNameTooLong")]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Введите фамилию.")]
-        [MaxLength(80, ErrorMessage = "Фамилия слишком длинная.")]
+        [Required(ErrorMessage = "Validation_LastNameRequired")]
+        [MaxLength(80, ErrorMessage = "Validation_LastNameTooLong")]
         public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Укажите дату рождения.")]
+        [Required(ErrorMessage = "Validation_BirthDateRequired")]
         public DateTime? BirthDate { get; set; }
 
-        [Required(ErrorMessage = "Выберите пол.")]
+        [Required(ErrorMessage = "Validation_GenderRequired")]
         public string Gender { get; set; } = string.Empty;
     }
 }
