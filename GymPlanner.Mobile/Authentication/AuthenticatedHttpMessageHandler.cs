@@ -10,21 +10,45 @@ public sealed class AuthenticatedHttpMessageHandler(
         HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
-        AddActivityMetadata(request);
-
-        var accessToken = await authentication.GetValidAccessTokenAsync(
-            cancellationToken);
-        if (!string.IsNullOrWhiteSpace(accessToken))
+        try
         {
-            request.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessToken);
+            AddActivityMetadata(request);
+
+            var accessToken = await authentication.GetValidAccessTokenAsync(
+                cancellationToken);
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                request.Headers.Authorization =
+                    new AuthenticationHeaderValue("Bearer", accessToken);
+            }
+
+            var response = await base.SendAsync(request, cancellationToken);
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                await authentication.ClearAsync(cancellationToken);
+
+            return response;
         }
-
-        var response = await base.SendAsync(request, cancellationToken);
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            await authentication.ClearAsync(cancellationToken);
-
-        return response;
+        catch (Exception exception) when (
+            exception is not OperationCanceledException &&
+            exception is not HttpRequestException)
+        {
+            // Транспорт на Android бросает не только HttpRequestException:
+            // okhttp отдаёт собственные исключения вроде «unexpected end of
+            // stream», когда сервер закрывает удерживаемое соединение — при
+            // перезапуске сервера, обрыве мобильной сети или таймауте прокси.
+            //
+            // Клиенты API ловят HttpRequestException и возвращают ApiResult с
+            // ошибкой, а всё остальное проходит их насквозь и всплывает в
+            // OnInitializedAsync страницы. Там его уже никто не ловит, и
+            // необработанное исключение убивает рендерер Blazor: интерфейс
+            // замирает целиком — не работают ни кнопки, ни навигация, ни
+            // закрытие открытого диалога.
+            //
+            // Поэтому любой сбой транспорта приводится здесь к типу, который
+            // вышележащий код уже умеет обрабатывать. Отмена пробрасывается
+            // как есть: это не ошибка.
+            throw new HttpRequestException(exception.Message, exception);
+        }
     }
 
     private static void AddActivityMetadata(HttpRequestMessage request)
