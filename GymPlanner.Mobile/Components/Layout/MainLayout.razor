@@ -7,8 +7,15 @@
 @inject PushRegistrationCoordinator PushRegistration
 @inject IAppText Text
 
-<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : null) @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
+<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
      style="--wallpaper-shift: @WallpaperShift;">
+    @if (!IsPrimaryNavigationPage)
+    {
+        <div class="ambient-dust" aria-hidden="true">
+            <span class="ambient-dust__layer ambient-dust__layer--far"></span>
+            <span class="ambient-dust__layer ambient-dust__layer--near"></span>
+        </div>
+    }
     @if (!HidesApplicationNavigation)
     {
         <header class="mobile-header">

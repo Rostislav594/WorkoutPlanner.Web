@@ -166,6 +166,92 @@
     background: transparent;
 }
 
+.ambient-shell {
+    position: relative;
+    isolation: isolate;
+    overflow-x: clip;
+    background:
+        radial-gradient(circle at 50% -12%, rgba(255, 122, 26, .055), transparent 38%),
+        var(--color-bg);
+}
+
+.ambient-dust {
+    position: fixed;
+    inset: -16vh -14vw;
+    z-index: -1;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, transparent 28%, rgba(0, 0, 0, .36) 100%);
+    contain: strict;
+    perspective: 760px;
+    pointer-events: none;
+}
+
+.ambient-dust__layer {
+    position: absolute;
+    inset: -18%;
+    background-repeat: repeat;
+    backface-visibility: hidden;
+    pointer-events: none;
+    transform-origin: center;
+    will-change: transform, opacity;
+}
+
+.ambient-dust__layer--far {
+    background-image:
+        radial-gradient(circle, rgba(255, 255, 255, .34) 0 .7px, transparent 1.35px),
+        radial-gradient(circle, rgba(255, 122, 26, .22) 0 .8px, transparent 1.5px),
+        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .55px, transparent 1.15px);
+    background-position: 0 0, 43px 67px, 109px 31px;
+    background-size: 99px 119px, 157px 193px, 223px 257px;
+    opacity: .54;
+    animation: ambient-dust-far 34s ease-in-out infinite alternate;
+}
+
+.ambient-dust__layer--near {
+    background-image:
+        radial-gradient(circle, rgba(255, 255, 255, .5) 0 1.25px, rgba(255, 255, 255, .12) 1.9px, transparent 3px),
+        radial-gradient(circle, rgba(255, 122, 26, .36) 0 1.1px, rgba(255, 122, 26, .1) 2px, transparent 3.2px),
+        radial-gradient(circle, rgba(255, 255, 255, .28) 0 .9px, transparent 2.3px);
+    background-position: 29px 53px, 137px 181px, 241px 97px;
+    background-size: 233px 277px, 337px 383px, 457px 509px;
+    opacity: .64;
+    animation: ambient-dust-near 19s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-dust-far {
+    0% {
+        opacity: .48;
+        transform: translate3d(-1.5%, 2.5%, -80px) scale(.96);
+    }
+
+    52% {
+        opacity: .66;
+        transform: translate3d(1.5%, -1%, -38px) scale(.99);
+    }
+
+    100% {
+        opacity: .54;
+        transform: translate3d(-.5%, -4.5%, -10px) scale(1.02);
+    }
+}
+
+@keyframes ambient-dust-near {
+    0% {
+        opacity: .56;
+        transform: translate3d(2%, 4%, 36px) scale(1.02);
+    }
+
+    45% {
+        opacity: .74;
+        transform: translate3d(-2%, -.5%, 58px) scale(1.045);
+    }
+
+    100% {
+        opacity: .62;
+        transform: translate3d(1%, -5%, 82px) scale(1.075);
+    }
+}
+
 .home-shell .mobile-content {
     width: 100%;
     max-width: none;
@@ -433,6 +519,10 @@
     .mobile-navigation ::deep .navigation-label {
         font-size: 9px;
     }
+
+    .ambient-dust__layer--near {
+        opacity: .46;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -450,6 +540,19 @@
     .navigation-indicator--moving,
     .navigation-indicator--moving .navigation-indicator__blob {
         animation: none;
+    }
+
+    .ambient-dust__layer {
+        animation: none;
+        transform: none;
+    }
+
+    .ambient-dust__layer--far {
+        opacity: .38;
+    }
+
+    .ambient-dust__layer--near {
+        opacity: .24;
     }
 
     .mobile-navigation ::deep a.active .material-symbols-rounded {
