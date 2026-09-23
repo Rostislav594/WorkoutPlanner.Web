@@ -994,7 +994,7 @@
     <value>Синхронизация</value>
   </data>
   <data name="ProfileItem_Sessions" xml:space="preserve">
-    <value>Активные сеансы</value>
+    <value>Активные сессии</value>
   </data>
   <data name="ProfileItem_Help" xml:space="preserve">
     <value>Помощь</value>
@@ -3440,4 +3440,28 @@
   <data name="Layout_PageErrorBody" xml:space="preserve">
     <value>Что-то пошло не так при загрузке. Остальное приложение работает — попробуйте снова или перейдите в другой раздел.</value>
   </data>
+  <data name="Sessions_Description" xml:space="preserve"><value>Устройства с действующим доступом к аккаунту. Завершение сессии потребует повторного входа на выбранном устройстве.</value></data>
+  <data name="Sessions_Refresh" xml:space="preserve"><value>Обновить список</value></data>
+  <data name="Sessions_Empty" xml:space="preserve"><value>Активных сессий нет.</value></data>
+  <data name="Sessions_Current" xml:space="preserve"><value>Это устройство</value></data>
+  <data name="Sessions_Created" xml:space="preserve"><value>Вход: {0}</value></data>
+  <data name="Sessions_Refreshed" xml:space="preserve"><value>Обновление сессии: {0}</value></data>
+  <data name="Sessions_End" xml:space="preserve"><value>Завершить сессию</value></data>
+  <data name="Sessions_Confirm" xml:space="preserve"><value>Завершить сессию «{0}»? Данные аккаунта сохранятся.</value></data>
+  <data name="Sessions_ConfirmCurrent" xml:space="preserve"><value>Это текущая сессия «{0}». После завершения откроется экран входа.</value></data>
+  <data name="Sessions_Unknown" xml:space="preserve"><value>Неизвестное устройство</value></data>
+  <data name="Sessions_Ended" xml:space="preserve"><value>Сессия завершена. Доступ устройства отозван.</value></data>
+  <data name="Effort_Easy" xml:space="preserve"><value>Не понятно зачем приходил(а)</value></data>
+  <data name="Effort_Medium" xml:space="preserve"><value>Уже не плохо...</value></data>
+  <data name="Effort_Hard" xml:space="preserve"><value>Жесть...</value></data>
+  <data name="Effort_Max" xml:space="preserve"><value>Вызывайте скорую</value></data>
+  <data name="Effort_Prompt" xml:space="preserve"><value>Оцени тяжесть упражнения</value></data>
+  <data name="ProfilePush_Description" xml:space="preserve"><value>Получайте push-уведомления о сообщениях и ответах поддержки на этом устройстве.</value></data>
+  <data name="ProfilePush_Master" xml:space="preserve"><value>Push-уведомления</value></data>
+  <data name="ProfilePush_Enabled" xml:space="preserve"><value>Включены</value></data>
+  <data name="ProfilePush_Disabled" xml:space="preserve"><value>Выключены</value></data>
+  <data name="ProfilePush_SystemHint" xml:space="preserve"><value>Для доставки нужно разрешение на уведомления в настройках телефона. Напоминания о тренировках настраиваются отдельно в календаре.</value></data>
+  <data name="ProfilePush_Updating" xml:space="preserve"><value>Сохраняем настройку…</value></data>
+  <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Не удалось подключить push-уведомления на этом устройстве. Попробуйте позже.</value></data>
+  <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Не удалось изменить настройку. Проверьте соединение и попробуйте снова.</value></data>
 </root>

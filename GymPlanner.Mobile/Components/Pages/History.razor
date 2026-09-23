@@ -140,9 +140,9 @@
                                             }
                                         </div>
                                     </div>
-                                    <span class="status-badge status-@supersetStatus.ToLowerInvariant()">@Text[WorkoutDifficulties.KeyFor(supersetStatus)]</span>
                                 </header>
 
+                                <p class="history-effort history-effort--@WorkoutDifficulties.ToneFor(supersetStatus)">@Text[WorkoutDifficulties.EffortKeyFor(supersetStatus)]</p>
                                 <div class="history-sets history-superset-rounds">
                                     @foreach (var roundNumber in GetSupersetRoundNumbers(group))
                                     {
@@ -185,8 +185,8 @@
                                         <span class="exercise-index">@Text["Common_Exercise"]</span>
                                         <h3>@exercise.Name</h3>
                                     </div>
-                                    <span class="status-badge status-@exercise.Status.ToLowerInvariant()">@Text[WorkoutDifficulties.KeyFor(exercise.Status)]</span>
                                 </div>
+                                <p class="history-effort history-effort--@WorkoutDifficulties.ToneFor(exercise.Status)">@Text[WorkoutDifficulties.EffortKeyFor(exercise.Status)]</p>
                                 <div class="history-sets">
                                     @foreach (var set in exercise.Sets.OrderBy(x => x.SetNumber))
                                     {

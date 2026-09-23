@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Logging
 @using GymPlanner.Mobile.ExternalLinks
 @using GymPlanner.Mobile.Localization
+@using GymPlanner.Mobile.Notifications
 @using WorkoutPlanner.Api.Contracts
 @using WorkoutPlanner.Localization
 @inject IProfileApiClient ProfileClient
@@ -16,6 +17,7 @@
 @inject MobileAuthenticationService Authentication
 @inject NavigationManager Navigation
 @inject ILogger<ProfileSetting> Logger
+@inject PushRegistrationCoordinator PushRegistration
 
 <section class="profile-setting-page" aria-busy="@_isLoading">
     <header class="setting-header">
@@ -201,9 +203,66 @@
             }
         </div>
     }
-    else if (Section == "my-data")
+    else if (Section == "notifications")
     {
-        <article class="setting-card"><span class="setting-icon material-symbols-rounded" aria-hidden="true">database</span><h2>@Text["ProfileSetting_ExportTitle"]</h2><p class="setting-description">@Text["ProfileSetting_ExportDescription"]</p></article>
+        <article class="setting-card push-settings-card" aria-busy="@_isBusy">
+            <p class="setting-description">@Text["ProfilePush_Description"]</p>
+            <button class="push-setting-toggle" type="button" role="switch"
+                    aria-label="@Text["ProfilePush_Master"]"
+                    aria-checked="@(PushRegistration.IsEnabled ? "true" : "false")"
+                    disabled="@_isBusy" @onclick="TogglePushAsync">
+                <span class="push-setting-copy">
+                    <strong>@Text["ProfilePush_Master"]</strong>
+                    <span aria-hidden="true">@Text[PushRegistration.IsEnabled ? "ProfilePush_Enabled" : "ProfilePush_Disabled"]</span>
+                </span>
+                <span class="push-setting-switch" aria-hidden="true"><span></span></span>
+            </button>
+            <p class="setting-description push-setting-hint">@Text["ProfilePush_SystemHint"]</p>
+            @if (_isBusy)
+            {
+                <p class="push-setting-status" role="status">@Text["ProfilePush_Updating"]</p>
+            }
+            @if (_pushError is not null)
+            {
+                <p class="idea-error" role="alert">@_pushError</p>
+            }
+        </article>
+    }
+    else if (Section == "sessions")
+    {
+        <div class="watch-settings-stack" aria-busy="@_isBusy">
+            <article class="setting-card">
+                <p class="setting-description">@Text["Sessions_Description"]</p>
+                <button class="watch-list-retry" disabled="@_isBusy" @onclick="LoadSessionsAsync">@Text["Sessions_Refresh"]</button>
+                @if (_sessionError is not null) { <p class="idea-error" role="alert">@_sessionError</p> }
+                @if (_sessionMessage is not null) { <p class="watch-success" role="status">@_sessionMessage</p> }
+                @if (_sessionsLoaded && _sessions.Count == 0) { <p class="setting-description">@Text["Sessions_Empty"]</p> }
+                <div class="watch-device-list">
+                    @foreach (var session in _sessions)
+                    {
+                        <article class="watch-device-item" @key="session.Id">
+                            <div class="watch-device-copy">
+                                <strong>@SessionName(session)</strong>
+                                @if (session.IsCurrent) { <span>@Text["Sessions_Current"]</span> }
+                                <span>@Text.Format("Sessions_Created", SessionDate(session.CreatedAtUtc))</span>
+                                @if (session.LastRefreshedAtUtc is { } refreshed) { <span>@Text.Format("Sessions_Refreshed", SessionDate(refreshed))</span> }
+                            </div>
+                            <button class="watch-disconnect-button" disabled="@_isBusy" @onclick="() => _pendingSession = session">@Text["Sessions_End"]</button>
+                            @if (_pendingSession?.Id == session.Id)
+                            {
+                                <div class="session-confirmation">
+                                    <p>@Text.Format(session.IsCurrent ? "Sessions_ConfirmCurrent" : "Sessions_Confirm", SessionName(session))</p>
+                                    <div class="watch-confirmation-actions">
+                                        <button class="setting-secondary-action" disabled="@_isBusy" @onclick="() => _pendingSession = null">@Text["Common_Cancel"]</button>
+                                        <button class="setting-danger-action" disabled="@_isBusy" @onclick="RevokeSessionAsync">@Text["Sessions_End"]</button>
+                                    </div>
+                                </div>
+                            }
+                        </article>
+                    }
+                </div>
+            </article>
+        </div>
     }
     else if (Section == "rest-timers")
     {
@@ -301,6 +360,7 @@
     private bool _revokeAllWatchesRequested;
     private string _supportMessage = string.Empty;
     private string? _watchMessage;
+    private string? _pushError;
     private IEnumerable<WatchDeviceResponse> ActiveWatchDevices =>
         _watchDevices.Where(device => !device.IsRevoked);
     private ProfileSettingInfo Setting => Settings.TryGetValue(Section, out var setting)
@@ -308,19 +368,29 @@
         : new("ProfileSetting_NotFoundTitle", "help", "ProfileSetting_NotFoundDescription", false);
     private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
         ["personal-information"] = new("ProfileItem_PersonalInformation", "badge", "", true), ["rest-timers"] = new("ProfileItem_RestTimers", "timer", "", true), ["change-password"] = new("ProfileItem_ChangePassword", "password", "", true), ["report-problem"] = new("ProfileItem_ReportProblem", "bug_report", "", true), ["logout"] = new("ProfileItem_Logout", "logout", "", true), ["delete-account"] = new("ProfileItem_DeleteAccount", "delete_forever", "", true), ["devices"] = new("ProfileItem_ConnectedDevices", "devices", "", true), ["my-data"] = new("ProfileItem_MyData", "database", "", true),
-        ["units"] = new("ProfileItem_Units", "scale", "ProfileSoon_Units", false), ["workout-settings"] = new("ProfileItem_WorkoutSettings", "exercise", "ProfileSoon_WorkoutSettings", false), ["notifications"] = new("ProfileItem_Notifications", "notifications", "ProfileSoon_Notifications", false), ["appearance"] = new("ProfileItem_Appearance", "palette", "ProfileSoon_Appearance", false), ["language"] = new("Profile_Language_Title", "language", "", true, RequiresProfile: false), ["export"] = new("ProfileItem_Export", "download", "ProfileSoon_Export", false), ["sync"] = new("ProfileItem_Sync", "sync", "ProfileSoon_Sync", false), ["sessions"] = new("ProfileItem_Sessions", "devices_other", "ProfileSoon_Sessions", false), ["help"] = new("ProfileItem_Help", "help", "ProfileSoon_Help", false), ["suggest-idea"] = new("Profile_SuggestIdea_Title", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("ProfileItem_AboutApp", "info", "ProfileAbout_Description", false), ["privacy"] = new("ProfileItem_Privacy", "privacy_tip", "ProfileSoon_Privacy", false) };
-    protected override async Task OnInitializedAsync()
+        ["units"] = new("ProfileItem_Units", "scale", "ProfileSoon_Units", false), ["workout-settings"] = new("ProfileItem_WorkoutSettings", "exercise", "ProfileSoon_WorkoutSettings", false), ["notifications"] = new("ProfileItem_Notifications", "notifications", "", true, RequiresProfile: false), ["appearance"] = new("ProfileItem_Appearance", "palette", "ProfileSoon_Appearance", false), ["language"] = new("Profile_Language_Title", "language", "", true, RequiresProfile: false), ["export"] = new("ProfileItem_Export", "download", "ProfileSoon_Export", false), ["sync"] = new("ProfileItem_Sync", "sync", "ProfileSoon_Sync", false), ["sessions"] = new("ProfileItem_Sessions", "devices_other", "", true, RequiresProfile: false), ["help"] = new("ProfileItem_Help", "help", "ProfileSoon_Help", false), ["suggest-idea"] = new("Profile_SuggestIdea_Title", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("ProfileItem_AboutApp", "info", "ProfileAbout_Description", false), ["privacy"] = new("ProfileItem_Privacy", "privacy_tip", "ProfileSoon_Privacy", false) };
+    protected override async Task OnParametersSetAsync()
     {
+        _isLoading = true;
+        _errors.Clear();
+        _pushError = null;
         var replacementRoute = Section.ToLowerInvariant() switch
         {
             "email" => "/profile/personal-information",
-            "export" or "sync" => "/profile/my-data",
+            "export" or "sync" or "my-data" => "/profile/sessions",
             _ => null
         };
 
         if (replacementRoute is not null)
         {
             Navigation.NavigateTo(replacementRoute, replace: true);
+            return;
+        }
+
+        if (Section == "sessions")
+        {
+            await LoadSessionsAsync();
+            _isLoading = false;
             return;
         }
 
@@ -338,6 +408,60 @@
         _isLoading = false;
     }
     private string? _languageError;
+    private async Task TogglePushAsync()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        _pushError = null;
+        try
+        {
+            var result = await PushRegistration.SetEnabledAsync(!PushRegistration.IsEnabled);
+            if (!result.Succeeded)
+                _pushError = string.Join(" ", result.Errors);
+        }
+        finally { _isBusy = false; }
+    }
+    private List<AccountSessionResponse> _sessions = [];
+    private AccountSessionResponse? _pendingSession;
+    private bool _sessionsLoaded;
+    private string? _sessionError, _sessionMessage;
+    private string SessionName(AccountSessionResponse session) => string.IsNullOrWhiteSpace(session.DeviceName) ? Text["Sessions_Unknown"] : session.DeviceName;
+    private static string SessionDate(DateTime value) => DateTime.SpecifyKind(value, DateTimeKind.Utc).ToLocalTime().ToString("g");
+    private async Task LoadSessionsAsync()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        _sessionError = null;
+        try
+        {
+            var result = await ProfileClient.GetSessionsAsync();
+            if (!result.Succeeded) _sessionError = string.Join(" ", result.Errors);
+            else { _sessions = result.Value!; _sessionsLoaded = true; _pendingSession = null; }
+        }
+        finally { _isBusy = false; }
+    }
+    private async Task RevokeSessionAsync()
+    {
+        if (_isBusy || _pendingSession is null) return;
+        var session = _pendingSession;
+        _isBusy = true;
+        _sessionError = null;
+        _sessionMessage = null;
+        try
+        {
+            var result = await ProfileClient.RevokeSessionAsync(session.Id);
+            if (!result.Succeeded) { _sessionError = string.Join(" ", result.Errors); return; }
+            _sessions.RemoveAll(x => x.Id == session.Id);
+            _pendingSession = null;
+            if (session.IsCurrent)
+            {
+                await Authentication.ClearAsync();
+                Navigation.NavigateTo("/account/login", replace: true);
+            }
+            else _sessionMessage = Text["Sessions_Ended"];
+        }
+        finally { _isBusy = false; }
+    }
     private async Task SelectLanguageAsync(string languageCode)
     {
         if (_isBusy || languageCode == Language.Current) return;

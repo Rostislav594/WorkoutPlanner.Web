@@ -172,8 +172,11 @@
                                     @if (HasFollowingSupersetRound(group, roundNumber))
                                     {
                                          <button class="rest-timer-box superset-rest-timer" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)">
-                                            <span class="material-symbols-rounded" aria-hidden="true">timer</span>
-                                            <span>
+                                            <span class="rest-timer-icon @(GetRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets).StartAnimationVersion" aria-hidden="true">
+                                                <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
+                                                <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
+                                            </span>
+                                            <span class="rest-timer-copy">
                                                 <small>@Text["Today_RestAfterPair"]</small>
                                                 <strong>@GetRestTimerLabel(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)</strong>
                                             </span>
@@ -186,20 +189,17 @@
                         </div>
 
                         <footer class="exercise-footer superset-footer">
-                            <label class="status-control">
-                                <span>@Text["Today_SupersetRating"]</span>
-                                <SystemChoiceField class="status-select"
-                                                   Title="@Text["Today_SupersetRating"]"
-                                                   Options="RatingOptions"
-                                                   Value="@GetSupersetStatus(group)"
-                                                   ValueChanged="value => SetSupersetStatus(group, value)"
-                                                   AriaLabel="@Text["Today_SelectSupersetRating"]" />
-                            </label>
+                            <ExerciseEffortRating Value="@GetSupersetStatus(group)" Disabled="@_isBusy"
+                                                  ValueChanged="value => SetSupersetStatus(group, value)"
+                                                  Label="@Text["Today_SelectSupersetRating"]" />
                             @if (HasFollowingGroup(group))
                             {
                                 <button class="rest-timer-box rest-timer-box--exercise" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)">
-                                    <span class="material-symbols-rounded" aria-hidden="true">timer</span>
-                                    <span>
+                                    <span class="rest-timer-icon @(GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion" aria-hidden="true">
+                                        <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
+                                        <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
+                                    </span>
+                                    <span class="rest-timer-copy">
                                         <small>@Text["Today_RestBetweenExercises"]</small>
                                         <strong>@GetRestTimerLabel(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)</strong>
                                     </span>
@@ -301,8 +301,11 @@
                                 @if (HasFollowingSet(exercise, set))
                                 {
                                     <button class="rest-timer-box" type="button" @onclick="() => OpenRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)">
-                                        <span class="material-symbols-rounded" aria-hidden="true">timer</span>
-                                        <span>
+                                        <span class="rest-timer-icon @(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets).StartAnimationVersion" aria-hidden="true">
+                                            <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
+                                            <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
+                                        </span>
+                                        <span class="rest-timer-copy">
                                             <small>@Text["Today_RestBetweenSets"]</small>
                                             <strong>@GetRestTimerLabel(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)</strong>
                                         </span>
@@ -315,19 +318,16 @@
                     </div>
 
                     <footer class="exercise-footer">
-                        <label class="status-control">
-                            <span>@Text["Today_ExerciseRating"]</span>
-                            <SystemChoiceField class="status-select"
-                                               Title="@Text["Today_ExerciseRating"]"
-                                               Options="RatingOptions"
-                                               @bind-Value="exercise.Status"
-                                               AriaLabel="@Text["Today_SelectExerciseRating"]" />
-                        </label>
+                        <ExerciseEffortRating @bind-Value="exercise.Status" Disabled="@_isBusy"
+                                              Label="@Text["Today_SelectExerciseRating"]" />
                         @if (HasFollowingExercise(exercise))
                         {
                             <button class="rest-timer-box rest-timer-box--exercise" type="button" @onclick="() => OpenRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises)">
-                                <span class="material-symbols-rounded" aria-hidden="true">timer</span>
-                                <span>
+                                <span class="rest-timer-icon @(GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion" aria-hidden="true">
+                                    <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
+                                    <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
+                                </span>
+                                <span class="rest-timer-copy">
                                     <small>@Text["Today_RestBetweenExercises"]</small>
                                     <strong>@GetRestTimerLabel(exercise.Id, 0, RestTimerKind.BetweenExercises)</strong>
                                 </span>
@@ -765,17 +765,6 @@
 }
 
 @code {
-    // Значение оценки уходит на сервер, поэтому остаётся английским кодом;
-    // переводится только подпись в списке.
-    private IReadOnlyList<SystemChoiceOption> RatingOptions =>
-    [
-        new("NotCompleted", Text["Difficulty_NotRated"]),
-        new("Easy", Text["Difficulty_Easy"]),
-        new("Medium", Text["Difficulty_Medium"]),
-        new("Hard", Text["Difficulty_Hard"]),
-        new("Max", Text["Difficulty_Max"])
-    ];
-
     // Неназначенная карточка показывает общий заголовок: имя появится
     // только после выбора упражнения из библиотеки.
     private string DisplayNameOf(ExerciseDraft exercise) =>
@@ -1735,6 +1724,7 @@
         timer.RemainingSeconds = timer.DurationSeconds;
         timer.EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(timer.RemainingSeconds);
         timer.IsRunning = true;
+        timer.StartAnimationVersion++;
     }
 
     private void ResetRestTimer(RestTimerState timer)
@@ -2082,6 +2072,7 @@
         public bool IsRunning { get; set; }
         public bool IsQueued { get; set; }
         public bool IsCompleted { get; set; }
+        public int StartAnimationVersion { get; set; }
         public DateTimeOffset? EndsAtUtc { get; set; }
     }
 

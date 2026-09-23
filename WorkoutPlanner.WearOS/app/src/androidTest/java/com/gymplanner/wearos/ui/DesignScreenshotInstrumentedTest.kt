@@ -68,12 +68,12 @@ class DesignScreenshotInstrumentedTest {
                 RestTimerScreen(
                     state = MockWorkoutState.Rest(
                         completedExerciseName = "Жим штанги лежачи",
-                        completedSetNumber = 1,
-                        durationSeconds = 120,
-                        endsAtElapsedRealtimeMillis = 120_000,
-                        nextSet = SetPreview("Жим штанги лежачи", 2),
+                        completedSetNumber = 2,
+                        durationSeconds = 90,
+                        endsAtElapsedRealtimeMillis = 90_000,
+                        nextSet = SetPreview("Жим штанги лежачи", 3),
                     ),
-                    remainingSeconds = 119,
+                    remainingSeconds = 90,
                     onSkip = {},
                 )
             }
@@ -206,10 +206,10 @@ class DesignScreenshotInstrumentedTest {
                 AmbientWorkoutScreen(
                     MockWorkoutState.Rest(
                         completedExerciseName = "Жим штанги лежачи",
-                        completedSetNumber = 1,
-                        durationSeconds = 120,
-                        endsAtElapsedRealtimeMillis = 120_000,
-                        nextSet = SetPreview("Жим штанги лежачи", 2),
+                        completedSetNumber = 2,
+                        durationSeconds = 90,
+                        endsAtElapsedRealtimeMillis = 90_000,
+                        nextSet = SetPreview("Жим штанги лежачи", 3),
                     ),
                 )
             }
@@ -247,9 +247,9 @@ class DesignScreenshotInstrumentedTest {
         exerciseName = "Жим штанги лежачи",
         exerciseNumber = 1,
         totalExercises = 2,
-        setNumber = 1,
+        setNumber = 2,
         totalSets = 5,
-        weightKilograms = 120.0,
+        weightKilograms = 60.0,
     )
 
     /**

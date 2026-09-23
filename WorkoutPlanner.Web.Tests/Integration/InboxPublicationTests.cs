@@ -10,6 +10,83 @@ namespace WorkoutPlanner.Web.Tests.Integration;
 
 public sealed class InboxPublicationTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RegistrationCutoff_AppliesToListCountAndSingleAndBulkActions(bool deleteAll)
+    {
+        await using var app = await TestApplication.CreateAsync();
+        await app.CreateUserAsync("new-user");
+        await app.CreateUserAsync("existing-user");
+        var registered = DateTime.UtcNow.AddHours(-1);
+        await using var scope = app.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        db.UserActivities.AddRange(
+            new UserActivity { UserId = "new-user", RegisteredAtUtc = registered },
+            new UserActivity { UserId = "existing-user", RegisteredAtUtc = registered.AddDays(-1) });
+        InboxPublication Publication(string title, DateTime published) => new()
+        {
+            Type = InboxMessageType.News, Title = title, Body = title,
+            CreatedAtUtc = registered.AddDays(-2), PublishedAtUtc = published
+        };
+        var old = Publication("Before registration", registered.AddTicks(-1));
+        var boundary = Publication("At registration", registered);
+        var recent = Publication("After registration", registered.AddMinutes(1));
+        var future = Publication("Scheduled", DateTime.UtcNow.AddDays(1));
+        db.InboxPublications.AddRange(old, boundary, recent, future);
+        db.InboxMessages.Add(new InboxMessage
+        {
+            UserId = "new-user", Type = InboxMessageType.SupportReply,
+            Title = "Personal", Body = "Personal", CreatedAtUtc = registered.AddDays(-1)
+        });
+        await db.SaveChangesAsync();
+        app.AuthenticationStateProvider.SetUser("new-user");
+        var inbox = scope.ServiceProvider.GetRequiredService<IInboxService>();
+        var page = await inbox.GetCurrentAsync();
+        Assert.Equal(3, page.Messages.Count);
+        Assert.Equal(3, page.UnreadCount);
+        Assert.Equal(page.UnreadCount, await inbox.GetUnreadCountAsync());
+        Assert.DoesNotContain(page.Messages, x => x.IsPublication && (x.Id == old.Id || x.Id == future.Id));
+        Assert.False(await inbox.MarkPublicationReadAsync(old.Id));
+        Assert.False(await inbox.DeletePublicationAsync(old.Id));
+        Assert.False(await inbox.MarkPublicationReadAsync(future.Id));
+        Assert.False(await inbox.DeletePublicationAsync(future.Id));
+        Assert.True(await inbox.MarkPublicationReadAsync(boundary.Id));
+        Assert.Equal(2, await inbox.GetUnreadCountAsync());
+        if (deleteAll) await inbox.DeleteAllAsync();
+        else await inbox.MarkAllReadAsync();
+        Assert.Equal(0, await inbox.GetUnreadCountAsync());
+        var after = await inbox.GetCurrentAsync();
+        Assert.Equal(0, after.UnreadCount);
+        Assert.Equal(deleteAll ? 0 : 3, after.Messages.Count);
+        Assert.False(await db.InboxPublicationReads.AnyAsync(x => x.PublicationId == old.Id || x.PublicationId == future.Id));
+        app.AuthenticationStateProvider.SetUser("existing-user");
+        Assert.Equal(3, (await inbox.GetCurrentAsync()).Messages.Count);
+        Assert.Equal(3, await inbox.GetUnreadCountAsync());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task LegacyAccountWithoutRegistrationDate_KeepsPublishedNotifications(bool hasActivity)
+    {
+        await using var app = await TestApplication.CreateAsync();
+        await app.CreateUserAsync("legacy");
+        await using var scope = app.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        if (hasActivity) db.UserActivities.Add(new UserActivity { UserId = "legacy", RegisteredAtUtc = null });
+        db.InboxPublications.Add(new InboxPublication
+        {
+            Type = InboxMessageType.News, Title = "Old news", Body = "Old news",
+            PublishedAtUtc = DateTime.UtcNow.AddYears(-1), CreatedAtUtc = DateTime.UtcNow.AddYears(-1)
+        });
+        await db.SaveChangesAsync();
+        app.AuthenticationStateProvider.SetUser("legacy");
+        var inbox = scope.ServiceProvider.GetRequiredService<IInboxService>();
+        Assert.Single((await inbox.GetCurrentAsync()).Messages);
+        Assert.Equal(1, await inbox.GetUnreadCountAsync());
+    }
+
     [Fact]
     public async Task GlobalPublication_UsesIndependentReadState_AndMarkAllReadsBothSources()
     {

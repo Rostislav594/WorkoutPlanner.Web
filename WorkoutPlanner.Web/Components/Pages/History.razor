@@ -78,9 +78,8 @@ else
                                         @exercise.Name
                                     </div>
 
-                                    <div class="history-exercise-status"
-                                         style="color:@exercise.StatusColor">
-                                        @(exercise.StatusTextKey.Length == 0 ? string.Empty : Text[exercise.StatusTextKey])
+                                    <div class="history-exercise-status history-exercise-status--@EffortToneFor(exercise.Status.ToString())">
+                                        @Text[EffortKeyFor(exercise.Status.ToString())]
                                     </div>
 
                                     <div class="history-sets">
@@ -167,5 +166,23 @@ else
 
         await LoadHistory();
     }
+
+    private static string EffortKeyFor(string status) => status switch
+    {
+        "Easy" => "Effort_Easy",
+        "Medium" => "Effort_Medium",
+        "Hard" => "Effort_Hard",
+        "Max" => "Effort_Max",
+        _ => "Difficulty_NotRated"
+    };
+
+    private static string EffortToneFor(string status) => status switch
+    {
+        "Easy" => "easy",
+        "Medium" => "medium",
+        "Hard" => "hard",
+        "Max" => "max",
+        _ => "not-rated"
+    };
 
 }

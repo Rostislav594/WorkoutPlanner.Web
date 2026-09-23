@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using WorkoutPlanner.Api.Contracts;
 using GymPlanner.Mobile.Authentication;
+using GymPlanner.Mobile.Localization;
 
 namespace GymPlanner.Mobile.Notifications;
 
@@ -11,9 +12,12 @@ public sealed class PushRegistrationCoordinator(
     ILocalNotificationPlatform localNotifications,
     ILogger<PushRegistrationCoordinator> logger) : IDisposable
 {
+    private const string EnabledPreferenceKey = "gymplanner.push-enabled";
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _lastRegisteredToken;
     private bool _permissionRequested;
+
+    public bool IsEnabled => Preferences.Default.Get(EnabledPreferenceKey, true);
 
     public async System.Threading.Tasks.Task InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -25,12 +29,61 @@ public sealed class PushRegistrationCoordinator(
     private void OnAuthenticationChanged() => _ = TryRegisterAsync();
     private void OnTokenChanged(string token) => _ = TryRegisterAsync();
 
+    public async Task<NotificationOperationResult> SetEnabledAsync(
+        bool enabled,
+        CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (enabled == IsEnabled)
+                return NotificationOperationResult.Success;
+
+            if (!authentication.IsAuthenticated)
+                return NotificationOperationResult.Failure(AppTexts.Get("Auth_InvalidSession"));
+
+            if (enabled)
+            {
+                var permission = await localNotifications.RequestPermissionAsync(cancellationToken);
+                if (!permission.Succeeded)
+                    return permission;
+
+                _permissionRequested = true;
+                var token = await tokenProvider.GetTokenAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(token))
+                    return NotificationOperationResult.Failure(AppTexts.Get("ProfilePush_TokenUnavailable"));
+
+                await registration.RegisterAsync(
+                    new RegisterPushDeviceRequest(InstallationIdStore.Get(), "android", token),
+                    cancellationToken);
+                _lastRegisteredToken = token;
+            }
+            else
+            {
+                await registration.UnregisterAsync(InstallationIdStore.Get(), cancellationToken);
+                _lastRegisteredToken = null;
+            }
+
+            Preferences.Default.Set(EnabledPreferenceKey, enabled);
+            return NotificationOperationResult.Success;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "Updating push preference failed.");
+            return NotificationOperationResult.Failure(AppTexts.Get("ProfilePush_UpdateFailed"));
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     private async System.Threading.Tasks.Task TryRegisterAsync(CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (!authentication.IsAuthenticated)
+            if (!authentication.IsAuthenticated || !IsEnabled)
             {
                 _lastRegisteredToken = null;
                 return;

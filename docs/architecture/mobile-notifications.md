@@ -1,5 +1,23 @@
 # Mobile notifications
 
+## Inbox publication audience
+
+Shared inbox publications are visible from the account's recorded registration
+time (`UserActivity.RegisteredAtUtc`), inclusive, up to the current UTC time.
+Eligibility uses `PublishedAtUtc`, not the draft's `CreatedAtUtc`: a publication
+prepared before signup but released afterwards is visible. Future publications
+remain hidden until their scheduled time.
+
+`InboxService` uses the same query for the list, unread count, individual
+publication read/delete operations, and bulk read/delete operations. An older
+publication id is rejected by the individual APIs (404); bulk operations do not
+create read/deletion state for ineligible publications. Personal messages remain
+owner-scoped and are not filtered by registration time.
+
+For legacy accounts with a null registration date or no activity row, the existing
+published inbox remains available. No dates are invented and no rows are removed.
+This is a query change; no schema migration or mobile update is required.
+
 ## Local reminders
 
 The MAUI client owns local workout reminders; they are not copied to the server

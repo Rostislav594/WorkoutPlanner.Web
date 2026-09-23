@@ -137,6 +137,7 @@
     display: grid;
     place-items: center;
     color: var(--color-success);
+    opacity: .72;
 }
 
 .no-workout-visual > .material-symbols-rounded {
@@ -225,28 +226,29 @@
     justify-content: center;
     gap: 8px;
     padding: 10px 16px;
-    border: 1px solid rgba(255, 122, 26, .72);
+    border: 1px solid var(--color-success);
     border-radius: var(--radius-md);
-    background: linear-gradient(135deg, rgba(255, 122, 26, .22), rgba(255, 122, 26, .08));
+    background: var(--color-success-soft);
     color: var(--color-text);
     font: inherit;
     font-weight: 800;
     white-space: nowrap;
-    box-shadow: 0 8px 24px rgba(255, 122, 26, .12);
+    box-shadow: 0 8px 24px rgba(63, 185, 80, .12);
     cursor: pointer;
     transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease, transform .18s ease;
 }
 
 .free-workout-button .material-symbols-rounded {
     flex: 0 0 auto;
-    color: var(--color-accent);
+    color: var(--color-success-hover);
     font-size: 24px;
 }
 
 .free-workout-button:hover:not(:disabled),
 .free-workout-button:focus-visible:not(:disabled) {
-    background: linear-gradient(135deg, rgba(255, 122, 26, .3), rgba(255, 122, 26, .12));
-    box-shadow: 0 10px 28px rgba(255, 122, 26, .2);
+    border-color: var(--color-success-hover);
+    background: color-mix(in srgb, var(--color-success) 22%, transparent);
+    box-shadow: 0 10px 28px rgba(63, 185, 80, .2);
 }
 
 .free-workout-button:active:not(:disabled) {
@@ -802,14 +804,70 @@
     background: var(--color-orange-soft);
 }
 
+.rest-timer-icon {
+    position: relative;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    color: var(--color-orange);
+}
+
+.rest-timer-icon__glyph {
+    font-size: 22px;
+}
+
+.rest-timer-icon__rays {
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 30px;
+    height: 16px;
+    opacity: 0;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+.rest-timer-icon--started .rest-timer-icon__glyph {
+    animation: rest-timer-lift .7s ease-out;
+}
+
+.rest-timer-icon--started .rest-timer-icon__rays {
+    animation: rest-timer-rays .85s ease-out both;
+}
+
+@keyframes rest-timer-lift {
+    0%, 100% { transform: translateY(0); }
+    34% { transform: translateY(-3px); }
+    62% { transform: translateY(-1px); }
+}
+
+@keyframes rest-timer-rays {
+    0%, 10% { opacity: 0; transform: translateY(4px); }
+    24% { opacity: 1; transform: translateY(0); }
+    46% { opacity: 1; transform: translateY(-5px); }
+    68% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(0); }
+}
+
+.rest-timer-box > .rest-timer-copy {
+    display: grid;
+    gap: 2px;
+}
+
 .rest-timer-box > .material-symbols-rounded {
     color: var(--color-orange);
     font-size: 22px;
 }
 
-.rest-timer-box > span:not(.material-symbols-rounded) {
-    display: grid;
-    gap: 2px;
+@media (prefers-reduced-motion: reduce) {
+    .rest-timer-icon--started .rest-timer-icon__glyph,
+    .rest-timer-icon--started .rest-timer-icon__rays {
+        animation: none;
+    }
 }
 
 .rest-timer-box small {

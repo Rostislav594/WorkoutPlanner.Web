@@ -55,9 +55,8 @@ public sealed class InboxService(
                 x.SupportTicket == null ? null : x.SupportTicket.TicketNumber))
             .ToListAsync(cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        var publications = await db.InboxPublications.AsNoTracking()
-            .Where(x => x.PublishedAtUtc <= now &&
-                        !x.Reads.Any(read => read.UserId == userId && read.DeletedAtUtc != null))
+        var publications = await PublishedForUser(db, userId, now).AsNoTracking()
+            .Where(x => !x.Reads.Any(read => read.UserId == userId && read.DeletedAtUtc != null))
             .Select(x => new InboxMessageItem(
                 x.Id, x.Type, x.Title, x.Preview, x.Body, x.PublishedAtUtc,
                 x.Reads.Where(read => read.UserId == userId && read.DeletedAtUtc == null)
@@ -100,8 +99,8 @@ public sealed class InboxService(
             x => x.UserId == userId && x.ReadAtUtc == null && x.DeletedAtUtc == null,
             cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        var publications = await db.InboxPublications.CountAsync(
-            x => x.PublishedAtUtc <= now && !x.Reads.Any(read => read.UserId == userId),
+        var publications = await PublishedForUser(db, userId, now).CountAsync(
+            x => !x.Reads.Any(read => read.UserId == userId),
             cancellationToken);
         return personal + publications;
     }
@@ -132,8 +131,8 @@ public sealed class InboxService(
         var userId = await currentUser.GetRequiredUserIdAsync();
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        if (!await db.InboxPublications.AnyAsync(
-                x => x.Id == publicationId && x.PublishedAtUtc <= now,
+        if (!await PublishedForUser(db, userId, now).AnyAsync(
+                x => x.Id == publicationId,
                 cancellationToken))
             return false;
         var readState = await db.InboxPublicationReads.SingleOrDefaultAsync(
@@ -170,7 +169,7 @@ public sealed class InboxService(
         var userId = await currentUser.GetRequiredUserIdAsync();
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        if (!await db.InboxPublications.AnyAsync(x => x.Id == publicationId && x.PublishedAtUtc <= now, cancellationToken)) return false;
+        if (!await PublishedForUser(db, userId, now).AnyAsync(x => x.Id == publicationId, cancellationToken)) return false;
         var state = await db.InboxPublicationReads.SingleOrDefaultAsync(
             x => x.PublicationId == publicationId && x.UserId == userId, cancellationToken);
         if (state is null)
@@ -195,8 +194,7 @@ public sealed class InboxService(
         var now = timeProvider.GetUtcNow().UtcDateTime;
         await db.InboxMessages.Where(x => x.UserId == userId && x.DeletedAtUtc == null)
             .ExecuteUpdateAsync(setters => setters.SetProperty(x => x.DeletedAtUtc, now), cancellationToken);
-        var publicationIds = await db.InboxPublications
-            .Where(x => x.PublishedAtUtc <= now)
+        var publicationIds = await PublishedForUser(db, userId, now)
             .Select(x => x.Id).ToListAsync(cancellationToken);
         var states = await db.InboxPublicationReads.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
         var stateIds = states.Select(x => x.PublicationId).ToHashSet();
@@ -219,8 +217,8 @@ public sealed class InboxService(
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(x => x.ReadAtUtc, now),
                 cancellationToken);
-        var publicationIds = await db.InboxPublications
-            .Where(x => x.PublishedAtUtc <= now && !x.Reads.Any(read => read.UserId == userId))
+        var publicationIds = await PublishedForUser(db, userId, now)
+            .Where(x => !x.Reads.Any(read => read.UserId == userId))
             .Select(x => x.Id).ToListAsync(cancellationToken);
         if (publicationIds.Count > 0)
         {
@@ -304,6 +302,16 @@ public sealed class InboxService(
                 inboxMessageId);
         }
     }
+
+    private static IQueryable<InboxPublication> PublishedForUser(
+        WorkoutDbContext db, string userId, DateTime now) =>
+        db.InboxPublications.Where(publication => publication.PublishedAtUtc <= now &&
+            publication.PublishedAtUtc >= (db.UserActivities
+                .Where(activity => activity.UserId == userId)
+                .Select(activity => activity.RegisteredAtUtc)
+                // Legacy accounts may have no recorded registration date.
+                // Keep their existing inbox rather than inventing a cutoff.
+                .FirstOrDefault() ?? DateTime.MinValue));
 
     private static string CreatePreview(string text) =>
         text.Length <= 400 ? text : $"{text[..397]}…";

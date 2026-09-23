@@ -1,0 +1,71 @@
+@inject IAppText Text
+
+<div class="effort-rating @(ReadOnly ? "effort-rating--readonly" : null)"
+     role="@(ReadOnly ? "img" : "group")" aria-label="@AccessibleLabel">
+    <div class="effort-selection @(string.IsNullOrEmpty(SelectedText) ? null : "effort-selection--visible")"
+         aria-live="polite" aria-atomic="true">
+        @if (!string.IsNullOrEmpty(SelectedText))
+        {
+            <span class="effort-selection-text" @key="Value">@SelectedText</span>
+        }
+    </div>
+
+    <div class="effort-options">
+        @foreach (var option in Options)
+        {
+            var selected = Value == option.Value;
+            @if (ReadOnly)
+            {
+                <span class="effort-option effort-option--@option.Tone @(selected ? "effort-option--selected" : null)" aria-hidden="true">
+                    <span class="effort-square">
+                        <svg class="effort-checkmark" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6.5 12.5 10.2 16 17.8 8.4" />
+                        </svg>
+                    </span>
+                </span>
+            }
+            else
+            {
+                <button type="button" class="effort-option effort-option--@option.Tone @(selected ? "effort-option--selected" : null)"
+                        aria-label="@Text[option.Key]" aria-pressed="@(selected ? "true" : "false")"
+                        disabled="@(Disabled || _changing)"
+                        @onpointerdown:stopPropagation="true" @onclick:stopPropagation="true"
+                        @onclick="() => SelectAsync(option.Value)">
+                    <span class="effort-square" aria-hidden="true">
+                        <svg class="effort-checkmark" viewBox="0 0 24 24">
+                            <path d="M6.5 12.5 10.2 16 17.8 8.4" />
+                        </svg>
+                    </span>
+                </button>
+            }
+        }
+    </div>
+
+    <p class="effort-caption">@Text["Effort_Prompt"]</p>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = "NotCompleted";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private bool _changing;
+    private static readonly (string Value, string Key, string Tone)[] Options =
+    [
+        ("Easy", "Effort_Easy", "easy"), ("Medium", "Effort_Medium", "medium"),
+        ("Hard", "Effort_Hard", "hard"), ("Max", "Effort_Max", "max")
+    ];
+    private string SelectedKey => Options.FirstOrDefault(x => x.Value == Value).Key ?? string.Empty;
+    private string SelectedText => string.IsNullOrEmpty(SelectedKey) ? string.Empty : Text[SelectedKey];
+    private string AccessibleLabel => $"{Label ?? Text["Today_ExerciseRating"]}: {Text[Options.FirstOrDefault(x => x.Value == Value).Key ?? "Difficulty_NotRated"]}";
+
+    private async Task SelectAsync(string value)
+    {
+        if (ReadOnly || Disabled || _changing) return;
+        _changing = true;
+        try { await ValueChanged.InvokeAsync(Value == value ? "NotCompleted" : value); }
+        finally { _changing = false; }
+    }
+}

@@ -351,7 +351,7 @@
         new("training", Text["Nav_Workouts"], [new("timer", Text["ProfileItem_RestTimers"], "/profile/rest-timers")]),
         new("devices", Text["ProfileSection_Devices"], [new("watch", Text["ProfileItem_Watch"], "/profile/devices")]),
         new("application", Text["ProfileSection_Application"], [new("notifications", Text["ProfileItem_Notifications"], "/profile/notifications"), new("language", Text["Profile_Language_Title"], "/profile/language")]),
-        new("data", Text["ProfileSection_Data"], [new("database", Text["ProfileItem_MyData"], "/profile/my-data")]),
+        new("sessions", Text["ProfileItem_Sessions"], [new("devices_other", Text["ProfileItem_Sessions"], "/profile/sessions")]),
         new("security", Text["ProfileSection_Security"], [new("password", Text["ProfileItem_ChangePassword"], "/profile/change-password")]),
         new("support", Text["ProfileSection_Support"], [new("bug_report", Text["ProfileItem_ReportProblem"], "/profile/report-problem"), new("lightbulb", Text["Profile_SuggestIdea_Title"], "/profile/suggest-idea")]),
         new("about", Text["ProfileSection_About"], [new("privacy_tip", Text["ProfileItem_Privacy"], "/profile/privacy"), new("tag", Text["ProfileItem_Version"], "/profile/about", ShowChevron: false), new("logout", Text["ProfileItem_Logout"], "/profile/logout", IsStandalone: true)]),
@@ -646,10 +646,12 @@
         "/profile/personal-information" or
         "/profile/devices" or
         "/profile/my-data" or
+        "/profile/sessions" or
         "/profile/rest-timers" or
         "/profile/change-password" or
         "/profile/report-problem" or
         "/profile/suggest-idea" or
+        "/profile/notifications" or
         "/profile/language" or
         "/profile/logout" or
         "/profile/delete-account";

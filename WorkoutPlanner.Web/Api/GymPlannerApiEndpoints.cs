@@ -91,6 +91,14 @@ public static class GymPlannerApiEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
+        account.MapGet("/sessions", async (HttpContext context, MobileSessionService sessions,
+            CancellationToken cancellationToken) => Results.Ok(await sessions.ListAsync(
+                context.User, GetRequiredUserId(context.User), cancellationToken)));
+        account.MapDelete("/sessions/{id:guid}", async (Guid id, HttpContext context,
+            MobileSessionService sessions, CancellationToken cancellationToken) =>
+            await sessions.RevokeAsync(id, GetRequiredUserId(context.User), cancellationToken)
+                ? Results.NoContent() : Results.NotFound());
+
         account.MapPost("/revoke-access", RevokeAccessAsync)
             .Produces(StatusCodes.Status204NoContent)
             .Produces(StatusCodes.Status401Unauthorized)

@@ -3409,4 +3409,28 @@
   <data name="Layout_PageErrorBody" xml:space="preserve">
     <value>Something went wrong while loading it. The rest of the app still works, so try again or move to another section.</value>
   </data>
+  <data name="Sessions_Description" xml:space="preserve"><value>Devices with active account access. Ending a session requires signing in again on that device.</value></data>
+  <data name="Sessions_Refresh" xml:space="preserve"><value>Refresh list</value></data>
+  <data name="Sessions_Empty" xml:space="preserve"><value>No active sessions.</value></data>
+  <data name="Sessions_Current" xml:space="preserve"><value>This device</value></data>
+  <data name="Sessions_Created" xml:space="preserve"><value>Signed in: {0}</value></data>
+  <data name="Sessions_Refreshed" xml:space="preserve"><value>Session refreshed: {0}</value></data>
+  <data name="Sessions_End" xml:space="preserve"><value>End session</value></data>
+  <data name="Sessions_Confirm" xml:space="preserve"><value>End the session for “{0}”? Account data will be kept.</value></data>
+  <data name="Sessions_ConfirmCurrent" xml:space="preserve"><value>This is your current session, “{0}”. Ending it will take you to sign-in.</value></data>
+  <data name="Sessions_Unknown" xml:space="preserve"><value>Unknown device</value></data>
+  <data name="Sessions_Ended" xml:space="preserve"><value>Session ended. Device access revoked.</value></data>
+  <data name="Effort_Easy" xml:space="preserve"><value>Why did I even come?</value></data>
+  <data name="Effort_Medium" xml:space="preserve"><value>Getting harder...</value></data>
+  <data name="Effort_Hard" xml:space="preserve"><value>Brutal...</value></data>
+  <data name="Effort_Max" xml:space="preserve"><value>Call an ambulance</value></data>
+  <data name="Effort_Prompt" xml:space="preserve"><value>Rate the exercise difficulty</value></data>
+  <data name="ProfilePush_Description" xml:space="preserve"><value>Get push notifications for messages and support replies on this device.</value></data>
+  <data name="ProfilePush_Master" xml:space="preserve"><value>Push notifications</value></data>
+  <data name="ProfilePush_Enabled" xml:space="preserve"><value>On</value></data>
+  <data name="ProfilePush_Disabled" xml:space="preserve"><value>Off</value></data>
+  <data name="ProfilePush_SystemHint" xml:space="preserve"><value>Notifications must also be allowed in your phone settings. Workout reminders are managed separately in the calendar.</value></data>
+  <data name="ProfilePush_Updating" xml:space="preserve"><value>Saving setting…</value></data>
+  <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Push notifications could not be connected on this device. Try again later.</value></data>
+  <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Could not change the setting. Check your connection and try again.</value></data>
 </root>

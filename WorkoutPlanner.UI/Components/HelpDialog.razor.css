@@ -16,6 +16,7 @@
     width: min(100%, 54rem);
     max-height: min(90dvh, 52rem);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1.4rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-xl, 1.5rem);
@@ -69,10 +70,54 @@
     background: var(--color-accent-soft);
 }
 
-.help-dialog__intro-icon { display: grid; width: 5rem; height: 5rem; place-items: center; color: var(--color-accent); font-size: 1.65rem; font-weight: 850; }
+.help-dialog__intro-icon { display: grid; width: 5rem; height: 5rem; place-items: center; color: var(--color-accent); }
+.help-question-mark { position: relative; display: block; width: 2.6rem; height: 3.4rem; transform-origin: 50% 58%; animation: help-question-wobble .82s .94s cubic-bezier(.22, 1, .36, 1) both; }
+.help-question-mark__part { position: absolute; color: var(--color-accent); }
+.help-question-mark__hook { inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: currentColor; stroke-width: 8; stroke-linecap: butt; stroke-linejoin: miter; animation: help-question-hook-in .78s .08s cubic-bezier(.2, .7, .2, 1) both; }
+.help-question-mark__dot { left: 50%; bottom: .18rem; width: .46rem; height: .46rem; margin-left: -.23rem; border-radius: 0; background: currentColor; transform-origin: center; animation: help-question-dot-in .70s .20s cubic-bezier(.2, .7, .2, 1) both; }
+
+@keyframes help-question-hook-in {
+    from { opacity: 0; transform: translateY(-3.5rem) rotate(-10deg); }
+    82% { opacity: 1; transform: translateY(.18rem) rotate(2deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+}
+
+@keyframes help-question-dot-in {
+    from { opacity: 0; transform: translateY(2.8rem) scale(.55); }
+    82% { opacity: 1; transform: translateY(-.14rem) scale(1.08); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes help-question-wobble {
+    0%, 100% { transform: rotate(0); }
+    24% { transform: rotate(-7deg); }
+    48% { transform: rotate(5deg); }
+    70% { transform: rotate(-2.5deg); }
+    86% { transform: rotate(1deg); }
+}
+
 .help-dialog__intro p { margin: 0; color: var(--color-text-muted); line-height: 1.55; }
 .help-dialog__sections { display: grid; gap: 1rem; margin-top: 1rem; }
-.help-section { position: relative; padding: 1.1rem; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.help-section { position: relative; padding: 1.1rem; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); opacity: 0; animation: help-section-from-right .80s cubic-bezier(.2, .7, .2, 1) both; }
+.help-section:nth-child(even) { animation-name: help-section-from-left; }
+.help-section--delay-0 { animation-delay: 1.04s; }
+.help-section--delay-1 { animation-delay: 1.20s; }
+.help-section--delay-2 { animation-delay: 1.36s; }
+.help-section--delay-3 { animation-delay: 1.52s; }
+.help-section--delay-4 { animation-delay: 1.68s; }
+.help-section--delay-5 { animation-delay: 1.84s; }
+.help-section--delay-6 { animation-delay: 2s; }
+
+@keyframes help-section-from-right {
+    from { opacity: 0; transform: translateX(3rem); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes help-section-from-left {
+    from { opacity: 0; transform: translateX(-3rem); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
 .help-section h3 { margin: 0 0 .45rem; font-size: 1.15rem; }
 .help-section p { margin: 0; color: var(--color-text-muted); line-height: 1.55; }
 .help-section ol { display: grid; gap: .5rem; margin: .85rem 0 0; padding-left: 1.35rem; color: var(--color-text); line-height: 1.45; }
@@ -89,4 +134,17 @@
     .help-dialog__header { top: -1rem; margin: -1rem calc(-1 * max(1rem, env(safe-area-inset-right))) 1rem calc(-1 * max(1rem, env(safe-area-inset-left))); padding: 1rem max(1rem, env(safe-area-inset-right)); }
     .help-dialog__intro { grid-template-columns: 4.25rem minmax(0, 1fr); padding: .85rem; }
     .help-dialog__intro-icon { width: 4.25rem; height: 4.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .help-question-mark,
+    .help-question-mark__part,
+    .help-section {
+        animation: none;
+    }
+
+    .help-section {
+        opacity: 1;
+        transform: none;
+    }
 }

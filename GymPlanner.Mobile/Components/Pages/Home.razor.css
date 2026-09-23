@@ -2,7 +2,7 @@
     width: 100%;
     min-height: calc(100dvh - 176px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     display: flex;
-    background: #000;
+    background: transparent;
 }
 
 .home-layout {

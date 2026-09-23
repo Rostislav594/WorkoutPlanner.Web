@@ -29,8 +29,8 @@ and protect the Data Protection key ring and expose the API only through HTTPS.
 3. `POST /api/v1/auth/refresh` validates expiry and the security stamp before
    issuing replacement tokens for an active session.
 4. `POST /api/v1/auth/logout` revokes only the current mobile session.
-5. `POST /api/v1/account/revoke-access` revokes every mobile session for the
-   authenticated user without signing out the existing web cookie.
+5. `POST /api/v1/account/revoke-access` revokes every tracked session for the
+   authenticated user, including tracked web sessions.
 6. `POST /api/v1/account/change-password` changes the Identity password and
    revokes all mobile sessions. `DELETE /api/v1/account` uses the transactional
    account-deletion service and removes session rows with the account.
@@ -40,6 +40,23 @@ and protect the Data Protection key ring and expose the API only through HTTPS.
 The migration that introduced `MobileSessions` is additive. It creates a new
 table and indexes with a cascading foreign key to `AspNetUsers`; it does not
 rewrite or delete existing history, plans, profiles, or Identity rows.
+
+## Active sessions
+
+`GET /api/v1/account/sessions` lists the authenticated user's unrevoked,
+unexpired sessions with a current-session flag. `DELETE /api/v1/account/sessions/{id}`
+revokes only the owned session; foreign identifiers return 404. Revocation blocks
+both subsequent protected requests and token refresh. The mobile Profile menu
+opens this list instead of My Data; the old route redirects to the new list.
+Ending the current session clears local authentication after server success.
+
+New web cookie sign-ins are also tracked in the existing session table. Cookie
+validation and user-scoped service operations check revocation; cookie expiry
+is fixed to the session lifetime. Web sign-out revokes its session. Cookies issued
+before this change have no session identifier and require a new sign-in to appear.
+Watch pairing credentials remain managed in the existing connected-watches screen.
+The list is active access, not a permanent history of all devices ever used.
+LastRefreshedAtUtc is token refresh time, not exact last user activity.
 
 ## Implemented MAUI client flow
 

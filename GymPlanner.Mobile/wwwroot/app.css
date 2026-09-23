@@ -360,6 +360,7 @@ button[class]:is(
     .auth-submit,
     .history-start-button,
     .guide-button-primary,
+    .free-workout-button,
     .primary
 ),
 a[class]:is(.primary-button, .profile-primary-action, .setting-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary) {
@@ -444,7 +445,7 @@ a[class]:is(.danger-button, .profile-danger-action, .setting-danger-action, .dan
     transition: background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), filter var(--transition-ui) !important;
 }
 
-button[class]:is(.edit-workout-button, .free-workout-button),
+button[class].edit-workout-button,
 a[class].calendar-link {
     min-height: var(--button-height) !important;
     display: inline-flex;
@@ -579,7 +580,7 @@ button:is(
 }
 
 @media (hover: hover) {
-    button[class]:is(.primary-button, .finish-button, .add-template-button, .profile-primary-action, .setting-primary-action, .primary-action, .auth-submit, .history-start-button, .guide-button-primary, .primary):hover:not(:disabled),
+    button[class]:is(.primary-button, .finish-button, .add-template-button, .profile-primary-action, .setting-primary-action, .primary-action, .auth-submit, .history-start-button, .guide-button-primary, .free-workout-button, .primary):hover:not(:disabled),
     a[class]:is(.primary-button, .profile-primary-action, .setting-primary-action, .primary-action, .history-start-button, .guide-button-primary, .primary):hover {
         border-color: var(--color-success-hover) !important;
         background:
@@ -612,7 +613,7 @@ button:is(
         color: var(--color-text) !important;
     }
 
-    button[class]:is(.edit-workout-button, .free-workout-button):hover:not(:disabled),
+    button[class].edit-workout-button:hover:not(:disabled),
     a[class].calendar-link:hover {
         border-color: var(--color-accent-hover) !important;
         background:

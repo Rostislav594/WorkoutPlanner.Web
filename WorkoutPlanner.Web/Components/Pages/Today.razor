@@ -101,7 +101,7 @@
 
                              <input type="checkbox"
                                    checked="@set.Completed"
-                                   disabled="@SavingSetIds.Contains(set.Id)"
+                                   disabled="@(SavingRating || SavingSetIds.Contains(set.Id))"
                                    @onchange="async e => await SetCompleted(set, (bool)e.Value!)" />
 
                             <span class="set-text">
@@ -113,101 +113,24 @@
 
                 </div>
 
-                <div class="exercise-footer">
-
-                    <span class="status-badge"
-                          style="color:@exercise.StatusColor">
-                        @(exercise.Status switch
-                        {
-                            ExerciseStatus.Easy => Text["Web_Rate_Easy"],
-                            ExerciseStatus.Medium => Text["Web_Rate_Medium"],
-                            ExerciseStatus.Hard => Text["Web_Rate_Hard"],
-                            ExerciseStatus.Max => Text["Web_Rate_Max"],
-                            _ => Text["Difficulty_NotRated"]
-                        })
-                    </span>
-
-                    <button class="status-button" @onclick="() => OpenStatusWindow(exercise)"
-                            >
-                        ⚡
-                    </button>
-
+                <div class="exercise-effort-footer">
+                    <ExerciseEffortRating Value="@exercise.Status.ToString()"
+                                          ValueChanged="value => SetStatusAsync(exercise, value)"
+                                          Disabled="@(SavingRating || SavingSetIds.Count > 0)" />
+                    @if (RatingErrorExerciseId == exercise.Id)
+                    {
+                        <p role="alert">@Text["Web_Details_SaveFailed"]</p>
+                    }
                 </div>
 
             </div>
         }
 
-        <button class="finish-button" @onclick="FinishWorkout">
+        <button class="finish-button" disabled="@SavingRating" @onclick="FinishWorkout">
             @Text["Today_FinishWorkout"]
         </button>
     }
    
-    @if (StatusExercise != null)
-    {
-        <div class="modal-overlay"
-             @onclick="CloseStatusWindow">
-
-            <div class="modal-window"
-                 @onclick:stopPropagation="true">
-
-                <h3>@Text["Web_Today_RateTitle"]</h3>
-
-                    <div class="status-option"
-                         style="cursor:pointer"
-                         @onclick="() => SetStatus(ExerciseStatus.Easy)">
-
-                        <div class="status-title">
-                            @Text["Web_Rate_Easy"]
-                        </div>
-
-                        <div class="status-description">
-                            @Text["Web_Rate_EasyHint"]
-                        </div>
-
-                    </div>
-
-                    <div class="status-option"
-                         style="cursor:pointer"
-                         @onclick="() => SetStatus(ExerciseStatus.Medium)">
-                        <div class="status-title">
-                            @Text["Web_Rate_Medium"]
-                        </div>
-                        <div class="status-description">
-                            @Text["Web_Rate_MediumHint"]
-                        </div>
-                    </div>
-
-                    <div class="status-option"
-                         style="cursor:pointer"
-                         @onclick="() => SetStatus(ExerciseStatus.Hard)">
-                        <div class="status-title">
-                            @Text["Web_Rate_Hard"]
-                        </div>
-                        <div class="status-description">
-                            @Text["Web_Rate_HardHint"]
-                        </div>
-                    </div>
-
-                    <div class="status-option"
-                         style="cursor:pointer"
-                         @onclick="() => SetStatus(ExerciseStatus.Max)">
-                        <div class="status-title">
-                            @Text["Web_Rate_Max"]
-                        </div>
-                        <div class="status-description">
-                            @Text["Web_Rate_MaxHint"]
-                        </div>
-                    </div>
-                    <button class="secondary-button"
-                            @onclick="CloseStatusWindow">
-                        @Text["Web_Today_RateCancel"]
-                    </button>
-
-            </div>
-
-        </div>
-    
-}
 </div>
 @if (ShowStatusWarning)
 {
@@ -281,7 +204,8 @@
 
 @code
 {
-    Exercise? StatusExercise;
+    bool SavingRating;
+    int? RatingErrorExerciseId;
     bool ShowWorkoutCompleted = false;
     bool ShowStatusWarning = false;
     TrainingPlan? TodayWorkout;
@@ -359,32 +283,29 @@
         RealtimeFinishedSubscription?.Dispose();
     }
 
-    void OpenStatusWindow(Exercise exercise)
+    async Task SetStatusAsync(Exercise exercise, string value)
     {
-        StatusExercise = exercise;
-    }
-
-    void CloseStatusWindow()
-    {
-        StatusExercise = null;
-    }
-
-    async Task SetStatus(ExerciseStatus status)
-    {
-        if (StatusExercise == null)
-            return;
-
-        StatusExercise.Status = status;
-
-        await ExerciseService.UpdateExerciseAsync(StatusExercise);
-
-        StatusExercise = null;
-
+        if (SavingRating || SavingSetIds.Count > 0 || !Enum.TryParse<ExerciseStatus>(value, out var status)) return;
+        SavingRating = true;
+        RatingErrorExerciseId = null;
+        var previous = exercise.Status;
+        try
+        {
+            exercise.Status = status;
+            await ExerciseService.UpdateExerciseAsync(exercise);
+        }
+        catch (Exception exception)
+        {
+            exercise.Status = previous;
+            RatingErrorExerciseId = exercise.Id;
+            Logger.LogError(exception, "Could not save exercise rating.");
+        }
+        finally { SavingRating = false; }
     }
 
     async Task FinishWorkout()
     {
-        if (TodayWorkout == null)
+        if (TodayWorkout == null || SavingRating)
             return;
         if (Exercises.Any(x =>
         x.Status == ExerciseStatus.NotCompleted))

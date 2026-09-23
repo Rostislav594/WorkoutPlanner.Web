@@ -7,6 +7,34 @@ namespace GymPlanner.Mobile.Api;
 
 public sealed class ProfileApiClient(HttpClient client) : IProfileApiClient
 {
+    public async Task<ApiResult<List<AccountSessionResponse>>> GetSessionsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.GetAsync("api/v1/account/sessions", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+                return new(null, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            var sessions = await response.Content.ReadFromJsonAsync<List<AccountSessionResponse>>(cancellationToken);
+            return sessions is null ? ApiResult<List<AccountSessionResponse>>.Failure(ApiErrorMessages.EmptyResponse())
+                : ApiResult<List<AccountSessionResponse>>.Success(sessions);
+        }
+        catch (HttpRequestException) { return ApiResult<List<AccountSessionResponse>>.Failure(ApiErrorMessages.NetworkUnavailable()); }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        { return ApiResult<List<AccountSessionResponse>>.Failure(ApiErrorMessages.NetworkUnavailable()); }
+    }
+
+    public async Task<ApiResult> RevokeSessionAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.DeleteAsync($"api/v1/account/sessions/{id}", cancellationToken);
+            return response.IsSuccessStatusCode ? ApiResult.Success
+                : new(false, await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+        }
+        catch (HttpRequestException) { return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable()); }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        { return ApiResult.Failure(ApiErrorMessages.NetworkUnavailable()); }
+    }
     public async Task<ApiResult<ProfileResponse>> GetAsync(
         CancellationToken cancellationToken = default)
     {

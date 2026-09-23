@@ -38,3 +38,23 @@
 .page-title-row h1 {
     margin: 0;
 }
+
+.history-exercise-status {
+    width: fit-content;
+    max-width: 100%;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border: 1px solid color-mix(in srgb, currentColor 44%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.history-exercise-status--medium { color: var(--color-success); }
+.history-exercise-status--hard { color: var(--color-warning); }
+.history-exercise-status--max { color: var(--color-danger-soft); }

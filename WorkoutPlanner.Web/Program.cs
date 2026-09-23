@@ -159,6 +159,45 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/account/login";
     options.AccessDeniedPath = "/account/access-denied";
+    options.SlidingExpiration = false;
+    options.Events.OnSigningOut = async context =>
+    {
+        var userId = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is not null)
+            await context.HttpContext.RequestServices.GetRequiredService<MobileSessionService>()
+                .RevokeCurrentAsync(context.HttpContext.User, userId, context.HttpContext.RequestAborted);
+    };
+    options.Events.OnSigningIn = async context =>
+    {
+        var principal = context.Principal!;
+        if (MobileSessionService.TryGetSessionId(principal, out _)) return;
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null) return;
+        var sessions = context.HttpContext.RequestServices.GetRequiredService<MobileSessionService>();
+        var expires = context.Properties.ExpiresUtc ?? DateTimeOffset.UtcNow.Add(options.ExpireTimeSpan);
+        context.Properties.ExpiresUtc = expires;
+        var session = await sessions.CreateAsync(userId,
+            "Web: " + context.Request.Headers.UserAgent.ToString(), expires.UtcDateTime,
+            context.HttpContext.RequestAborted);
+        MobileSessionService.AddSessionClaim(principal, session.Id);
+    };
+    options.Events.OnValidatePrincipal = async context =>
+    {
+        // Preserve Identity's security-stamp check as well as per-session revocation.
+        var principal = context.Principal;
+        await SecurityStampValidator.ValidatePrincipalAsync(context);
+        if (principal is null || context.Principal is null) return;
+        if (!MobileSessionService.TryGetSessionId(principal, out var sessionId)) return;
+        var sessions = context.HttpContext.RequestServices.GetRequiredService<MobileSessionService>();
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null || !await sessions.IsActiveAsync(principal, userId, context.HttpContext.RequestAborted))
+        {
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        }
+        else if (!MobileSessionService.TryGetSessionId(context.Principal, out _))
+            MobileSessionService.AddSessionClaim(context.Principal, sessionId);
+    };
     options.Events.OnRedirectToLogin = context =>
     {
         if (context.Request.Path.StartsWithSegments("/api"))

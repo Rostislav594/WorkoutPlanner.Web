@@ -20,7 +20,14 @@
         </header>
 
         <div class="help-dialog__intro">
-            <span class="help-dialog__intro-icon" aria-hidden="true">?</span>
+            <span class="help-dialog__intro-icon" aria-hidden="true">
+                <span class="help-question-mark">
+                    <svg class="help-question-mark__part help-question-mark__hook" viewBox="0 0 48 64" focusable="false">
+                        <path d="M10 17C10 8 16 4 24 4C33 4 40 9 40 18C40 27 36 31 30 35C25 38 24 41 24 46" />
+                    </svg>
+                    <span class="help-question-mark__part help-question-mark__dot"></span>
+                </span>
+            </span>
             <p id="context-help-introduction">@Text[Topic.IntroductionKey]</p>
         </div>
 
@@ -28,7 +35,7 @@
             @for (var index = 0; index < Topic.Sections.Count; index++)
             {
                 var section = Topic.Sections[index];
-                <article class="help-section">
+                <article class="help-section help-section--delay-@Math.Min(index, 6)">
                     <h3>@Text[section.TitleKey]</h3>
                     <p>@Text[section.TextKey]</p>
                     @if (!string.IsNullOrWhiteSpace(section.ImageSource))

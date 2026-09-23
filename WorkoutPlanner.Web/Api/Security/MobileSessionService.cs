@@ -11,6 +11,28 @@ public sealed class MobileSessionService(
 {
     public const string SessionIdClaimType = "gymplanner:mobile_session";
 
+    public async Task<List<WorkoutPlanner.Api.Contracts.AccountSessionResponse>> ListAsync(
+        ClaimsPrincipal principal, string userId, CancellationToken cancellationToken)
+    {
+        TryGetSessionId(principal, out var currentId);
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.MobileSessions.AsNoTracking()
+            .Where(x => x.UserId == userId && x.RevokedAtUtc == null && x.ExpiresAtUtc > now)
+            .OrderByDescending(x => x.Id == currentId).ThenByDescending(x => x.CreatedAtUtc)
+            .Select(x => new WorkoutPlanner.Api.Contracts.AccountSessionResponse(
+                x.Id, x.DeviceName, x.CreatedAtUtc, x.ExpiresAtUtc, x.LastRefreshedAtUtc, x.Id == currentId))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> RevokeAsync(Guid id, string userId, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.MobileSessions.Where(x => x.Id == id && x.UserId == userId)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAtUtc, now), cancellationToken) > 0;
+    }
+
     public async Task<MobileSession> CreateAsync(
         string userId,
         string? deviceName,

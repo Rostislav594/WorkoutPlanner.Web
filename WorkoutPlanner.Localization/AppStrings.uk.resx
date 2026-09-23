@@ -557,7 +557,7 @@
     <value>Підхід {0}</value>
   </data>
   <data name="Common_WarmupSet" xml:space="preserve">
-    <value>Розминковий</value>
+    <value>Розминочний</value>
   </data>
   <data name="Common_WorkingSet" xml:space="preserve">
     <value>Робочий</value>
@@ -1178,31 +1178,31 @@
     <value>Підходи суперсета</value>
   </data>
   <data name="WorkoutDetails_ToggleWarmupTitle" xml:space="preserve">
-    <value>Розминковий підхід. Натисніть, щоб зробити робочим</value>
+    <value>Розминочний підхід. Натисніть, щоб зробити робочим</value>
   </data>
   <data name="WorkoutDetails_ToggleWorkingTitle" xml:space="preserve">
-    <value>Робочий підхід. Натисніть, щоб зробити розминковим</value>
+    <value>Робочий підхід. Натисніть, щоб зробити розминочним</value>
   </data>
   <data name="WorkoutDetails_ToggleWarmupSupersetLabel" xml:space="preserve">
-    <value>{0}, підхід {1}: розминковий. Зробити робочим</value>
+    <value>{0}, підхід {1}: розминочний. Зробити робочим</value>
   </data>
   <data name="WorkoutDetails_ToggleWorkingSupersetLabel" xml:space="preserve">
-    <value>{0}, підхід {1}: робочий. Зробити розминковим</value>
+    <value>{0}, підхід {1}: робочий. Зробити розминочним</value>
   </data>
   <data name="WorkoutDetails_ToggleWarmupLabel" xml:space="preserve">
-    <value>Підхід {0}: розминковий. Зробити робочим</value>
+    <value>Підхід {0}: розминочний. Зробити робочим</value>
   </data>
   <data name="WorkoutDetails_ToggleWorkingLabel" xml:space="preserve">
-    <value>Підхід {0}: робочий. Зробити розминковим</value>
+    <value>Підхід {0}: робочий. Зробити розминочним</value>
   </data>
   <data name="Common_WarmupLower" xml:space="preserve">
-    <value>розминковий</value>
+    <value>розминочний</value>
   </data>
   <data name="Common_WorkingLower" xml:space="preserve">
     <value>робочий</value>
   </data>
   <data name="WorkoutDetails_WarmupSet" xml:space="preserve">
-    <value>Розминковий підхід</value>
+    <value>Розминочний підхід</value>
   </data>
   <data name="WorkoutDetails_WorkingSet" xml:space="preserve">
     <value>Робочий підхід</value>
@@ -1364,7 +1364,7 @@
     <value>Типи підходів</value>
   </data>
   <data name="Today_WarmupCount" xml:space="preserve">
-    <value>Розминкові: {0}</value>
+    <value>Розминочні: {0}</value>
   </data>
   <data name="Today_WorkingCount" xml:space="preserve">
     <value>Робочі: {0}</value>
@@ -1853,7 +1853,7 @@
     <value>Записи йдуть від свіжих до старих. У старих може стояти позначка «Архівна» — деталі таких тренувань не збереглися.</value>
   </data>
   <data name="Help_History_S2_Title" xml:space="preserve">
-    <value>Розрізнити розминкові та робочі підходи</value>
+    <value>Розрізнити розминочні та робочі підходи</value>
   </data>
   <data name="Help_History_S2_Text" xml:space="preserve">
     <value>У записі зберігається тип кожного підходу — за ним видно реальне навантаження, а не загальну кількість підходів.</value>
@@ -2939,16 +2939,16 @@
     <value>Натисніть «Запустити», потім «Готово» — відлік триватиме й із закритим вікном.</value>
   </data>
   <data name="Help_Today_S5_Title" xml:space="preserve">
-    <value>Перемкнути розминковий і робочий підхід</value>
+    <value>Перемкнути розминочний і робочий підхід</value>
   </data>
   <data name="Help_Today_S5_Text" xml:space="preserve">
-    <value>Розминкові підходи не враховуються як робочі, коли застосунок рахує навантаження.</value>
+    <value>Розминочні підходи не враховуються як робочі, коли застосунок рахує навантаження.</value>
   </data>
   <data name="Help_Today_S5_Step1" xml:space="preserve">
     <value>Натисніть на номер підходу ліворуч у рядку.</value>
   </data>
   <data name="Help_Today_S5_Step2" xml:space="preserve">
-    <value>Номер змінить колір — підхід перемкнеться між розминковим і робочим.</value>
+    <value>Номер змінить колір — підхід перемкнеться між розминочним і робочим.</value>
   </data>
   <data name="Help_Today_S6_Title" xml:space="preserve">
     <value>Змінити або видалити вправу</value>
@@ -3056,16 +3056,16 @@
     <value>У вікні «Керування вправою» виберіть «Змінити параметри» або «Видалити вправу».</value>
   </data>
   <data name="Help_WorkoutDetails_S3_Title" xml:space="preserve">
-    <value>Розмітити розминкові підходи</value>
+    <value>Розмітити розминочні підходи</value>
   </data>
   <data name="Help_WorkoutDetails_S3_Text" xml:space="preserve">
-    <value>Розминкові підходи підписані окремо й не вважаються робочими.</value>
+    <value>Розминочні підходи підписані окремо й не вважаються робочими.</value>
   </data>
   <data name="Help_WorkoutDetails_S3_Step1" xml:space="preserve">
     <value>Натисніть на номер підходу в рядку.</value>
   </data>
   <data name="Help_WorkoutDetails_S3_Step2" xml:space="preserve">
-    <value>Підпис поруч зміниться на «розминковий» або «робочий».</value>
+    <value>Підпис поруч зміниться на «розминочний» або «робочий».</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Title" xml:space="preserve">
     <value>Додати фото вправи</value>
@@ -3209,7 +3209,7 @@
     <value>Відкрийте запис тренування.</value>
   </data>
   <data name="Help_History_S2_Step2" xml:space="preserve">
-    <value>Поруч із номером підходу стоїть підпис «розминковий» або «робочий».</value>
+    <value>Поруч із номером підходу стоїть підпис «розминочний» або «робочий».</value>
   </data>
   <data name="Help_History_S3_Step1" xml:space="preserve">
     <value>Відкрийте запис і натисніть «Видалити запис».</value>
@@ -3409,4 +3409,28 @@
   <data name="Layout_PageErrorBody" xml:space="preserve">
     <value>Щось пішло не так під час завантаження. Решта застосунку працює — спробуйте ще раз або перейдіть до іншого розділу.</value>
   </data>
+  <data name="Sessions_Description" xml:space="preserve"><value>Пристрої з чинним доступом до акаунта. Завершення сесії вимагатиме повторного входу на вибраному пристрої.</value></data>
+  <data name="Sessions_Refresh" xml:space="preserve"><value>Оновити список</value></data>
+  <data name="Sessions_Empty" xml:space="preserve"><value>Активних сесій немає.</value></data>
+  <data name="Sessions_Current" xml:space="preserve"><value>Цей пристрій</value></data>
+  <data name="Sessions_Created" xml:space="preserve"><value>Вхід: {0}</value></data>
+  <data name="Sessions_Refreshed" xml:space="preserve"><value>Оновлення сесії: {0}</value></data>
+  <data name="Sessions_End" xml:space="preserve"><value>Завершити сесію</value></data>
+  <data name="Sessions_Confirm" xml:space="preserve"><value>Завершити сесію «{0}»? Дані акаунта збережуться.</value></data>
+  <data name="Sessions_ConfirmCurrent" xml:space="preserve"><value>Це поточна сесія «{0}». Після завершення відкриється екран входу.</value></data>
+  <data name="Sessions_Unknown" xml:space="preserve"><value>Невідомий пристрій</value></data>
+  <data name="Sessions_Ended" xml:space="preserve"><value>Сесію завершено. Доступ пристрою відкликано.</value></data>
+  <data name="Effort_Easy" xml:space="preserve"><value>Не зрозуміло навіщо приходив(-ла)</value></data>
+  <data name="Effort_Medium" xml:space="preserve"><value>Уже непогано...</value></data>
+  <data name="Effort_Hard" xml:space="preserve"><value>Дуже важко...</value></data>
+  <data name="Effort_Max" xml:space="preserve"><value>Викликайте швидку</value></data>
+  <data name="Effort_Prompt" xml:space="preserve"><value>Оціни складність вправи</value></data>
+  <data name="ProfilePush_Description" xml:space="preserve"><value>Отримуйте push-сповіщення про повідомлення та відповіді підтримки на цьому пристрої.</value></data>
+  <data name="ProfilePush_Master" xml:space="preserve"><value>Push-сповіщення</value></data>
+  <data name="ProfilePush_Enabled" xml:space="preserve"><value>Увімкнено</value></data>
+  <data name="ProfilePush_Disabled" xml:space="preserve"><value>Вимкнено</value></data>
+  <data name="ProfilePush_SystemHint" xml:space="preserve"><value>Для доставки також потрібен дозвіл на сповіщення в налаштуваннях телефона. Нагадування про тренування налаштовуються окремо в календарі.</value></data>
+  <data name="ProfilePush_Updating" xml:space="preserve"><value>Зберігаємо налаштування…</value></data>
+  <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Не вдалося підключити push-сповіщення на цьому пристрої. Спробуйте пізніше.</value></data>
+  <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Не вдалося змінити налаштування. Перевірте з’єднання та спробуйте знову.</value></data>
 </root>

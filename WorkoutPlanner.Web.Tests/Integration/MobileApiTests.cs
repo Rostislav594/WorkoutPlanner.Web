@@ -23,6 +23,138 @@ namespace WorkoutPlanner.Web.Tests.Integration;
 public sealed class MobileApiTests
 {
     [Fact]
+    public async Task NewlyRegisteredAccount_DoesNotReceiveExistingPublications()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        long oldId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var old = new InboxPublication
+            {
+                Type = InboxMessageType.News, Title = "Before signup", Body = "Old news",
+                CreatedAtUtc = DateTime.UtcNow.AddDays(-1), PublishedAtUtc = DateTime.UtcNow.AddDays(-1)
+            };
+            db.InboxPublications.Add(old);
+            await db.SaveChangesAsync();
+            oldId = old.Id;
+        }
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+            new MobileRegisterRequest("new-inbox@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var tokens = await LoginAsync(client, "new-inbox@example.test", "password1", "Test phone");
+        SetBearer(client, tokens.AccessToken);
+        var empty = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.Empty(empty!.Messages);
+        Assert.Equal(0, empty.UnreadCount);
+        Assert.Equal(0, (await client.GetFromJsonAsync<InboxUnreadCountResponse>("/api/v1/inbox/unread-count"))!.UnreadCount);
+        using var oldRead = await client.PostAsync($"/api/v1/inbox/publications/{oldId}/read", null);
+        Assert.Equal(HttpStatusCode.NotFound, oldRead.StatusCode);
+        using var oldDelete = await client.DeleteAsync($"/api/v1/inbox/publications/{oldId}");
+        Assert.Equal(HttpStatusCode.NotFound, oldDelete.StatusCode);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.InboxPublications.Add(new InboxPublication
+            {
+                Type = InboxMessageType.News, Title = "After signup", Body = "New news",
+                CreatedAtUtc = DateTime.UtcNow.AddDays(-1), PublishedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
+        var page = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.Equal("After signup", Assert.Single(page!.Messages).Title);
+        Assert.Equal(1, page.UnreadCount);
+        Assert.Equal(1, (await client.GetFromJsonAsync<InboxUnreadCountResponse>("/api/v1/inbox/unread-count"))!.UnreadCount);
+        using var readAll = await client.PostAsync("/api/v1/inbox/messages/read-all", null);
+        Assert.Equal(HttpStatusCode.OK, readAll.StatusCode);
+        Assert.Equal(0, (await client.GetFromJsonAsync<InboxUnreadCountResponse>("/api/v1/inbox/unread-count"))!.UnreadCount);
+        using var deleteAll = await client.DeleteAsync("/api/v1/inbox/messages");
+        Assert.Equal(HttpStatusCode.OK, deleteAll.StatusCode);
+        Assert.Empty((await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages"))!.Messages);
+        await using var verification = factory.Services.CreateAsyncScope();
+        var verificationDb = verification.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        Assert.False(await verificationDb.InboxPublicationReads.AnyAsync(x => x.PublicationId == oldId));
+    }
+
+    [Fact]
+    public async Task WebCookieSignIn_IsListed_AndRevokedCookieCannotAuthenticate()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("web-session@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var mobile = await LoginAsync(client, "web-session@example.test", "password1", "Phone");
+        await using var scope = factory.Services.CreateAsyncScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var user = (await users.FindByEmailAsync("web-session@example.test"))!;
+        var signIn = scope.ServiceProvider.GetRequiredService<SignInManager<IdentityUser>>();
+        var principal = await signIn.CreateUserPrincipalAsync(user);
+        var context = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = scope.ServiceProvider };
+        context.Request.Scheme = "https";
+        context.Request.Headers.UserAgent = "Test browser";
+        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(
+            context, IdentityConstants.ApplicationScheme, principal);
+        var cookie = context.Response.Headers.SetCookie.ToString().Split(';')[0];
+        Assert.NotEmpty(cookie);
+        SetBearer(client, mobile.AccessToken);
+        var sessions = (await client.GetFromJsonAsync<List<AccountSessionResponse>>("/api/v1/account/sessions"))!;
+        var browser = Assert.Single(sessions, x => x.DeviceName == "Web: Test browser");
+        Assert.False(browser.IsCurrent);
+        async Task<bool> AuthenticateCookieAsync()
+        {
+            await using var requestScope = factory.Services.CreateAsyncScope();
+            var request = new Microsoft.AspNetCore.Http.DefaultHttpContext { RequestServices = requestScope.ServiceProvider };
+            request.Request.Scheme = "https";
+            request.Request.Headers.Cookie = cookie;
+            return (await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.AuthenticateAsync(
+                request, IdentityConstants.ApplicationScheme)).Succeeded;
+        }
+        Assert.True(await AuthenticateCookieAsync());
+        using var revoke = await client.DeleteAsync($"/api/v1/account/sessions/{browser.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, revoke.StatusCode);
+        Assert.False(await AuthenticateCookieAsync());
+    }
+
+    [Fact]
+    public async Task Sessions_AreUserScoped_AndRevocationRejectsAccessAndRefresh()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = factory.CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("sessions@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var first = await LoginAsync(client, "sessions@example.test", "password1", "First phone");
+        var second = await LoginAsync(client, "sessions@example.test", "password1", "Second phone");
+        SetBearer(client, first.AccessToken);
+        var sessions = await client.GetFromJsonAsync<List<AccountSessionResponse>>("/api/v1/account/sessions");
+        Assert.Equal(2, sessions!.Count);
+        Assert.Equal("First phone", Assert.Single(sessions, x => x.IsCurrent).DeviceName);
+        var target = Assert.Single(sessions, x => !x.IsCurrent);
+        using var otherRegistration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("other-session@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, otherRegistration.StatusCode);
+        var other = await LoginAsync(client, "other-session@example.test", "password1", "Other user");
+        SetBearer(client, other.AccessToken);
+        Assert.Single((await client.GetFromJsonAsync<List<AccountSessionResponse>>("/api/v1/account/sessions"))!);
+        using var forbidden = await client.DeleteAsync($"/api/v1/account/sessions/{target.Id}");
+        Assert.Equal(HttpStatusCode.NotFound, forbidden.StatusCode);
+        SetBearer(client, first.AccessToken);
+        using var revoke = await client.DeleteAsync($"/api/v1/account/sessions/{target.Id}");
+        Assert.Equal(HttpStatusCode.NoContent, revoke.StatusCode);
+        Assert.Single((await client.GetFromJsonAsync<List<AccountSessionResponse>>("/api/v1/account/sessions"))!);
+        SetBearer(client, second.AccessToken);
+        using var denied = await client.GetAsync("/api/v1/account/sessions");
+        Assert.False(denied.IsSuccessStatusCode);
+        using var refresh = await client.PostAsJsonAsync("/api/v1/auth/refresh", new MobileRefreshRequest(second.RefreshToken));
+        Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+        SetBearer(client, first.AccessToken);
+        using var self = await client.DeleteAsync($"/api/v1/account/sessions/{sessions.Single(x => x.IsCurrent).Id}");
+        Assert.Equal(HttpStatusCode.NoContent, self.StatusCode);
+        using var selfDenied = await client.GetAsync("/api/v1/account/sessions");
+        Assert.False(selfDenied.IsSuccessStatusCode);
+    }
+
+    [Fact]
     public async Task OpenApiDocument_IsAvailableOnlyWhenDevelopmentIsConfigured()
     {
         using var factory = new GymPlannerApiFactory("Development");
@@ -2967,6 +3099,9 @@ public sealed class MobileApiTests
         using var adminClient = CreateClient(factory);
         var adminTokens = await LoginAsync(adminClient, "admin-role@example.test", "password1", "Admin session");
         SetBearer(adminClient, adminTokens.AccessToken);
+        // This authorization test publishes after registration so the inbox is
+        // eligible under the registration-time audience rule.
+        request = request with { PublishedAtUtc = DateTime.UtcNow };
         using var created = await adminClient.PostAsJsonAsync("/api/admin/publications", request);
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         using var allowedRead = await adminClient.GetAsync("/api/admin/publications");

@@ -7,7 +7,8 @@
 @inject PushRegistrationCoordinator PushRegistration
 @inject IAppText Text
 
-<div class="mobile-shell @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)">
+<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : null) @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
+     style="--wallpaper-shift: @WallpaperShift;">
     @if (!HidesApplicationNavigation)
     {
         <header class="mobile-header">
@@ -56,6 +57,15 @@
     @if (!HidesApplicationNavigation)
     {
         <nav class="mobile-navigation" aria-label="@Text["Nav_Main"]">
+            @if (_activeNavigationIndex >= 0)
+            {
+                <span @key="_navigationMotionKey"
+                      class="navigation-indicator @(_animateNavigationIndicator ? "navigation-indicator--moving" : null)"
+                      style="@NavigationIndicatorStyle"
+                      aria-hidden="true">
+                    <span class="navigation-indicator__blob"></span>
+                </span>
+            }
             <NavLink href="today">
                 <span class="material-symbols-rounded" aria-hidden="true">home</span>
                 <span class="navigation-label">@Text["Nav_Today"]</span>
@@ -83,6 +93,10 @@
 @code {
     private bool _checkingWelcomeGuide;
     private ErrorBoundary? _pageErrorBoundary;
+    private int _activeNavigationIndex;
+    private int _previousNavigationIndex;
+    private long _navigationMotionKey;
+    private bool _animateNavigationIndicator;
 
     // Recover пересоздаёт содержимое границы, то есть страница инициализируется
     // заново. Для сетевого сбоя этого достаточно; если причина устойчивая,
@@ -93,6 +107,20 @@
         Navigation.ToBaseRelativePath(Navigation.Uri);
     private bool IsHomePage => string.IsNullOrEmpty(
         Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
+    private bool IsPrimaryNavigationPage =>
+        CurrentRoute.Length == 0 ||
+        CurrentRoute.Equals("today", StringComparison.OrdinalIgnoreCase) ||
+        CurrentRoute.Equals("workouts", StringComparison.OrdinalIgnoreCase) ||
+        CurrentRoute.Equals("history", StringComparison.OrdinalIgnoreCase) ||
+        CurrentRoute.Equals("progress", StringComparison.OrdinalIgnoreCase);
+    private string WallpaperShift => _activeNavigationIndex switch
+    {
+        0 => "8vw",
+        1 => "4vw",
+        3 => "-4vw",
+        4 => "-8vw",
+        _ => "0vw"
+    };
     private bool HidesApplicationNavigation =>
         string.Equals(CurrentRoute, "profile/setup", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(CurrentRoute, "firstlaunch", StringComparison.OrdinalIgnoreCase) ||
@@ -103,16 +131,62 @@
 
     protected override void OnInitialized()
     {
+        _activeNavigationIndex = NavigationIndexFor(Navigation.Uri);
+        _previousNavigationIndex = Math.Max(0, _activeNavigationIndex);
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
         Navigation.LocationChanged += OnLocationChanged;
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) =>
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        var nextNavigationIndex = NavigationIndexFor(args.Location);
+        if (nextNavigationIndex != _activeNavigationIndex)
+        {
+            _animateNavigationIndicator = _activeNavigationIndex >= 0 && nextNavigationIndex >= 0;
+            _previousNavigationIndex = _animateNavigationIndicator
+                ? _activeNavigationIndex
+                : Math.Max(0, nextNavigationIndex);
+            _activeNavigationIndex = nextNavigationIndex;
+            _navigationMotionKey++;
+        }
+
         _ = InvokeAsync(async () =>
         {
             StateHasChanged();
             await CheckWelcomeGuideAsync();
         });
+    }
+
+    private string NavigationIndicatorStyle
+    {
+        get
+        {
+            var distance = Math.Abs(_activeNavigationIndex - _previousNavigationIndex);
+            var boundedDistance = Math.Min(distance, 4);
+            var stretch = 1 + boundedDistance * .3;
+            var duration = .54 + boundedDistance * .03;
+            return $"--nav-from-offset:var(--nav-offset-{_previousNavigationIndex});" +
+                   $"--nav-to-offset:var(--nav-offset-{_activeNavigationIndex});" +
+                   $"--nav-stretch:{stretch.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)};" +
+                   $"--nav-duration:{duration.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}s";
+        }
+    }
+
+    private int NavigationIndexFor(string uri)
+    {
+        var route = Navigation.ToBaseRelativePath(uri)
+            .Split('?', '#')[0]
+            .Trim('/');
+
+        if (route.Equals("today", StringComparison.OrdinalIgnoreCase)) return 0;
+        if (route.Equals("workouts", StringComparison.OrdinalIgnoreCase) ||
+            route.StartsWith("workouts/", StringComparison.OrdinalIgnoreCase)) return 1;
+        if (route.Length == 0) return 2;
+        if (route.Equals("history", StringComparison.OrdinalIgnoreCase)) return 3;
+        if (route.Equals("progress", StringComparison.OrdinalIgnoreCase) ||
+            route.StartsWith("progress/", StringComparison.OrdinalIgnoreCase)) return 4;
+        return -1;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
