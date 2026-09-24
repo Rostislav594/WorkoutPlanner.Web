@@ -1,5 +1,9 @@
 @page "/progress"
 @attribute [Authorize]
+@implements IDisposable
+@using System.Globalization
+@using WorkoutPlanner.Api.Contracts
+@inject IProgressApiClient ProgressClient
 @inject IAppText Text
 
 <section class="progress-menu-page" aria-labelledby="progress-page-title">
@@ -9,16 +13,298 @@
     </div>
 
     <nav class="progress-menu" aria-label="@Text["Progress_Sections"]">
-        <a class="progress-menu-card" href="/progress/exercises">
-            <img class="progress-menu-card-art" src="/images/progress-exercises-reference.png" alt="" aria-hidden="true" />
-            <img class="progress-menu-card-figures progress-menu-card-figures--exercise" src="/images/progress-exercises-figures.png" alt="" aria-hidden="true" />
-            <span class="progress-menu-title">@Text["Progress_Exercises"]</span>
+        <a class="progress-tile progress-tile--exercises"
+           href="/progress/exercises"
+           aria-label="@ExercisesLabel"
+           @onfocusin="() => _exerciseSlot.IsPaused = true"
+           @onfocusout="() => _exerciseSlot.IsPaused = false">
+            <span class="progress-tile-head" aria-hidden="true">
+                <span class="progress-tile-title">@Text["Progress_Exercises"]</span>
+                <span class="material-symbols-rounded progress-tile-chevron">chevron_right</span>
+            </span>
+            <span class="progress-tile-stage" aria-hidden="true">
+                @if (_isLoading)
+                {
+                    <span class="progress-tile-skeleton"></span>
+                }
+                else if (Exercises.Count == 0)
+                {
+                    <span class="progress-tile-note">@(_loadFailed ? Text["ProgressOverview_Unavailable"] : Text["ProgressOverview_ExercisesEmpty"])</span>
+                }
+                else
+                {
+                    @if (_exerciseSlot.Previous is int previousExercise && previousExercise < Exercises.Count)
+                    {
+                        <span @key="@($"out-{_exerciseSlot.Version}")" class="progress-slide progress-slide--leave">
+                            @ExerciseSlide(Exercises[previousExercise])
+                        </span>
+                    }
+                    <span @key="@($"in-{_exerciseSlot.Version}")" class="progress-slide progress-slide--enter">
+                        @ExerciseSlide(Exercises[_exerciseSlot.Current])
+                    </span>
+                }
+            </span>
         </a>
 
-        <a class="progress-menu-card" href="/progress/workouts">
-            <img class="progress-menu-card-art progress-menu-card-art--bottom" src="/images/progress-exercises-reference.png" alt="" aria-hidden="true" />
-            <img class="progress-menu-card-figures progress-menu-card-figures--workouts" src="/images/progress-workouts-figures.png" alt="" aria-hidden="true" />
-            <span class="progress-menu-title">@Text["Progress_Workouts"]</span>
+        <a class="progress-tile progress-tile--workouts"
+           href="/progress/workouts"
+           aria-label="@WorkoutsLabel"
+           @onfocusin="() => _workoutSlot.IsPaused = true"
+           @onfocusout="() => _workoutSlot.IsPaused = false">
+            <span class="progress-tile-head" aria-hidden="true">
+                <span class="progress-tile-title">@Text["Progress_Workouts"]</span>
+                <span class="material-symbols-rounded progress-tile-chevron">chevron_right</span>
+            </span>
+            <span class="progress-tile-stage" aria-hidden="true">
+                @if (_isLoading)
+                {
+                    <span class="progress-tile-skeleton"></span>
+                }
+                else if (Workouts.Count == 0)
+                {
+                    <span class="progress-tile-note">@(_loadFailed ? Text["ProgressOverview_Unavailable"] : Text["ProgressOverview_WorkoutsEmpty"])</span>
+                }
+                else
+                {
+                    @if (_workoutSlot.Previous is int previousWorkout && previousWorkout < Workouts.Count)
+                    {
+                        <span @key="@($"out-{_workoutSlot.Version}")" class="progress-slide progress-slide--leave">
+                            @WorkoutSlide(Workouts[previousWorkout])
+                        </span>
+                    }
+                    <span @key="@($"in-{_workoutSlot.Version}")" class="progress-slide progress-slide--enter">
+                        @WorkoutSlide(Workouts[_workoutSlot.Current])
+                    </span>
+                }
+            </span>
         </a>
     </nav>
 </section>
+
+@code {
+    // Плитки листаются по очереди: каждая раз в 10 секунд, тренировки со сдвигом на 5.
+    private static readonly TimeSpan HalfSlideInterval = TimeSpan.FromSeconds(5);
+    private readonly CancellationTokenSource _disposeCts = new();
+    private readonly RotationSlot _exerciseSlot = new();
+    private readonly RotationSlot _workoutSlot = new();
+    private ProgressOverviewApiResponse? _overview;
+    private bool _isLoading = true;
+    private bool _loadFailed;
+
+    private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
+
+    private IReadOnlyList<ExerciseWeightTrendApiResponse> Exercises =>
+        _overview?.Exercises ?? [];
+
+    private IReadOnlyList<WorkoutScoreChangeApiResponse> Workouts =>
+        _overview?.Workouts ?? [];
+
+    // Экранный диктор слышит лучший результат, а не каждую смену слайда.
+    private string ExercisesLabel => Exercises.Count == 0
+        ? Text["Progress_Exercises"]
+        : Text.Format(
+            "ProgressOverview_BestLabel",
+            Text["Progress_Exercises"],
+            Exercises[0].ExerciseName,
+            FormatWeightChange(Exercises[0].WeightChange));
+
+    private string WorkoutsLabel => Workouts.Count == 0
+        ? Text["Progress_Workouts"]
+        : Text.Format(
+            "ProgressOverview_BestLabel",
+            Text["Progress_Workouts"],
+            Workouts[0].WorkoutName,
+            FormatPercent(Workouts[0].ChangePercent));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await ProgressClient.GetOverviewAsync(_disposeCts.Token);
+            if (result.Succeeded)
+                _overview = result.Value;
+            else
+                _loadFailed = true;
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+            return;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+
+        if (Exercises.Count > 1 || Workouts.Count > 1)
+            _ = RotateAsync(_disposeCts.Token);
+    }
+
+    private async Task RotateAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(HalfSlideInterval);
+        var tick = 0;
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                tick++;
+                var advanced = tick % 2 == 0
+                    ? _exerciseSlot.Advance(Exercises.Count)
+                    : tick > 1 && _workoutSlot.Advance(Workouts.Count);
+                if (advanced)
+                    await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+    }
+
+    private RenderFragment ExerciseSlide(ExerciseWeightTrendApiResponse exercise) => __builder =>
+    {
+        var trend = TrendOf((decimal)exercise.WeightChange);
+        <span class="progress-slide-name">@exercise.ExerciseName</span>
+        <span class="progress-slide-body">
+            <span class="progress-slide-figures">
+                <span class="progress-slide-value progress-slide-value--@trend">
+                    <span class="material-symbols-rounded">@TrendIcon(trend)</span>
+                    @FormatWeightChange(exercise.WeightChange)
+                </span>
+                <span class="progress-slide-caption">@Text.Format("ProgressOverview_ExerciseCaption", FormatWeight(exercise.CurrentWeight))</span>
+            </span>
+            <svg class="progress-spark progress-spark--line progress-spark--@trend" viewBox="@SparkViewBox" focusable="false">
+                <polyline points="@SparkPoints(exercise.Weights)" />
+                <circle cx="@Svg(SparkX(exercise.Weights.Count - 1, exercise.Weights.Count))" cy="@Svg(SparkY(exercise.Weights, exercise.Weights.Count - 1))" r="4.5" />
+            </svg>
+        </span>
+    };
+
+    private RenderFragment WorkoutSlide(WorkoutScoreChangeApiResponse workout) => __builder =>
+    {
+        var trend = TrendOf(workout.ChangePercent);
+        <span class="progress-slide-name">@workout.WorkoutName</span>
+        <span class="progress-slide-body">
+            <span class="progress-slide-figures">
+                <span class="progress-slide-value progress-slide-value--@trend">
+                    <span class="material-symbols-rounded">@TrendIcon(trend)</span>
+                    @FormatPercent(workout.ChangePercent)
+                </span>
+                <span class="progress-slide-caption">@Text["ProgressOverview_WorkoutCaption"]</span>
+            </span>
+            <svg class="progress-spark progress-spark--bars progress-spark--@trend" viewBox="@SparkViewBox" focusable="false">
+                @for (var index = 0; index < workout.Scores.Count; index++)
+                {
+                    var height = BarHeight(workout.Scores, index);
+                    <rect class="@(index == workout.Scores.Count - 1 ? "is-last" : null)"
+                          x="@Svg(BarX(index, workout.Scores.Count))"
+                          y="@Svg(SparkHeight - height)"
+                          width="@Svg(BarWidth(workout.Scores.Count))"
+                          height="@Svg(height)"
+                          rx="3" />
+                }
+            </svg>
+        </span>
+    };
+
+    private const double SparkWidth = 150;
+    private const double SparkHeight = 56;
+    private const double SparkPadding = 6;
+    private static readonly string SparkViewBox = $"0 0 {Svg(SparkWidth)} {Svg(SparkHeight)}";
+
+    private static string SparkPoints(IReadOnlyList<double> values) =>
+        string.Join(" ", values.Select((_, index) =>
+            $"{Svg(SparkX(index, values.Count))},{Svg(SparkY(values, index))}"));
+
+    private static double SparkX(int index, int count) =>
+        count < 2
+            ? SparkWidth / 2
+            : SparkPadding + index * (SparkWidth - SparkPadding * 2) / (count - 1);
+
+    private static double SparkY(IReadOnlyList<double> values, int index)
+    {
+        var min = values.Min();
+        var range = values.Max() - min;
+        var share = range <= 0 ? .5 : (values[index] - min) / range;
+        return SparkHeight - SparkPadding - share * (SparkHeight - SparkPadding * 2);
+    }
+
+    private static double BarWidth(int count) =>
+        Math.Min(14, (SparkWidth - (count - 1) * 5) / count);
+
+    private static double BarX(int index, int count)
+    {
+        var width = BarWidth(count);
+        var used = count * width + (count - 1) * 5;
+        return SparkWidth - used + index * (width + 5);
+    }
+
+    // Столбики начинаются с 25% высоты, чтобы разница между тренировками читалась.
+    private static double BarHeight(IReadOnlyList<double> values, int index)
+    {
+        var min = values.Min();
+        var range = values.Max() - min;
+        var share = range <= 0 ? .6 : (values[index] - min) / range;
+        return (SparkHeight - 4) * (.25 + share * .75);
+    }
+
+    private static string Svg(double value) =>
+        value.ToString("0.#", CultureInfo.InvariantCulture);
+
+    private static string TrendOf(decimal change) => change switch
+    {
+        > 0 => "up",
+        < 0 => "down",
+        _ => "flat"
+    };
+
+    private static string TrendIcon(string trend) => trend switch
+    {
+        "up" => "trending_up",
+        "down" => "trending_down",
+        _ => "trending_flat"
+    };
+
+    private string FormatWeight(double weight) =>
+        $"{weight.ToString("0.##", UiCulture)} {Text["Common_Kg"]}";
+
+    private string FormatWeightChange(double change) =>
+        $"{Sign(change)}{FormatWeight(Math.Abs(change))}";
+
+    private string FormatPercent(decimal percent) =>
+        $"{Sign((double)percent)}{Math.Abs(percent).ToString("0.#", UiCulture)}%";
+
+    private static string Sign(double value) => value switch
+    {
+        > 0 => "+",
+        < 0 => "−",
+        _ => string.Empty
+    };
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+
+    private sealed class RotationSlot
+    {
+        public int Current { get; private set; }
+
+        public int? Previous { get; private set; }
+
+        public int Version { get; private set; }
+
+        public bool IsPaused { get; set; }
+
+        public bool Advance(int count)
+        {
+            if (count < 2 || IsPaused)
+                return false;
+
+            Previous = Current;
+            Current = (Current + 1) % count;
+            Version++;
+            return true;
+        }
+    }
+}

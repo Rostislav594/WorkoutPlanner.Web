@@ -4,6 +4,9 @@ namespace GymPlanner.Mobile.Api;
 
 public interface IProgressApiClient
 {
+    Task<ApiResult<ProgressOverviewApiResponse>> GetOverviewAsync(
+        CancellationToken cancellationToken = default);
+
     Task<ApiResult<WorkoutProgressApiResponse>> GetWorkoutProgressAsync(
         int trainingPlanId,
         CancellationToken cancellationToken = default);

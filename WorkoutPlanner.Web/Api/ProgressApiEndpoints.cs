@@ -14,6 +14,10 @@ public static class ProgressApiEndpoints
             .WithTags("Progress")
             .RequireAuthorization(MobileApiAuthorization.PolicyName);
 
+        progress.MapGet("/overview", GetOverviewAsync)
+            .Produces<ProgressOverviewApiResponse>()
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
         progress.MapGet("/workouts/{trainingPlanId:int}", GetWorkoutProgressAsync)
             .Produces<WorkoutProgressApiResponse>()
             .Produces(StatusCodes.Status404NotFound)
@@ -55,6 +59,29 @@ public static class ProgressApiEndpoints
             .Produces(StatusCodes.Status403Forbidden);
 
         return api;
+    }
+
+    private static async Task<IResult> GetOverviewAsync(
+        IProgressService progress,
+        CancellationToken cancellationToken)
+    {
+        var overview = await progress.GetOverviewAsync(cancellationToken);
+        return Results.Ok(new ProgressOverviewApiResponse(
+            overview.Exercises
+                .Select(x => new ExerciseWeightTrendApiResponse(
+                    x.WorkoutName,
+                    x.ExerciseName,
+                    x.CurrentWeight,
+                    x.WeightChange,
+                    x.Weights))
+                .ToList(),
+            overview.Workouts
+                .Select(x => new WorkoutScoreChangeApiResponse(
+                    x.TrainingPlanId,
+                    x.WorkoutName,
+                    x.ChangePercent,
+                    x.Scores))
+                .ToList()));
     }
 
     private static async Task<IResult> GetWorkoutProgressAsync(

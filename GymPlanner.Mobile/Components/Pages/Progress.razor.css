@@ -35,82 +35,292 @@
 .progress-menu {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: var(--space-4);
 }
 
-.progress-menu-card {
+/* Плитка полупрозрачная: сквозь неё видно фото зала, цветное свечение в углу
+   отличает упражнения (оранжевые) от тренировок (зелёные). */
+.progress-tile {
+    --tile-tone: var(--color-accent);
+    --tile-glow: rgba(255, 122, 26, .16);
     box-sizing: border-box;
     position: relative;
     display: flex;
-    width: calc(100% - 32px);
-    margin-inline: 16px;
     min-width: 0;
-    aspect-ratio: 2.1 / 1;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    overflow: visible;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4) var(--space-5);
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    background:
+        radial-gradient(120% 90% at 0% 0%, var(--tile-glow), transparent 60%),
+        var(--glass-surface);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-card);
     color: var(--color-text);
-    text-align: center;
     text-decoration: none;
-    box-shadow: none;
-    transition: filter var(--transition-ui), transform var(--transition-ui);
+    transition: border-color var(--transition-ui), transform var(--transition-ui);
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.progress-menu-card:hover,
-.progress-menu-card:focus-visible {
-    outline: none;
-    box-shadow: none;
-    filter: brightness(1.08);
+.progress-tile--workouts {
+    --tile-tone: var(--color-success);
+    --tile-glow: rgba(63, 185, 80, .15);
 }
 
-.progress-menu-card:active {
+.progress-tile:focus-visible {
+    outline: 2px solid var(--tile-tone);
+    outline-offset: 3px;
+}
+
+.progress-tile:active {
     transform: scale(.985);
+    border-color: color-mix(in srgb, var(--tile-tone) 55%, transparent);
 }
 
-.progress-menu-card-art {
+@media (hover: hover) {
+    .progress-tile:hover {
+        border-color: color-mix(in srgb, var(--tile-tone) 45%, transparent);
+    }
+}
+
+.progress-tile-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.progress-tile-title {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    font-size: var(--text-card-title);
+    font-weight: 800;
+    letter-spacing: .01em;
+}
+
+.progress-tile-title::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tile-tone);
+    box-shadow: 0 0 10px var(--tile-tone);
+}
+
+.progress-tile-chevron {
+    color: var(--color-text-muted);
+    font-size: 1.4rem;
+}
+
+/* Сцена фиксированной высоты: слайды сменяют друг друга, не сдвигая страницу. */
+.progress-tile-stage {
+    position: relative;
+    display: block;
+    height: 96px;
+    overflow: hidden;
+}
+
+.progress-slide {
     position: absolute;
     inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+/* Строки слайда въезжают по очереди с небольшим сдвигом и лёгким размытием:
+   смена выглядит как перетекание, а не как рывок. */
+.progress-slide--enter > * {
+    animation: progress-slide-in 900ms cubic-bezier(.22, .61, .36, 1) both;
+}
+
+.progress-slide--enter > :nth-child(2) {
+    animation-delay: 110ms;
+}
+
+.progress-slide--leave {
     pointer-events: none;
 }
 
-.progress-menu-card-art--bottom {
-    transform: scaleY(-1);
+.progress-slide--leave > * {
+    animation: progress-slide-out 650ms cubic-bezier(.4, 0, .2, 1) forwards;
 }
 
-.progress-menu-card-figures {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
-    transform: translateY(-6%) scale(.78);
-    transform-origin: center;
-    pointer-events: none;
+.progress-slide--leave > :nth-child(2) {
+    animation-delay: 60ms;
 }
 
-.progress-menu-title {
-    position: absolute;
-    z-index: 2;
-    right: 16px;
-    bottom: 12px;
-    left: 16px;
+.progress-slide-name {
+    overflow: hidden;
     color: var(--color-text);
-    font-size: var(--text-section-title);
+    font-size: var(--text-body);
     font-weight: 700;
-    line-height: 1.15;
-    text-shadow: 0 2px 8px #000, 0 0 3px #000;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress-slide-body {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 0;
+}
+
+.progress-slide-figures {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.progress-slide-value {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: clamp(1.75rem, 8vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.progress-slide-value .material-symbols-rounded {
+    font-size: .8em;
+}
+
+.progress-slide-value--up {
+    color: var(--tile-tone);
+}
+
+.progress-slide-value--down {
+    color: var(--color-danger);
+}
+
+.progress-slide-value--flat {
+    color: var(--color-text-muted);
+}
+
+.progress-slide-caption {
+    overflow: hidden;
+    color: var(--color-text-muted);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progress-spark {
+    flex: 0 1 44%;
+    min-width: 96px;
+    max-width: 170px;
+    height: auto;
+    overflow: visible;
+}
+
+/* Пунктир из круглых точек перекликается с частицами эквалайзера в шапке. */
+.progress-spark--line polyline {
+    fill: none;
+    stroke: var(--tile-tone);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: .1 6;
+}
+
+.progress-spark--line circle {
+    fill: var(--tile-tone);
+    stroke: rgba(255, 255, 255, .85);
+    stroke-width: 2;
+}
+
+.progress-spark--line.progress-spark--down polyline {
+    stroke: var(--color-danger);
+}
+
+.progress-spark--line.progress-spark--down circle {
+    fill: var(--color-danger);
+}
+
+.progress-spark--bars rect {
+    fill: var(--tile-tone);
+    opacity: .32;
+}
+
+.progress-spark--bars rect.is-last {
+    opacity: 1;
+}
+
+.progress-spark--bars.progress-spark--down rect.is-last {
+    fill: var(--color-danger);
+}
+
+.progress-tile-note {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    color: var(--color-text-muted);
+    font-size: var(--text-secondary);
+    font-weight: 700;
+    line-height: var(--line-height-body);
+}
+
+.progress-tile-skeleton {
+    display: block;
+    height: 100%;
+    border-radius: var(--radius-md);
+    background: linear-gradient(100deg, rgba(255, 255, 255, .04) 30%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .04) 70%);
+    background-size: 220% 100%;
+    animation: progress-skeleton 1.3s linear infinite;
+}
+
+@keyframes progress-slide-in {
+    from {
+        opacity: 0;
+        filter: blur(3px);
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+    }
+}
+
+@keyframes progress-slide-out {
+    from {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        filter: blur(3px);
+        transform: translateY(-14px);
+    }
+}
+
+@keyframes progress-skeleton {
+    from {
+        background-position: 110% 0;
+    }
+
+    to {
+        background-position: -110% 0;
+    }
 }
 
 @media (min-width: 720px) {
@@ -119,30 +329,25 @@
     }
 
     .progress-menu {
-        flex-flow: row wrap;
-        justify-content: center;
+        flex-direction: row;
         gap: var(--space-4);
     }
 
-    .progress-menu-card {
-        width: min(430px, calc(50% - 12px));
-        margin-inline: 0;
-        min-height: 0;
-        justify-content: center;
-        padding: 0;
+    .progress-tile {
+        flex: 1 1 0;
     }
-
-    .progress-menu-card:hover,
-    .progress-menu-card:focus-visible {
-        transform: translateY(-3px);
-    }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .progress-menu-card,
-    .progress-menu-card-art,
-    .progress-menu-card-figures {
+    .progress-tile,
+    .progress-slide--enter > *,
+    .progress-slide--leave > *,
+    .progress-tile-skeleton {
         transition: none;
+        animation: none;
+    }
+
+    .progress-slide--leave {
+        display: none;
     }
 }

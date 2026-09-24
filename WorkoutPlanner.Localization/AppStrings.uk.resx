@@ -229,6 +229,24 @@
   <data name="Progress_Workouts" xml:space="preserve">
     <value>Тренування</value>
   </data>
+  <data name="ProgressOverview_ExerciseCaption" xml:space="preserve">
+    <value>за 30 днів · зараз {0}</value>
+  </data>
+  <data name="ProgressOverview_WorkoutCaption" xml:space="preserve">
+    <value>до минулого тренування</value>
+  </data>
+  <data name="ProgressOverview_ExercisesEmpty" xml:space="preserve">
+    <value>Приріст ваги з'явиться після двох тренувань</value>
+  </data>
+  <data name="ProgressOverview_WorkoutsEmpty" xml:space="preserve">
+    <value>Порівняння з'явиться після двох тренувань</value>
+  </data>
+  <data name="ProgressOverview_Unavailable" xml:space="preserve">
+    <value>Не вдалося завантажити дані</value>
+  </data>
+  <data name="ProgressOverview_BestLabel" xml:space="preserve">
+    <value>{0}. Найкращий результат: {1}, {2}</value>
+  </data>
   <data name="Common_Choose" xml:space="preserve">
     <value>Оберіть</value>
   </data>

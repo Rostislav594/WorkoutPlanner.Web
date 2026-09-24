@@ -229,6 +229,24 @@
   <data name="Progress_Workouts" xml:space="preserve">
     <value>Workouts</value>
   </data>
+  <data name="ProgressOverview_ExerciseCaption" xml:space="preserve">
+    <value>30 days · now {0}</value>
+  </data>
+  <data name="ProgressOverview_WorkoutCaption" xml:space="preserve">
+    <value>vs last workout</value>
+  </data>
+  <data name="ProgressOverview_ExercisesEmpty" xml:space="preserve">
+    <value>Weight gains appear after two workouts</value>
+  </data>
+  <data name="ProgressOverview_WorkoutsEmpty" xml:space="preserve">
+    <value>The comparison appears after two workouts</value>
+  </data>
+  <data name="ProgressOverview_Unavailable" xml:space="preserve">
+    <value>Couldn't load the data</value>
+  </data>
+  <data name="ProgressOverview_BestLabel" xml:space="preserve">
+    <value>{0}. Top result: {1}, {2}</value>
+  </data>
   <data name="Common_Choose" xml:space="preserve">
     <value>Choose</value>
   </data>

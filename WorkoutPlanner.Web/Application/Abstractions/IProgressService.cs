@@ -32,4 +32,6 @@ public interface IProgressService
     Task<List<string>> GetWorkoutExercisesAsync(
         string workoutName,
         CancellationToken cancellationToken = default);
+    Task<ProgressOverview> GetOverviewAsync(
+        CancellationToken cancellationToken = default);
 }

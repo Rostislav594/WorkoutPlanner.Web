@@ -979,6 +979,182 @@ public sealed class MobileApiTests
     }
 
     [Fact]
+    public async Task ProgressOverviewApi_RanksOwnedGainsFromLargestToDrop()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var firstUser = CreateClient(factory);
+        using var secondUser = CreateClient(factory);
+        foreach (var (client, email) in new[]
+                 {
+                     (firstUser, "overview-a@example.test"),
+                     (secondUser, "overview-b@example.test")
+                 })
+        {
+            using var registration = await client.PostAsJsonAsync(
+                "/api/v1/auth/register",
+                new MobileRegisterRequest(email, "password1"));
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+            SetBearer(
+                client,
+                (await LoginAsync(client, email, "password1", email)).AccessToken);
+        }
+
+        var planIds = new Dictionary<string, int>();
+        foreach (var name in new[] { "Push", "Pull" })
+        {
+            using var created = await firstUser.PostAsJsonAsync(
+                "/api/v1/training-plans",
+                new CreateTrainingPlanRequest(name));
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+            planIds[name] = (await created.Content
+                .ReadFromJsonAsync<TrainingPlanApiResponse>())!.Id;
+        }
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var firstUserId = await db.Users
+                .Where(x => x.Email == "overview-a@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            var secondUserId = await db.Users
+                .Where(x => x.Email == "overview-b@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+
+            static WorkoutPlanner.Web.Models.WorkoutHistoryExercise Exercise(
+                string name,
+                params (double Weight, bool Completed, bool IsWarmup)[] sets) =>
+                new()
+                {
+                    Name = name,
+                    Sets = sets
+                        .Select((x, index) => new WorkoutPlanner.Web.Models.WorkoutHistorySet
+                        {
+                            SetNumber = index + 1,
+                            Weight = x.Weight,
+                            Repetitions = 8,
+                            Completed = x.Completed,
+                            IsWarmup = x.IsWarmup
+                        })
+                        .ToList()
+                };
+
+            static WorkoutPlanner.Web.Models.WorkoutHistory History(
+                string userId,
+                string workoutName,
+                int daysAgo,
+                params WorkoutPlanner.Web.Models.WorkoutHistoryExercise[] exercises) =>
+                new()
+                {
+                    UserId = userId,
+                    WorkoutName = workoutName,
+                    Date = DateTime.Today.AddDays(-daysAgo).AddHours(18),
+                    Details = System.Text.Json.JsonSerializer.Serialize(
+                        new WorkoutPlanner.Web.Models.WorkoutHistoryDetails
+                        {
+                            Exercises = exercises.ToList()
+                        })
+                };
+
+            db.WorkoutHistory.AddRange(
+                // За пределами 30 дней: не должно стать стартовым весом.
+                History(firstUserId, "Push", 45,
+                    Exercise("Bench press", (20, true, false))),
+                History(firstUserId, "Push", 20,
+                    Exercise("Bench press", (40, true, true), (60, true, false), (65, false, false)),
+                    Exercise("Overhead press", (30, false, false))),
+                History(firstUserId, "Push", 10,
+                    Exercise("Bench press", (70, true, false)),
+                    Exercise("Overhead press", (27.5, false, false))),
+                History(firstUserId, "Push", 1,
+                    Exercise("Bench press", (72.5, true, false)),
+                    Exercise("Overhead press", (25, true, false)),
+                    Exercise("Curl", (15, true, false))),
+                // Прогресс очищен, снимков нет: одной истории недостаточно.
+                History(firstUserId, "Pull", 10,
+                    Exercise("Deadlift", (100, true, false))),
+                History(firstUserId, "Pull", 1,
+                    Exercise("Deadlift", (140, true, false))),
+                History(secondUserId, "Push", 10,
+                    Exercise("Bench press", (10, true, false))),
+                History(secondUserId, "Push", 1,
+                    Exercise("Bench press", (200, true, false))));
+
+            static WorkoutPlanner.Web.Models.ExerciseProgressSnapshot ExerciseSnapshot(
+                string userId,
+                string exerciseName,
+                int daysAgo) =>
+                new()
+                {
+                    UserId = userId,
+                    WorkoutName = "Push",
+                    ExerciseName = exerciseName,
+                    Date = DateTime.Today.AddDays(-daysAgo).AddHours(18),
+                    Score = 1
+                };
+
+            db.ExerciseProgressSnapshots.AddRange(
+                ExerciseSnapshot(firstUserId, "Bench press", 20),
+                // Жим стоя очищали после 20-го дня, отслеживание снова идёт с 10-го.
+                ExerciseSnapshot(firstUserId, "Overhead press", 10),
+                ExerciseSnapshot(firstUserId, "Curl", 1),
+                ExerciseSnapshot(secondUserId, "Bench press", 10));
+
+            static WorkoutPlanner.Web.Models.ProgressSnapshot WorkoutSnapshot(
+                string userId,
+                string workoutName,
+                int daysAgo,
+                double score) =>
+                new()
+                {
+                    UserId = userId,
+                    WorkoutName = workoutName,
+                    Date = DateTime.Today.AddDays(-daysAgo).AddHours(18),
+                    Score = score
+                };
+
+            db.ProgressSnapshots.AddRange(
+                WorkoutSnapshot(firstUserId, "Push", 20, 100),
+                WorkoutSnapshot(firstUserId, "Push", 10, 120),
+                WorkoutSnapshot(firstUserId, "Push", 1, 90),
+                WorkoutSnapshot(firstUserId, "Pull", 10, 50),
+                WorkoutSnapshot(firstUserId, "Pull", 1, 60),
+                WorkoutSnapshot(secondUserId, "Push", 1, 999));
+            await db.SaveChangesAsync();
+        }
+
+        var overview = await firstUser.GetFromJsonAsync<ProgressOverviewApiResponse>(
+            "/api/v1/progress/overview");
+        Assert.NotNull(overview);
+
+        Assert.Equal(
+            ["Bench press", "Overhead press"],
+            overview.Exercises.Select(x => x.ExerciseName));
+        var bench = overview.Exercises[0];
+        Assert.Equal("Push", bench.WorkoutName);
+        Assert.Equal(72.5, bench.CurrentWeight);
+        Assert.Equal(12.5, bench.WeightChange);
+        Assert.Equal([60d, 70d, 72.5d], bench.Weights);
+        var press = overview.Exercises[1];
+        Assert.Equal(-2.5, press.WeightChange);
+        Assert.Equal([27.5d, 25d], press.Weights);
+
+        Assert.Equal(["Pull", "Push"], overview.Workouts.Select(x => x.WorkoutName));
+        Assert.Equal([20m, -25m], overview.Workouts.Select(x => x.ChangePercent));
+        Assert.Equal(planIds["Pull"], overview.Workouts[0].TrainingPlanId);
+        Assert.Equal([100d, 120d, 90d], overview.Workouts[1].Scores);
+
+        var foreign = await secondUser.GetFromJsonAsync<ProgressOverviewApiResponse>(
+            "/api/v1/progress/overview");
+        Assert.NotNull(foreign);
+        Assert.Equal([190d], foreign.Exercises.Select(x => x.WeightChange));
+        Assert.Empty(foreign.Workouts);
+    }
+
+    [Fact]
     public async Task WorkoutLifecycleApi_CompletesAtomically_AndReturnsImmutableSnapshot()
     {
         using var factory = new GymPlannerApiFactory();
