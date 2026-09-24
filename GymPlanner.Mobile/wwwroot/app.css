@@ -60,6 +60,15 @@
     --border-subtle: 1px solid var(--color-border);
     --shadow-card: 0 8px 22px rgba(0, 0, 0, .22);
     --shadow-modal: 0 18px 44px rgba(0, 0, 0, .48);
+    /* Стекло: карточки просвечивают фон, окна и меню плотнее, вложенное — лёгкая подсветка. */
+    --glass-surface: rgba(18, 18, 19, .52);
+    --glass-surface-hover: rgba(44, 44, 47, .6);
+    --glass-surface-strong: rgba(24, 24, 26, .84);
+    --glass-inset: rgba(255, 255, 255, .045);
+    --glass-inset-hover: rgba(255, 255, 255, .085);
+    --glass-border: rgba(255, 255, 255, .09);
+    --glass-blur: blur(8px);
+    --glass-blur-strong: blur(18px);
     --control-height: 46px;
     --touch-target: 44px;
     --transition-ui: 160ms ease;
@@ -759,12 +768,12 @@ body .modal-window {
         transition: none !important;
     }
 }
-.welcome-card { max-width: 36rem; margin: 1rem auto; padding: 1.25rem; border: var(--border-subtle); border-radius: var(--radius-xl); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.welcome-card { max-width: 36rem; margin: 1rem auto; padding: 1.25rem; border: 1px solid var(--glass-border, var(--color-border)); border-radius: var(--radius-xl); background: var(--glass-surface, var(--color-surface)); -webkit-backdrop-filter: var(--glass-blur, none); backdrop-filter: var(--glass-blur, none); box-shadow: var(--shadow-card); }
 .welcome-card h1 { margin: .25rem 0 .75rem; font-size: clamp(2rem, 10vw, 3.4rem); }
 .welcome-card p { color: var(--color-text-muted); line-height: 1.55; }
 .welcome-card .eyebrow { margin: 0; color: var(--color-success-text); font-size: var(--text-caption); letter-spacing: .08em; text-transform: uppercase; }
 
-.auth-card { width: min(100%, 28rem); padding: 1.25rem; border: var(--border-subtle); border-radius: var(--radius-xl); background: var(--color-surface); box-shadow: var(--shadow-card); }
+.auth-card { width: min(100%, 28rem); padding: 1.25rem; border: 1px solid var(--glass-border, var(--color-border)); border-radius: var(--radius-xl); background: var(--glass-surface, var(--color-surface)); -webkit-backdrop-filter: var(--glass-blur, none); backdrop-filter: var(--glass-blur, none); box-shadow: var(--shadow-card); }
 .auth-card h1 { margin: .1rem 0 .25rem; font-size: 2rem; text-align: center; }
 .auth-card .auth-title {
     margin: .1rem 0 -.75rem;

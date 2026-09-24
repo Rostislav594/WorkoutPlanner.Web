@@ -9,9 +9,11 @@
 .profile-setup-panel {
     box-sizing: border-box;
     padding: clamp(18px, 4vw, 28px);
-    border: var(--border-subtle);
+    border: 1px solid var(--glass-border, var(--color-border));
     border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
+    background: var(--glass-surface, var(--color-surface));
+    -webkit-backdrop-filter: var(--glass-blur, none);
+    backdrop-filter: var(--glass-blur, none);
     box-shadow: var(--shadow-card);
 }
 

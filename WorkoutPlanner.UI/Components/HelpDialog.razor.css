@@ -20,7 +20,9 @@
     padding: 1.4rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-xl, 1.5rem);
-    background: var(--color-surface-raised);
+    background: var(--glass-surface-strong, var(--color-surface-raised));
+    -webkit-backdrop-filter: var(--glass-blur-strong, none);
+    backdrop-filter: var(--glass-blur-strong, none);
     color: var(--color-text);
     box-shadow: var(--shadow-modal);
     overscroll-behavior: contain;
@@ -36,8 +38,10 @@
     gap: 1rem;
     margin: -1.4rem -1.4rem 1.2rem;
     padding: 1.4rem;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-surface-raised);
+    border-bottom: 1px solid var(--glass-border, var(--color-border));
+    background: var(--glass-surface-strong, var(--color-surface-raised));
+    -webkit-backdrop-filter: var(--glass-blur-strong, none);
+    backdrop-filter: var(--glass-blur-strong, none);
 }
 
 .help-dialog__header p { margin: 0; color: var(--color-accent); font-size: .72rem; font-weight: 850; letter-spacing: .09em; text-transform: uppercase; }
@@ -98,7 +102,7 @@
 
 .help-dialog__intro p { margin: 0; color: var(--color-text-muted); line-height: 1.55; }
 .help-dialog__sections { display: grid; gap: 1rem; margin-top: 1rem; }
-.help-section { position: relative; padding: 1.1rem; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); opacity: 0; animation: help-section-from-right .80s cubic-bezier(.2, .7, .2, 1) both; }
+.help-section { position: relative; padding: 1.1rem; overflow: hidden; border: 1px solid var(--glass-border, var(--color-border)); border-radius: var(--radius-lg); background: var(--glass-inset, var(--color-bg-elevated)); opacity: 0; animation: help-section-from-right .80s cubic-bezier(.2, .7, .2, 1) both; }
 .help-section:nth-child(even) { animation-name: help-section-from-left; }
 .help-section--delay-0 { animation-delay: 1.04s; }
 .help-section--delay-1 { animation-delay: 1.20s; }

@@ -74,7 +74,9 @@
     padding: 28px;
     border: 1px dashed var(--color-border-strong);
     border-radius: var(--radius-lg);
-    background: rgba(30, 30, 31, .45);
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     color: var(--color-text-muted);
 }
 
@@ -167,9 +169,11 @@
     justify-content: space-between;
     gap: 12px;
     padding: 16px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--glass-border, var(--color-border));
     border-radius: var(--radius-lg);
-    background: var(--color-surface);
+    background: var(--glass-surface, var(--color-surface));
+    -webkit-backdrop-filter: var(--glass-blur, none);
+    backdrop-filter: var(--glass-blur, none);
     color: var(--color-text);
     box-shadow: var(--shadow-card);
     font: inherit;
@@ -181,7 +185,7 @@
 .history-card:hover,
 .history-card:focus-visible {
     border-color: var(--color-success);
-    background: var(--color-surface-hover);
+    background: var(--glass-surface-hover, var(--color-surface-hover));
 }
 
 .history-card--targeted {
@@ -278,9 +282,11 @@
     max-height: calc(100dvh - max(16px, env(safe-area-inset-top)));
     overflow-y: auto;
     padding: 20px 16px max(20px, env(safe-area-inset-bottom));
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--glass-border, var(--color-border));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    background: var(--color-surface);
+    background: var(--glass-surface-strong, var(--color-surface-raised));
+    -webkit-backdrop-filter: var(--glass-blur-strong, none);
+    backdrop-filter: var(--glass-blur-strong, none);
     color: var(--color-text);
     box-shadow: var(--shadow-modal);
     scroll-padding-bottom: max(20px, env(safe-area-inset-bottom));
@@ -383,7 +389,7 @@
     display: grid;
     gap: 12px;
     border: 2px solid var(--color-accent);
-    background: linear-gradient(145deg, var(--color-orange-soft), var(--color-bg-elevated) 40%);
+    background: linear-gradient(145deg, var(--color-orange-soft), var(--glass-inset) 40%);
 }
 
 .history-superset-heading {
@@ -452,7 +458,7 @@
 
 .history-set.history-superset-set {
     border: 1px solid currentColor;
-    background: color-mix(in srgb, currentColor 7%, var(--color-surface-raised));
+    background: color-mix(in srgb, currentColor 9%, transparent);
 }
 
 .history-superset-set .completion-mark,
@@ -485,9 +491,9 @@
 .snapshot-unavailable {
     min-width: 0;
     padding: 14px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--glass-border, var(--color-border));
     border-radius: var(--radius-md);
-    background: var(--color-bg-elevated);
+    background: var(--glass-inset, var(--color-bg-elevated));
 }
 
 .history-effort {
@@ -577,9 +583,9 @@
     align-items: center;
     gap: 8px;
     padding: 9px 10px;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--glass-border, var(--color-border));
     border-radius: var(--radius-sm);
-    background: var(--color-surface-raised);
+    background: var(--glass-inset, var(--color-bg-elevated));
     color: var(--color-text-muted);
     font-size: 13px;
 }
