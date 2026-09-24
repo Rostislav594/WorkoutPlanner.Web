@@ -189,6 +189,21 @@
   <data name="Layout_OpenProfile" xml:space="preserve">
     <value>Открыть профиль</value>
   </data>
+  <data name="AudioEqualizer_Start" xml:space="preserve">
+    <value>Включить музыкальную визуализацию</value>
+  </data>
+  <data name="AudioEqualizer_Stop" xml:space="preserve">
+    <value>Выключить музыкальную визуализацию</value>
+  </data>
+  <data name="AudioEqualizer_PermissionDenied" xml:space="preserve">
+    <value>Для реакции на музыку разрешите GymPlanner доступ к микрофону в настройках телефона.</value>
+  </data>
+  <data name="AudioEqualizer_Unavailable" xml:space="preserve">
+    <value>Музыкальная визуализация недоступна на этом устройстве.</value>
+  </data>
+  <data name="AudioEqualizer_Error" xml:space="preserve">
+    <value>Не удалось запустить анализ музыки. Нажмите на эквалайзер, чтобы попробовать снова.</value>
+  </data>
   <data name="Home_Tools" xml:space="preserve">
     <value>Инструменты</value>
   </data>

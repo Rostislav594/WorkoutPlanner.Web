@@ -22,6 +22,13 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();
 		builder.Services.AddSingleton<Orientation.IScreenOrientationService,
 			Orientation.ScreenOrientationService>();
+#if ANDROID
+		builder.Services.AddSingleton<Audio.IAudioSpectrumService,
+			Audio.AndroidAudioSpectrumService>();
+#else
+		builder.Services.AddSingleton<Audio.IAudioSpectrumService,
+			Audio.UnavailableAudioSpectrumService>();
+#endif
 		builder.Services.AddSingleton<MainPage>();
 		builder.Services.AddSingleton<Authentication.IMobileTokenStore,
 			Authentication.SecureMobileTokenStore>();

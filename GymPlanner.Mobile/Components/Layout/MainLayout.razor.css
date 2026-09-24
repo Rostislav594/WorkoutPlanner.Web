@@ -12,9 +12,10 @@
     position: sticky;
     top: 0;
     z-index: 20;
-    display: flex;
+    display: grid;
+    grid-template-columns: auto minmax(72px, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
     min-height: calc(58px + env(safe-area-inset-top));
     padding: calc(4px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 4px max(16px, env(safe-area-inset-left));
     border-bottom: 1px solid var(--color-border);
@@ -39,7 +40,94 @@
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-self: end;
+    gap: 4px;
+}
+
+.header-audio-visualizer {
+    width: min(100%, 230px);
+    height: 44px;
+    min-width: 0;
+    justify-self: center;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.audio-equalizer-toggle {
+    position: relative;
+    display: inline-grid;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-text-muted);
+    box-shadow: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: color .18s ease, opacity .18s ease;
+}
+
+.audio-equalizer-toggle:hover,
+.audio-equalizer-toggle:focus-visible {
+    background: transparent;
+    color: var(--color-text);
+}
+
+.audio-equalizer-toggle:active:not(:disabled) {
+    opacity: .68;
+}
+
+.audio-equalizer-toggle:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.audio-equalizer-toggle:disabled {
+    cursor: wait;
+    opacity: .55;
+}
+
+.audio-equalizer-toggle--active {
+    background: transparent;
+    color: var(--color-accent-hover);
+    box-shadow: none;
+}
+
+.audio-equalizer-toggle .material-symbols-rounded {
+    font-size: 23px;
+}
+
+.audio-equalizer-toggle__signal {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 7px;
+    height: 7px;
+    border: 1px solid rgba(15, 15, 16, .8);
+    border-radius: 50%;
+    background: var(--color-text-muted);
+}
+
+.audio-equalizer-toggle--active .audio-equalizer-toggle__signal {
+    background: var(--color-accent);
+    box-shadow: none;
+    animation: audio-signal-pulse 1.4s ease-out infinite;
+}
+
+@keyframes audio-signal-pulse {
+    0%, 100% {
+        transform: scale(.92);
+        opacity: .72;
+    }
+
+    48% {
+        transform: scale(1.18);
+        opacity: 1;
+    }
 }
 
 .profile-button {
@@ -116,6 +204,13 @@
     animation: page-fade-up .3s ease;
 }
 
+/* The continuously composited 3-D dust layers can make WebView paint the new
+   route once before its entrance animation starts. Avoid resetting the page
+   opacity on ambient screens so their content is presented exactly once. */
+.ambient-shell .page-transition {
+    animation: none;
+}
+
 @keyframes page-fade-up {
     from {
         opacity: 0;
@@ -166,6 +261,10 @@
     background: transparent;
 }
 
+.wallpaper-shell .ambient-dust {
+    display: none;
+}
+
 .ambient-shell {
     position: relative;
     isolation: isolate;
@@ -186,6 +285,19 @@
     pointer-events: none;
 }
 
+.audio-equalizer-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .32s ease;
+}
+
+.audio-equalizer-canvas--active {
+    opacity: .94;
+}
+
 .ambient-dust__layer {
     position: absolute;
     inset: -18%;
@@ -196,58 +308,138 @@
     will-change: transform, opacity;
 }
 
+.audio-equalizer-message {
+    position: fixed;
+    top: calc(66px + env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 24;
+    display: flex;
+    align-items: flex-start;
+    max-width: min(330px, calc(100vw - 32px));
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 122, 26, .38);
+    border-radius: var(--radius-md);
+    background: rgba(20, 20, 22, .94);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .32);
+    color: var(--color-text);
+    font-size: 13px;
+    line-height: 1.4;
+    backdrop-filter: blur(14px);
+}
+
+.audio-equalizer-message .material-symbols-rounded {
+    flex: 0 0 auto;
+    color: var(--color-accent);
+    font-size: 20px;
+}
+
 .ambient-dust__layer--far {
     background-image:
-        radial-gradient(circle, rgba(255, 255, 255, .34) 0 .7px, transparent 1.35px),
-        radial-gradient(circle, rgba(255, 122, 26, .22) 0 .8px, transparent 1.5px),
-        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .55px, transparent 1.15px);
-    background-position: 0 0, 43px 67px, 109px 31px;
-    background-size: 99px 119px, 157px 193px, 223px 257px;
-    opacity: .54;
+        radial-gradient(circle, rgba(255, 255, 255, .18) 0 .45px, transparent 1.05px),
+        radial-gradient(circle, rgba(255, 122, 26, .18) 0 .65px, transparent 1.3px),
+        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .6px, transparent 1.25px),
+        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .5px, transparent 1.1px),
+        radial-gradient(circle, rgba(255, 122, 26, .16) 0 .55px, transparent 1.2px),
+        radial-gradient(circle, rgba(255, 255, 255, .3) 0 .72px, transparent 1.4px),
+        radial-gradient(circle, rgba(255, 122, 26, .2) 0 .7px, transparent 1.35px),
+        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .55px, transparent 1.2px),
+        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .68px, transparent 1.3px),
+        radial-gradient(circle, rgba(255, 122, 26, .17) 0 .52px, transparent 1.15px),
+        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .48px, transparent 1.08px),
+        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .6px, transparent 1.25px);
+    background-position:
+        17px 43px,
+        113px 197px,
+        -67px 89px,
+        251px -37px,
+        -149px 223px,
+        79px -131px,
+        307px 151px,
+        -211px -83px,
+        163px 277px,
+        -97px 347px,
+        389px -173px,
+        -281px 109px;
+    background-size:
+        133px 164px,
+        179px 213px,
+        224px 261px,
+        269px 312px,
+        317px 366px,
+        366px 424px,
+        417px 473px,
+        473px 536px,
+        536px 603px,
+        603px 669px,
+        669px 734px,
+        734px 805px;
+    opacity: .6;
     animation: ambient-dust-far 34s ease-in-out infinite alternate;
 }
 
 .ambient-dust__layer--near {
     background-image:
-        radial-gradient(circle, rgba(255, 255, 255, .5) 0 1.25px, rgba(255, 255, 255, .12) 1.9px, transparent 3px),
-        radial-gradient(circle, rgba(255, 122, 26, .36) 0 1.1px, rgba(255, 122, 26, .1) 2px, transparent 3.2px),
-        radial-gradient(circle, rgba(255, 255, 255, .28) 0 .9px, transparent 2.3px);
-    background-position: 29px 53px, 137px 181px, 241px 97px;
-    background-size: 233px 277px, 337px 383px, 457px 509px;
-    opacity: .64;
+        radial-gradient(circle, rgba(255, 255, 255, .3) 0 .8px, rgba(255, 255, 255, .08) 1.45px, transparent 2.3px),
+        radial-gradient(circle, rgba(255, 122, 26, .3) 0 1px, rgba(255, 122, 26, .08) 1.8px, transparent 2.8px),
+        radial-gradient(circle, rgba(255, 255, 255, .48) 0 1.2px, rgba(255, 255, 255, .11) 1.9px, transparent 3px),
+        radial-gradient(circle, rgba(255, 122, 26, .34) 0 .9px, rgba(255, 122, 26, .09) 1.7px, transparent 2.7px),
+        radial-gradient(circle, rgba(255, 255, 255, .36) 0 1px, rgba(255, 255, 255, .08) 1.7px, transparent 2.6px),
+        radial-gradient(circle, rgba(255, 122, 26, .28) 0 1.15px, rgba(255, 122, 26, .08) 2px, transparent 3.1px),
+        radial-gradient(circle, rgba(255, 255, 255, .42) 0 .95px, rgba(255, 255, 255, .09) 1.65px, transparent 2.65px),
+        radial-gradient(circle, rgba(255, 122, 26, .24) 0 .82px, rgba(255, 122, 26, .07) 1.5px, transparent 2.4px);
+    background-position:
+        31px 71px,
+        173px 229px,
+        -83px 149px,
+        287px -59px,
+        -191px 311px,
+        97px -173px,
+        353px 197px,
+        -263px 43px;
+    background-size:
+        193px 230px,
+        249px 297px,
+        312px 356px,
+        377px 428px,
+        445px 499px,
+        516px 575px,
+        596px 654px,
+        688px 754px;
+    opacity: .68;
     animation: ambient-dust-near 19s ease-in-out infinite alternate;
 }
 
 @keyframes ambient-dust-far {
     0% {
-        opacity: .48;
+        opacity: .55;
         transform: translate3d(-1.5%, 2.5%, -80px) scale(.96);
     }
 
     52% {
-        opacity: .66;
+        opacity: .7;
         transform: translate3d(1.5%, -1%, -38px) scale(.99);
     }
 
     100% {
-        opacity: .54;
+        opacity: .6;
         transform: translate3d(-.5%, -4.5%, -10px) scale(1.02);
     }
 }
 
 @keyframes ambient-dust-near {
     0% {
-        opacity: .56;
+        opacity: .62;
         transform: translate3d(2%, 4%, 36px) scale(1.02);
     }
 
     45% {
-        opacity: .74;
+        opacity: .78;
         transform: translate3d(-2%, -.5%, 58px) scale(1.045);
     }
 
     100% {
-        opacity: .62;
+        opacity: .68;
         transform: translate3d(1%, -5%, 82px) scale(1.075);
     }
 }
@@ -467,6 +659,8 @@
 
 @media (max-width: 390px) {
     .mobile-header {
+        grid-template-columns: minmax(72px, auto) minmax(64px, 1fr) auto;
+        gap: 4px;
         padding-right: max(10px, env(safe-area-inset-right));
         padding-left: max(6px, env(safe-area-inset-left));
     }
@@ -553,6 +747,14 @@
 
     .ambient-dust__layer--near {
         opacity: .24;
+    }
+
+    .audio-equalizer-toggle__signal {
+        animation: none;
+    }
+
+    .audio-equalizer-canvas {
+        transition: none;
     }
 
     .mobile-navigation ::deep a.active .material-symbols-rounded {

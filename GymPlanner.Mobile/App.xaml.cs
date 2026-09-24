@@ -18,9 +18,13 @@ public partial class App : Application
 	{
 		var window = new Window(_mainPage) { Title = "GymPlanner" };
 		window.Resumed += OnWindowResumed;
+		window.Stopped += OnWindowStopped;
 		return window;
 	}
 
 	private void OnWindowResumed(object? sender, EventArgs args) =>
 		_lifecycle.NotifyResumed();
+
+	private void OnWindowStopped(object? sender, EventArgs args) =>
+		_lifecycle.NotifySuspended();
 }

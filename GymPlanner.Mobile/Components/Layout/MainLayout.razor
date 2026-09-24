@@ -1,30 +1,46 @@
 @inherits LayoutComponentBase
-@implements IDisposable
+@implements IAsyncDisposable
 @inject MobileAuthenticationService Authentication
 @inject IWelcomeGuideApiClient WelcomeGuide
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 @inject PushRegistrationCoordinator PushRegistration
+@inject IAudioSpectrumService AudioSpectrum
+@inject MobileLifecycleService Lifecycle
+@inject IJSRuntime JavaScript
 @inject IAppText Text
 
-<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
+<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null) @(_audioState == AudioSpectrumState.Active ? "audio-reactive" : null)"
      style="--wallpaper-shift: @WallpaperShift;">
-    @if (!IsPrimaryNavigationPage)
-    {
-        <div class="ambient-dust" aria-hidden="true">
-            <span class="ambient-dust__layer ambient-dust__layer--far"></span>
-            <span class="ambient-dust__layer ambient-dust__layer--near"></span>
-        </div>
-    }
+    <div class="ambient-dust" aria-hidden="true">
+        <span class="ambient-dust__layer ambient-dust__layer--far"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--near"></span>
+    </div>
     @if (!HidesApplicationNavigation)
     {
         <header class="mobile-header">
             <a class="mobile-brand" href="/" aria-label="@Text["Layout_BrandHome"]">
                 <span>GPlanner</span>
             </a>
+            <div class="header-audio-visualizer" aria-hidden="true">
+                <canvas class="audio-equalizer-canvas" @ref="_audioCanvas"></canvas>
+            </div>
             <AuthorizeView>
                 <Authorized>
                     <div class="header-actions">
+                        @if (AudioSpectrum.IsAvailable)
+                        {
+                            <button class="audio-equalizer-toggle @(_audioState == AudioSpectrumState.Active ? "audio-equalizer-toggle--active" : null)"
+                                    type="button"
+                                    disabled="@(_audioState == AudioSpectrumState.Starting)"
+                                    aria-pressed="@(_audioState == AudioSpectrumState.Active ? "true" : "false")"
+                                    aria-label="@AudioToggleLabel"
+                                    title="@AudioToggleLabel"
+                                    @onclick="ToggleAudioVisualizationAsync">
+                                <span class="material-symbols-rounded" aria-hidden="true">graphic_eq</span>
+                                <span class="audio-equalizer-toggle__signal" aria-hidden="true"></span>
+                            </button>
+                        }
                         <a class="profile-button" href="profile" aria-label="@Text["Layout_OpenProfile"]">
                             <span class="material-symbols-rounded" aria-hidden="true">person</span>
                         </a>
@@ -35,6 +51,13 @@
                 </NotAuthorized>
             </AuthorizeView>
         </header>
+    }
+    @if (!HidesApplicationNavigation && _audioMessageKey is not null)
+    {
+        <div class="audio-equalizer-message" role="status">
+            <span class="material-symbols-rounded" aria-hidden="true">info</span>
+            <span>@Text[_audioMessageKey]</span>
+        </div>
     }
     <main class="mobile-content">
         <div class="page-transition" @key="CurrentPageKey">
@@ -104,6 +127,13 @@
     private int _previousNavigationIndex;
     private long _navigationMotionKey;
     private bool _animateNavigationIndicator;
+    private ElementReference _audioCanvas;
+    private IJSObjectReference? _audioEqualizerModule;
+    private AudioSpectrumState _audioState = AudioSpectrumState.Inactive;
+    private AudioSpectrumFrame _latestSpectrumFrame;
+    private int _spectrumDispatchPending;
+    private string? _audioMessageKey;
+    private bool _audioCanvasReady;
 
     // Recover пересоздаёт содержимое границы, то есть страница инициализируется
     // заново. Для сетевого сбоя этого достаточно; если причина устойчивая,
@@ -114,12 +144,11 @@
         Navigation.ToBaseRelativePath(Navigation.Uri);
     private bool IsHomePage => string.IsNullOrEmpty(
         Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
-    private bool IsPrimaryNavigationPage =>
-        CurrentRoute.Length == 0 ||
-        CurrentRoute.Equals("today", StringComparison.OrdinalIgnoreCase) ||
-        CurrentRoute.Equals("workouts", StringComparison.OrdinalIgnoreCase) ||
-        CurrentRoute.Equals("history", StringComparison.OrdinalIgnoreCase) ||
-        CurrentRoute.Equals("progress", StringComparison.OrdinalIgnoreCase);
+    private bool IsPrimaryNavigationPage => IsPrimaryRoute(CurrentRoute);
+    private string AudioToggleLabel => Text[
+        _audioState == AudioSpectrumState.Active
+            ? "AudioEqualizer_Stop"
+            : "AudioEqualizer_Start"];
     private string WallpaperShift => _activeNavigationIndex switch
     {
         0 => "8vw",
@@ -136,10 +165,21 @@
         .Split('?', '#')[0]
         .Trim('/');
 
+    private static bool IsPrimaryRoute(string route) =>
+        route.Length == 0 ||
+        route.Equals("today", StringComparison.OrdinalIgnoreCase) ||
+        route.Equals("workouts", StringComparison.OrdinalIgnoreCase) ||
+        route.Equals("history", StringComparison.OrdinalIgnoreCase) ||
+        route.Equals("progress", StringComparison.OrdinalIgnoreCase);
+
     protected override void OnInitialized()
     {
+        _audioState = AudioSpectrum.State;
         _activeNavigationIndex = NavigationIndexFor(Navigation.Uri);
         _previousNavigationIndex = Math.Max(0, _activeNavigationIndex);
+        AudioSpectrum.SpectrumUpdated += OnSpectrumUpdated;
+        AudioSpectrum.StateChanged += OnAudioStateChanged;
+        Lifecycle.Suspended += OnApplicationSuspended;
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
         Navigation.LocationChanged += OnLocationChanged;
     }
@@ -159,6 +199,12 @@
 
         _ = InvokeAsync(async () =>
         {
+            if (HidesApplicationNavigation)
+            {
+                await DisposeAudioCanvasAsync();
+                await StopAudioVisualizationAsync(clearMessage: true);
+            }
+
             StateHasChanged();
             await CheckWelcomeGuideAsync();
         });
@@ -197,6 +243,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!HidesApplicationNavigation && !_audioCanvasReady)
+        {
+            _audioEqualizerModule ??= await JavaScript.InvokeAsync<IJSObjectReference>(
+                "import",
+                "./js/audioEqualizer.js");
+            await _audioEqualizerModule.InvokeVoidAsync("initialize", _audioCanvas);
+            _audioCanvasReady = true;
+
+            if (_audioState == AudioSpectrumState.Active)
+                await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, true);
+        }
+
         if (!firstRender)
             return;
 
@@ -206,8 +264,8 @@
             return;
         }
 
-                await Authentication.InitializeAsync();
-                await PushRegistration.InitializeAsync();
+        await Authentication.InitializeAsync();
+        await PushRegistration.InitializeAsync();
         await CheckWelcomeGuideAsync();
     }
 
@@ -237,9 +295,140 @@
     private void OpenNotificationRoute(string route) =>
         _ = InvokeAsync(() => Navigation.NavigateTo(route));
 
-    public void Dispose()
+    private async Task ToggleAudioVisualizationAsync()
     {
+        if (_audioState == AudioSpectrumState.Starting)
+            return;
+
+        _audioMessageKey = null;
+        if (_audioState == AudioSpectrumState.Active)
+        {
+            await StopAudioVisualizationAsync(clearMessage: true);
+            return;
+        }
+
+        _audioState = AudioSpectrumState.Starting;
+        StateHasChanged();
+        var result = await AudioSpectrum.StartAsync();
+        await ApplyAudioStateAsync(result);
+    }
+
+    private void OnAudioStateChanged(AudioSpectrumState state) =>
+        _ = InvokeAsync(() => ApplyAudioStateAsync(state));
+
+    private async Task ApplyAudioStateAsync(AudioSpectrumState state)
+    {
+        _audioState = state;
+        _audioMessageKey = state switch
+        {
+            AudioSpectrumState.PermissionDenied => "AudioEqualizer_PermissionDenied",
+            AudioSpectrumState.Unavailable => "AudioEqualizer_Unavailable",
+            AudioSpectrumState.Error => "AudioEqualizer_Error",
+            _ => null
+        };
+
+        if (_audioCanvasReady && _audioEqualizerModule is not null)
+        {
+            await _audioEqualizerModule.InvokeVoidAsync(
+                "setActive",
+                _audioCanvas,
+                state == AudioSpectrumState.Active);
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnSpectrumUpdated(AudioSpectrumFrame frame)
+    {
+        _latestSpectrumFrame = frame;
+        if (Interlocked.CompareExchange(ref _spectrumDispatchPending, 1, 0) == 0)
+            _ = InvokeAsync(PushLatestSpectrumFrameAsync);
+    }
+
+    private async Task PushLatestSpectrumFrameAsync()
+    {
+        try
+        {
+            if (!_audioCanvasReady ||
+                _audioEqualizerModule is null ||
+                _audioState != AudioSpectrumState.Active)
+            {
+                return;
+            }
+
+            var frame = _latestSpectrumFrame;
+            await _audioEqualizerModule.InvokeVoidAsync(
+                "update",
+                _audioCanvas,
+                frame.Bass,
+                frame.LowMid,
+                frame.Mid,
+                frame.High,
+                frame.Beat,
+                frame.Level);
+        }
+        catch (JSException)
+        {
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _spectrumDispatchPending, 0);
+        }
+    }
+
+    private void OnApplicationSuspended() =>
+        _ = InvokeAsync(() => StopAudioVisualizationAsync(clearMessage: true));
+
+    private async Task StopAudioVisualizationAsync(bool clearMessage)
+    {
+        await AudioSpectrum.StopAsync();
+        _audioState = AudioSpectrumState.Inactive;
+        if (clearMessage)
+            _audioMessageKey = null;
+
+        if (_audioCanvasReady && _audioEqualizerModule is not null)
+            await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, false);
+
+        StateHasChanged();
+    }
+
+    private async Task DisposeAudioCanvasAsync()
+    {
+        if (!_audioCanvasReady || _audioEqualizerModule is null)
+            return;
+
+        try
+        {
+            await _audioEqualizerModule.InvokeVoidAsync("dispose", _audioCanvas);
+        }
+        catch (JSException)
+        {
+        }
+        finally
+        {
+            _audioCanvasReady = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        AudioSpectrum.SpectrumUpdated -= OnSpectrumUpdated;
+        AudioSpectrum.StateChanged -= OnAudioStateChanged;
+        Lifecycle.Suspended -= OnApplicationSuspended;
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
         Navigation.LocationChanged -= OnLocationChanged;
+
+        await AudioSpectrum.StopAsync();
+        if (_audioEqualizerModule is not null)
+        {
+            try
+            {
+                await DisposeAudioCanvasAsync();
+                await _audioEqualizerModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
     }
 }
