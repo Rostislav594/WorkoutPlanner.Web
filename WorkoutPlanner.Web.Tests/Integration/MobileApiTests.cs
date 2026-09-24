@@ -3189,7 +3189,10 @@ public sealed class MobileApiTests
                 {
                     ["ConnectionStrings:WorkoutDatabase"] = $"Data Source={_databasePath}",
                     ["TelegramSupport:ChatId"] = "1198730360",
-                    ["TelegramSupport:WebhookSecret"] = "test-webhook-secret"
+                    ["TelegramSupport:WebhookSecret"] = "test-webhook-secret",
+                    // A developer machine may enable real FCM through Push__Enabled.
+                    // FirebaseApp is process-wide, so a second test host would fail to create it.
+                    ["Push:Enabled"] = "false"
                 });
             });
             builder.ConfigureServices(services =>
