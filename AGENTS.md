@@ -169,6 +169,14 @@ Required behavior:
 - Do not leave a Codex-started background process running after the task is finished unless the user explicitly asks for it to remain running.
 - In the final response, state what process cleanup or blocking-process termination was performed, or identify any process intentionally left running and why.
 
+Exception — the backend stays running:
+
+- The user checks changes on the phone right after the agent finishes, so the `WorkoutPlanner.Web` backend on port 5121 must be left running at the end of every task. This overrides the cleanup rules above for the backend only.
+- If the backend is already running, reuse it (`scripts/Start-GPlanner-Android.ps1 -ReuseBackend`) instead of starting a second instance.
+- If the backend had to be stopped or restarted during the task (for example, to pick up server changes), start it again before finishing (`scripts/Start-GPlanner-Android.ps1 -BackendOnly`) and confirm that port 5121 is listening.
+- Other agent-started processes (log streams, `adb forward`, temporary test servers) are still stopped as described above.
+- The final response states that the backend was left running.
+
 ### Active verification tools and permissions
 
 Codex must actively use the strongest available verification tools that are appropriate for the task instead of limiting verification to source inspection, compilation, or logs when the result can be tested interactively.
@@ -199,7 +207,7 @@ A task is complete only when:
 - The solution is consistent with current architecture and styling.
 - Persistence and migrations are correct when data changes.
 - Relevant build/tests/checks were run or limitations were disclosed.
-- All Codex-started background processes that are no longer required were stopped before final completion, and any clearly identified project-related process blocking build, deployment, execution, or testing was handled appropriately.
+- All Codex-started background processes that are no longer required were stopped before final completion, and any clearly identified project-related process blocking build, deployment, execution, or testing was handled appropriately. The `WorkoutPlanner.Web` backend on port 5121 is left running.
 - The result was deployed to and personally verified on the configured target device whenever the environment allowed device access. Available interactive verification tools such as Computer Use or equivalent capabilities were used when they materially improved verification.
 - If device verification was impossible, the blocker and the exact unverified behavior were explicitly disclosed; the task must not be described as fully device-verified.
 - No unrelated functionality was intentionally changed.
