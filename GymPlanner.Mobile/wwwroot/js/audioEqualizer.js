@@ -1,35 +1,41 @@
 const visualizers = new WeakMap();
 
+// The header speaker moves with whatever the equalizer currently shows.
+let speaker = null;
+
+// Display-frame smoothing of each band: fast rise, slower fall, like a
+// hardware analyzer's attack/release ballistics.
+const attackRate = 0.6;
+const releaseRate = 0.1;
+const reducedAttackRate = 0.18;
+const reducedReleaseRate = 0.08;
+
+// Each band is drawn as its own peak centred in its slot. The half-width is in
+// band slots: below 1, a valley reaches the baseline between neighbouring peaks.
+const peakHalfWidth = 0.5;
+const peakSharpness = 1.8;
+
+// Share of particles that trace the outline so every peak keeps a crisp edge.
+const outlineShare = 0.5;
+
 function clamp(value, minimum = 0, maximum = 1) {
     return Math.min(maximum, Math.max(minimum, value));
 }
 
-function gaussian(value, center, width) {
-    const distance = (value - center) / width;
-    return Math.exp(-distance * distance);
-}
-
 function createParticle(index, count) {
     const normalizedX = count <= 1 ? 0.5 : index / (count - 1);
-    const centered = normalizedX * 2 - 1;
-    const absoluteX = Math.abs(centered);
+    const tracesOutline = Math.random() < outlineShare;
 
     return {
         normalizedX,
-        centered,
-        bassZone: gaussian(absoluteX, 0, 0.16),
-        lowMidZone: gaussian(absoluteX, 0.36, 0.09),
-        midZone: gaussian(absoluteX, 0.62, 0.078),
-        highZone: gaussian(absoluteX, 0.87, 0.062),
-        taper: 1 - absoluteX * 0.32,
         side: Math.random() < 0.5 ? -1 : 1,
         entranceSide: normalizedX < 0.5 ? -1 : 1,
         entranceDelay: Math.random() * 120,
         entranceDuration: 580 + Math.random() * 260,
-        spread: Math.pow(Math.random(), 1.28),
+        spread: tracesOutline ? 0.95 + Math.random() * 0.05 : Math.random(),
         depth: Math.random(),
         radius: 0.2 + Math.random() * 0.48,
-        peakScale: 0.68 + Math.random() * 0.32,
+        bandPosition: 0,
         launchX: 0,
         launchY: 0,
         x: 0,
@@ -50,18 +56,9 @@ function createState(canvas) {
         width: 0,
         height: 0,
         pixelRatio: 1,
-        bass: 0,
-        lowMid: 0,
-        mid: 0,
-        high: 0,
-        beat: 0,
-        level: 0,
-        targetBass: 0,
-        targetLowMid: 0,
-        targetMid: 0,
-        targetHigh: 0,
-        targetBeat: 0,
-        targetLevel: 0,
+        bands: new Float32Array(0),
+        targetBands: new Float32Array(0),
+        releaseOverride: null,
         activationStartedAt: 0
     };
 
@@ -70,6 +67,12 @@ function createState(canvas) {
     state.resizeObserver.observe(canvas);
     state.frame = requestAnimationFrame(timestamp => draw(state, timestamp));
     return state;
+}
+
+function assignBands(state) {
+    const bandCount = state.bands.length;
+    for (const particle of state.particles)
+        particle.bandPosition = particle.normalizedX * bandCount - 0.5;
 }
 
 function resize(state) {
@@ -91,29 +94,39 @@ function resize(state) {
     const density = clamp(Math.round(width * 7.2), 760, 1280);
     const count = state.reducedMotion ? Math.min(760, density) : density;
     state.particles = Array.from({ length: count }, (_, index) => createParticle(index, count));
+    assignBands(state);
+}
+
+function peakKernel(distance) {
+    return distance >= peakHalfWidth ? 0 : Math.pow(1 - distance / peakHalfWidth, peakSharpness);
+}
+
+function peakLevelAt(bands, position) {
+    const last = bands.length - 1;
+    if (last < 0)
+        return 0;
+
+    const nearest = Math.round(position);
+    let level = 0;
+    for (let index = Math.max(nearest - 1, 0); index <= Math.min(nearest + 1, last); index++)
+        level = Math.max(level, bands[index] * peakKernel(Math.abs(position - index)));
+
+    return level;
 }
 
 function amplitudeAt(state, particle) {
-    const availableHeight = state.height * 0.39;
-    const levelGate = clamp((state.level - 0.025) / 0.32);
-
-    const bassResponse = state.bass * particle.bassZone * 1.08;
-    const lowMidResponse = state.lowMid * particle.lowMidZone * 0.9;
-    const midResponse = state.mid * particle.midZone * 0.74;
-    const highResponse = state.high * particle.highZone * 0.6;
-    const localSignal = Math.max(bassResponse, lowMidResponse, midResponse, highResponse);
-    const localBeat = state.beat * particle.bassZone * 0.44;
-    const response = clamp(
-        localSignal * 2.85 * particle.taper * (0.16 + levelGate * 0.84) + localBeat,
-        0,
-        0.98);
-
-    return 0.72 + availableHeight * response * particle.peakScale;
+    const availableHeight = state.height * 0.48;
+    return 0.72 + availableHeight * peakLevelAt(state.bands, particle.bandPosition);
 }
 
-function followSignal(current, target, attack, release) {
-    const response = target > current ? attack : release;
-    return current + (target - current) * response;
+function followBands(state) {
+    const attack = state.reducedMotion ? reducedAttackRate : attackRate;
+    const release = state.reducedMotion ? reducedReleaseRate : state.releaseOverride ?? releaseRate;
+    for (let index = 0; index < state.bands.length; index++) {
+        const current = state.bands[index];
+        const target = state.targetBands[index];
+        state.bands[index] = current + (target - current) * (target > current ? attack : release);
+    }
 }
 
 function draw(state, timestamp) {
@@ -124,15 +137,7 @@ function draw(state, timestamp) {
     context.clearRect(0, 0, state.width, state.height);
 
     if (state.active) {
-        const attack = state.reducedMotion ? 0.16 : 0.62;
-        const release = state.reducedMotion ? 0.1 : 0.3;
-        state.bass = followSignal(state.bass, state.targetBass, attack, release);
-        state.lowMid = followSignal(state.lowMid, state.targetLowMid, attack, release);
-        state.mid = followSignal(state.mid, state.targetMid, attack, release);
-        state.high = followSignal(state.high, state.targetHigh, attack, release);
-        state.level = followSignal(state.level, state.targetLevel, attack, release);
-        state.beat = Math.max(state.targetBeat, state.beat * 0.76);
-        state.targetBeat *= 0.48;
+        followBands(state);
 
         const centerY = state.height * 0.5;
         const horizontalInset = Math.min(4, state.width * 0.025);
@@ -146,9 +151,8 @@ function draw(state, timestamp) {
 
         for (const particle of state.particles) {
             const amplitude = amplitudeAt(state, particle);
-            const depthScale = 0.62 + particle.depth * 0.68;
             const targetX = horizontalInset + particle.normalizedX * drawableWidth;
-            const targetY = centerY + particle.side * particle.spread * amplitude * depthScale;
+            const targetY = centerY + particle.side * particle.spread * amplitude;
 
             const entranceProgress = state.reducedMotion
                 ? 1
@@ -166,7 +170,7 @@ function draw(state, timestamp) {
                 particle.y += (targetY - particle.y) * particleFollow;
             }
 
-            const radius = particle.radius * (0.72 + particle.depth * 0.46 + state.beat * 0.14);
+            const radius = particle.radius * (0.72 + particle.depth * 0.46);
             context.moveTo(particle.x + radius, particle.y);
             context.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
         }
@@ -207,26 +211,32 @@ export function setActive(canvas, active) {
         }
     }
     if (!state.active) {
-        state.targetBass = 0;
-        state.targetLowMid = 0;
-        state.targetMid = 0;
-        state.targetHigh = 0;
-        state.targetBeat = 0;
-        state.targetLevel = 0;
+        state.bands.fill(0);
+        state.targetBands.fill(0);
+        driveSpeaker(null);
     }
 }
 
-export function update(canvas, bass, lowMid, mid, high, beat, level) {
+/**
+ * Feeds a frame of band levels (0..1, lows first). The optional speaker levels
+ * override how the header speaker moves, for sources whose band layout does
+ * not keep the bass on the left.
+ */
+export function update(canvas, bands, speakerLevels = null) {
+    const isBandList = Array.isArray(bands) || ArrayBuffer.isView(bands);
     const state = visualizers.get(canvas);
-    if (!state || !state.active)
+    if (!state || !state.active || !isBandList)
         return;
 
-    state.targetBass = clamp(bass);
-    state.targetLowMid = clamp(lowMid);
-    state.targetMid = clamp(mid);
-    state.targetHigh = clamp(high);
-    state.targetBeat = clamp(beat);
-    state.targetLevel = clamp(level);
+    if (bands.length !== state.targetBands.length) {
+        state.bands = new Float32Array(bands.length);
+        state.targetBands = new Float32Array(bands.length);
+        assignBands(state);
+    }
+
+    for (let index = 0; index < bands.length; index++)
+        state.targetBands[index] = clamp(Number(bands[index]) || 0);
+    driveSpeaker(state.targetBands, speakerLevels);
 }
 
 export function dispose(canvas) {
@@ -239,4 +249,36 @@ export function dispose(canvas) {
     state.resizeObserver.disconnect();
     state.context.clearRect(0, 0, state.width, state.height);
     visualizers.delete(canvas);
+}
+
+/** Overrides how fast peaks fall on this canvas; null restores the default. */
+export function setRelease(canvas, release) {
+    const state = visualizers.get(canvas);
+    if (state)
+        state.releaseOverride = release ?? null;
+}
+
+export function setSpeaker(element) {
+    speaker = element ?? null;
+}
+
+// Sets --speaker-bass and --speaker-high (0..1) on the header speaker; CSS
+// turns them into the woofer and tweeter movement. Passing null rests it.
+function driveSpeaker(bands, speakerLevels = null) {
+    if (!speaker)
+        return;
+
+    let bass = speakerLevels?.bass ?? 0;
+    let high = speakerLevels?.high ?? 0;
+    if (!speakerLevels && bands && bands.length > 0) {
+        const bassEnd = Math.max(1, Math.round(bands.length * 0.25));
+        const highStart = Math.floor(bands.length * 0.65);
+        for (let index = 0; index < bassEnd; index++)
+            bass = Math.max(bass, bands[index]);
+        for (let index = highStart; index < bands.length; index++)
+            high = Math.max(high, bands[index]);
+    }
+
+    speaker.style.setProperty("--speaker-bass", clamp(bass).toFixed(3));
+    speaker.style.setProperty("--speaker-high", clamp(high).toFixed(3));
 }

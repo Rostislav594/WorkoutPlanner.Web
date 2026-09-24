@@ -24,17 +24,95 @@
     backdrop-filter: blur(16px);
 }
 
-.mobile-brand {
-    display: inline-flex;
-    align-items: center;
-    min-width: 0;
-    min-height: 48px;
-    gap: 0px;
+/* Speaker drawn in the Material Symbols Rounded line style of the home
+   shortcuts. It is the equalizer control: tap to switch, hold for the mode
+   menu. --speaker-bass and --speaker-high (0..1) come from the equalizer and
+   move the whole speaker, the woofer and the tweeter. */
+.header-speaker {
+    --speaker-bass: 0;
+    --speaker-high: 0;
+    display: inline-grid;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    place-items: center;
+    margin-left: -8px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
     color: var(--color-text);
-    font-size: 20px;
-    font-weight: 800;
-    letter-spacing: .4px;
-    text-decoration: none;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color .18s ease, opacity .18s ease;
+}
+
+@media (hover: hover) {
+    .header-speaker:hover {
+        background: var(--color-accent-soft);
+    }
+}
+
+.header-speaker:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.header-speaker:disabled {
+    cursor: wait;
+    opacity: .55;
+}
+
+.header-speaker__icon {
+    width: 34px;
+    height: 34px;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transform: scale(calc(1 + var(--speaker-bass) * .08));
+    transition: transform 70ms linear;
+}
+
+.header-speaker__cabinet {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+    transform: scaleY(calc(1 + var(--speaker-bass) * .07));
+    transition: transform 70ms linear;
+}
+
+.header-speaker__woofer,
+.header-speaker__tweeter {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 70ms linear;
+}
+
+.header-speaker__woofer {
+    transform: scale(calc(1 + var(--speaker-bass) * .3));
+}
+
+.header-speaker__tweeter {
+    transform: scale(calc(1 + var(--speaker-high) * .75));
+}
+
+.header-speaker__cone {
+    fill: currentColor;
+    stroke: none;
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: scale(calc(1 + var(--speaker-bass) * 1.1));
+    transition: transform 70ms linear, fill .18s ease;
+}
+
+.header-speaker--active .header-speaker__cone {
+    fill: var(--color-accent);
 }
 
 .header-actions {
@@ -53,80 +131,98 @@
     pointer-events: none;
 }
 
-.audio-equalizer-toggle {
-    position: relative;
-    display: inline-grid;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--color-text-muted);
-    box-shadow: none;
-    cursor: pointer;
-    touch-action: manipulation;
-    transition: color .18s ease, opacity .18s ease;
+.audio-mode-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
 }
 
-.audio-equalizer-toggle:hover,
-.audio-equalizer-toggle:focus-visible {
+.audio-mode-menu {
+    position: fixed;
+    top: calc(66px + env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    z-index: 41;
+    display: grid;
+    gap: 4px;
+    width: min(300px, calc(100vw - 32px));
+    padding: 8px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-raised);
+    box-shadow: var(--shadow-modal);
+    animation: audio-mode-menu-in .16s ease-out;
+}
+
+.audio-mode-menu__title {
+    margin: 4px 8px 6px;
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 700;
+}
+
+.audio-mode-option {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr) 20px;
+    align-items: center;
+    gap: 12px;
+    min-height: var(--touch-target);
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: var(--transition-ui);
 }
 
-.audio-equalizer-toggle:active:not(:disabled) {
-    opacity: .68;
+.audio-mode-option:hover,
+.audio-mode-option:focus-visible {
+    background: var(--color-surface-hover);
 }
 
-.audio-equalizer-toggle:focus-visible {
+.audio-mode-option:focus-visible {
     outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
+    outline-offset: 1px;
 }
 
-.audio-equalizer-toggle:disabled {
-    cursor: wait;
-    opacity: .55;
+.audio-mode-option:active:not(:disabled) {
+    background: var(--color-accent-soft);
 }
 
-.audio-equalizer-toggle--active {
-    background: transparent;
-    color: var(--color-accent-hover);
-    box-shadow: none;
+.audio-mode-option:disabled {
+    cursor: default;
+    opacity: .45;
 }
 
-.audio-equalizer-toggle .material-symbols-rounded {
-    font-size: 23px;
+.audio-mode-option--current {
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
 }
 
-.audio-equalizer-toggle__signal {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 7px;
-    height: 7px;
-    border: 1px solid rgba(15, 15, 16, .8);
-    border-radius: 50%;
-    background: var(--color-text-muted);
+.audio-mode-option .material-symbols-rounded {
+    font-size: 22px;
 }
 
-.audio-equalizer-toggle--active .audio-equalizer-toggle__signal {
-    background: var(--color-accent);
-    box-shadow: none;
-    animation: audio-signal-pulse 1.4s ease-out infinite;
+.audio-mode-option__label {
+    font-size: var(--text-body);
+    font-weight: 700;
 }
 
-@keyframes audio-signal-pulse {
-    0%, 100% {
-        transform: scale(.92);
-        opacity: .72;
+.audio-mode-option__check {
+    color: var(--color-accent);
+}
+
+@keyframes audio-mode-menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
     }
 
-    48% {
-        transform: scale(1.18);
+    to {
         opacity: 1;
+        transform: none;
     }
 }
 
@@ -659,15 +755,10 @@
 
 @media (max-width: 390px) {
     .mobile-header {
-        grid-template-columns: minmax(72px, auto) minmax(64px, 1fr) auto;
+        grid-template-columns: auto minmax(64px, 1fr) auto;
         gap: 4px;
         padding-right: max(10px, env(safe-area-inset-right));
         padding-left: max(6px, env(safe-area-inset-left));
-    }
-
-    .mobile-brand {
-        gap: 6px;
-        font-size: 24px;
     }
 
     .profile-button {
@@ -696,12 +787,6 @@
 }
 
 @media (max-width: 360px) {
-    .mobile-brand span {
-        max-width: 78px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
     .mobile-navigation ::deep a {
         min-height: 56px;
     }
@@ -720,6 +805,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .header-speaker__icon,
+    .header-speaker__cabinet,
+    .header-speaker__woofer,
+    .header-speaker__tweeter,
+    .header-speaker__cone {
+        transform: none;
+        transition: none;
+    }
+
+    .audio-mode-menu {
+        animation: none;
+    }
+
     .wallpaper-shell::before {
         transition: none;
     }
@@ -747,10 +845,6 @@
 
     .ambient-dust__layer--near {
         opacity: .24;
-    }
-
-    .audio-equalizer-toggle__signal {
-        animation: none;
     }
 
     .audio-equalizer-canvas {

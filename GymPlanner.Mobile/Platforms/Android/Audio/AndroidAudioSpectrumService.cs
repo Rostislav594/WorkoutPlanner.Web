@@ -50,10 +50,10 @@ public sealed class AndroidAudioSpectrumService : IAudioSpectrumService
             }
 
             await ReleaseRecorderAsync();
-            var analyzer = new AudioSpectrumAnalyzer();
-            var bufferSize = Math.Max(minimumBufferSize, analyzer.SampleCount * sizeof(short) * 2);
+            var analyzer = new AudioSpectrumAnalyzer(SampleRate);
+            var bufferSize = Math.Max(minimumBufferSize, analyzer.WindowSize * sizeof(short));
             _audioRecord = new AudioRecord(
-                AudioSource.Mic,
+                SelectAudioSource(),
                 SampleRate,
                 ChannelIn.Mono,
                 AndroidAudioEncoding.Pcm16bit,
@@ -142,7 +142,7 @@ public sealed class AndroidAudioSpectrumService : IAudioSpectrumService
         AudioSpectrumAnalyzer analyzer,
         CancellationToken cancellationToken)
     {
-        var samples = new short[analyzer.SampleCount];
+        var samples = new short[analyzer.HopSize];
         try
         {
             while (!cancellationToken.IsCancellationRequested)
@@ -155,7 +155,7 @@ public sealed class AndroidAudioSpectrumService : IAudioSpectrumService
                     continue;
                 }
 
-                SpectrumUpdated?.Invoke(analyzer.Analyze(samples, read, SampleRate));
+                SpectrumUpdated?.Invoke(analyzer.Analyze(samples, read));
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -163,11 +163,68 @@ public sealed class AndroidAudioSpectrumService : IAudioSpectrumService
         }
         catch (Exception exception)
         {
+            // StopAsync stops the recorder after cancelling, so a failed read then is expected.
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
             System.Diagnostics.Debug.WriteLine($"Audio spectrum capture failed: {exception}");
-            SetState(AudioSpectrumState.Error);
+            // StopAsync holds the state lock while awaiting this task, so the
+            // recorder must be released from outside the capture loop.
+            _ = Task.Run(() => ReleaseFailedCaptureAsync(recorder), CancellationToken.None);
         }
 
         await Task.CompletedTask;
+    }
+
+    private async Task ReleaseFailedCaptureAsync(AudioRecord recorder)
+    {
+        await _stateLock.WaitAsync();
+        try
+        {
+            // A concurrent Stop or restart has already released this recorder.
+            if (!ReferenceEquals(_audioRecord, recorder))
+                return;
+
+            try
+            {
+                recorder.Stop();
+            }
+            catch (InvalidOperationException)
+            {
+                // Recorder may already be stopped after the read failure.
+            }
+
+            if (_captureTask is not null)
+                await _captureTask;
+
+            await ReleaseRecorderAsync();
+            SetState(AudioSpectrumState.Error);
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"Audio spectrum cleanup failed: {exception}");
+            SetState(AudioSpectrumState.Error);
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
+    }
+
+    // AudioSource.Mic runs through the device's automatic gain control, which
+    // raises the gain in a quiet room until background noise fills the display.
+    // Unprocessed is the raw signal; VoiceRecognition is the documented fallback
+    // with gain control and noise suppression off by default.
+    private static AudioSource SelectAudioSource()
+    {
+        var audioManager = Android.App.Application.Context.GetSystemService(
+            Android.Content.Context.AudioService) as AudioManager;
+        var supportsUnprocessed = string.Equals(
+            audioManager?.GetProperty(AudioManager.PropertySupportAudioSourceUnprocessed),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+
+        return supportsUnprocessed ? AudioSource.Unprocessed : AudioSource.VoiceRecognition;
     }
 
     private Task ReleaseRecorderAsync()

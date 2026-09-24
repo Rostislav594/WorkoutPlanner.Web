@@ -204,6 +204,18 @@
   <data name="AudioEqualizer_Error" xml:space="preserve">
     <value>Не удалось запустить анализ музыки. Нажмите на эквалайзер, чтобы попробовать снова.</value>
   </data>
+  <data name="AudioMode_Menu" xml:space="preserve">
+    <value>Режим эквалайзера</value>
+  </data>
+  <data name="AudioMode_Ambient" xml:space="preserve">
+    <value>Окружающая музыка</value>
+  </data>
+  <data name="AudioMode_Decorative" xml:space="preserve">
+    <value>Декоративный формат</value>
+  </data>
+  <data name="AudioMode_Hint" xml:space="preserve">
+    <value>Удерживайте, чтобы выбрать режим</value>
+  </data>
   <data name="Home_Tools" xml:space="preserve">
     <value>Инструменты</value>
   </data>

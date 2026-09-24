@@ -1,10 +1,7 @@
 namespace GymPlanner.Mobile.Audio;
 
-public readonly record struct AudioSpectrumFrame(
-    double Bass,
-    double LowMid,
-    double Mid,
-    double High,
-    double Beat,
-    double Level);
-
+/// <summary>
+/// Band levels from low to high frequency, each normalized to 0..1 on a shared
+/// decibel scale.
+/// </summary>
+public sealed record AudioSpectrumFrame(float[] Bands);

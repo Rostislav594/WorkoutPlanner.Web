@@ -1,87 +1,109 @@
 namespace GymPlanner.Mobile.Audio;
 
+/// <summary>
+/// Real-time analyzer: log-spaced bands of roughly half an octave, all
+/// measured on one decibel scale so a sound only raises the bands it occupies.
+/// </summary>
 internal sealed class AudioSpectrumAnalyzer
 {
-    private const int TransformSize = 2048;
-    private static readonly (double Start, double End)[] Bands =
-    [
-        (35, 180),
-        (180, 500),
-        (500, 2_000),
-        (2_000, 8_000)
-    ];
+    public const int BandCount = 20;
+    private const int TransformSize = 4096;
+    private const int Hop = 1024;
+    private const double LowestFrequency = 45;
+    private const double HighestFrequency = 16_000;
 
+    // Decibels shown between the baseline and the top of the display.
+    private const double DisplayRange = 30;
+
+    // The top of the scale follows the loudest band, but never drops below this
+    // level, so quiet-room microphone noise stays under the baseline.
+    private const double MinimumReference = -46;
+    private const double ReferenceFallPerHop = 0.2;
+
+    private readonly double[] _history = new double[TransformSize];
+    private readonly double[] _window = new double[TransformSize];
     private readonly double[] _real = new double[TransformSize];
     private readonly double[] _imaginary = new double[TransformSize];
-    private readonly double[] _peaks = [0.006, 0.004, 0.0025, 0.0015];
-    private readonly double[] _smoothed = new double[Bands.Length];
-    private double _previousBass;
-    private double _beatAverage = 0.004;
-    private double _beat;
+    private readonly (int FirstBin, int LastBin)[] _bands;
+    private readonly double _powerScale;
+    private double _reference = MinimumReference;
 
-    public int SampleCount => TransformSize;
-
-    public AudioSpectrumFrame Analyze(short[] samples, int sampleCount, int sampleRate)
+    public AudioSpectrumAnalyzer(int sampleRate)
     {
-        var usableCount = Math.Min(sampleCount, TransformSize);
-        var energy = 0d;
+        var windowSum = 0d;
+        for (var index = 0; index < TransformSize; index++)
+        {
+            _window[index] = 0.5d - 0.5d * Math.Cos(2d * Math.PI * index / (TransformSize - 1));
+            windowSum += _window[index];
+        }
+
+        // A full-scale sine then reads close to 0 dBFS.
+        _powerScale = 4d / (windowSum * windowSum);
+        _bands = CreateBands(sampleRate);
+    }
+
+    public int HopSize => Hop;
+
+    public int WindowSize => TransformSize;
+
+    public AudioSpectrumFrame Analyze(short[] samples, int sampleCount)
+    {
+        var count = Math.Min(sampleCount, TransformSize);
+        Array.Copy(_history, count, _history, 0, TransformSize - count);
+        for (var index = 0; index < count; index++)
+            _history[TransformSize - count + index] = samples[index] / 32768d;
 
         for (var index = 0; index < TransformSize; index++)
         {
-            var sample = index < usableCount ? samples[index] / 32768d : 0d;
-            var window = 0.5d - 0.5d * Math.Cos(2d * Math.PI * index / (TransformSize - 1));
-            _real[index] = sample * window;
+            _real[index] = _history[index] * _window[index];
             _imaginary[index] = 0d;
-            energy += sample * sample;
         }
 
         Transform(_real, _imaginary);
 
-        var normalizedBands = new double[Bands.Length];
-        var rawBands = new double[Bands.Length];
-        for (var bandIndex = 0; bandIndex < Bands.Length; bandIndex++)
+        var decibels = new double[BandCount];
+        var loudest = double.NegativeInfinity;
+        for (var bandIndex = 0; bandIndex < BandCount; bandIndex++)
         {
-            rawBands[bandIndex] = BandEnergy(Bands[bandIndex], sampleRate);
-            _peaks[bandIndex] = Math.Max(rawBands[bandIndex], _peaks[bandIndex] * 0.992d);
+            var (firstBin, lastBin) = _bands[bandIndex];
+            var power = 0d;
+            for (var bin = firstBin; bin <= lastBin; bin++)
+                power += _real[bin] * _real[bin] + _imaginary[bin] * _imaginary[bin];
 
-            var normalized = Math.Clamp(rawBands[bandIndex] / Math.Max(_peaks[bandIndex], 0.000001d), 0d, 1d);
-            normalized = Math.Pow(normalized, 0.62d);
-            var smoothing = normalized > _smoothed[bandIndex] ? 0.82d : 0.28d;
-            _smoothed[bandIndex] += (normalized - _smoothed[bandIndex]) * smoothing;
-            normalizedBands[bandIndex] = _smoothed[bandIndex];
+            decibels[bandIndex] = 10d * Math.Log10(power * _powerScale + 1e-12);
+            loudest = Math.Max(loudest, decibels[bandIndex]);
         }
 
-        var bassRise = Math.Max(0d, rawBands[0] - _previousBass);
-        _previousBass = rawBands[0];
-        _beatAverage = _beatAverage * 0.9d + bassRise * 0.1d;
-        var detectedBeat = bassRise > Math.Max(0.00038d, _beatAverage * 1.75d) && normalizedBands[0] > 0.36d;
-        _beat = detectedBeat ? 1d : _beat * 0.55d;
+        // One shared reference keeps the relative height of the bands intact.
+        _reference = loudest > _reference
+            ? loudest
+            : Math.Max(MinimumReference, _reference - ReferenceFallPerHop);
 
-        var level = Math.Clamp(Math.Sqrt(energy / Math.Max(usableCount, 1)) * 5.5d, 0d, 1d);
-        return new AudioSpectrumFrame(
-            normalizedBands[0],
-            normalizedBands[1],
-            normalizedBands[2],
-            normalizedBands[3],
-            _beat,
-            level);
+        var floor = _reference - DisplayRange;
+        var bands = new float[BandCount];
+        for (var bandIndex = 0; bandIndex < BandCount; bandIndex++)
+            bands[bandIndex] = (float)Math.Clamp((decibels[bandIndex] - floor) / DisplayRange, 0d, 1d);
+
+        return new AudioSpectrumFrame(bands);
     }
 
-    private double BandEnergy((double Start, double End) band, int sampleRate)
+    private static (int FirstBin, int LastBin)[] CreateBands(int sampleRate)
     {
-        var firstBin = Math.Max(1, (int)Math.Floor(band.Start * TransformSize / sampleRate));
-        var lastBin = Math.Min(TransformSize / 2 - 1, (int)Math.Ceiling(band.End * TransformSize / sampleRate));
-        var sum = 0d;
-        var count = 0;
+        var binWidth = (double)sampleRate / TransformSize;
+        var lastUsableBin = TransformSize / 2 - 1;
+        var ratio = Math.Pow(HighestFrequency / LowestFrequency, 1d / BandCount);
+        var bands = new (int, int)[BandCount];
 
-        for (var bin = firstBin; bin <= lastBin; bin++)
+        for (var bandIndex = 0; bandIndex < BandCount; bandIndex++)
         {
-            var magnitudeSquared = _real[bin] * _real[bin] + _imaginary[bin] * _imaginary[bin];
-            sum += magnitudeSquared;
-            count++;
+            var start = LowestFrequency * Math.Pow(ratio, bandIndex);
+            var end = start * ratio;
+            var firstBin = Math.Clamp((int)Math.Ceiling(start / binWidth), 1, lastUsableBin);
+            var lastBin = Math.Clamp((int)Math.Floor(end / binWidth), firstBin, lastUsableBin);
+            bands[bandIndex] = (firstBin, lastBin);
         }
 
-        return count == 0 ? 0d : Math.Sqrt(sum / count) / TransformSize;
+        return bands;
     }
 
     private static void Transform(double[] real, double[] imaginary)
