@@ -607,6 +607,9 @@
     <value>Суперсет</value>
     <comment>В украинском слово совпадает с русским.</comment>
   </data>
+  <data name="Common_SupersetSwap" xml:space="preserve">
+    <value>Поменять упражнения местами</value>
+  </data>
   <data name="Common_Exercise" xml:space="preserve">
     <value>Упражнение</value>
   </data>

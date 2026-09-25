@@ -439,7 +439,7 @@
 .exercise-card.superset-exercise-card {
     display: grid;
     gap: 12px;
-    border: 2px solid var(--color-orange-border);
+    border: 2px solid var(--superset-frame);
     background: var(--glass-surface, var(--color-surface));
     -webkit-backdrop-filter: var(--glass-blur, none);
     backdrop-filter: var(--glass-blur, none);
@@ -508,8 +508,8 @@
 }
 
 .set-row.superset-set-row {
-    border: 1px solid currentColor;
-    background: var(--glass-inset, var(--color-bg-elevated));
+    border: 1px solid var(--superset-set-border);
+    background: var(--superset-set-fill);
 }
 
 .superset-set-row .set-value-control,
@@ -1624,6 +1624,80 @@
     .progress-track span,
     .secondary-button,
     .finish-button {
+        transition: none;
+    }
+}
+
+.superset-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* Кнопка перестановки: только белые стрелки, зона нажатия 44×44 без подложки. */
+.superset-swap-button {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    margin: -10px -10px -10px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-text);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.superset-swap-button .material-symbols-rounded {
+    font-size: 24px;
+    transition: transform var(--transition-ui);
+}
+
+.superset-swap-button:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+.superset-swap-button:active:not(:disabled) .material-symbols-rounded {
+    transform: scale(.86);
+}
+
+/* Пока сервер сохраняет перестановку, кнопка не отключается (глобальное
+   button:disabled гасит её до .52 и она мигала бы), а только помечается занятой. */
+.superset-swap-button[aria-disabled="true"] {
+    cursor: progress;
+}
+
+.superset-swap-button.is-swapped .material-symbols-rounded {
+    animation: superset-swap-turn 520ms cubic-bezier(.3, .7, .2, 1);
+}
+
+@keyframes superset-swap-turn {
+    from { transform: rotate(-180deg); }
+    to { transform: rotate(0); }
+}
+
+/* При перестановке упражнения меняются местами и цветом: цвет перетекает
+   вместе с переездом, рамка и заливка на currentColor следуют за ним.
+   position здесь не задаётся: позиционированные потомки стеклянной карточки
+   (backdrop-filter) на Android WebView пропадают на кадр при перерисовке. */
+.superset-name,
+.superset-set-row {
+    transition: color 620ms ease;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .superset-swap-button .material-symbols-rounded {
+        animation: none;
         transition: none;
     }
 }

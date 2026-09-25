@@ -13,7 +13,7 @@ internal static class ApplicationContractMapper
             Id = source.Id,
             WorkoutName = source.WorkoutName,
             Date = source.Date,
-            Exercises = source.Exercises
+            Exercises = Entities.ExerciseOrdering.InWorkoutOrder(source.Exercises)
                 .Select(ToContract)
                 .ToList()
         };

@@ -98,15 +98,15 @@ public sealed class MigrationTests
             .Select(x => x.Id)
             .SingleAsync();
 
-        db.Exercises.Add(new Exercise
-        {
-            UserId = "user-a",
-            Name = "Existing exercise",
-            WorkoutName = "Existing plan",
-            TrainingPlanId = planId,
-            Sets = []
-        });
-        await db.SaveChangesAsync();
+        // Упражнение старой схемы тоже вставляется чистым SQL: у модели уже есть
+        // колонки, которых в этой версии базы ещё нет.
+        await db.Database.ExecuteSqlInterpolatedAsync($"""
+            INSERT INTO Exercises
+                (UserId, Name, WorkoutName, SetsCount, Set1Completed, Set2Completed,
+                 Set3Completed, Status, TrainingPlanId)
+            VALUES
+                ('user-a', 'Existing exercise', 'Existing plan', 3, 0, 0, 0, 0, {planId})
+            """);
         var exerciseId = await db.Exercises
             .IgnoreQueryFilters()
             .Where(x => x.TrainingPlanId == planId)

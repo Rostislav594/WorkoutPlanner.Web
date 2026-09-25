@@ -6,5 +6,6 @@ public sealed record RenameTrainingPlanRequest(string WorkoutName);
 public sealed record ExerciseApiResponse(int Id, string Name, int SetsCount, string Status, int TrainingPlanId, int? ExerciseDefinitionId, bool HasPhoto, IReadOnlyList<ExerciseSetApiResponse> Sets, int? SupersetGroupId = null);
 public sealed record ExerciseSetApiResponse(int SetNumber, int Repetitions, double Weight, bool Completed, bool IsWarmup = false);
 public sealed record SaveExerciseRequest(string Name, int SetsCount, string Status, int? ExerciseDefinitionId, IReadOnlyList<SaveExerciseSetRequest>? Sets, int? SupersetGroupId = null);
+public sealed record ReorderSupersetRequest(IReadOnlyList<int> ExerciseIds);
 public sealed record SaveExerciseSetRequest(int SetNumber, int Repetitions, double Weight, bool Completed, bool IsWarmup = false);
 public sealed record ExerciseDefinitionApiResponse(int Id, string Name);

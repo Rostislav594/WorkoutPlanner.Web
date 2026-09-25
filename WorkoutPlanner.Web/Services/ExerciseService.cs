@@ -32,10 +32,11 @@ public sealed class ExerciseService : IExerciseService
             .Include(x => x.ExerciseDefinition)
             .Include(x => x.Sets)
             .Where(x => x.WorkoutName == workoutName && x.UserId == userId)
-            .OrderBy(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        return exercises.Select(x => x.ToContract()).ToList();
+        return Models.ExerciseOrdering.InWorkoutOrder(exercises)
+            .Select(x => x.ToContract())
+            .ToList();
     }
 
     public async Task<Exercise?> GetByIdAsync(
@@ -118,6 +119,36 @@ public sealed class ExerciseService : IExerciseService
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<SupersetReorderResult> ReorderSupersetAsync(
+        int trainingPlanId,
+        int supersetGroupId,
+        IReadOnlyList<int> exerciseIds,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var members = await db.Exercises
+            .Where(x =>
+                x.UserId == userId &&
+                x.TrainingPlanId == trainingPlanId &&
+                x.SupersetGroupId == supersetGroupId)
+            .ToListAsync(cancellationToken);
+        if (members.Count < 2)
+            return SupersetReorderResult.NotFound;
+
+        var requested = exerciseIds.ToHashSet();
+        if (requested.Count != exerciseIds.Count ||
+            !requested.SetEquals(members.Select(x => x.Id)))
+            return SupersetReorderResult.Mismatch;
+
+        var membersById = members.ToDictionary(x => x.Id);
+        for (var position = 0; position < exerciseIds.Count; position++)
+            membersById[exerciseIds[position]].SupersetOrder = position;
+
+        await db.SaveChangesAsync(cancellationToken);
+        return SupersetReorderResult.Reordered;
+    }
+
     public async Task UpdateExerciseAsync(
         Exercise exercise,
         CancellationToken cancellationToken = default)
@@ -137,6 +168,9 @@ public sealed class ExerciseService : IExerciseService
         entity.SetsCount = exercise.SetsCount;
         entity.Status = (Models.ExerciseStatus)exercise.Status;
         entity.ExerciseDefinitionId = exercise.ExerciseDefinitionId;
+        // Порядок внутри суперсета теряет смысл, когда упражнение уходит из группы.
+        if (entity.SupersetGroupId != exercise.SupersetGroupId)
+            entity.SupersetOrder = null;
         entity.SupersetGroupId = exercise.SupersetGroupId;
         entity.PhotoPath = exercise.PhotoPath;
 

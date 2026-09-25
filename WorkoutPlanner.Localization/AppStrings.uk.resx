@@ -595,6 +595,9 @@
   <data name="Common_Superset" xml:space="preserve">
     <value>Суперсет</value>
   </data>
+  <data name="Common_SupersetSwap" xml:space="preserve">
+    <value>Поміняти вправи місцями</value>
+  </data>
   <data name="Common_Exercise" xml:space="preserve">
     <value>Вправа</value>
   </data>

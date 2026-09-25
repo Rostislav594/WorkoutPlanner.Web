@@ -19,6 +19,11 @@ public interface IExerciseService
     Task UpdateExerciseAsync(
         Exercise exercise,
         CancellationToken cancellationToken = default);
+    Task<SupersetReorderResult> ReorderSupersetAsync(
+        int trainingPlanId,
+        int supersetGroupId,
+        IReadOnlyList<int> exerciseIds,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IExerciseDefinitionService

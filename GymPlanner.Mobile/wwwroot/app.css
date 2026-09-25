@@ -69,6 +69,10 @@
     --glass-border: rgba(255, 255, 255, .09);
     --glass-blur: blur(8px);
     --glass-blur-strong: blur(18px);
+    /* Суперсет: рамки приглушены, цвет упражнений остаётся в названиях. */
+    --superset-frame: color-mix(in srgb, var(--color-accent) 42%, transparent);
+    --superset-set-border: color-mix(in srgb, currentColor 34%, transparent);
+    --superset-set-fill: color-mix(in srgb, currentColor 6%, transparent);
     --control-height: 46px;
     --touch-target: 44px;
     --transition-ui: 160ms ease;

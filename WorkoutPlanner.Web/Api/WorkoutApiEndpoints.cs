@@ -47,6 +47,14 @@ public static class WorkoutApiEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
+        plans.MapPut(
+                "/{planId:int}/supersets/{supersetGroupId:int}/order",
+                ReorderSupersetAsync)
+            .Produces<TrainingPlanApiResponse>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
         plans.MapPost("/{planId:int}/exercises", CreateExerciseAsync)
             .Produces<ExerciseApiResponse>(StatusCodes.Status201Created)
             .ProducesValidationProblem()
@@ -257,6 +265,41 @@ public static class WorkoutApiEndpoints
         updated.PhotoPath = existing.PhotoPath;
         await exercises.UpdateExerciseAsync(updated, cancellationToken);
         return Results.Ok(ToResponse(updated));
+    }
+
+    private static async Task<IResult> ReorderSupersetAsync(
+        int planId,
+        int supersetGroupId,
+        ReorderSupersetRequest request,
+        IExerciseService exercises,
+        ITrainingPlanService trainingPlans,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExerciseIds is not { Count: >= 2 })
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.ExerciseIds)] = ["A superset order needs at least two exercises."]
+            });
+        }
+
+        var result = await exercises.ReorderSupersetAsync(
+            planId,
+            supersetGroupId,
+            request.ExerciseIds,
+            cancellationToken);
+        if (result == AppContracts.SupersetReorderResult.NotFound)
+            return Results.NotFound();
+        if (result == AppContracts.SupersetReorderResult.Mismatch)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.ExerciseIds)] = ["List every exercise of the superset exactly once."]
+            });
+        }
+
+        var plan = await trainingPlans.GetByIdAsync(planId, cancellationToken);
+        return plan is null ? Results.NotFound() : Results.Ok(ToApiResponse(plan));
     }
 
     private static async Task<IResult> DeleteExerciseAsync(

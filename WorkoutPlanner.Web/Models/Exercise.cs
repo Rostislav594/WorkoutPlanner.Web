@@ -31,6 +31,9 @@ public class Exercise
     public int? ExerciseDefinitionId { get; set; }
     public int? SupersetGroupId { get; set; }
 
+    /// <summary>Место внутри суперсета, которое выбрал человек; null — порядок добавления.</summary>
+    public int? SupersetOrder { get; set; }
+
     public ExerciseDefinition? ExerciseDefinition { get; set; }
 
     public List<ExerciseTemplateSet> Sets { get; set; } = new();

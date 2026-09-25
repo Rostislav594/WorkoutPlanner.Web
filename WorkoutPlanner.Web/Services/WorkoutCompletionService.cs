@@ -92,8 +92,7 @@ public sealed class WorkoutCompletionService(
 
         var snapshot = new WorkoutHistoryDetails
         {
-            Exercises = plan.Exercises
-                .OrderBy(x => x.Id)
+            Exercises = Models.ExerciseOrdering.InWorkoutOrder(plan.Exercises)
                 .Select(ToSnapshot)
                 .ToList()
         };
@@ -166,8 +165,7 @@ public sealed class WorkoutCompletionService(
 
         var snapshot = new WorkoutHistoryDetails
         {
-            Exercises = draft.Exercises
-                .OrderBy(x => x.Id)
+            Exercises = Models.ExerciseOrdering.InWorkoutOrder(draft.Exercises)
                 .Select(ToSnapshot)
                 .ToList()
         };

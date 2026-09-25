@@ -29,6 +29,9 @@ public sealed class WorkoutApiClient(HttpClient client) : IWorkoutApiClient
     public Task<ApiResult<TrainingPlanApiResponse>> RenamePlanAsync(int id, RenameTrainingPlanRequest request, CancellationToken cancellationToken = default) =>
         GetPlanResponseAsync(HttpMethod.Put, $"api/v1/training-plans/{id}", request, cancellationToken);
 
+    public Task<ApiResult<TrainingPlanApiResponse>> ReorderSupersetAsync(int planId, int supersetGroupId, ReorderSupersetRequest request, CancellationToken cancellationToken = default) =>
+        GetPlanResponseAsync(HttpMethod.Put, $"api/v1/training-plans/{planId}/supersets/{supersetGroupId}/order", request, cancellationToken);
+
     public async Task<ApiResult> DeletePlanAsync(int id, CancellationToken cancellationToken = default)
     {
         try

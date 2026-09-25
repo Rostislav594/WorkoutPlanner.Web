@@ -63,6 +63,14 @@ public sealed class ExerciseDefinition
     public string Name { get; set; } = string.Empty;
 }
 
+public enum SupersetReorderResult
+{
+    Reordered,
+    NotFound,
+    // Список не совпадает с упражнениями суперсета: лишние, пропущенные или повторы.
+    Mismatch
+}
+
 public enum ExerciseStatus
 {
     Easy,

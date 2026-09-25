@@ -5,6 +5,8 @@
 @inject IExercisePhotoApiClient PhotoClient
 @inject IMobilePhotoPicker PhotoPicker
 @inject IAppText Text
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <section class="workout-details-page" aria-busy="@_loading">
     <div class="workout-utility-row">
@@ -80,6 +82,7 @@
                     @if (group.IsSuperset)
                     {
                         <article class="exercise-card template-superset-card edit-hold-target"
+                                 data-superset-id="@group.Exercises[0].SupersetGroupId"
                                  tabindex="0"
                                  aria-label="@Text.Format("WorkoutDetails_SupersetCardHint", string.Join(Text["Common_AndSeparator"], group.Exercises.Select(x => x.Name)))"
                                  @onpointerdown="() => BeginSupersetHold(group)"
@@ -90,9 +93,23 @@
                                  @oncontextmenu:preventDefault="true"
                                  @onkeydown="eventArgs => HandleSupersetKeyDown(eventArgs, group)">
                             <header class="template-superset-heading">
-                                <div class="template-superset-label">
-                                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                                    <span>@Text["Common_Superset"]</span>
+                                <div class="template-superset-label-row">
+                                    <div class="template-superset-label">
+                                        <span class="material-symbols-rounded" aria-hidden="true">link</span>
+                                        <span>@Text["Common_Superset"]</span>
+                                    </div>
+                                    <button class="superset-swap-button @SwapClass(group)"
+                                            @key="@SwapKey(group)"
+                                            type="button"
+                                            disabled="@_busy"
+                                            aria-disabled="@(_swappingSuperset ? "true" : "false")"
+                                            title="@Text["Common_SupersetSwap"]"
+                                            aria-label="@Text["Common_SupersetSwap"]"
+                                            @onpointerdown:stopPropagation="true"
+                                            @onkeydown:stopPropagation="true"
+                                            @onclick="() => SwapSupersetAsync(group)">
+                                        <span class="material-symbols-rounded" aria-hidden="true">swap_vert</span>
+                                    </button>
                                 </div>
                                 <div class="template-superset-names" aria-label="@string.Join(" / ", group.Exercises.Select(x => x.Name))">
                                     @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
@@ -102,7 +119,7 @@
                                         {
                                             <span class="template-superset-name-separator" aria-hidden="true">/</span>
                                         }
-                                        <span class="template-superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")">@exercise.Name</span>
+                                        <span class="template-superset-name @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" @key="@($"name-{exercise.Id}")" data-flip-key="@($"name-{exercise.Id}")">@exercise.Name</span>
                                     }
                                 </div>
                             </header>
@@ -119,7 +136,7 @@
                                                 if (set is null)
                                                     continue;
 
-                                                <div class="exercise-set-row template-superset-set @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" @onpointerdown:stopPropagation="true">
+                                                <div class="exercise-set-row template-superset-set @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" @key="@($"set-{exercise.Id}-{set.SetNumber}")" data-flip-key="@($"set-{exercise.Id}-{set.SetNumber}")" @onpointerdown:stopPropagation="true">
                                                     <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
                                                             type="button"
                                                             disabled="@_busy"
@@ -139,7 +156,7 @@
                                     @for (var exerciseIndex = 0; exerciseIndex < group.Exercises.Count; exerciseIndex++)
                                     {
                                         var exercise = group.Exercises[exerciseIndex];
-                                        <div class="exercise-photo-panel template-superset-photo">
+                                        <div class="exercise-photo-panel template-superset-photo" @key="@($"photo-{exercise.Id}")" data-flip-key="@($"photo-{exercise.Id}")">
                                             <span class="template-superset-photo-name">@exercise.Name</span>
                                             <button class="exercise-photo-button"
                                                     type="button"
@@ -521,6 +538,13 @@
     private ExerciseGroup? _supersetActionGroup;
     private CancellationTokenSource? _supersetHoldCts;
     private bool _supersetDeleteConfirmation;
+    private int? _swappedSupersetId;
+    private int _supersetSwapVersion;
+    // Перестановка блокирует только свою кнопку: общий флаг занятости гасил бы
+    // все кнопки карточки, и они мигали бы при каждом нажатии.
+    private bool _swappingSuperset;
+    private SupersetSwapAnimation? _swapAnimationField;
+    private SupersetSwapAnimation _swapAnimation => _swapAnimationField ??= new SupersetSwapAnimation(JS);
     private IReadOnlyList<ExerciseGroup> ExerciseGroups => (_plan?.Exercises ?? [])
         .GroupBy(x => x.SupersetGroupId is { } groupId ? $"superset:{groupId}" : $"exercise:{x.Id}")
         .Select(group => new ExerciseGroup(
@@ -716,6 +740,58 @@
         }
         finally { _busy = false; }
     }
+
+    // Перестановка видна сразу, сервер сохраняет её следом; при отказе порядок возвращается.
+    private async Task SwapSupersetAsync(ExerciseGroup group)
+    {
+        if (_busy || _swappingSuperset || _plan is null || group.Exercises.Count < 2 || group.Exercises[0].SupersetGroupId is not { } groupId)
+            return;
+
+        var previous = _plan;
+        var newOrder = group.Exercises.Reverse().Select(x => x.Id).ToArray();
+        _swappingSuperset = true;
+        _operationErrors.Clear();
+        try
+        {
+            var capture = _swapAnimation.CaptureAsync(groupId);
+            _plan = _plan with { Exercises = SupersetOrdering.Apply(_plan.Exercises, newOrder, x => x.Id) };
+            _swappedSupersetId = groupId;
+            _supersetSwapVersion++;
+            StateHasChanged();
+            await capture;
+
+            var result = await WorkoutClient.ReorderSupersetAsync(Id, groupId, new ReorderSupersetRequest(newOrder));
+            if (result.Succeeded)
+                _plan = result.Value!;
+            else
+            {
+                _plan = previous;
+                _operationErrors.AddRange(result.Errors);
+            }
+        }
+        finally
+        {
+            _swappingSuperset = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await _swapAnimation.PrepareAsync();
+        await _swapAnimation.PlayPendingAsync();
+    }
+
+    public ValueTask DisposeAsync() => _swapAnimation.DisposeAsync();
+
+    private string? SwapClass(ExerciseGroup group) =>
+        group.Exercises[0].SupersetGroupId == _swappedSupersetId ? "is-swapped" : null;
+
+    // Новый ключ пересоздаёт кнопку, и иконка снова делает полуоборот.
+    private string SwapKey(ExerciseGroup group) =>
+        group.Exercises[0].SupersetGroupId == _swappedSupersetId
+            ? $"swap-{_supersetSwapVersion}"
+            : "swap-0";
 
     private async Task SeparateSupersetAsync(ExerciseGroup group)
     {

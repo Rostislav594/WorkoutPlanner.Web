@@ -97,8 +97,7 @@ public sealed class ActiveWorkoutService(
     }
 
     private static List<ActiveWorkoutExercise> ToActiveExercises(Models.TrainingPlan plan) =>
-        plan.Exercises
-            .OrderBy(x => x.Id)
+        Models.ExerciseOrdering.InWorkoutOrder(plan.Exercises)
             .Select((exercise, index) => new ActiveWorkoutExercise(
                 exercise.Id,
                 exercise.Name,

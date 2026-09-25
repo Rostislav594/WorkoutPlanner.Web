@@ -1155,6 +1155,105 @@ public sealed class MobileApiTests
     }
 
     [Fact]
+    public async Task SupersetOrderApi_SwapsOwnedSupersetAndResetsWhenSeparated()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var stranger = CreateClient(factory);
+        foreach (var (client, email) in new[]
+                 {
+                     (owner, "superset-order-a@example.test"),
+                     (stranger, "superset-order-b@example.test")
+                 })
+        {
+            using var registration = await client.PostAsJsonAsync(
+                "/api/v1/auth/register",
+                new MobileRegisterRequest(email, "password1"));
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+            SetBearer(
+                client,
+                (await LoginAsync(client, email, "password1", email)).AccessToken);
+        }
+
+        using var createPlan = await owner.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("Superset order"));
+        var plan = await createPlan.Content.ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.NotNull(plan);
+
+        const int supersetGroupId = 5;
+        async Task<ExerciseApiResponse> CreateExerciseAsync(string name, int? groupId)
+        {
+            using var response = await owner.PostAsJsonAsync(
+                $"/api/v1/training-plans/{plan.Id}/exercises",
+                new SaveExerciseRequest(
+                    name,
+                    1,
+                    "NotCompleted",
+                    null,
+                    [new SaveExerciseSetRequest(1, 8, 20, false)],
+                    groupId));
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            return (await response.Content.ReadFromJsonAsync<ExerciseApiResponse>())!;
+        }
+
+        var bench = await CreateExerciseAsync("Bench", supersetGroupId);
+        var row = await CreateExerciseAsync("Row", null);
+        var squat = await CreateExerciseAsync("Squat", supersetGroupId);
+        async Task<string[]> ReadOrderAsync() =>
+            (await owner.GetFromJsonAsync<TrainingPlanApiResponse>(
+                $"/api/v1/training-plans/{plan.Id}"))!
+            .Exercises.Select(x => x.Name).ToArray();
+
+        // Суперсет стоит на месте первого упражнения, одиночное — после него.
+        Assert.Equal(["Bench", "Squat", "Row"], await ReadOrderAsync());
+
+        var orderPath = $"/api/v1/training-plans/{plan.Id}/supersets/{supersetGroupId}/order";
+        using var swap = await owner.PutAsJsonAsync(
+            orderPath,
+            new ReorderSupersetRequest([squat.Id, bench.Id]));
+        Assert.Equal(HttpStatusCode.OK, swap.StatusCode);
+        var swapped = await swap.Content.ReadFromJsonAsync<TrainingPlanApiResponse>();
+        Assert.Equal(["Squat", "Bench", "Row"], swapped!.Exercises.Select(x => x.Name));
+        Assert.Equal(["Squat", "Bench", "Row"], await ReadOrderAsync());
+
+        using var withSingle = await owner.PutAsJsonAsync(
+            orderPath,
+            new ReorderSupersetRequest([squat.Id, row.Id]));
+        Assert.Equal(HttpStatusCode.BadRequest, withSingle.StatusCode);
+        using var duplicate = await owner.PutAsJsonAsync(
+            orderPath,
+            new ReorderSupersetRequest([squat.Id, squat.Id]));
+        Assert.Equal(HttpStatusCode.BadRequest, duplicate.StatusCode);
+        using var foreign = await stranger.PutAsJsonAsync(
+            orderPath,
+            new ReorderSupersetRequest([bench.Id, squat.Id]));
+        Assert.Equal(HttpStatusCode.NotFound, foreign.StatusCode);
+        Assert.Equal(["Squat", "Bench", "Row"], await ReadOrderAsync());
+
+        // Разобранный и собранный заново суперсет снова идёт в порядке добавления.
+        async Task SetGroupAsync(ExerciseApiResponse exercise, int? groupId)
+        {
+            using var response = await owner.PutAsJsonAsync(
+                $"/api/v1/exercises/{exercise.Id}",
+                new SaveExerciseRequest(
+                    exercise.Name,
+                    1,
+                    "NotCompleted",
+                    null,
+                    [new SaveExerciseSetRequest(1, 8, 20, false)],
+                    groupId));
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        await SetGroupAsync(bench, null);
+        await SetGroupAsync(squat, null);
+        await SetGroupAsync(bench, supersetGroupId);
+        await SetGroupAsync(squat, supersetGroupId);
+        Assert.Equal(["Bench", "Squat", "Row"], await ReadOrderAsync());
+    }
+
+    [Fact]
     public async Task WorkoutLifecycleApi_CompletesAtomically_AndReturnsImmutableSnapshot()
     {
         using var factory = new GymPlannerApiFactory();
