@@ -1,0 +1,19 @@
+.needs-internet-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 0 14px;
+    padding: 10px 12px;
+    border: 1px solid rgba(232, 200, 121, .35);
+    border-radius: var(--radius-md);
+    background: var(--glass-inset, var(--color-surface));
+    color: var(--color-text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.needs-internet-hint .material-symbols-rounded {
+    flex: 0 0 auto;
+    color: var(--color-warning);
+    font-size: 18px;
+}

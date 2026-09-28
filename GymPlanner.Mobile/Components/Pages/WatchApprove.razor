@@ -46,11 +46,16 @@
             <p class="watch-approve__error" role="alert">@_error</p>
         }
 
+        @if (IsOffline)
+        {
+            <NeedsInternetHint />
+        }
+
         <div class="watch-approve__actions">
-            <button class="primary-button" type="button" disabled="@_busy" @onclick="ApproveAsync">
+            <button class="primary-button" type="button" disabled="@(_busy || IsOffline)" @onclick="ApproveAsync">
                 @(_busy ? Text["WatchApprove_Connecting"] : Text["WatchApprove_Connect"])
             </button>
-            <button class="secondary-button" type="button" disabled="@_busy" @onclick="RejectAsync">
+            <button class="secondary-button" type="button" disabled="@(_busy || IsOffline)" @onclick="RejectAsync">
                 @Text["WatchApprove_Reject"]
             </button>
         </div>
@@ -58,6 +63,9 @@
 </section>
 
 @code {
+    // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
+    [CascadingParameter(Name = "IsOffline")]
+    public bool IsOffline { get; set; }
     [Parameter]
     public string RequestId { get; set; } = string.Empty;
 

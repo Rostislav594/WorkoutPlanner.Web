@@ -329,6 +329,59 @@ public sealed class MobileApiTests
         }
     }
 
+    [Fact]
+    public async Task PhoneOutbox_CreatesOfflinePlanWithExercise_AndSchedulesIt()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("outbox-plan@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(client, (await LoginAsync(client, "outbox-plan@example.test", "password1", "Phone")).AccessToken);
+        var root = Path.Combine(Path.GetTempPath(), "gymplanner-e2e-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new GymPlanner.Mobile.Offline.OfflineDocumentStore(root);
+            await store.UseAccountAsync("outbox-plan@example.test");
+            var reachability = new GymPlanner.Mobile.Offline.ServerReachability(TimeProvider.System);
+            var outbox = new GymPlanner.Mobile.Offline.OutboxSync(store, client, reachability, TimeProvider.System);
+            var json = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
+            var planId = GymPlanner.Mobile.Offline.OfflineIds.Next();
+            var tomorrow = DateTime.Today.AddDays(1);
+
+            // Всё сделано без связи: план, упражнение в нём и назначение в календарь.
+            reachability.ReportServerUnavailable();
+            await outbox.EnqueueAsync(outbox.Create(
+                GymPlanner.Mobile.Offline.OutboxKinds.CreatePlan, HttpMethod.Post, "api/v1/training-plans",
+                System.Text.Json.JsonSerializer.Serialize(new CreateTrainingPlanRequest("Offline legs"), json), "Offline legs", planId));
+            await outbox.EnqueueAsync(outbox.Create(
+                GymPlanner.Mobile.Offline.OutboxKinds.CreateExercise, HttpMethod.Post, $"api/v1/training-plans/{planId}/exercises",
+                System.Text.Json.JsonSerializer.Serialize(new SaveExerciseRequest("Squat", 1, "NotCompleted", null, [new SaveExerciseSetRequest(1, 5, 100, false)]), json),
+                "Squat", GymPlanner.Mobile.Offline.OfflineIds.Next()));
+            await outbox.EnqueueAsync(outbox.Create(
+                GymPlanner.Mobile.Offline.OutboxKinds.ScheduleWorkout, HttpMethod.Post, "api/v1/calendar",
+                System.Text.Json.JsonSerializer.Serialize(new ScheduleWorkoutRequest(tomorrow, planId), json), "Offline legs",
+                GymPlanner.Mobile.Offline.OfflineIds.Next()));
+
+            reachability.ReportServerResponded();
+            Assert.Equal(3, await outbox.FlushAsync());
+            Assert.Empty(await outbox.GetIssuesAsync());
+
+            var realPlanId = await outbox.ResolveAsync(planId);
+            Assert.True(realPlanId > 0);
+            var plan = await client.GetFromJsonAsync<TrainingPlanApiResponse>($"/api/v1/training-plans/{realPlanId}");
+            Assert.Equal("Offline legs", plan!.WorkoutName);
+            Assert.Equal(100, Assert.Single(plan.Exercises).Sets.Single().Weight);
+            var calendar = await client.GetFromJsonAsync<List<WorkoutDayApiResponse>>(
+                $"/api/v1/calendar?from={tomorrow:yyyy-MM-dd}&to={tomorrow:yyyy-MM-dd}");
+            Assert.Equal(realPlanId, Assert.Single(calendar!).TrainingPlanId);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
     private static async Task<(TrainingPlanApiResponse Plan, ExerciseApiResponse Exercise, WorkoutDayApiResponse Day)>
         ScheduleSingleExerciseWorkoutAsync(HttpClient client, string email)
     {

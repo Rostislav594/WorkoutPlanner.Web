@@ -1,5 +1,6 @@
 using System.Text.Json;
 using GymPlanner.Mobile.Api;
+using GymPlanner.Mobile.Localization;
 using GymPlanner.Mobile.Offline;
 using WorkoutPlanner.Api.Contracts;
 
@@ -9,8 +10,9 @@ namespace GymPlanner.Mobile.OfflineMode;
 /// Планы и упражнения: с сервера, а без связи — из сохранённой копии.
 /// </summary>
 /// <remarks>
-/// Правки упражнений идут через офлайн-очередь. Свободная тренировка без связи
-/// живёт только на телефоне: её упражнения правятся локально, потому что
+/// Все правки идут через офлайн-очередь; созданное без связи получает временный
+/// ID, который очередь заменит настоящим. Исключение — черновик свободной
+/// тренировки: без связи его упражнения правятся только на телефоне, потому что
 /// завершение всё равно отправит на сервер полный состав.
 /// </remarks>
 public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRuntime runtime, TimeProvider timeProvider) : IWorkoutApiClient
@@ -31,49 +33,106 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
 
     public async Task<ApiResult<TrainingPlanApiResponse>> GetPlanAsync(int id, CancellationToken cancellationToken = default)
     {
+        var resolved = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+
         // План, созданный без связи, сервер ещё не знает.
-        if (OfflineIds.IsLocal(id))
+        if (OfflineIds.IsLocal(resolved))
         {
-            return (await LoadPlansAsync(cancellationToken)).Find(id) is { } localPlan
+            return (await LoadPlansAsync(cancellationToken)).Find(resolved) is { } localPlan
                 ? ApiResult<TrainingPlanApiResponse>.Success(localPlan)
-                : ApiResult<TrainingPlanApiResponse>.Failure(Localization.ApiErrorMessages.Get(
+                : ApiResult<TrainingPlanApiResponse>.Failure(ApiErrorMessages.Get(
                     WorkoutPlanner.Localization.ApiErrorCodes.NotFound));
         }
 
         return await runtime.ReadAsync(
-            token => inner.GetPlanAsync(id, token),
-            async () => (await LoadPlansAsync(cancellationToken)).Find(id),
+            token => inner.GetPlanAsync(resolved, token),
+            async () =>
+            {
+                var plans = await LoadPlansAsync(cancellationToken);
+                return plans.Find(resolved) ?? plans.Find(id);
+            },
             plan => UpdatePlansAsync(x => x.Upsert(plan, listed: x.Order.Contains(plan.Id)), cancellationToken),
             cancellationToken);
     }
 
-    public Task<ApiResult<TrainingPlanApiResponse>> CreatePlanAsync(CreateTrainingPlanRequest request, CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.CreatePlanAsync(request, token),
-            plan => UpdatePlansAsync(x => x.Upsert(plan), cancellationToken),
-            cancellationToken);
-
-    public Task<ApiResult<TrainingPlanApiResponse>> RenamePlanAsync(int id, RenameTrainingPlanRequest request, CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.RenamePlanAsync(id, request, token),
-            plan => UpdatePlansAsync(x => x.Upsert(plan, listed: x.Order.Contains(plan.Id)), cancellationToken),
-            cancellationToken);
-
-    public Task<ApiResult> DeletePlanAsync(int id, CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.DeletePlanAsync(id, token),
+    public async Task<ApiResult<TrainingPlanApiResponse>> CreatePlanAsync(CreateTrainingPlanRequest request, CancellationToken cancellationToken = default)
+    {
+        var localId = OfflineIds.Next();
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.CreatePlan,
+            HttpMethod.Post,
+            "api/v1/training-plans",
+            JsonSerializer.Serialize(request, Json),
+            request.WorkoutName.Trim(),
+            localId);
+        return await runtime.SubmitAsync(
+            operation,
             async () =>
             {
+                var plan = new TrainingPlanApiResponse(localId, request.WorkoutName.Trim(), timeProvider.GetLocalNow().Date, []);
+                await UpdatePlansAsync(x => x.Upsert(plan), cancellationToken);
+                return plan;
+            },
+            body => AcceptPlanAsync(body, cancellationToken),
+            cancellationToken);
+    }
+
+    public async Task<ApiResult<TrainingPlanApiResponse>> RenamePlanAsync(int id, RenameTrainingPlanRequest request, CancellationToken cancellationToken = default)
+    {
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.RenamePlan,
+            HttpMethod.Put,
+            $"api/v1/training-plans/{id}",
+            JsonSerializer.Serialize(request, Json),
+            request.WorkoutName.Trim());
+        return await runtime.SubmitAsync(
+            operation,
+            async () =>
+            {
+                var current = (await LoadPlansAsync(cancellationToken)).Find(id)
+                    ?? new TrainingPlanApiResponse(id, string.Empty, timeProvider.GetLocalNow().Date, []);
+                var renamed = current with { WorkoutName = request.WorkoutName.Trim() };
+                await UpdatePlansAsync(x => x.Upsert(renamed, listed: x.Order.Contains(id)), cancellationToken);
+                return renamed;
+            },
+            body => AcceptPlanAsync(body, cancellationToken),
+            cancellationToken);
+    }
+
+    public async Task<ApiResult> DeletePlanAsync(int id, CancellationToken cancellationToken = default)
+    {
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var name = (await LoadPlansAsync(cancellationToken)).Find(id)?.WorkoutName;
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.DeletePlan,
+            HttpMethod.Delete,
+            $"api/v1/training-plans/{id}",
+            body: null,
+            name);
+        return await runtime.SubmitAsync(
+            operation,
+            async () =>
+            {
+                // Сервер удаляет вместе с планом и его дни в календаре.
                 await UpdatePlansAsync(x => x.Remove(id), cancellationToken);
-                await runtime.Store.UpdateAsync<OfflineCalendar>(
+                await runtime.UpdateCopyAsync<OfflineCalendar>(
                     OfflineKeys.Calendar,
                     x => (x ?? OfflineCalendar.Empty).RemovePlan(id),
                     cancellationToken);
             },
-            cancellationToken);
+            cancellationToken,
+            notFoundIsSuccess: true);
+    }
 
     public async Task<ApiResult<TrainingPlanApiResponse>> ReorderSupersetAsync(int planId, int supersetGroupId, ReorderSupersetRequest request, CancellationToken cancellationToken = default)
     {
+        planId = await runtime.Outbox.ResolveAsync(planId, cancellationToken);
+        var exerciseIds = new List<int>();
+        foreach (var exerciseId in request.ExerciseIds)
+            exerciseIds.Add(await runtime.Outbox.ResolveAsync(exerciseId, cancellationToken));
+        request = new ReorderSupersetRequest(exerciseIds);
+
         async Task<TrainingPlanApiResponse> ProjectAsync()
         {
             // Экран переставляет упражнения сам; копия плана нужна только для офлайн-чтения.
@@ -84,7 +143,7 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
             return reordered;
         }
 
-        if (await KeepsOnPhoneAsync(planId, cancellationToken))
+        if (await KeepsOnPhoneAsync(planId, exerciseId: null, cancellationToken))
             return ApiResult<TrainingPlanApiResponse>.Success(await ProjectAsync());
 
         var operation = runtime.Outbox.Create(
@@ -95,13 +154,7 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
         return await runtime.SubmitAsync(
             operation,
             ProjectAsync,
-            async body =>
-            {
-                var plan = JsonSerializer.Deserialize<TrainingPlanApiResponse>(body, Json)
-                    ?? throw new JsonException("Empty plan response.");
-                await UpdatePlansAsync(x => x.Upsert(plan, listed: x.Order.Contains(plan.Id)), cancellationToken);
-                return plan;
-            },
+            body => AcceptPlanAsync(body, cancellationToken),
             cancellationToken);
     }
 
@@ -119,27 +172,36 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
 
     public async Task<ApiResult<ExerciseApiResponse>> CreateExerciseAsync(int planId, SaveExerciseRequest request, CancellationToken cancellationToken = default)
     {
-        if (!await KeepsOnPhoneAsync(planId, cancellationToken))
-        {
-            using var scope = TransportScope.Begin();
-            var result = await runtime.WriteAsync(
-                token => inner.CreateExerciseAsync(planId, request, token),
-                exercise => UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken),
-                cancellationToken);
-            // Связь пропала посреди свободной тренировки — упражнение остаётся на телефоне.
-            if (result.Succeeded || !scope.ServerUnavailable || !await IsFreeDraftPlanAsync(planId, cancellationToken))
-                return result;
-        }
+        planId = await runtime.Outbox.ResolveAsync(planId, cancellationToken);
+        if (await IsFreeDraftPlanAsync(planId, cancellationToken))
+            return await CreateDraftExerciseAsync(planId, request, cancellationToken);
 
-        await EnsureDraftPlanOnPhoneAsync(planId, cancellationToken);
-        var created = OfflineProjections.Exercise(OfflineIds.Next(), planId, request, hasPhoto: false);
-        await UpdatePlansAsync(x => x.UpsertExercise(created), cancellationToken);
-        return ApiResult<ExerciseApiResponse>.Success(created);
+        var localId = OfflineIds.Next();
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.CreateExercise,
+            HttpMethod.Post,
+            $"api/v1/training-plans/{planId}/exercises",
+            JsonSerializer.Serialize(request, Json),
+            request.Name.Trim(),
+            localId);
+        return await runtime.SubmitAsync(
+            operation,
+            async () =>
+            {
+                var exercise = OfflineProjections.Exercise(localId, planId, request, hasPhoto: false);
+                await UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken);
+                return exercise;
+            },
+            body => AcceptExerciseAsync(body, cancellationToken),
+            cancellationToken);
     }
 
     public async Task<ApiResult<ExerciseApiResponse>> UpdateExerciseAsync(int id, SaveExerciseRequest request, CancellationToken cancellationToken = default)
     {
-        var current = (await LoadPlansAsync(cancellationToken)).FindExercise(id);
+        var originalId = id;
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var plans = await LoadPlansAsync(cancellationToken);
+        var current = plans.FindExercise(id) ?? plans.FindExercise(originalId);
 
         async Task<ExerciseApiResponse> ProjectAsync()
         {
@@ -148,11 +210,8 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
             return exercise;
         }
 
-        if (OfflineIds.IsLocal(id) ||
-            current is not null && await KeepsOnPhoneAsync(current.TrainingPlanId, cancellationToken))
-        {
+        if (current is not null && await KeepsOnPhoneAsync(current.TrainingPlanId, id, cancellationToken))
             return ApiResult<ExerciseApiResponse>.Success(await ProjectAsync());
-        }
 
         var operation = runtime.Outbox.Create(
             OutboxKinds.UpdateExercise,
@@ -163,23 +222,17 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
         return await runtime.SubmitAsync(
             operation,
             ProjectAsync,
-            async body =>
-            {
-                var exercise = JsonSerializer.Deserialize<ExerciseApiResponse>(body, Json)
-                    ?? throw new JsonException("Empty exercise response.");
-                await UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken);
-                return exercise;
-            },
+            body => AcceptExerciseAsync(body, cancellationToken),
             cancellationToken);
     }
 
     public async Task<ApiResult> DeleteExerciseAsync(int id, CancellationToken cancellationToken = default)
     {
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
         var current = (await LoadPlansAsync(cancellationToken)).FindExercise(id);
         Task ForgetAsync() => UpdatePlansAsync(x => x.RemoveExercise(id), cancellationToken);
 
-        if (OfflineIds.IsLocal(id) ||
-            current is not null && await KeepsOnPhoneAsync(current.TrainingPlanId, cancellationToken))
+        if (current is not null && await KeepsOnPhoneAsync(current.TrainingPlanId, id, cancellationToken))
         {
             await ForgetAsync();
             return ApiResult.Success;
@@ -195,12 +248,41 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
     }
 
     /// <summary>
-    /// Правки этого плана остаются на телефоне: план создан без связи или это
-    /// черновик свободной тренировки, а связи сейчас нет.
+    /// Упражнение свободной тренировки. Со связью оно сразу уходит на сервер,
+    /// чтобы его видели часы; без связи — остаётся на телефоне до завершения.
     /// </summary>
-    private async Task<bool> KeepsOnPhoneAsync(int planId, CancellationToken cancellationToken) =>
-        OfflineIds.IsLocal(planId) ||
-        runtime.Reachability.IsOffline && await IsFreeDraftPlanAsync(planId, cancellationToken);
+    private async Task<ApiResult<ExerciseApiResponse>> CreateDraftExerciseAsync(
+        int planId,
+        SaveExerciseRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await KeepsOnPhoneAsync(planId, exerciseId: null, cancellationToken))
+        {
+            using var scope = TransportScope.Begin();
+            var result = await runtime.WriteAsync(
+                token => inner.CreateExerciseAsync(planId, request, token),
+                exercise => UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken),
+                cancellationToken);
+            if (result.Succeeded || !scope.ServerUnavailable)
+                return result;
+        }
+
+        await EnsureDraftPlanOnPhoneAsync(planId, cancellationToken);
+        var created = OfflineProjections.Exercise(OfflineIds.Next(), planId, request, hasPhoto: false);
+        await UpdatePlansAsync(x => x.UpsertExercise(created), cancellationToken);
+        return ApiResult<ExerciseApiResponse>.Success(created);
+    }
+
+    /// <summary>
+    /// Правки остаются на телефоне только у свободной тренировки: когда нет связи,
+    /// когда сам черновик начат без связи или упражнение добавлено без неё —
+    /// такого упражнения сервер не знает, а завершение отправит полный состав.
+    /// </summary>
+    private async Task<bool> KeepsOnPhoneAsync(int planId, int? exerciseId, CancellationToken cancellationToken) =>
+        await IsFreeDraftPlanAsync(planId, cancellationToken) &&
+        (runtime.Reachability.IsOffline ||
+         OfflineIds.IsLocal(planId) ||
+         exerciseId is { } id && OfflineIds.IsLocal(id));
 
     private async Task<bool> IsFreeDraftPlanAsync(int planId, CancellationToken cancellationToken) =>
         (await runtime.Store.GetAsync<OfflineOptional<FreeWorkoutDraftResponse>>(
@@ -222,6 +304,22 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
             timeProvider.GetLocalNow().Date,
             []);
         await UpdatePlansAsync(x => x.Upsert(plan, listed: false), cancellationToken);
+    }
+
+    private async Task<TrainingPlanApiResponse> AcceptPlanAsync(string body, CancellationToken cancellationToken)
+    {
+        var plan = JsonSerializer.Deserialize<TrainingPlanApiResponse>(body, Json)
+            ?? throw new JsonException("Empty plan response.");
+        await UpdatePlansAsync(x => x.Upsert(plan, listed: x.Order.Contains(plan.Id) || !x.Plans.ContainsKey(plan.Id)), cancellationToken);
+        return plan;
+    }
+
+    private async Task<ExerciseApiResponse> AcceptExerciseAsync(string body, CancellationToken cancellationToken)
+    {
+        var exercise = JsonSerializer.Deserialize<ExerciseApiResponse>(body, Json)
+            ?? throw new JsonException("Empty exercise response.");
+        await UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken);
+        return exercise;
     }
 
     private async Task<OfflinePlans> LoadPlansAsync(CancellationToken cancellationToken) =>

@@ -130,7 +130,10 @@
                границу при переходе, так что отдельно сбрасывать её не нужно. *@
             <ErrorBoundary @ref="_pageErrorBoundary">
                 <ChildContent>
-                    @Body
+                    @* Страницы блокируют действия, которым нужен сервер, без собственной подписки на статус. *@
+                    <CascadingValue Value="OfflineStatus.IsOffline" Name="IsOffline">
+                        @Body
+                    </CascadingValue>
                 </ChildContent>
                 <ErrorContent>
                     <div class="page-error" role="alert">

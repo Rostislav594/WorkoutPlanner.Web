@@ -27,11 +27,11 @@
                  @onpointercancel="CancelClearHistoryHold"
                  @onpointerleave="CancelClearHistoryHold">
             <header class="inbox-menu__header">
-                <p class="inbox-menu__clear-hint">@Text["Inbox_ClearHint"]</p>
+                <p class="inbox-menu__clear-hint">@(IsOffline ? Text["Offline_InboxReadOnly"] : Text["Inbox_ClearHint"])</p>
                 <div class="inbox-menu__header-actions">
                     @if (_messages.Any(x => x.ReadAtUtc is null))
                     {
-                        <button class="inbox-menu__mark-all" type="button" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
+                        <button class="inbox-menu__mark-all" type="button" disabled="@IsOffline" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
                     }
                 </div>
             </header>
@@ -68,7 +68,7 @@
                                     <span class="inbox-menu__dot" aria-label="@Text["Inbox_UnreadDot"]"></span>
                                 }
                             </button>
-                            <button class="inbox-menu__delete" type="button" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
+                            <button class="inbox-menu__delete" type="button" disabled="@IsOffline" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
                                 <span class="material-symbols-rounded" aria-hidden="true">delete</span>
                             </button>
                         </div>
@@ -97,7 +97,7 @@
             }
             <div class="inbox-clear-dialog__actions">
                 <button class="inbox-clear-dialog__cancel" type="button" disabled="@_isClearingHistory" @onclick="CancelClearHistory">@Text["Common_Cancel"]</button>
-                <button class="inbox-clear-dialog__confirm" type="button" disabled="@_isClearingHistory" @onclick="DeleteAllAsync">
+                <button class="inbox-clear-dialog__confirm" type="button" disabled="@(_isClearingHistory || IsOffline)" @onclick="DeleteAllAsync">
                     @(_isClearingHistory ? Text["Inbox_Clearing"] : Text["Inbox_Clear"])
                 </button>
             </div>
@@ -106,6 +106,9 @@
 }
 
 @code {
+    // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
+    [CascadingParameter(Name = "IsOffline")]
+    public bool IsOffline { get; set; }
     private List<InboxMessageResponse> _messages = [];
     private bool _isOpen;
     private bool _isLoading;

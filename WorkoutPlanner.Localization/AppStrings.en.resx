@@ -3492,12 +3492,10 @@
   <data name="Offline_LastContact" xml:space="preserve"><value>Data updated: {0}</value></data>
   <data name="Offline_LastContactUnknown" xml:space="preserve"><value>Data has not been updated from the server yet</value></data>
   <data name="Offline_WorksTitle" xml:space="preserve"><value>Works without internet</value></data>
-  <data name="Offline_Works_Viewing" xml:space="preserve"><value>Workouts, plans, calendar and history — viewing</value></data>
   <data name="Offline_Works_Progress" xml:space="preserve"><value>Progress charts — the last saved ones</value></data>
-  <data name="Offline_Works_Profile" xml:space="preserve"><value>Profile and settings — viewing</value></data>
-  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Notebook and workout reminders</value></data>
+  <data name="Offline_Works_Profile" xml:space="preserve"><value>Profile, rest timers and language</value></data>
+  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Notebook</value></data>
   <data name="Offline_NeedsTitle" xml:space="preserve"><value>Needs internet</value></data>
-  <data name="Offline_Needs_Editing" xml:space="preserve"><value>New plans and their exercises, the calendar, your profile</value></data>
   <data name="Offline_Needs_Account" xml:space="preserve"><value>Sign-in, password, sessions and account deletion</value></data>
   <data name="Offline_Needs_Watch" xml:space="preserve"><value>Connecting and managing your watch</value></data>
   <data name="Offline_Needs_Media" xml:space="preserve"><value>Uploading exercise photos and contacting support</value></data>
@@ -3522,4 +3520,20 @@
   <data name="Offline_Op_ReorderSuperset" xml:space="preserve"><value>Superset exercise order</value></data>
   <data name="Offline_Op_Other" xml:space="preserve"><value>Change</value></data>
   <data name="Offline_Works_Workout" xml:space="preserve"><value>Workouts: sets, weights, supersets and finishing</value></data>
+  <data name="Offline_Op_CreatePlan" xml:space="preserve"><value>New plan</value></data>
+  <data name="Offline_Op_RenamePlan" xml:space="preserve"><value>Plan rename</value></data>
+  <data name="Offline_Op_DeletePlan" xml:space="preserve"><value>Plan removal</value></data>
+  <data name="Offline_Op_CreateExercise" xml:space="preserve"><value>New exercise</value></data>
+  <data name="Offline_Op_ScheduleWorkout" xml:space="preserve"><value>Workout in the calendar</value></data>
+  <data name="Offline_Op_MoveWorkout" xml:space="preserve"><value>Workout moved</value></data>
+  <data name="Offline_Op_DeleteWorkoutDay" xml:space="preserve"><value>Removed from the calendar</value></data>
+  <data name="Offline_Op_DeleteHistory" xml:space="preserve"><value>Removed from history</value></data>
+  <data name="Offline_Op_SaveProfile" xml:space="preserve"><value>Profile settings</value></data>
+  <data name="Offline_Works_Plans" xml:space="preserve"><value>Plans and exercises: creating, editing and removing</value></data>
+  <data name="Offline_Works_Calendar" xml:space="preserve"><value>The calendar, history and workout reminders</value></data>
+  <data name="Offline_NeedsInternetHint" xml:space="preserve"><value>This needs a connection to the server, so the buttons are off while offline.</value></data>
+  <data name="Offline_PhotoNeedsInternet" xml:space="preserve"><value>Uploading or removing a photo needs a connection to the server. A saved photo is visible without one.</value></data>
+  <data name="Offline_InboxReadOnly" xml:space="preserve"><value>Without a connection the inbox is read-only.</value></data>
+  <data name="Offline_LogoutUnsent" xml:space="preserve"><value>Changes not yet sent to the server: {0}. They will be lost after signing out. Go online so they are sent, or sign out anyway.</value></data>
+  <data name="Offline_LogoutAnyway" xml:space="preserve"><value>Sign out anyway</value></data>
 </root>

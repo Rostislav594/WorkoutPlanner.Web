@@ -169,9 +169,14 @@
                 <div class="error-state compact" role="alert">@string.Join(" ", _dialogErrors)</div>
             }
 
+            @if (IsOffline)
+            {
+                <NeedsInternetHint />
+            }
+
             <div class="dialog-buttons">
                 <button class="secondary-action" type="button" disabled="@_isBusy" @onclick="CloseClearDialog">@Text["Common_Cancel"]</button>
-                <button class="danger-action" type="button" disabled="@_isBusy" @onclick="ClearExerciseProgressAsync">
+                <button class="danger-action" type="button" disabled="@(_isBusy || IsOffline)" @onclick="ClearExerciseProgressAsync">
                     @(_isBusy ? Text["Common_Deleting"] : Text["Common_Delete"])
                 </button>
             </div>
@@ -188,6 +193,9 @@
 }
 
 @code {
+    // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
+    [CascadingParameter(Name = "IsOffline")]
+    public bool IsOffline { get; set; }
     // Проценты и числа форматируем в культуре выбранного языка.
     private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
     private readonly List<TrainingPlanApiResponse> _plans = [];

@@ -26,6 +26,21 @@ public static class OutboxKinds
     public const string UpdateExercise = "exercise.update";
     public const string DeleteExercise = "exercise.delete";
     public const string ReorderSuperset = "superset.reorder";
+    public const string CreatePlan = "plan.create";
+    public const string RenamePlan = "plan.rename";
+    public const string DeletePlan = "plan.delete";
+    public const string CreateExercise = "exercise.create";
+    public const string ScheduleWorkout = "calendar.schedule";
+    public const string MoveWorkout = "calendar.move";
+    public const string DeleteWorkoutDay = "calendar.delete";
+    public const string DeleteHistory = "history.delete";
+    public const string SaveProfile = "profile.save";
+    public const string SaveRestTimers = "profile.rest-timers";
+    public const string SaveLanguage = "profile.language";
+
+    /// <summary>Удаление: «уже удалено» на сервере — тоже нужный исход.</summary>
+    public static bool IsDeletion(string kind) =>
+        kind is DeleteExercise or DiscardFreeWorkoutDraft or DeletePlan or DeleteWorkoutDay or DeleteHistory;
 }
 
 /// <summary>

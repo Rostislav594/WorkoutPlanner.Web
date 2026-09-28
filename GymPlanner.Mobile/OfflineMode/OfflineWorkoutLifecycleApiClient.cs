@@ -24,28 +24,99 @@ public sealed class OfflineWorkoutLifecycleApiClient(
             days => UpdateCalendarAsync(x => x.WithRange(from, to, days), cancellationToken),
             cancellationToken);
 
-    public Task<ApiResult<WorkoutDayApiResponse>> ScheduleWorkoutAsync(
+    /// <summary>Назначение тренировки на дату; без связи день получает временный ID.</summary>
+    public async Task<ApiResult<WorkoutDayApiResponse>> ScheduleWorkoutAsync(
         ScheduleWorkoutRequest request,
-        CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.ScheduleWorkoutAsync(request, token),
-            day => UpdateCalendarAsync(x => x.Upsert(day), cancellationToken),
+        CancellationToken cancellationToken = default)
+    {
+        request = request with
+        {
+            TrainingPlanId = await runtime.Outbox.ResolveAsync(request.TrainingPlanId, cancellationToken)
+        };
+        var localId = OfflineIds.Next();
+        var planName = (await runtime.Store.GetAsync<OfflinePlans>(OfflineKeys.Plans, cancellationToken))?
+            .Find(request.TrainingPlanId)?.WorkoutName;
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.ScheduleWorkout,
+            HttpMethod.Post,
+            "api/v1/calendar",
+            JsonSerializer.Serialize(request, Json),
+            planName,
+            localId);
+        return await runtime.SubmitAsync(
+            operation,
+            async () =>
+            {
+                var day = new WorkoutDayApiResponse(localId, request.Date.Date, request.TrainingPlanId, false);
+                await UpdateCalendarAsync(x => x.Upsert(day), cancellationToken);
+                return day;
+            },
+            body => AcceptDayAsync(body, cancellationToken),
             cancellationToken);
+    }
 
-    public Task<ApiResult> DeleteCalendarDayAsync(int id, CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.DeleteCalendarDayAsync(id, token),
+    public async Task<ApiResult> DeleteCalendarDayAsync(int id, CancellationToken cancellationToken = default)
+    {
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.DeleteWorkoutDay,
+            HttpMethod.Delete,
+            $"api/v1/calendar/{id}",
+            body: null,
+            await PlanNameForDayAsync(id, cancellationToken));
+        return await runtime.SubmitAsync(
+            operation,
             () => UpdateCalendarAsync(x => x.Remove(id), cancellationToken),
-            cancellationToken);
+            cancellationToken,
+            notFoundIsSuccess: true);
+    }
 
-    public Task<ApiResult<WorkoutDayApiResponse>> MoveCalendarDayAsync(
+    public async Task<ApiResult<WorkoutDayApiResponse>> MoveCalendarDayAsync(
         int id,
         MoveWorkoutRequest request,
-        CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.MoveCalendarDayAsync(id, request, token),
-            day => UpdateCalendarAsync(x => x.Upsert(day), cancellationToken),
+        CancellationToken cancellationToken = default)
+    {
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var calendar = await runtime.Store.GetAsync<OfflineCalendar>(OfflineKeys.Calendar, cancellationToken);
+        var current = calendar?.Days.GetValueOrDefault(id);
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.MoveWorkout,
+            HttpMethod.Put,
+            $"api/v1/calendar/{id}/date",
+            JsonSerializer.Serialize(request, Json),
+            await PlanNameForDayAsync(id, cancellationToken));
+        return await runtime.SubmitAsync(
+            operation,
+            async () =>
+            {
+                var moved = (current ?? new WorkoutDayApiResponse(id, request.Date.Date, 0, false)) with
+                {
+                    Date = request.Date.Date
+                };
+                await UpdateCalendarAsync(x => x.Upsert(moved), cancellationToken);
+                return moved;
+            },
+            body => AcceptDayAsync(body, cancellationToken),
             cancellationToken);
+    }
+
+    private async Task<WorkoutDayApiResponse> AcceptDayAsync(string body, CancellationToken cancellationToken)
+    {
+        var day = JsonSerializer.Deserialize<WorkoutDayApiResponse>(body, Json)
+            ?? throw new JsonException("Empty calendar day response.");
+        await UpdateCalendarAsync(x => x.Upsert(day), cancellationToken);
+        return day;
+    }
+
+    private async Task<string?> PlanNameForDayAsync(int dayId, CancellationToken cancellationToken)
+    {
+        var day = (await runtime.Store.GetAsync<OfflineCalendar>(OfflineKeys.Calendar, cancellationToken))?
+            .Days.GetValueOrDefault(dayId);
+        return day is null
+            ? null
+            : (await runtime.Store.GetAsync<OfflinePlans>(OfflineKeys.Plans, cancellationToken))?
+                .Find(day.TrainingPlanId)?.WorkoutName;
+    }
 
     /// <summary>
     /// Сегодняшняя тренировка. Без связи собирается из сохранённых календаря и
@@ -105,6 +176,7 @@ public sealed class OfflineWorkoutLifecycleApiClient(
         CompleteScheduledWorkoutRequest request,
         CancellationToken cancellationToken = default)
     {
+        workoutDayId = await runtime.Outbox.ResolveAsync(workoutDayId, cancellationToken);
         var calendar = await runtime.Store.GetAsync<OfflineCalendar>(OfflineKeys.Calendar, cancellationToken);
         var day = calendar?.Days.GetValueOrDefault(workoutDayId);
         var plans = await runtime.Store.GetAsync<OfflinePlans>(OfflineKeys.Plans, cancellationToken) ?? OfflinePlans.Empty;
@@ -305,14 +377,26 @@ public sealed class OfflineWorkoutLifecycleApiClient(
             history => runtime.Store.SetAsync(OfflineKeys.History, history.ToList(), cancellationToken),
             cancellationToken);
 
-    public Task<ApiResult> DeleteHistoryAsync(int id, CancellationToken cancellationToken = default) =>
-        runtime.WriteAsync(
-            token => inner.DeleteHistoryAsync(id, token),
-            () => runtime.Store.UpdateAsync<List<WorkoutHistoryApiResponse>>(
+    public async Task<ApiResult> DeleteHistoryAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var originalId = id;
+        id = await runtime.Outbox.ResolveAsync(id, cancellationToken);
+        var history = await runtime.Store.GetAsync<List<WorkoutHistoryApiResponse>>(OfflineKeys.History, cancellationToken);
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.DeleteHistory,
+            HttpMethod.Delete,
+            $"api/v1/history/{id}",
+            body: null,
+            history?.FirstOrDefault(x => x.Id == id || x.Id == originalId)?.WorkoutName);
+        return await runtime.SubmitAsync(
+            operation,
+            () => runtime.UpdateCopyAsync<List<WorkoutHistoryApiResponse>>(
                 OfflineKeys.History,
-                x => (x ?? []).Where(item => item.Id != id).ToList(),
+                x => (x ?? []).Where(item => item.Id != id && item.Id != originalId).ToList(),
                 cancellationToken),
-            cancellationToken);
+            cancellationToken,
+            notFoundIsSuccess: true);
+    }
 
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 

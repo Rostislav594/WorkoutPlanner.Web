@@ -1,0 +1,13 @@
+@inject IAppText Text
+
+@* Подпись у действий, которым нужен сервер: без связи кнопки неактивны,
+   и человек должен понимать почему, а не гадать. *@
+<p class="needs-internet-hint" role="note">
+    <span class="material-symbols-rounded" aria-hidden="true">wifi_off</span>
+    <span>@(Message ?? Text["Offline_NeedsInternetHint"])</span>
+</p>
+
+@code {
+    [Parameter]
+    public string? Message { get; set; }
+}

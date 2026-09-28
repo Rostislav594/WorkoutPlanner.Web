@@ -3492,12 +3492,10 @@
   <data name="Offline_LastContact" xml:space="preserve"><value>Дані оновлено: {0}</value></data>
   <data name="Offline_LastContactUnknown" xml:space="preserve"><value>Дані ще не оновлювалися із сервера</value></data>
   <data name="Offline_WorksTitle" xml:space="preserve"><value>Працює без інтернету</value></data>
-  <data name="Offline_Works_Viewing" xml:space="preserve"><value>Тренування, плани, календар та історія — перегляд</value></data>
   <data name="Offline_Works_Progress" xml:space="preserve"><value>Графіки прогресу — останні збережені</value></data>
-  <data name="Offline_Works_Profile" xml:space="preserve"><value>Профіль і налаштування — перегляд</value></data>
-  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Блокнот і нагадування про тренування</value></data>
+  <data name="Offline_Works_Profile" xml:space="preserve"><value>Профіль, таймери відпочинку та мова</value></data>
+  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Нотатник</value></data>
   <data name="Offline_NeedsTitle" xml:space="preserve"><value>Потрібен інтернет</value></data>
-  <data name="Offline_Needs_Editing" xml:space="preserve"><value>Нові плани та вправи в них, календар, профіль</value></data>
   <data name="Offline_Needs_Account" xml:space="preserve"><value>Вхід, пароль, сеанси та видалення акаунта</value></data>
   <data name="Offline_Needs_Watch" xml:space="preserve"><value>Підключення та керування годинником</value></data>
   <data name="Offline_Needs_Media" xml:space="preserve"><value>Завантаження фото вправ і звернення до підтримки</value></data>
@@ -3522,4 +3520,20 @@
   <data name="Offline_Op_ReorderSuperset" xml:space="preserve"><value>Порядок вправ у суперсеті</value></data>
   <data name="Offline_Op_Other" xml:space="preserve"><value>Зміна</value></data>
   <data name="Offline_Works_Workout" xml:space="preserve"><value>Тренування: підходи, ваги, суперсети та завершення</value></data>
+  <data name="Offline_Op_CreatePlan" xml:space="preserve"><value>Новий план</value></data>
+  <data name="Offline_Op_RenamePlan" xml:space="preserve"><value>Перейменування плану</value></data>
+  <data name="Offline_Op_DeletePlan" xml:space="preserve"><value>Видалення плану</value></data>
+  <data name="Offline_Op_CreateExercise" xml:space="preserve"><value>Нова вправа</value></data>
+  <data name="Offline_Op_ScheduleWorkout" xml:space="preserve"><value>Тренування в календарі</value></data>
+  <data name="Offline_Op_MoveWorkout" xml:space="preserve"><value>Перенесення тренування</value></data>
+  <data name="Offline_Op_DeleteWorkoutDay" xml:space="preserve"><value>Видалення з календаря</value></data>
+  <data name="Offline_Op_DeleteHistory" xml:space="preserve"><value>Видалення з історії</value></data>
+  <data name="Offline_Op_SaveProfile" xml:space="preserve"><value>Налаштування профілю</value></data>
+  <data name="Offline_Works_Plans" xml:space="preserve"><value>Плани та вправи: створення, редагування й видалення</value></data>
+  <data name="Offline_Works_Calendar" xml:space="preserve"><value>Календар, історія та нагадування про тренування</value></data>
+  <data name="Offline_NeedsInternetHint" xml:space="preserve"><value>Для цього потрібен зв'язок із сервером — без нього кнопки неактивні.</value></data>
+  <data name="Offline_PhotoNeedsInternet" xml:space="preserve"><value>Завантажити чи видалити фото можна лише за зв'язку із сервером. Збережене фото видно й без нього.</value></data>
+  <data name="Offline_InboxReadOnly" xml:space="preserve"><value>Без зв'язку вхідні відкриті лише для читання.</value></data>
+  <data name="Offline_LogoutUnsent" xml:space="preserve"><value>Змін, не надісланих на сервер: {0}. Після виходу вони зникнуть. Підключіться до інтернету, щоб вони надіслалися, або вийдіть усе одно.</value></data>
+  <data name="Offline_LogoutAnyway" xml:space="preserve"><value>Вийти все одно</value></data>
 </root>

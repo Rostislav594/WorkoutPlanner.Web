@@ -44,6 +44,7 @@ public sealed class OutboxSync(
     public const string IdempotencyHeader = "Idempotency-Key";
     private const string OutboxKey = "outbox";
     private const string IssuesKey = "sync-issues";
+    private const string IdMapKey = "id-map";
     private const int MaximumIssues = 20;
     private const string RequestInProgressCode = "common.request_in_progress";
 
@@ -161,9 +162,42 @@ public sealed class OutboxSync(
                     break;
 
                 var operation = pending[0];
-                var outcome = await SendAsync(operation, cancellationToken);
+                var map = await GetIdMapAsync(cancellationToken);
+
+                // Родительскую запись сервер создать отказался — эта операция теряет
+                // смысл и снимается молча: о самом отказе человек уже узнал.
+                if (LocalIdMap.ReferencesRejected(operation, map))
+                {
+                    await ForgetLocalIdAsync(operation.LocalId);
+                    await RemoveAsync(operation.Id);
+                    processed++;
+                    if (operation.Id == target)
+                    {
+                        targetOutcome = new(OutboxOutcomeKind.Rejected, 404, string.Empty);
+                        break;
+                    }
+
+                    continue;
+                }
+
+                var outcome = await SendAsync(
+                    operation with
+                    {
+                        Path = LocalIdMap.Rewrite(operation.Path, map)!,
+                        Body = LocalIdMap.Rewrite(operation.Body, map)
+                    },
+                    cancellationToken);
                 if (outcome.Kind == OutboxOutcomeKind.Queued)
                     break;
+
+                if (operation.LocalId is { } localId)
+                {
+                    await RememberIdAsync(
+                        localId,
+                        outcome.Kind == OutboxOutcomeKind.Sent
+                            ? LocalIdMap.ReadCreatedId(operation.Kind, outcome.Body ?? string.Empty)
+                            : null);
+                }
 
                 if (outcome.Kind == OutboxOutcomeKind.Sent)
                 {
@@ -231,6 +265,38 @@ public sealed class OutboxSync(
             HttpStatusCode.TooManyRequests ||
         (int)status >= 500 ||
         status == HttpStatusCode.Conflict && body.Contains(RequestInProgressCode, StringComparison.Ordinal);
+
+    /// <summary>Настоящий ID для временного, если сервер его уже выдал; иначе тот же ID.</summary>
+    public async Task<int> ResolveAsync(int id, CancellationToken cancellationToken = default)
+    {
+        if (!OfflineIds.IsLocal(id))
+            return id;
+
+        var map = await GetIdMapAsync(cancellationToken);
+        return map.TryGetValue(id, out var real) && real is { } realId ? realId : id;
+    }
+
+    private async Task<IReadOnlyDictionary<int, int?>> GetIdMapAsync(CancellationToken cancellationToken) =>
+        await store.GetAsync<Dictionary<int, int?>>(IdMapKey, cancellationToken) ?? [];
+
+    private Task RememberIdAsync(int localId, int? realId) =>
+        store.UpdateAsync<Dictionary<int, int?>>(
+            IdMapKey,
+            current =>
+            {
+                var map = current ?? [];
+                if (map.Count >= LocalIdMap.Capacity)
+                    map.Remove(map.Keys.First());
+                map[localId] = realId;
+                return map;
+            });
+
+    // Созданное зависимой операцией тоже не появится на сервере.
+    private async Task ForgetLocalIdAsync(int? localId)
+    {
+        if (localId is { } id)
+            await RememberIdAsync(id, null);
+    }
 
     // Без токена отмены: ответ сервера уже получен, его нельзя потерять из-за
     // того, что ожидающий экран перестал ждать.

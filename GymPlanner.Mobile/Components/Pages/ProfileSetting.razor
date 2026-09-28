@@ -18,6 +18,7 @@
 @inject NavigationManager Navigation
 @inject ILogger<ProfileSetting> Logger
 @inject PushRegistrationCoordinator PushRegistration
+@inject OutboxSync Outbox
 
 <section class="profile-setting-page" aria-busy="@_isLoading">
     <header class="setting-header">
@@ -29,6 +30,11 @@
             <h1>@Text[Setting.TitleKey]</h1>
         </div>
     </header>
+
+    @if (IsOffline && OnlineOnlySections.Contains(Section))
+    {
+        <NeedsInternetHint />
+    }
 
     @if (_isLoading)
     {
@@ -104,7 +110,7 @@
                 }
 
                 <button class="setting-primary-action" type="button"
-                        disabled="@_isBusy" @onclick="CreatePairingCodeAsync">
+                        disabled="@(_isBusy || IsOffline)" @onclick="CreatePairingCodeAsync">
                     @(_isBusy
                         ? Text["Watch_CreatingCode"]
                         : _pairingCode is null ? Text["Watch_CreateCode"] : Text["Watch_CreateNewCode"])
@@ -119,7 +125,7 @@
                     </div>
                     <button class="watch-refresh-button" type="button"
                             aria-label="@Text["Watch_RefreshList"]"
-                            disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
+                            disabled="@(_isBusy || IsOffline)" @onclick="LoadWatchDevicesAsync">
                         <span class="material-symbols-rounded" aria-hidden="true">refresh</span>
                     </button>
                 </div>
@@ -134,7 +140,7 @@
                         <strong>@Text["Watch_ListUnavailable"]</strong>
                         <span>@Text["Watch_ListUnavailableHint"]</span>
                         <button class="watch-list-retry" type="button"
-                                disabled="@_isBusy" @onclick="LoadWatchDevicesAsync">
+                                disabled="@(_isBusy || IsOffline)" @onclick="LoadWatchDevicesAsync">
                             @Text["Watch_RetryLoad"]
                         </button>
                     </div>
@@ -159,7 +165,7 @@
                                     <small>@FormatLastSeen(device.LastSeenAtUtc)</small>
                                 </div>
                                 <button class="watch-disconnect-button" type="button"
-                                        disabled="@_isBusy"
+                                        disabled="@(_isBusy || IsOffline)"
                                         @onclick="() => ConfirmWatchRevocation(device)">
                                     @Text["Watch_Disconnect"]
                                 </button>
@@ -170,7 +176,7 @@
                     @if (ActiveWatchDevices.Count() > 1)
                     {
                         <button class="watch-disconnect-all" type="button"
-                                disabled="@_isBusy" @onclick="ConfirmAllWatchRevocations">
+                                disabled="@(_isBusy || IsOffline)" @onclick="ConfirmAllWatchRevocations">
                             @Text["Watch_DisconnectAll"]
                         </button>
                     }
@@ -191,11 +197,11 @@
                     </p>
                     <div class="watch-confirmation-actions">
                         <button class="setting-secondary-action" type="button"
-                                disabled="@_isBusy" @onclick="CancelWatchRevocation">
+                                disabled="@(_isBusy || IsOffline)" @onclick="CancelWatchRevocation">
                             @Text["Common_Cancel"]
                         </button>
                         <button class="setting-danger-action" type="button"
-                                disabled="@_isBusy" @onclick="RevokeConfirmedWatchesAsync">
+                                disabled="@(_isBusy || IsOffline)" @onclick="RevokeConfirmedWatchesAsync">
                             @(_isBusy ? Text["Watch_Disconnecting"] : Text["Watch_Disconnect"])
                         </button>
                     </div>
@@ -210,7 +216,7 @@
             <button class="push-setting-toggle" type="button" role="switch"
                     aria-label="@Text["ProfilePush_Master"]"
                     aria-checked="@(PushRegistration.IsEnabled ? "true" : "false")"
-                    disabled="@_isBusy" @onclick="TogglePushAsync">
+                    disabled="@(_isBusy || IsOffline)" @onclick="TogglePushAsync">
                 <span class="push-setting-copy">
                     <strong>@Text["ProfilePush_Master"]</strong>
                     <span aria-hidden="true">@Text[PushRegistration.IsEnabled ? "ProfilePush_Enabled" : "ProfilePush_Disabled"]</span>
@@ -233,7 +239,7 @@
         <div class="watch-settings-stack" aria-busy="@_isBusy">
             <article class="setting-card">
                 <p class="setting-description">@Text["Sessions_Description"]</p>
-                <button class="watch-list-retry" disabled="@_isBusy" @onclick="LoadSessionsAsync">@Text["Sessions_Refresh"]</button>
+                <button class="watch-list-retry" disabled="@(_isBusy || IsOffline)" @onclick="LoadSessionsAsync">@Text["Sessions_Refresh"]</button>
                 @if (_sessionError is not null) { <p class="idea-error" role="alert">@_sessionError</p> }
                 @if (_sessionMessage is not null) { <p class="watch-success" role="status">@_sessionMessage</p> }
                 @if (_sessionsLoaded && _sessions.Count == 0) { <p class="setting-description">@Text["Sessions_Empty"]</p> }
@@ -247,14 +253,14 @@
                                 <span>@Text.Format("Sessions_Created", SessionDate(session.CreatedAtUtc))</span>
                                 @if (session.LastRefreshedAtUtc is { } refreshed) { <span>@Text.Format("Sessions_Refreshed", SessionDate(refreshed))</span> }
                             </div>
-                            <button class="watch-disconnect-button" disabled="@_isBusy" @onclick="() => _pendingSession = session">@Text["Sessions_End"]</button>
+                            <button class="watch-disconnect-button" disabled="@(_isBusy || IsOffline)" @onclick="() => _pendingSession = session">@Text["Sessions_End"]</button>
                             @if (_pendingSession?.Id == session.Id)
                             {
                                 <div class="session-confirmation">
                                     <p>@Text.Format(session.IsCurrent ? "Sessions_ConfirmCurrent" : "Sessions_Confirm", SessionName(session))</p>
                                     <div class="watch-confirmation-actions">
-                                        <button class="setting-secondary-action" disabled="@_isBusy" @onclick="() => _pendingSession = null">@Text["Common_Cancel"]</button>
-                                        <button class="setting-danger-action" disabled="@_isBusy" @onclick="RevokeSessionAsync">@Text["Sessions_End"]</button>
+                                        <button class="setting-secondary-action" disabled="@(_isBusy || IsOffline)" @onclick="() => _pendingSession = null">@Text["Common_Cancel"]</button>
+                                        <button class="setting-danger-action" disabled="@(_isBusy || IsOffline)" @onclick="RevokeSessionAsync">@Text["Sessions_End"]</button>
                                     </div>
                                 </div>
                             }
@@ -274,11 +280,11 @@
     }
     else if (Section == "change-password")
     {
-        <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>@Text["Profile_CurrentPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>@Text["Profile_NewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>@Text["Profile_ConfirmNewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@_isBusy">@(_isBusy ? Text["Profile_PasswordBusy"] : Text["ProfileItem_ChangePassword"])</button></EditForm>
+        <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>@Text["Profile_CurrentPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>@Text["Profile_NewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>@Text["Profile_ConfirmNewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@(_isBusy || IsOffline)">@(_isBusy ? Text["Profile_PasswordBusy"] : Text["ProfileItem_ChangePassword"])</button></EditForm>
     }
     else if (Section == "report-problem")
     {
-        <div class="setting-card"><label class="support-field">@Text["Profile_SupportQuestion"]<textarea maxlength="2000" placeholder="@Text["Profile_SupportPlaceholder"]" @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">@Text["ProfileSetting_SupportHint"]</p><button class="setting-secondary-action" type="button" disabled="@_isBusy" @onclick="PickScreenshotAsync">@Text["Profile_AddScreenshot"]</button>@if (_screenshot is not null) { <p class="setting-description">@Text.Format("ProfileSetting_ScreenshotAttached", _screenshot.FileName)</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? Text["Profile_Sending"] : Text["Profile_Send"])</button></div>
+        <div class="setting-card"><label class="support-field">@Text["Profile_SupportQuestion"]<textarea maxlength="2000" placeholder="@Text["Profile_SupportPlaceholder"]" @bind="_supportMessage" @bind:event="oninput"></textarea></label><p class="setting-description">@Text["ProfileSetting_SupportHint"]</p><button class="setting-secondary-action" type="button" disabled="@(_isBusy || IsOffline)" @onclick="PickScreenshotAsync">@Text["Profile_AddScreenshot"]</button>@if (_screenshot is not null) { <p class="setting-description">@Text.Format("ProfileSetting_ScreenshotAttached", _screenshot.FileName)</p> }<button class="setting-primary-action" type="button" disabled="@(_isBusy || _supportMessage.Trim().Length < 10)" @onclick="SubmitSupportAsync">@(_isBusy ? Text["Profile_Sending"] : Text["Profile_Send"])</button></div>
     }
     else if (Section == "suggest-idea")
     {
@@ -325,15 +331,35 @@
     }
     else if (Section == "logout")
     {
-        <article class="setting-card"><p class="setting-description">@Text["ProfileSetting_LogoutHint"]</p><button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="LogoutAsync">@Text["ProfileItem_Logout"]</button></article>
+        <article class="setting-card">
+            <p class="setting-description">@Text["ProfileSetting_LogoutHint"]</p>
+            @if (_unsentChanges > 0)
+            {
+                @* Выход стирает данные телефона, а вместе с ними и то, что не дошло до сервера. *@
+                <p class="delete-confirmation" role="alert">@Text.Format("Offline_LogoutUnsent", _unsentChanges)</p>
+            }
+            <button class="setting-primary-action" type="button" disabled="@(_isBusy || IsOffline)" @onclick="LogoutAsync">
+                @Text[_unsentChanges > 0 ? "Offline_LogoutAnyway" : "ProfileItem_Logout"]
+            </button>
+        </article>
     }
     else if (Section == "delete-account")
     {
-        <article class="setting-card setting-card--danger"><span class="setting-icon material-symbols-rounded" aria-hidden="true">warning</span><h2>@Text["Profile_DeleteAccountTitle"]</h2><p>@Text["ProfileSetting_DeleteWarning"]</p>@if (!_deleteConfirmed) { <button class="setting-danger-action" type="button" @onclick="() => _deleteConfirmed = true">@Text["Common_Continue"]</button> } else { <p class="delete-confirmation">@Text["ProfileSetting_DeleteIrreversible"]</p><button class="setting-danger-action" type="button" disabled="@_isBusy" @onclick="DeleteAccountAsync">@(_isBusy ? Text["Common_Deleting"] : Text["Profile_DeleteForever"])</button> }</article>
+        <article class="setting-card setting-card--danger"><span class="setting-icon material-symbols-rounded" aria-hidden="true">warning</span><h2>@Text["Profile_DeleteAccountTitle"]</h2><p>@Text["ProfileSetting_DeleteWarning"]</p>@if (!_deleteConfirmed) { <button class="setting-danger-action" type="button" @onclick="() => _deleteConfirmed = true">@Text["Common_Continue"]</button> } else { <p class="delete-confirmation">@Text["ProfileSetting_DeleteIrreversible"]</p><button class="setting-danger-action" type="button" disabled="@(_isBusy || IsOffline)" @onclick="DeleteAccountAsync">@(_isBusy ? Text["Common_Deleting"] : Text["Profile_DeleteForever"])</button> }</article>
     }
 </section>
 
 @code {
+    // Разделы, которым нужен сервер: без связи их кнопки неактивны и подписаны.
+    private static readonly HashSet<string> OnlineOnlySections =
+    [
+        "devices", "notifications", "sessions", "change-password",
+        "report-problem", "suggest-idea", "logout", "delete-account"
+    ];
+
+    [CascadingParameter(Name = "IsOffline")]
+    public bool IsOffline { get; set; }
+
     // Значение остаётся русским: оно уходит на сервер и хранится в профиле.
     // Переводится только подпись, которую видит пользователь.
     private IReadOnlyList<SystemChoiceOption> GenderOptions =>
@@ -599,7 +625,9 @@
     private async Task ChangePasswordAsync() { await RunAsync(async () => { var r = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword)); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
     private async Task PickScreenshotAsync() { var r = await PhotoPicker.PickAsync(MobilePhotoSource.Library); if (r.Succeeded) _screenshot = r.Photo; else if (!r.Cancelled) _errors.AddRange(r.Errors); }
     private async Task SubmitSupportAsync() { await RunAsync(async () => { var r = await SupportClient.CreateAsync(_supportMessage.Trim(), _screenshot, GetDeviceContext()); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
-    private async Task LogoutAsync() { await RunAsync(async () => { var r = await Authentication.LogoutAsync(); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/account/login", replace: true); }); }
+    private int _unsentChanges;
+
+    private async Task LogoutAsync() { await RunAsync(async () => { if (_unsentChanges == 0) { await Outbox.FlushAsync(); _unsentChanges = (await Outbox.GetPendingAsync()).Count; if (_unsentChanges > 0) return; } var r = await Authentication.LogoutAsync(); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/account/login", replace: true); }); }
     private async Task DeleteAccountAsync() { await RunAsync(async () => { var r = await ProfileClient.DeleteAccountAsync(); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
     private async Task RunAsync(Func<Task> action) { if (_isBusy) return; _isBusy = true; _errors.Clear(); try { await action(); } finally { _isBusy = false; } }
     private SupportDeviceContext GetDeviceContext() { try { return new(AppInfo.Current.VersionString, DeviceInfo.Current.Platform.ToString(), DeviceInfo.Current.VersionString, $"{DeviceInfo.Current.Manufacturer} {DeviceInfo.Current.Model}".Trim()); } catch (Exception exception) { Logger.LogDebug(exception, "Device context is unavailable for a support ticket."); return new(null, null, null, null); } }

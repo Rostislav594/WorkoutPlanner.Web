@@ -383,7 +383,7 @@
                     <span>@Text["WorkoutDetails_PhotoTitle"]</span>
                     <h2 id="photo-editor-title">@_photoExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus disabled="@_photoBusy" @onclick="ClosePhoto">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus disabled="@(_photoBusy || IsOffline)" @onclick="ClosePhoto">×</button>
             </div>
 
             <div class="modal-body">
@@ -413,12 +413,16 @@
 
                 <p class="photo-hint">@Text["WorkoutDetails_PhotoHint"]</p>
 
+                @if (IsOffline)
+                {
+                    <NeedsInternetHint Message="@Text["Offline_PhotoNeedsInternet"]" />
+                }
                 <div class="photo-actions">
-                    <button class="primary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
+                    <button class="primary-button" type="button" disabled="@(_photoBusy || IsOffline)" @onclick="() => PickPhotoAsync(MobilePhotoSource.Library)">
                         <span class="material-symbols-rounded" aria-hidden="true">photo_library</span>
                         @Text["WorkoutDetails_PickPhoto"]
                     </button>
-                    <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
+                    <button class="secondary-button" type="button" disabled="@(_photoBusy || IsOffline)" @onclick="() => PickPhotoAsync(MobilePhotoSource.Camera)">
                         <span class="material-symbols-rounded" aria-hidden="true">photo_camera</span>
                         @Text["WorkoutDetails_TakePhoto"]
                     </button>
@@ -427,12 +431,12 @@
                     {
                         @if (_confirmPhotoDelete)
                         {
-                            <button class="secondary-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = false">@Text["WorkoutDetails_CancelDelete"]</button>
-                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="DeletePhotoAsync">@Text["History_DeleteConfirm"]</button>
+                            <button class="secondary-button" type="button" disabled="@(_photoBusy || IsOffline)" @onclick="() => _confirmPhotoDelete = false">@Text["WorkoutDetails_CancelDelete"]</button>
+                            <button class="danger-button" type="button" disabled="@(_photoBusy || IsOffline)" @onclick="DeletePhotoAsync">@Text["History_DeleteConfirm"]</button>
                         }
                         else
                         {
-                            <button class="danger-button" type="button" disabled="@_photoBusy" @onclick="() => _confirmPhotoDelete = true">@Text["WorkoutDetails_DeletePhoto"]</button>
+                            <button class="danger-button" type="button" disabled="@(_photoBusy || IsOffline)" @onclick="() => _confirmPhotoDelete = true">@Text["WorkoutDetails_DeletePhoto"]</button>
                         }
                     }
 
@@ -521,6 +525,9 @@
 }
 
 @code {
+    // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
+    [CascadingParameter(Name = "IsOffline")]
+    public bool IsOffline { get; set; }
     [Parameter] public int Id { get; set; }
     private TrainingPlanApiResponse? _plan;
     private readonly List<ExerciseDefinitionApiResponse> _definitions = [];

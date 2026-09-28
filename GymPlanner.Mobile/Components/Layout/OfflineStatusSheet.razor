@@ -122,7 +122,8 @@
     private static readonly string[] WorksOffline =
     [
         "Offline_Works_Workout",
-        "Offline_Works_Viewing",
+        "Offline_Works_Plans",
+        "Offline_Works_Calendar",
         "Offline_Works_Progress",
         "Offline_Works_Profile",
         "Offline_Works_Notebook"
@@ -130,7 +131,6 @@
 
     private static readonly string[] NeedsInternet =
     [
-        "Offline_Needs_Editing",
         "Offline_Needs_Account",
         "Offline_Needs_Watch",
         "Offline_Needs_Media",
@@ -178,6 +178,15 @@
             OutboxKinds.UpdateExercise => "Offline_Op_UpdateExercise",
             OutboxKinds.DeleteExercise => "Offline_Op_DeleteExercise",
             OutboxKinds.ReorderSuperset => "Offline_Op_ReorderSuperset",
+            OutboxKinds.CreatePlan => "Offline_Op_CreatePlan",
+            OutboxKinds.RenamePlan => "Offline_Op_RenamePlan",
+            OutboxKinds.DeletePlan => "Offline_Op_DeletePlan",
+            OutboxKinds.CreateExercise => "Offline_Op_CreateExercise",
+            OutboxKinds.ScheduleWorkout => "Offline_Op_ScheduleWorkout",
+            OutboxKinds.MoveWorkout => "Offline_Op_MoveWorkout",
+            OutboxKinds.DeleteWorkoutDay => "Offline_Op_DeleteWorkoutDay",
+            OutboxKinds.DeleteHistory => "Offline_Op_DeleteHistory",
+            OutboxKinds.SaveProfile or OutboxKinds.SaveRestTimers or OutboxKinds.SaveLanguage => "Offline_Op_SaveProfile",
             _ => "Offline_Op_Other"
         }];
         return string.IsNullOrWhiteSpace(label) ? title : $"{title} · {label}";
