@@ -28,6 +28,15 @@ public interface IWorkoutLifecycleApiClient
     Task<ApiResult<WorkoutHistoryApiResponse>> CompleteTodayWorkoutAsync(
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Завершает день календаря одним запросом вместе с итогами подходов.
+    /// Без связи результат сохраняется на телефоне и уходит на сервер позже.
+    /// </summary>
+    Task<ApiResult<WorkoutHistoryApiResponse>> CompleteScheduledWorkoutAsync(
+        int workoutDayId,
+        CompleteScheduledWorkoutRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<ApiResult<CompleteFreeWorkoutResponse>> CompleteFreeWorkoutAsync(
         CompleteFreeWorkoutRequest request,
         CancellationToken cancellationToken = default);

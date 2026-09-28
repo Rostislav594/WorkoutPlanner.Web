@@ -37,11 +37,19 @@ public sealed class MobileAuthenticationService : IDisposable
         _authenticationClient = new HttpClient(
             MobileHttpMessageHandlerFactory.Create())
         {
-            BaseAddress = options.BaseAddress
+            BaseAddress = options.BaseAddress,
+            // Без связи обновление токена не должно висеть стандартные 100 секунд.
+            Timeout = TimeSpan.FromSeconds(15)
         };
     }
 
     public event Action? AuthenticationChanged;
+
+    /// <summary>
+    /// Человек сам вышел из аккаунта (адрес вышедшего аккаунта). В отличие от
+    /// истёкшей сессии, его данные на телефоне больше не нужны.
+    /// </summary>
+    public event Action<string>? SignedOut;
 
     public bool IsAuthenticated => _tokens is not null;
     public string? CurrentEmail => _tokens?.Email;
@@ -171,6 +179,7 @@ public sealed class MobileAuthenticationService : IDisposable
     public async Task<MobileAuthResult> LogoutAsync(
         CancellationToken cancellationToken = default)
     {
+        var email = CurrentEmail;
         var accessToken = await GetValidAccessTokenAsync(cancellationToken);
         if (accessToken is null)
         {
@@ -201,6 +210,8 @@ public sealed class MobileAuthenticationService : IDisposable
         }
 
         await ClearAsync(cancellationToken);
+        if (email is not null)
+            SignedOut?.Invoke(email);
         return MobileAuthResult.Success;
     }
 
@@ -233,8 +244,17 @@ public sealed class MobileAuthenticationService : IDisposable
                 cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                await ClearCoreAsync(cancellationToken);
-                AuthenticationChanged?.Invoke();
+                // Сессию завершает только явный отказ сервера. Сбой самого сервера
+                // (5xx, прокси) не повод выкидывать человека: офлайн-данные и очередь
+                // изменений продолжают работать, а токен обновится при следующей попытке.
+                if (response.StatusCode is HttpStatusCode.BadRequest or
+                    HttpStatusCode.Unauthorized or
+                    HttpStatusCode.Forbidden)
+                {
+                    await ClearCoreAsync(cancellationToken);
+                    AuthenticationChanged?.Invoke();
+                }
+
                 return false;
             }
 
@@ -259,6 +279,11 @@ public sealed class MobileAuthenticationService : IDisposable
         }
         catch (HttpRequestException)
         {
+            return false;
+        }
+        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // Таймаут HttpClient: сервер недоступен, токены сохраняем.
             return false;
         }
         catch (JsonException)

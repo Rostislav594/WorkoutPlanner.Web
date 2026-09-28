@@ -181,6 +181,38 @@ public sealed class WorkoutLifecycleApiClient(HttpClient client)
         }
     }
 
+    public async Task<ApiResult<WorkoutHistoryApiResponse>> CompleteScheduledWorkoutAsync(
+        int workoutDayId,
+        CompleteScheduledWorkoutRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await client.PostAsJsonAsync(
+                $"api/v1/workouts/days/{workoutDayId}/complete",
+                request,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new(
+                    null,
+                    await MobileApiErrorReader.ReadAsync(response, cancellationToken));
+            }
+
+            var history = await response.Content.ReadFromJsonAsync<
+                WorkoutHistoryApiResponse>(cancellationToken);
+            return history is null
+                ? ApiResult<WorkoutHistoryApiResponse>.Failure(
+                    ApiErrorMessages.EmptyResponse())
+                : ApiResult<WorkoutHistoryApiResponse>.Success(history);
+        }
+        catch (HttpRequestException)
+        {
+            return ApiResult<WorkoutHistoryApiResponse>.Failure(
+                ApiErrorMessages.NetworkUnavailable());
+        }
+    }
+
     public async Task<ApiResult<CompleteFreeWorkoutResponse>> CompleteFreeWorkoutAsync(
         CompleteFreeWorkoutRequest request,
         CancellationToken cancellationToken = default)

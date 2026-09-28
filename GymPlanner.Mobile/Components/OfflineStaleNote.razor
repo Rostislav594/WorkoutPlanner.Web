@@ -1,0 +1,21 @@
+@implements IDisposable
+@inject OfflineStatusService Status
+@inject IAppText Text
+
+@* Подпись для данных, которые считает сервер: без связи экран показывает
+   последнюю сохранённую версию, и человеку стоит об этом знать. *@
+@if (Status.IsOffline)
+{
+    <p class="offline-stale-note">
+        <span class="material-symbols-rounded" aria-hidden="true">cloud_off</span>
+        <span>@Text["Offline_StaleNote"]</span>
+    </p>
+}
+
+@code {
+    protected override void OnInitialized() => Status.Changed += OnStatusChanged;
+
+    private void OnStatusChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Status.Changed -= OnStatusChanged;
+}

@@ -267,6 +267,79 @@
     font-size: 22px;
 }
 
+/* Значок пропавшей связи: та же кнопка-иконка, что профиль, но в цвете
+   предупреждения. Появляется только когда сервер недоступен. */
+.offline-indicator {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    box-shadow: none;
+    color: var(--color-warning);
+    cursor: pointer;
+    transition: background-color .18s ease, color .18s ease;
+    animation: offline-indicator-in 220ms ease-out;
+    position: relative;
+}
+
+.offline-indicator--pending {
+    color: var(--color-text-muted);
+}
+
+.offline-indicator--problem {
+    color: var(--color-danger-soft, var(--color-danger));
+}
+
+/* Число изменений в очереди — вспомогательное: полное описание в aria-label кнопки. */
+.offline-indicator__count {
+    position: absolute;
+    top: 6px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    /* Тёмная цифра на оранжевом читается (≈7.9:1), белая — нет. */
+    color: var(--color-bg);
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 16px;
+    text-align: center;
+}
+
+.offline-indicator:hover,
+.offline-indicator:active {
+    background: var(--color-surface-hover);
+}
+
+.offline-indicator:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.offline-indicator .material-symbols-rounded {
+    font-size: 22px;
+}
+
+@keyframes offline-indicator-in {
+    from {
+        opacity: 0;
+        transform: scale(.85);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .offline-indicator {
+        animation: none;
+    }
+}
+
 .connection-mode {
     color: var(--color-accent);
     font-size: 12px;

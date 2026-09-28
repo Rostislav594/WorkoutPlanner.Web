@@ -37,16 +37,39 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>(
 			serviceProvider => serviceProvider.GetRequiredService<Authentication.MobileAuthenticationStateProvider>());
 		builder.Services.AddAuthorizationCore();
-		builder.Services.AddSingleton<Api.IProfileApiClient, Api.ProfileApiClient>();
-		builder.Services.AddSingleton<Api.IWorkoutApiClient, Api.WorkoutApiClient>();
+		// Офлайн-режим: экраны работают с обёртками, которые без связи отдают
+		// сохранённую копию; сами HTTP-клиенты остаются внутри них.
+		builder.Services.AddSingleton(new Offline.OfflineDocumentStore(
+			Path.Combine(FileSystem.AppDataDirectory, "offline")));
+		builder.Services.AddSingleton<Offline.ServerReachability>();
+		builder.Services.AddSingleton(serviceProvider => new Offline.OutboxSync(
+			serviceProvider.GetRequiredService<Offline.OfflineDocumentStore>(),
+			serviceProvider.GetRequiredService<HttpClient>(),
+			serviceProvider.GetRequiredService<Offline.ServerReachability>(),
+			serviceProvider.GetRequiredService<TimeProvider>()));
+		builder.Services.AddSingleton<OfflineMode.OutboxResultHandler>();
+		builder.Services.AddSingleton<OfflineMode.OfflineRuntime>();
+		builder.Services.AddSingleton<OfflineMode.ConnectivityMonitor>();
+		builder.Services.AddSingleton<OfflineMode.OfflineStatusService>();
+		builder.Services.AddSingleton<OfflineMode.OfflineWarmup>();
+		builder.Services.AddSingleton<OfflineMode.ActiveWorkoutSessionStore>();
+		builder.Services.AddSingleton<Api.ProfileApiClient>();
+		builder.Services.AddSingleton<Api.WorkoutApiClient>();
+		builder.Services.AddSingleton<Api.WorkoutLifecycleApiClient>();
+		builder.Services.AddSingleton<Api.ProgressApiClient>();
+		builder.Services.AddSingleton<Api.WelcomeGuideApiClient>();
+		builder.Services.AddSingleton<Api.ExercisePhotoApiClient>();
+		builder.Services.AddSingleton<Api.InboxApiClient>();
+		builder.Services.AddSingleton<Api.IProfileApiClient, OfflineMode.OfflineProfileApiClient>();
+		builder.Services.AddSingleton<Api.IWorkoutApiClient, OfflineMode.OfflineWorkoutApiClient>();
 		builder.Services.AddSingleton<Api.IWorkoutLifecycleApiClient,
-			Api.WorkoutLifecycleApiClient>();
-		builder.Services.AddSingleton<Api.IProgressApiClient, Api.ProgressApiClient>();
-		builder.Services.AddSingleton<Api.IWelcomeGuideApiClient, Api.WelcomeGuideApiClient>();
+			OfflineMode.OfflineWorkoutLifecycleApiClient>();
+		builder.Services.AddSingleton<Api.IProgressApiClient, OfflineMode.OfflineProgressApiClient>();
+		builder.Services.AddSingleton<Api.IWelcomeGuideApiClient, OfflineMode.OfflineWelcomeGuideApiClient>();
 		builder.Services.AddSingleton<Api.IExercisePhotoApiClient,
-			Api.ExercisePhotoApiClient>();
+			OfflineMode.OfflineExercisePhotoApiClient>();
 		builder.Services.AddSingleton<Api.ISupportApiClient, Api.SupportApiClient>();
-		builder.Services.AddSingleton<Api.IInboxApiClient, Api.InboxApiClient>();
+		builder.Services.AddSingleton<Api.IInboxApiClient, OfflineMode.OfflineInboxApiClient>();
 		builder.Services.AddSingleton<Api.IWatchManagementApiClient,
 			Api.WatchManagementApiClient>();
 		builder.Services.AddSingleton<Photos.IMobilePhotoPicker, Photos.MauiPhotoPicker>();
@@ -94,7 +117,17 @@ public static class MauiProgram
 			{
 				InnerHandler = languageHandler
 			};
-			return new HttpClient(handler) { BaseAddress = options.BaseAddress };
+			// Внешний слой ограничивает время запроса и отмечает, отвечает ли сервер.
+			var reachabilityHandler = new Offline.ReachabilityHttpHandler(
+				serviceProvider.GetRequiredService<Offline.ServerReachability>())
+			{
+				InnerHandler = handler
+			};
+			return new HttpClient(reachabilityHandler)
+			{
+				BaseAddress = options.BaseAddress,
+				Timeout = Timeout.InfiniteTimeSpan
+			};
 		});
 
 #if DEBUG
@@ -117,6 +150,11 @@ public static class MauiProgram
 		// уведомлений, выбора фото и системных списков.
 		Localization.AppTexts.Use(
 			app.Services.GetRequiredService<WorkoutPlanner.Localization.IAppText>());
+		// Офлайн-режим запускается последним: подкачке данных нужен уже выбранный язык.
+		app.Services.GetRequiredService<OfflineMode.ConnectivityMonitor>().Start();
+		app.Services.GetRequiredService<Offline.OutboxSync>().ResultHandler =
+			app.Services.GetRequiredService<OfflineMode.OutboxResultHandler>();
+		app.Services.GetRequiredService<OfflineMode.OfflineWarmup>().Start();
 
 		return app;
 	}

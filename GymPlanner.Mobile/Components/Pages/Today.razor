@@ -11,6 +11,9 @@
 @inject NavigationManager Navigation
 @inject IAppText Text
 @inject MobileBackNavigationService BackNavigation
+@inject ActiveWorkoutSessionStore WorkoutSession
+@inject MobileLifecycleService Lifecycle
+@inject TimeProvider Clock
 
 <section class="today-page" aria-busy="@_isLoading">
     <header class="today-header">
@@ -873,8 +876,59 @@
     protected override async Task OnInitializedAsync()
     {
         _swapAnimation = new SupersetSwapAnimation(JS);
+        Lifecycle.Suspended += SaveSessionOnSuspend;
         _ = RunRestTimerLoopAsync();
         await LoadAsync();
+    }
+
+    // Идущая тренировка хранится на телефоне: закрытое системой приложение
+    // не должно терять ни одного подхода.
+    private string? _savedSessionJson;
+
+    private (int PlanId, int? DayId)? ActiveSessionKey =>
+        _completedHistory is not null || _isLoading ? null
+        : _isFreeWorkout && _freeDraftPlanId is { } freePlanId ? (freePlanId, null)
+        : _workout is { } workout ? (workout.TrainingPlan.Id, workout.Day.Id)
+        : null;
+
+    private async Task SaveSessionIfChangedAsync()
+    {
+        if (ActiveSessionKey is not { } key)
+            return;
+
+        var exercises = _exercises.Where(x => x.Id >= 0 || OfflineIds.IsLocal(x.Id)).Select(x => x.ToResponse()).ToList();
+        var json = System.Text.Json.JsonSerializer.Serialize(exercises);
+        if (json == _savedSessionJson)
+            return;
+
+        _savedSessionJson = json;
+        await WorkoutSession.SaveAsync(key.PlanId, key.DayId, exercises);
+    }
+
+    private void SaveSessionOnSuspend() => _ = InvokeAsync(SaveSessionIfChangedAsync);
+
+    /// <summary>Возвращает подходы, отмеченные до перезапуска приложения.</summary>
+    private async Task RestoreSessionAsync(int planId, int? dayId)
+    {
+        var snapshot = await WorkoutSession.LoadAsync(planId, dayId);
+        if (snapshot is null)
+            return;
+
+        var saved = snapshot.Exercises.ToDictionary(x => x.Id);
+        foreach (var exercise in _exercises)
+        {
+            if (saved.TryGetValue(exercise.Id, out var source))
+                exercise.UpdateFrom(source);
+        }
+
+        _savedSessionJson = System.Text.Json.JsonSerializer.Serialize(
+            _exercises.Select(x => x.ToResponse()).ToList());
+    }
+
+    private async Task ForgetSessionAsync()
+    {
+        _savedSessionJson = null;
+        await WorkoutSession.ClearAsync();
     }
 
     private async Task BeginExerciseHold(int exerciseId)
@@ -1132,6 +1186,7 @@
         _freeDraftPlanId = null;
         try
         {
+            await ForgetSessionAsync();
             await LifecycleClient.DiscardFreeWorkoutDraftAsync(_disposeCts.Token);
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -1440,6 +1495,7 @@
                     _workout = null;
                     _exercises.Clear();
                     _exercises.AddRange(plan.Exercises.Select(ExerciseDraft.From));
+                    await RestoreSessionAsync(draft.TrainingPlanId, null);
                     return;
                 }
             }
@@ -1463,6 +1519,7 @@
             {
                 _exercises.AddRange(_workout.TrainingPlan.Exercises
                     .Select(ExerciseDraft.From));
+                await RestoreSessionAsync(_workout.TrainingPlan.Id, _workout.Day.Id);
             }
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -1496,21 +1553,19 @@
         _isBusy = true;
         try
         {
-            foreach (var exercise in _exercises)
-            {
-                var saveResult = await WorkoutClient.UpdateExerciseAsync(
-                    exercise.Id,
-                    exercise.ToRequest(),
-                    _disposeCts.Token);
-                if (!saveResult.Succeeded)
-                {
-                    _errors.AddRange(saveResult.Errors);
-                    return;
-                }
-                exercise.UpdateFrom(saveResult.Value!);
-            }
-
-            var completionResult = await LifecycleClient.CompleteTodayWorkoutAsync(
+            // Итоги и отметка о завершении уходят одним запросом: сервер сохранит
+            // их вместе или не сохранит вовсе. Без связи запрос ждёт в очереди.
+            var request = new CompleteScheduledWorkoutRequest(
+                Clock.GetLocalNow().DateTime,
+                _exercises
+                    .Select(exercise => new CompletedExerciseRequest(
+                        exercise.Id,
+                        exercise.Status,
+                        exercise.ToRequest().Sets!))
+                    .ToArray());
+            var completionResult = await LifecycleClient.CompleteScheduledWorkoutAsync(
+                _workout.Day.Id,
+                request,
                 _disposeCts.Token);
             if (!completionResult.Succeeded)
             {
@@ -1519,7 +1574,10 @@
             }
 
             _completedHistory = completionResult.Value;
-            _completionMessage = Text["Today_ResultsSaved"];
+            _completionMessage = OfflineIds.IsLocal(_completedHistory!.Id)
+                ? Text["Today_SavedOffline"]
+                : Text["Today_ResultsSaved"];
+            await ForgetSessionAsync();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -1903,7 +1961,8 @@
                 new CompleteFreeWorkoutRequest(
                     saveAsTemplate,
                     templateName,
-                    _exercises.Select(x => x.ToRequest()).ToArray()),
+                    _exercises.Select(x => x.ToRequest()).ToArray(),
+                    Clock.GetLocalNow().DateTime),
                 _disposeCts.Token);
             if (!result.Succeeded)
             {
@@ -1915,9 +1974,12 @@
             _showTemplateNamePrompt = false;
             BackNavigation.SetBackInterceptor(null);
             _completedHistory = result.Value!.History;
-            _completionMessage = saveAsTemplate
-                ? Text.Format("Today_SavedWithTemplate", templateName ?? string.Empty)
-                : Text["Today_SavedHistoryOnly"];
+            _completionMessage = OfflineIds.IsLocal(_completedHistory.Id)
+                ? Text["Today_SavedOffline"]
+                : saveAsTemplate
+                    ? Text.Format("Today_SavedWithTemplate", templateName ?? string.Empty)
+                    : Text["Today_SavedHistoryOnly"];
+            await ForgetSessionAsync();
             _isFreeWorkout = false;
             _exercises.Clear();
             // Черновик на сервере удаляется вместе с записью в историю, одной
@@ -2037,6 +2099,7 @@
         if (firstRender)
             await _swapAnimation.PrepareAsync();
         await _swapAnimation.PlayPendingAsync();
+        await SaveSessionIfChangedAsync();
     }
 
     private string? SwapClass(ExerciseGroup group) =>
@@ -2139,6 +2202,7 @@
         CancelExerciseHold();
         CancelFinishHold();
         CancelSupersetHold();
+        Lifecycle.Suspended -= SaveSessionOnSuspend;
         BackNavigation.SetBackInterceptor(null);
         _disposeCts.Cancel();
         _disposeCts.Dispose();
@@ -2210,6 +2274,22 @@
                 x.Weight,
                 x.Completed,
                 x.IsWarmup)).ToArray(),
+            SupersetGroupId);
+
+        public ExerciseApiResponse ToResponse() => new(
+            Id,
+            Name,
+            Sets.Count,
+            Status,
+            TrainingPlanId,
+            ExerciseDefinitionId,
+            HasPhoto,
+            Sets.Select(x => new ExerciseSetApiResponse(
+                x.SetNumber,
+                x.Repetitions,
+                x.Weight,
+                x.Completed,
+                x.IsWarmup)).ToList(),
             SupersetGroupId);
 
         public ExerciseDraft Clone()

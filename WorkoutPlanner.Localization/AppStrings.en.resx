@@ -3481,4 +3481,45 @@
   <data name="ProfilePush_Updating" xml:space="preserve"><value>Saving setting…</value></data>
   <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Push notifications could not be connected on this device. Try again later.</value></data>
   <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Could not change the setting. Check your connection and try again.</value></data>
+  <data name="Offline_IndicatorLabel" xml:space="preserve"><value>No connection to the server. Open offline mode</value></data>
+  <data name="Offline_NoticeTitle" xml:space="preserve"><value>No connection to the server</value></data>
+  <data name="Offline_NoticeBody" xml:space="preserve"><value>Showing saved data.</value></data>
+  <data name="Offline_NoticeMore" xml:space="preserve"><value>Details</value></data>
+  <data name="Offline_SheetEyebrow" xml:space="preserve"><value>Connection</value></data>
+  <data name="Offline_SheetTitle" xml:space="preserve"><value>Offline mode</value></data>
+  <data name="Offline_StatusOffline" xml:space="preserve"><value>No connection to the server</value></data>
+  <data name="Offline_StatusOnline" xml:space="preserve"><value>Connected to the server</value></data>
+  <data name="Offline_LastContact" xml:space="preserve"><value>Data updated: {0}</value></data>
+  <data name="Offline_LastContactUnknown" xml:space="preserve"><value>Data has not been updated from the server yet</value></data>
+  <data name="Offline_WorksTitle" xml:space="preserve"><value>Works without internet</value></data>
+  <data name="Offline_Works_Viewing" xml:space="preserve"><value>Workouts, plans, calendar and history — viewing</value></data>
+  <data name="Offline_Works_Progress" xml:space="preserve"><value>Progress charts — the last saved ones</value></data>
+  <data name="Offline_Works_Profile" xml:space="preserve"><value>Profile and settings — viewing</value></data>
+  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Notebook and workout reminders</value></data>
+  <data name="Offline_NeedsTitle" xml:space="preserve"><value>Needs internet</value></data>
+  <data name="Offline_Needs_Editing" xml:space="preserve"><value>New plans and their exercises, the calendar, your profile</value></data>
+  <data name="Offline_Needs_Account" xml:space="preserve"><value>Sign-in, password, sessions and account deletion</value></data>
+  <data name="Offline_Needs_Watch" xml:space="preserve"><value>Connecting and managing your watch</value></data>
+  <data name="Offline_Needs_Media" xml:space="preserve"><value>Uploading exercise photos and contacting support</value></data>
+  <data name="Offline_Needs_Inbox" xml:space="preserve"><value>Inbox actions and clearing progress</value></data>
+  <data name="Offline_SyncHint" xml:space="preserve"><value>When the connection is back, changes are sent by themselves — no need to tap anything.</value></data>
+  <data name="Offline_CheckConnection" xml:space="preserve"><value>Check connection</value></data>
+  <data name="Offline_Checking" xml:space="preserve"><value>Checking…</value></data>
+  <data name="Offline_StaleNote" xml:space="preserve"><value>Saved data — it will update once you are back online.</value></data>
+  <data name="Today_SavedOffline" xml:space="preserve"><value>The workout is saved on your phone and will be sent to the server once you are back online.</value></data>
+  <data name="Offline_IndicatorPending" xml:space="preserve"><value>Changes waiting to be sent: {0}. Open offline mode</value></data>
+  <data name="Offline_IndicatorProblem" xml:space="preserve"><value>Some changes were not saved. Open details</value></data>
+  <data name="Offline_IssueNoticeTitle" xml:space="preserve"><value>A change was not saved</value></data>
+  <data name="Offline_Issue_AlreadyCompleted" xml:space="preserve"><value>This workout was already finished on another device, so that version was kept.</value></data>
+  <data name="Offline_StatusSyncing" xml:space="preserve"><value>Sending changes…</value></data>
+  <data name="Offline_IssuesTitle" xml:space="preserve"><value>Not saved</value></data>
+  <data name="Offline_IssuesDismiss" xml:space="preserve"><value>Got it, hide</value></data>
+  <data name="Offline_PendingTitle" xml:space="preserve"><value>Waiting to be sent: {0}</value></data>
+  <data name="Offline_Op_CompleteWorkout" xml:space="preserve"><value>Finished workout</value></data>
+  <data name="Offline_Op_DiscardDraft" xml:space="preserve"><value>Cancelled free workout</value></data>
+  <data name="Offline_Op_UpdateExercise" xml:space="preserve"><value>Exercise change</value></data>
+  <data name="Offline_Op_DeleteExercise" xml:space="preserve"><value>Exercise removal</value></data>
+  <data name="Offline_Op_ReorderSuperset" xml:space="preserve"><value>Superset exercise order</value></data>
+  <data name="Offline_Op_Other" xml:space="preserve"><value>Change</value></data>
+  <data name="Offline_Works_Workout" xml:space="preserve"><value>Workouts: sets, weights, supersets and finishing</value></data>
 </root>

@@ -21,6 +21,13 @@ public sealed class AuthenticatedHttpMessageHandler(
                 request.Headers.Authorization =
                     new AuthenticationHeaderValue("Bearer", accessToken);
             }
+            else if (authentication.IsAuthenticated)
+            {
+                // Токены на месте, но обновить их сейчас не удалось: сервер
+                // недоступен. Запрос без токена получил бы 401 и стёр сессию,
+                // поэтому считаем это обычным сбоем связи.
+                throw new HttpRequestException("The access token could not be refreshed.");
+            }
 
             var response = await base.SendAsync(request, cancellationToken);
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)

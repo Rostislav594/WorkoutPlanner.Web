@@ -3481,4 +3481,45 @@
   <data name="ProfilePush_Updating" xml:space="preserve"><value>Зберігаємо налаштування…</value></data>
   <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Не вдалося підключити push-сповіщення на цьому пристрої. Спробуйте пізніше.</value></data>
   <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Не вдалося змінити налаштування. Перевірте з’єднання та спробуйте знову.</value></data>
+  <data name="Offline_IndicatorLabel" xml:space="preserve"><value>Немає зв'язку із сервером. Відкрити офлайн-режим</value></data>
+  <data name="Offline_NoticeTitle" xml:space="preserve"><value>Немає зв'язку із сервером</value></data>
+  <data name="Offline_NoticeBody" xml:space="preserve"><value>Показуємо збережені дані.</value></data>
+  <data name="Offline_NoticeMore" xml:space="preserve"><value>Докладніше</value></data>
+  <data name="Offline_SheetEyebrow" xml:space="preserve"><value>Зв'язок</value></data>
+  <data name="Offline_SheetTitle" xml:space="preserve"><value>Режим без мережі</value></data>
+  <data name="Offline_StatusOffline" xml:space="preserve"><value>Немає зв'язку із сервером</value></data>
+  <data name="Offline_StatusOnline" xml:space="preserve"><value>Зв'язок із сервером є</value></data>
+  <data name="Offline_LastContact" xml:space="preserve"><value>Дані оновлено: {0}</value></data>
+  <data name="Offline_LastContactUnknown" xml:space="preserve"><value>Дані ще не оновлювалися із сервера</value></data>
+  <data name="Offline_WorksTitle" xml:space="preserve"><value>Працює без інтернету</value></data>
+  <data name="Offline_Works_Viewing" xml:space="preserve"><value>Тренування, плани, календар та історія — перегляд</value></data>
+  <data name="Offline_Works_Progress" xml:space="preserve"><value>Графіки прогресу — останні збережені</value></data>
+  <data name="Offline_Works_Profile" xml:space="preserve"><value>Профіль і налаштування — перегляд</value></data>
+  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Блокнот і нагадування про тренування</value></data>
+  <data name="Offline_NeedsTitle" xml:space="preserve"><value>Потрібен інтернет</value></data>
+  <data name="Offline_Needs_Editing" xml:space="preserve"><value>Нові плани та вправи в них, календар, профіль</value></data>
+  <data name="Offline_Needs_Account" xml:space="preserve"><value>Вхід, пароль, сеанси та видалення акаунта</value></data>
+  <data name="Offline_Needs_Watch" xml:space="preserve"><value>Підключення та керування годинником</value></data>
+  <data name="Offline_Needs_Media" xml:space="preserve"><value>Завантаження фото вправ і звернення до підтримки</value></data>
+  <data name="Offline_Needs_Inbox" xml:space="preserve"><value>Дії у вхідних та очищення прогресу</value></data>
+  <data name="Offline_SyncHint" xml:space="preserve"><value>Коли зв'язок повернеться, зміни надішлються самі — нічого натискати не потрібно.</value></data>
+  <data name="Offline_CheckConnection" xml:space="preserve"><value>Перевірити зв'язок</value></data>
+  <data name="Offline_Checking" xml:space="preserve"><value>Перевіряємо…</value></data>
+  <data name="Offline_StaleNote" xml:space="preserve"><value>Збережені дані — оновляться після підключення.</value></data>
+  <data name="Today_SavedOffline" xml:space="preserve"><value>Тренування збережено на телефоні, воно надішлеться на сервер, щойно з'явиться зв'язок.</value></data>
+  <data name="Offline_IndicatorPending" xml:space="preserve"><value>Змін чекають на надсилання: {0}. Відкрити режим без мережі</value></data>
+  <data name="Offline_IndicatorProblem" xml:space="preserve"><value>Не всі зміни збереглися. Відкрити подробиці</value></data>
+  <data name="Offline_IssueNoticeTitle" xml:space="preserve"><value>Зміну не збережено</value></data>
+  <data name="Offline_Issue_AlreadyCompleted" xml:space="preserve"><value>Це тренування вже завершили на іншому пристрої — залишили ту версію.</value></data>
+  <data name="Offline_StatusSyncing" xml:space="preserve"><value>Надсилаємо зміни…</value></data>
+  <data name="Offline_IssuesTitle" xml:space="preserve"><value>Не збереглося</value></data>
+  <data name="Offline_IssuesDismiss" xml:space="preserve"><value>Зрозуміло, сховати</value></data>
+  <data name="Offline_PendingTitle" xml:space="preserve"><value>Чекають на надсилання: {0}</value></data>
+  <data name="Offline_Op_CompleteWorkout" xml:space="preserve"><value>Завершення тренування</value></data>
+  <data name="Offline_Op_DiscardDraft" xml:space="preserve"><value>Скасування вільного тренування</value></data>
+  <data name="Offline_Op_UpdateExercise" xml:space="preserve"><value>Зміна вправи</value></data>
+  <data name="Offline_Op_DeleteExercise" xml:space="preserve"><value>Видалення вправи</value></data>
+  <data name="Offline_Op_ReorderSuperset" xml:space="preserve"><value>Порядок вправ у суперсеті</value></data>
+  <data name="Offline_Op_Other" xml:space="preserve"><value>Зміна</value></data>
+  <data name="Offline_Works_Workout" xml:space="preserve"><value>Тренування: підходи, ваги, суперсети та завершення</value></data>
 </root>

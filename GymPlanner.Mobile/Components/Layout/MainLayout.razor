@@ -8,6 +8,7 @@
 @inject IAudioSpectrumService AudioSpectrum
 @inject MobileLifecycleService Lifecycle
 @inject IJSRuntime JavaScript
+@inject OfflineStatusService OfflineStatus
 @inject IAppText Text
 
 <div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null) @(IsVisualizerOn ? "audio-reactive" : null)"
@@ -51,6 +52,20 @@
             <AuthorizeView>
                 <Authorized>
                     <div class="header-actions">
+                        @if (OfflineStatus.ShowsIndicator)
+                        {
+                            <button class="offline-indicator @OfflineIndicatorClass" type="button"
+                                    aria-label="@OfflineIndicatorLabel"
+                                    aria-haspopup="dialog"
+                                    title="@OfflineIndicatorLabel"
+                                    @onclick="OfflineStatus.OpenSheet">
+                                <span class="material-symbols-rounded" aria-hidden="true">@OfflineIndicatorIcon</span>
+                                @if (OfflineStatus.WaitingCount > 0 && !OfflineStatus.HasProblem)
+                                {
+                                    <span class="offline-indicator__count" aria-hidden="true">@OfflineStatus.WaitingCount</span>
+                                }
+                            </button>
+                        }
                         <a class="profile-button" href="profile" aria-label="@Text["Layout_OpenProfile"]">
                             <span class="material-symbols-rounded" aria-hidden="true">person</span>
                         </a>
@@ -93,6 +108,11 @@
             </div>
         }
     }
+    <AuthorizeView>
+        <Authorized>
+            <OfflineStatusSheet />
+        </Authorized>
+    </AuthorizeView>
     @if (!HidesApplicationNavigation && _audioMessageKey is not null)
     {
         <div class="audio-equalizer-message" role="status">
@@ -246,6 +266,7 @@
         AudioSpectrum.SpectrumUpdated += OnSpectrumUpdated;
         AudioSpectrum.StateChanged += OnAudioStateChanged;
         Lifecycle.Suspended += OnApplicationSuspended;
+        OfflineStatus.Changed += OnOfflineStatusChanged;
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
         Navigation.LocationChanged += OnLocationChanged;
     }
@@ -649,11 +670,30 @@
         }
     }
 
+    private void OnOfflineStatusChanged() => _ = InvokeAsync(StateHasChanged);
+
+    // Проблема важнее всего: пока она не просмотрена, значок говорит о ней.
+    private string OfflineIndicatorIcon =>
+        OfflineStatus.HasProblem ? "sync_problem"
+        : OfflineStatus.IsOffline ? "cloud_off"
+        : "cloud_upload";
+
+    private string OfflineIndicatorClass =>
+        OfflineStatus.HasProblem ? "offline-indicator--problem"
+        : OfflineStatus.IsOffline ? "offline-indicator--offline"
+        : "offline-indicator--pending";
+
+    private string OfflineIndicatorLabel =>
+        OfflineStatus.HasProblem ? Text["Offline_IndicatorProblem"]
+        : OfflineStatus.IsOffline ? Text["Offline_IndicatorLabel"]
+        : Text.Format("Offline_IndicatorPending", OfflineStatus.WaitingCount);
+
     public async ValueTask DisposeAsync()
     {
         AudioSpectrum.SpectrumUpdated -= OnSpectrumUpdated;
         AudioSpectrum.StateChanged -= OnAudioStateChanged;
         Lifecycle.Suspended -= OnApplicationSuspended;
+        OfflineStatus.Changed -= OnOfflineStatusChanged;
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
         Navigation.LocationChanged -= OnLocationChanged;
         CancelModeLongPress();
