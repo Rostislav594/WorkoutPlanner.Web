@@ -27,6 +27,8 @@ public static class ApiErrorCodes
     public const string Forbidden = "common.forbidden";
     public const string NotFound = "common.not_found";
     public const string IncompleteResponse = "common.incomplete_response";
+    /// <summary>Запрос с тем же ключом повтора ещё выполняется.</summary>
+    public const string RequestInProgress = "common.request_in_progress";
 
     // --- Профиль ---
     public const string ProfileFirstNameRequired = "profile.first_name_required";
@@ -61,6 +63,10 @@ public static class ApiErrorCodes
     public const string WorkoutNoExercises = "workout.no_exercises";
     public const string WorkoutInvalidSets = "workout.invalid_sets";
     public const string WorkoutSaveFailed = "workout.save_failed";
+    public const string WorkoutNotFound = "workout.not_found";
+    /// <summary>Тренировку уже завершили — например, на часах, пока телефон был без связи.</summary>
+    public const string WorkoutAlreadyCompleted = "workout.already_completed";
+    public const string WorkoutCompletedAtInvalid = "workout.completed_at_invalid";
 
     // --- Сопряжение часов ---
     public const string WatchPairingRequestNotFound = "watch_pairing.request_not_found";

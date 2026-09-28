@@ -160,4 +160,8 @@
   <data name="support.message_invalid" xml:space="preserve">
     <value>Enter a valid description of the problem.</value>
   </data>
+  <data name="workout.not_found" xml:space="preserve"><value>The workout was not found. It may have been deleted on another device.</value></data>
+  <data name="workout.already_completed" xml:space="preserve"><value>This workout has already been finished on another device.</value></data>
+  <data name="workout.completed_at_invalid" xml:space="preserve"><value>The workout end time does not match its day. Check the date and time on your phone.</value></data>
+  <data name="common.request_in_progress" xml:space="preserve"><value>The request is still being processed. Try again in a minute.</value></data>
 </root>

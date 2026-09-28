@@ -72,9 +72,14 @@ public sealed class MobileSessionService(
             cancellationToken);
     }
 
+    /// <summary>
+    /// Продлевает живую сессию: срок отсчитывается заново от каждого обновления токена,
+    /// чтобы телефон, который регулярно выходит на связь, не выкидывало на вход.
+    /// </summary>
     public async Task<bool> RefreshAsync(
         ClaimsPrincipal principal,
         string userId,
+        DateTime extendedExpiresAtUtc,
         CancellationToken cancellationToken)
     {
         if (!TryGetSessionId(principal, out var sessionId))
@@ -92,6 +97,8 @@ public sealed class MobileSessionService(
             return false;
 
         session.LastRefreshedAtUtc = now;
+        if (extendedExpiresAtUtc > session.ExpiresAtUtc)
+            session.ExpiresAtUtc = extendedExpiresAtUtc;
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }

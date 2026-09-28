@@ -155,6 +155,239 @@ public sealed class MobileApiTests
     }
 
     [Fact]
+    public async Task CompleteScheduledDay_SavesPhoneResultsAtomically_AndRejectsSecondFinish()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var (plan, exercise, day) = await ScheduleSingleExerciseWorkoutAsync(client, "scheduled-offline@example.test");
+        var completedAt = DateTime.Today.AddHours(7).AddMinutes(15);
+
+        using var complete = await client.PostAsJsonAsync(
+            $"/api/v1/workouts/days/{day.Id}/complete",
+            new CompleteScheduledWorkoutRequest(
+                completedAt,
+                [new CompletedExerciseRequest(
+                    exercise.Id,
+                    "Hard",
+                    [new SaveExerciseSetRequest(1, 12, 60, true), new SaveExerciseSetRequest(2, 10, 65, true)])]));
+        Assert.Equal(HttpStatusCode.Created, complete.StatusCode);
+        var history = await complete.Content.ReadFromJsonAsync<WorkoutHistoryApiResponse>();
+        Assert.NotNull(history);
+        Assert.Equal(completedAt, history.Date);
+        Assert.Equal("Hard", Assert.Single(history.Exercises).Status);
+        Assert.Equal([60d, 65d], history.Exercises[0].Sets.Select(x => x.Weight));
+
+        var savedPlan = await client.GetFromJsonAsync<TrainingPlanApiResponse>($"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal([60d, 65d], savedPlan!.Exercises.Single().Sets.Select(x => x.Weight));
+        Assert.True((await client.GetFromJsonAsync<WorkoutDayApiResponse>($"/api/v1/calendar/{day.Id}"))!.IsCompleted);
+
+        // Второе устройство (часы или телефон без связи) опоздало: первое завершение остаётся.
+        using var second = await client.PostAsJsonAsync(
+            $"/api/v1/workouts/days/{day.Id}/complete",
+            new CompleteScheduledWorkoutRequest(
+                completedAt.AddMinutes(5),
+                [new CompletedExerciseRequest(exercise.Id, "Easy", [new SaveExerciseSetRequest(1, 1, 1, true)])]));
+        Assert.Equal(HttpStatusCode.Conflict, second.StatusCode);
+        Assert.Contains(WorkoutPlanner.Localization.ApiErrorCodes.WorkoutAlreadyCompleted, await second.Content.ReadAsStringAsync());
+        var historyItems = await client.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>("/api/v1/history");
+        Assert.Single(historyItems!, x => x.WorkoutName == plan.WorkoutName);
+        savedPlan = await client.GetFromJsonAsync<TrainingPlanApiResponse>($"/api/v1/training-plans/{plan.Id}");
+        Assert.Equal([60d, 65d], savedPlan!.Exercises.Single().Sets.Select(x => x.Weight));
+    }
+
+    [Fact]
+    public async Task CompleteScheduledDay_RejectsTimeOutsideTheScheduledDay()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var (_, exercise, day) = await ScheduleSingleExerciseWorkoutAsync(client, "scheduled-time@example.test");
+
+        using var response = await client.PostAsJsonAsync(
+            $"/api/v1/workouts/days/{day.Id}/complete",
+            new CompleteScheduledWorkoutRequest(
+                DateTime.Today.AddDays(-3),
+                [new CompletedExerciseRequest(exercise.Id, "Hard", [new SaveExerciseSetRequest(1, 12, 60, true)])]));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains(WorkoutPlanner.Localization.ApiErrorCodes.WorkoutCompletedAtInvalid, await response.Content.ReadAsStringAsync());
+        Assert.False((await client.GetFromJsonAsync<WorkoutDayApiResponse>($"/api/v1/calendar/{day.Id}"))!.IsCompleted);
+    }
+
+    [Fact]
+    public async Task IdempotencyKey_ReplaysFirstResponse_InsteadOfRepeatingTheWrite()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var (plan, exercise, day) = await ScheduleSingleExerciseWorkoutAsync(client, "idempotent@example.test");
+        var key = Guid.NewGuid();
+
+        async Task<HttpResponseMessage> SendCompletionAsync()
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/workouts/days/{day.Id}/complete")
+            {
+                Content = JsonContent.Create(new CompleteScheduledWorkoutRequest(
+                    DateTime.Today.AddHours(8),
+                    [new CompletedExerciseRequest(exercise.Id, "Medium", [new SaveExerciseSetRequest(1, 8, 40, true)])]))
+            };
+            request.Headers.Add("Idempotency-Key", key.ToString());
+            return await client.SendAsync(request);
+        }
+
+        using var first = await SendCompletionAsync();
+        using var replay = await SendCompletionAsync();
+
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, replay.StatusCode);
+        var firstHistory = await first.Content.ReadFromJsonAsync<WorkoutHistoryApiResponse>();
+        var replayHistory = await replay.Content.ReadFromJsonAsync<WorkoutHistoryApiResponse>();
+        Assert.Equal(firstHistory!.Id, replayHistory!.Id);
+        var historyItems = await client.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>("/api/v1/history");
+        Assert.Single(historyItems!, x => x.WorkoutName == plan.WorkoutName);
+    }
+
+    [Fact]
+    public async Task IdempotencyKey_PreventsDuplicateFreeWorkout_AndKeepsPhoneTime()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("free-idempotent@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(client, (await LoginAsync(client, "free-idempotent@example.test", "password1", "Phone")).AccessToken);
+        var definition = (await client.GetFromJsonAsync<List<ExerciseDefinitionApiResponse>>("/api/v1/exercise-definitions"))!.First();
+        var historyBefore = (await client.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>("/api/v1/history"))!.Count;
+        var completedAt = DateTime.Today.AddDays(-1).AddHours(19);
+        var key = Guid.NewGuid();
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/workouts/free/complete")
+            {
+                Content = JsonContent.Create(new CompleteFreeWorkoutRequest(
+                    false,
+                    null,
+                    [new SaveExerciseRequest(definition.Name, 1, "Hard", definition.Id, [new SaveExerciseSetRequest(1, 10, 30, true)])],
+                    completedAt))
+            };
+            request.Headers.Add("Idempotency-Key", key.ToString());
+            using var response = await client.SendAsync(request);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            var completed = await response.Content.ReadFromJsonAsync<CompleteFreeWorkoutResponse>();
+            Assert.Equal(completedAt, completed!.History.Date);
+        }
+
+        var historyAfter = await client.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>("/api/v1/history");
+        Assert.Equal(historyBefore + 1, historyAfter!.Count);
+    }
+
+    [Fact]
+    public async Task PhoneOutbox_DeliversOfflineWorkout_AndReplayAfterLostResponseCreatesNoDuplicate()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var (plan, exercise, day) = await ScheduleSingleExerciseWorkoutAsync(client, "outbox-e2e@example.test");
+        var root = Path.Combine(Path.GetTempPath(), "gymplanner-e2e-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new GymPlanner.Mobile.Offline.OfflineDocumentStore(root);
+            await store.UseAccountAsync("outbox-e2e@example.test");
+            var reachability = new GymPlanner.Mobile.Offline.ServerReachability(TimeProvider.System);
+            var outbox = new GymPlanner.Mobile.Offline.OutboxSync(store, client, reachability, TimeProvider.System);
+            var body = System.Text.Json.JsonSerializer.Serialize(
+                new CompleteScheduledWorkoutRequest(
+                    DateTime.Today.AddHours(9),
+                    [new CompletedExerciseRequest(exercise.Id, "Hard", [new SaveExerciseSetRequest(1, 5, 90, true), new SaveExerciseSetRequest(2, 5, 90, true)])]),
+                new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+            var operation = outbox.Create(
+                GymPlanner.Mobile.Offline.OutboxKinds.CompleteScheduledWorkout,
+                HttpMethod.Post,
+                $"api/v1/workouts/days/{day.Id}/complete",
+                body,
+                plan.WorkoutName);
+
+            // Тренировка завершена без связи: операция ждёт в очереди.
+            reachability.ReportServerUnavailable();
+            var queued = await outbox.SubmitAsync(operation, TimeSpan.FromSeconds(10));
+            Assert.Equal(GymPlanner.Mobile.Offline.OutboxOutcomeKind.Queued, queued.Kind);
+
+            // Связь вернулась.
+            reachability.ReportServerResponded();
+            Assert.Equal(1, await outbox.FlushAsync());
+
+            // Ответ потерялся, и телефон отправляет ту же операцию ещё раз.
+            await outbox.EnqueueAsync(operation);
+            Assert.Equal(1, await outbox.FlushAsync());
+
+            var historyItems = await client.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>("/api/v1/history");
+            var history = Assert.Single(historyItems!, x => x.WorkoutName == plan.WorkoutName);
+            Assert.Equal(DateTime.Today.AddHours(9), history.Date);
+            Assert.Empty(await outbox.GetIssuesAsync());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+                Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static async Task<(TrainingPlanApiResponse Plan, ExerciseApiResponse Exercise, WorkoutDayApiResponse Day)>
+        ScheduleSingleExerciseWorkoutAsync(HttpClient client, string email)
+    {
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest(email, "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(client, (await LoginAsync(client, email, "password1", "Phone")).AccessToken);
+
+        using var createPlan = await client.PostAsJsonAsync("/api/v1/training-plans", new CreateTrainingPlanRequest("Offline " + Guid.NewGuid().ToString("N")[..8]));
+        var plan = (await createPlan.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+        using var createExercise = await client.PostAsJsonAsync(
+            $"/api/v1/training-plans/{plan.Id}/exercises",
+            new SaveExerciseRequest("Squat", 2, "NotCompleted", null,
+                [new SaveExerciseSetRequest(1, 8, 50, false), new SaveExerciseSetRequest(2, 8, 55, false)]));
+        var exercise = (await createExercise.Content.ReadFromJsonAsync<ExerciseApiResponse>())!;
+        using var schedule = await client.PostAsJsonAsync("/api/v1/calendar", new ScheduleWorkoutRequest(DateTime.Today, plan.Id));
+        Assert.Equal(HttpStatusCode.Created, schedule.StatusCode);
+        var day = (await schedule.Content.ReadFromJsonAsync<WorkoutDayApiResponse>())!;
+        return (plan, exercise, day);
+    }
+
+    [Fact]
+    public async Task Ping_AnswersWithoutAuthentication()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var response = await client.GetAsync("/api/v1/ping");
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Refresh_SlidesMobileSessionExpiry()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest("sliding@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var tokens = await LoginAsync(client, "sliding@example.test", "password1", "Phone");
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var session = await db.MobileSessions.SingleAsync();
+            Assert.True(session.ExpiresAtUtc > DateTime.UtcNow.AddDays(29));
+            session.ExpiresAtUtc = DateTime.UtcNow.AddHours(1);
+            await db.SaveChangesAsync();
+        }
+
+        using var refresh = await client.PostAsJsonAsync("/api/v1/auth/refresh", new MobileRefreshRequest(tokens.RefreshToken));
+        Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
+
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var session = await db.MobileSessions.AsNoTracking().SingleAsync();
+            Assert.True(session.ExpiresAtUtc > DateTime.UtcNow.AddDays(29));
+        }
+    }
+
+    [Fact]
     public async Task OpenApiDocument_IsAvailableOnlyWhenDevelopmentIsConfigured()
     {
         using var factory = new GymPlannerApiFactory("Development");

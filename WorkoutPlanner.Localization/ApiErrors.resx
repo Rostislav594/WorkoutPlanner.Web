@@ -160,4 +160,8 @@
   <data name="support.message_invalid" xml:space="preserve">
     <value>Введите корректное описание проблемы.</value>
   </data>
+  <data name="workout.not_found" xml:space="preserve"><value>Тренировка не найдена. Возможно, её удалили на другом устройстве.</value></data>
+  <data name="workout.already_completed" xml:space="preserve"><value>Эта тренировка уже завершена на другом устройстве.</value></data>
+  <data name="workout.completed_at_invalid" xml:space="preserve"><value>Время окончания тренировки не совпадает с её днём. Проверьте дату и время на телефоне.</value></data>
+  <data name="common.request_in_progress" xml:space="preserve"><value>Запрос ещё обрабатывается. Попробуйте через минуту.</value></data>
 </root>

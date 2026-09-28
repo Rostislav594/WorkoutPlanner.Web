@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Офлайн-логика мобилки без зависимостей от MAUI: хранилище, состояние связи,
+    сборка сегодняшней тренировки из кэша. Живёт отдельно, чтобы её можно было
+    проверять обычными тестами в WorkoutPlanner.Web.Tests.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WorkoutPlanner.Api.Contracts\WorkoutPlanner.Api.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -90,6 +90,135 @@ public sealed class WorkoutCompletionService(
                 null);
         }
 
+        var history = await RecordScheduledAsync(db, userId, plan, now, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new(true, WorkoutCompletionFailure.None, history);
+    }
+
+    /// <summary>Самое раннее окончание, которое ещё принимается из офлайн-очереди.</summary>
+    public static readonly TimeSpan MaximumCompletionAge = TimeSpan.FromDays(30);
+
+    public async Task<WorkoutCompletionResult> CompleteScheduledAsync(
+        ScheduledWorkoutCompletion completion,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        var completedAt = completion.CompletedAt;
+        if (!IsAcceptedCompletionTime(completedAt))
+            return new(false, WorkoutCompletionFailure.CompletedAtOutOfRange, null);
+
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var day = await db.WorkoutDays
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Id == completion.WorkoutDayId && x.UserId == userId,
+                cancellationToken);
+        if (day is null)
+            return new(false, WorkoutCompletionFailure.NoScheduledWorkout, null);
+        // Кто первым дошёл до сервера, тот и прав: второе завершение того же дня
+        // (часы и телефон без связи) не перезаписывает первое.
+        if (day.IsCompleted)
+            return new(false, WorkoutCompletionFailure.AlreadyCompleted, null);
+
+        // Тренировку, начатую поздно вечером, можно закончить уже после полуночи.
+        var daysAfterSchedule = (completedAt.Date - day.Date.Date).TotalDays;
+        if (daysAfterSchedule is < 0 or > 1)
+            return new(false, WorkoutCompletionFailure.CompletedAtOutOfRange, null);
+
+        var plan = await db.TrainingPlans
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.Sets)
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.ExerciseDefinition)
+                    .ThenInclude(x => x!.SecondaryMuscles)
+            .FirstOrDefaultAsync(
+                x => x.Id == day.TrainingPlanId && x.UserId == userId,
+                cancellationToken);
+        if (plan is null)
+            return new(false, WorkoutCompletionFailure.NoScheduledWorkout, null);
+        if (plan.Exercises.Count == 0)
+            return new(false, WorkoutCompletionFailure.NoExercises, null);
+
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            cancellationToken);
+        var claimedDay = await db.WorkoutDays
+            .Where(x => x.Id == day.Id && x.UserId == userId && !x.IsCompleted)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(x => x.IsCompleted, true),
+                cancellationToken);
+        if (claimedDay == 0)
+            return new(false, WorkoutCompletionFailure.AlreadyCompleted, null);
+
+        ApplyResults(db, plan, completion.Exercises);
+        var history = await RecordScheduledAsync(db, userId, plan, completedAt, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new(true, WorkoutCompletionFailure.None, history);
+    }
+
+    private bool IsAcceptedCompletionTime(DateTime completedAt)
+    {
+        var now = timeProvider.GetLocalNow().DateTime;
+        return completedAt <= now.AddDays(1) && completedAt >= now - MaximumCompletionAge;
+    }
+
+    /// <summary>
+    /// Переносит итоги с телефона в шаблон: подходы сопоставляются по номеру, как
+    /// в обычном сохранении упражнения, а изменённые получают новую версию —
+    /// по ней часы видят, что подход поменялся.
+    /// </summary>
+    private static void ApplyResults(
+        WorkoutDbContext db,
+        Models.TrainingPlan plan,
+        IReadOnlyCollection<CompletedExercise> results)
+    {
+        foreach (var result in results)
+        {
+            var exercise = plan.Exercises.FirstOrDefault(x => x.Id == result.ExerciseId);
+            if (exercise is null)
+                continue;
+
+            exercise.Status = (Models.ExerciseStatus)result.Status;
+            foreach (var source in result.Sets)
+            {
+                var target = exercise.Sets.FirstOrDefault(x => x.SetNumber == source.SetNumber);
+                if (target is null)
+                {
+                    target = new Models.ExerciseTemplateSet { SetNumber = source.SetNumber };
+                    exercise.Sets.Add(target);
+                }
+
+                var changed =
+                    target.Repetitions != source.Repetitions ||
+                    target.Weight != source.Weight ||
+                    target.Completed != source.Completed ||
+                    target.IsWarmup != source.IsWarmup;
+                target.Repetitions = source.Repetitions;
+                target.Weight = source.Weight;
+                target.Completed = source.Completed;
+                target.IsWarmup = source.IsWarmup;
+                if (changed)
+                    target.Version++;
+            }
+
+            var keptNumbers = result.Sets.Select(x => x.SetNumber).ToHashSet();
+            var removed = exercise.Sets.Where(x => !keptNumbers.Contains(x.SetNumber)).ToList();
+            foreach (var set in removed)
+            {
+                exercise.Sets.Remove(set);
+                db.ExerciseTemplateSets.Remove(set);
+            }
+
+            exercise.SetsCount = exercise.Sets.Count;
+        }
+    }
+
+    private async Task<WorkoutHistory> RecordScheduledAsync(
+        WorkoutDbContext db,
+        string userId,
+        Models.TrainingPlan plan,
+        DateTime completedAt,
+        CancellationToken cancellationToken)
+    {
         var snapshot = new WorkoutHistoryDetails
         {
             Exercises = Models.ExerciseOrdering.InWorkoutOrder(plan.Exercises)
@@ -100,7 +229,7 @@ public sealed class WorkoutCompletionService(
         {
             UserId = userId,
             WorkoutName = plan.WorkoutName,
-            Date = now,
+            Date = completedAt,
             Summary = string.Empty,
             Details = JsonSerializer.Serialize(snapshot)
         };
@@ -111,23 +240,18 @@ public sealed class WorkoutCompletionService(
             userId,
             plan.WorkoutName,
             plan.Exercises,
-            now,
+            completedAt,
             cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-
-        return new(
-            true,
-            WorkoutCompletionFailure.None,
-            new WorkoutHistory
-            {
-                Id = historyEntity.Id,
-                WorkoutName = historyEntity.WorkoutName,
-                Date = historyEntity.Date,
-                Summary = historyEntity.Summary,
-                Details = historyEntity.Details
-            });
+        return new WorkoutHistory
+        {
+            Id = historyEntity.Id,
+            WorkoutName = historyEntity.WorkoutName,
+            Date = historyEntity.Date,
+            Summary = historyEntity.Summary,
+            Details = historyEntity.Details
+        };
     }
 
     public async Task<WorkoutCompletionResult> CompleteFreeDraftAsync(
@@ -215,8 +339,18 @@ public sealed class WorkoutCompletionService(
         if (validation is not null)
             return validation;
 
+        if (workout.CompletedAt is { } requestedTime && !IsAcceptedCompletionTime(requestedTime))
+        {
+            return new(
+                false,
+                FreeWorkoutCompletionFailure.CompletedAtOutOfRange,
+                null,
+                null,
+                null);
+        }
+
         var userId = await currentUser.GetRequiredUserIdAsync();
-        var now = timeProvider.GetLocalNow().DateTime;
+        var now = workout.CompletedAt ?? timeProvider.GetLocalNow().DateTime;
         var workoutName = workout.SaveAsTemplate
             ? workout.TemplateName!.Trim()
             : ServerTexts.Current["Server_FreeWorkout_Name"];

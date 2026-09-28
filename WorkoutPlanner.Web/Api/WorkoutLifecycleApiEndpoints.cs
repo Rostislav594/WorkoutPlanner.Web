@@ -1,5 +1,6 @@
 using System.Text.Json;
 using WorkoutPlanner.Api.Contracts;
+using WorkoutPlanner.Localization;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
@@ -59,6 +60,19 @@ public static class WorkoutLifecycleApiEndpoints
             .Produces(StatusCodes.Status403Forbidden);
         workout.MapPost("/complete", CompleteTodayWorkoutAsync)
             .Produces<WorkoutHistoryApiResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        // Завершение конкретного дня одним запросом — им пользуется офлайн-очередь
+        // телефона, поэтому день задаётся явно, а время окончания приходит с телефона.
+        var workoutDays = api.MapGroup("/workouts/days")
+            .WithTags("Workout lifecycle")
+            .RequireAuthorization(MobileApiAuthorization.PolicyName);
+        workoutDays.MapPost("/{workoutDayId:int}/complete", CompleteScheduledWorkoutAsync)
+            .Produces<WorkoutHistoryApiResponse>(StatusCodes.Status201Created)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status409Conflict)
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
@@ -272,6 +286,95 @@ public static class WorkoutLifecycleApiEndpoints
             ToResponse(result.History));
     }
 
+    private static async Task<IResult> CompleteScheduledWorkoutAsync(
+        int workoutDayId,
+        CompleteScheduledWorkoutRequest request,
+        IWorkoutCompletionService completion,
+        CancellationToken cancellationToken)
+    {
+        if (request.Exercises is null)
+        {
+            return ApiProblems.ValidationProblem(
+                nameof(request.Exercises),
+                ApiErrorCodes.WorkoutInvalidSets,
+                "Exercises are required.");
+        }
+
+        var exercises = new List<CompletedExercise>(request.Exercises.Count);
+        foreach (var source in request.Exercises)
+        {
+            if (!Enum.TryParse<ExerciseStatus>(source.Status, ignoreCase: true, out var status) ||
+                !Enum.IsDefined(status) ||
+                source.Sets is null ||
+                source.Sets.Count is < 1 or > 20 ||
+                !source.Sets
+                    .Select(x => x.SetNumber)
+                    .Order()
+                    .SequenceEqual(Enumerable.Range(1, source.Sets.Count)) ||
+                source.Sets.Any(set =>
+                    set.Repetitions is < 1 or > 1000 ||
+                    !double.IsFinite(set.Weight) ||
+                    set.Weight is < 0 or > 2000))
+            {
+                return ApiProblems.ValidationProblem(
+                    nameof(request.Exercises),
+                    ApiErrorCodes.WorkoutInvalidSets,
+                    "Check the sets of every exercise.");
+            }
+
+            exercises.Add(new CompletedExercise
+            {
+                ExerciseId = source.ExerciseId,
+                Status = status,
+                Sets = source.Sets
+                    .Select(set => new ExerciseTemplateSet
+                    {
+                        SetNumber = set.SetNumber,
+                        Repetitions = set.Repetitions,
+                        Weight = set.Weight,
+                        Completed = set.Completed,
+                        IsWarmup = set.IsWarmup
+                    })
+                    .ToList()
+            });
+        }
+
+        var result = await completion.CompleteScheduledAsync(
+            new ScheduledWorkoutCompletion
+            {
+                WorkoutDayId = workoutDayId,
+                CompletedAt = request.CompletedAt,
+                Exercises = exercises
+            },
+            cancellationToken);
+        if (result.Succeeded && result.History is not null)
+        {
+            return Results.Created(
+                $"/api/v1/history/{result.History.Id}",
+                ToResponse(result.History));
+        }
+
+        return result.Failure switch
+        {
+            WorkoutCompletionFailure.AlreadyCompleted => ApiProblems.Problem(
+                ApiErrorCodes.WorkoutAlreadyCompleted,
+                "The workout has already been completed.",
+                StatusCodes.Status409Conflict),
+            WorkoutCompletionFailure.CompletedAtOutOfRange => ApiProblems.ValidationProblem(
+                nameof(request.CompletedAt),
+                ApiErrorCodes.WorkoutCompletedAtInvalid,
+                "The completion time does not match the scheduled day."),
+            WorkoutCompletionFailure.NoExercises => ApiProblems.Problem(
+                ApiErrorCodes.WorkoutNoExercises,
+                "The scheduled workout has no exercises.",
+                StatusCodes.Status409Conflict),
+            _ => ApiProblems.Problem(
+                ApiErrorCodes.WorkoutNotFound,
+                "The scheduled workout was not found.",
+                StatusCodes.Status404NotFound)
+        };
+    }
+
     /// <summary>
     /// Начинает свободную тренировку: создаёт черновик на сервере.
     /// </summary>
@@ -366,11 +469,20 @@ public static class WorkoutLifecycleApiEndpoints
             {
                 SaveAsTemplate = request.SaveAsTemplate,
                 TemplateName = request.TemplateName,
-                Exercises = exercises
+                Exercises = exercises,
+                CompletedAt = request.CompletedAt
             },
             cancellationToken);
         if (!result.Succeeded || result.History is null)
         {
+            if (result.Failure == FreeWorkoutCompletionFailure.CompletedAtOutOfRange)
+            {
+                return ApiProblems.ValidationProblem(
+                    nameof(request.CompletedAt),
+                    ApiErrorCodes.WorkoutCompletedAtInvalid,
+                    "The completion time is too far from now.");
+            }
+
             if (result.Failure == FreeWorkoutCompletionFailure.TemplateNameConflict)
             {
                 return Results.Problem(

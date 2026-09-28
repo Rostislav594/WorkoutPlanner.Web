@@ -226,7 +226,9 @@ builder.Services.Configure<BearerTokenOptions>(
     options =>
     {
         options.BearerTokenExpiration = TimeSpan.FromMinutes(15);
-        options.RefreshTokenExpiration = TimeSpan.FromDays(7);
+        // Срок скользящий: каждое обновление токена продлевает сессию,
+        // так что телефон держит вход до месяца без связи с сервером.
+        options.RefreshTokenExpiration = TimeSpan.FromDays(30);
     });
 builder.Services.Configure<AuthenticationOptions>(options =>
 {

@@ -18,7 +18,13 @@ public static class GymPlannerApiEndpoints
         this IEndpointRouteBuilder endpoints)
     {
         var api = endpoints.MapGroup("/api/v1")
-            .WithTags("GymPlanner API");
+            .WithTags("GymPlanner API")
+            .AddEndpointFilter<IdempotencyEndpointFilter>();
+
+        // Проба связи для офлайн-режима телефона: любой ответ значит, что сервер доступен.
+        api.MapGet("/ping", () => Results.NoContent())
+            .AllowAnonymous()
+            .Produces(StatusCodes.Status204NoContent);
 
         var authentication = api.MapGroup("/auth")
             .WithTags("Authentication");
@@ -291,9 +297,8 @@ public static class GymPlannerApiEndpoints
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var protector = bearerTokenOptions
-            .Get(IdentityConstants.BearerScheme)
-            .RefreshTokenProtector;
+        var bearerOptions = bearerTokenOptions.Get(IdentityConstants.BearerScheme);
+        var protector = bearerOptions.RefreshTokenProtector;
         var ticket = protector.Unprotect(request.RefreshToken);
 
         if (ticket?.Properties?.ExpiresUtc is not { } expiresUtc ||
@@ -304,9 +309,13 @@ public static class GymPlannerApiEndpoints
             return Results.Unauthorized();
         }
 
+        var extendedExpiresAtUtc = timeProvider.GetUtcNow()
+            .Add(bearerOptions.RefreshTokenExpiration)
+            .UtcDateTime;
         if (!await mobileSessions.RefreshAsync(
                 ticket.Principal,
                 user.Id,
+                extendedExpiresAtUtc,
                 cancellationToken) ||
             !MobileSessionService.TryGetSessionId(
                 ticket.Principal,

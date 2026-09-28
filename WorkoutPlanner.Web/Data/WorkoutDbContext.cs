@@ -86,6 +86,8 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<PushDeviceRegistration> PushDeviceRegistrations => Set<PushDeviceRegistration>();
 
+    public DbSet<MobileIdempotencyRecord> MobileIdempotencyRecords => Set<MobileIdempotencyRecord>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -349,6 +351,17 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.InstallationId).HasMaxLength(120);
         modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.Platform).HasMaxLength(20);
         modelBuilder.Entity<PushDeviceRegistration>().Property(x => x.PushToken).HasMaxLength(4096);
+
+        modelBuilder.Entity<MobileIdempotencyRecord>()
+            .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<MobileIdempotencyRecord>()
+            .HasIndex(x => new { x.UserId, x.Key }).IsUnique();
+        modelBuilder.Entity<MobileIdempotencyRecord>().HasIndex(x => x.ExpiresAtUtc);
+        modelBuilder.Entity<MobileIdempotencyRecord>().Property(x => x.Method).HasMaxLength(10);
+        modelBuilder.Entity<MobileIdempotencyRecord>().Property(x => x.Path).HasMaxLength(300);
+        modelBuilder.Entity<MobileIdempotencyRecord>().Property(x => x.ContentType).HasMaxLength(200);
+        modelBuilder.Entity<MobileIdempotencyRecord>().Property(x => x.ResponseBody).HasMaxLength(256000);
 
         modelBuilder.Entity<InboxMessage>()
             .HasOne<IdentityUser>()

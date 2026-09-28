@@ -10,10 +10,30 @@ public sealed record WorkoutHistoryExerciseApiResponse(
     string Status,
     IReadOnlyList<ExerciseSetApiResponse> Sets,
     int? SupersetGroupId = null);
+/// <param name="CompletedAt">
+/// Когда тренировка закончилась по часам телефона. Нужно офлайн-очереди: запрос
+/// может дойти до сервера на следующий день, а в истории должен остаться день
+/// тренировки. Старые сборки поле не шлют — тогда берётся время сервера.
+/// </param>
 public sealed record CompleteFreeWorkoutRequest(
     bool SaveAsTemplate,
     string? TemplateName,
-    IReadOnlyList<SaveExerciseRequest> Exercises);
+    IReadOnlyList<SaveExerciseRequest> Exercises,
+    DateTime? CompletedAt = null);
+
+/// <summary>
+/// Завершение запланированной тренировки одним запросом: итоги подходов и сама
+/// отметка о завершении сохраняются вместе или не сохраняются вовсе.
+/// </summary>
+/// <param name="CompletedAt">Время окончания по часам телефона (местное).</param>
+public sealed record CompleteScheduledWorkoutRequest(
+    DateTime CompletedAt,
+    IReadOnlyList<CompletedExerciseRequest> Exercises);
+
+public sealed record CompletedExerciseRequest(
+    int ExerciseId,
+    string Status,
+    IReadOnlyList<SaveExerciseSetRequest> Sets);
 public sealed record CompleteFreeWorkoutResponse(
     WorkoutHistoryApiResponse History,
     int? TrainingPlanId);

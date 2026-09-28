@@ -29,6 +29,15 @@ public interface IWorkoutCompletionService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Завершает конкретный день календаря с итогами от телефона. В отличие от
+    /// <see cref="CompleteTodayAsync(CancellationToken)"/>, не зависит от того, какой
+    /// сегодня день на сервере: запрос из офлайн-очереди может прийти позже.
+    /// </summary>
+    Task<WorkoutCompletionResult> CompleteScheduledAsync(
+        ScheduledWorkoutCompletion completion,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Завершение свободной тренировки по её серверному черновику.
     ///
     /// Отличие от <see cref="CompleteFreeAsync"/>: здесь состав тренировки берётся

@@ -160,4 +160,8 @@
   <data name="support.message_invalid" xml:space="preserve">
     <value>Введіть коректний опис проблеми.</value>
   </data>
+  <data name="workout.not_found" xml:space="preserve"><value>Тренування не знайдено. Можливо, його видалили на іншому пристрої.</value></data>
+  <data name="workout.already_completed" xml:space="preserve"><value>Це тренування вже завершено на іншому пристрої.</value></data>
+  <data name="workout.completed_at_invalid" xml:space="preserve"><value>Час завершення тренування не збігається з його днем. Перевірте дату й час на телефоні.</value></data>
+  <data name="common.request_in_progress" xml:space="preserve"><value>Запит ще обробляється. Спробуйте за хвилину.</value></data>
 </root>

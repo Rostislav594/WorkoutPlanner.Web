@@ -55,7 +55,9 @@ public enum WorkoutCompletionFailure
     None,
     NoScheduledWorkout,
     NoExercises,
-    ExerciseStatusMissing
+    ExerciseStatusMissing,
+    AlreadyCompleted,
+    CompletedAtOutOfRange
 }
 
 public sealed record WorkoutCompletionResult(
@@ -68,6 +70,23 @@ public sealed class FreeWorkoutCompletion
     public bool SaveAsTemplate { get; set; }
     public string? TemplateName { get; set; }
     public List<Exercise> Exercises { get; set; } = [];
+    /// <summary>Время окончания от клиента; <c>null</c> — сейчас по часам сервера.</summary>
+    public DateTime? CompletedAt { get; set; }
+}
+
+/// <summary>Итоги запланированной тренировки, пришедшие с телефона.</summary>
+public sealed class ScheduledWorkoutCompletion
+{
+    public int WorkoutDayId { get; set; }
+    public DateTime CompletedAt { get; set; }
+    public List<CompletedExercise> Exercises { get; set; } = [];
+}
+
+public sealed class CompletedExercise
+{
+    public int ExerciseId { get; set; }
+    public ExerciseStatus Status { get; set; }
+    public List<ExerciseTemplateSet> Sets { get; set; } = [];
 }
 
 public enum FreeWorkoutCompletionFailure
@@ -76,7 +95,8 @@ public enum FreeWorkoutCompletionFailure
     InvalidWorkout,
     TemplateNameRequired,
     TemplateNameConflict,
-    ExerciseDefinitionMissing
+    ExerciseDefinitionMissing,
+    CompletedAtOutOfRange
 }
 
 public sealed record FreeWorkoutCompletionResult(

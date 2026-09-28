@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WorkoutPlanner.Web\WorkoutPlanner.Web.csproj" />
     <ProjectReference Include="..\WorkoutPlanner.Localization\WorkoutPlanner.Localization.csproj" />
+    <ProjectReference Include="..\GymPlanner.Mobile.Offline\GymPlanner.Mobile.Offline.csproj" />
   </ItemGroup>
 
 </Project>
