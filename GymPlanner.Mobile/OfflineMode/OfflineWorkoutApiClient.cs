@@ -158,6 +158,55 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
             cancellationToken);
     }
 
+    public async Task<ApiResult<TrainingPlanApiResponse>> UpdateRestTimersAsync(int planId, UpdateRestTimersRequest request, CancellationToken cancellationToken = default)
+    {
+        planId = await runtime.Outbox.ResolveAsync(planId, cancellationToken);
+        var exercises = new List<ExerciseRestTimerRequest>();
+        foreach (var exercise in request.Exercises ?? [])
+            exercises.Add(exercise with { ExerciseId = await runtime.Outbox.ResolveAsync(exercise.ExerciseId, cancellationToken) });
+        var sets = new List<SetRestTimerRequest>();
+        foreach (var set in request.Sets ?? [])
+            sets.Add(set with { ExerciseId = await runtime.Outbox.ResolveAsync(set.ExerciseId, cancellationToken) });
+        var afterExercises = new List<ExerciseRestAfterRequest>();
+        foreach (var exercise in request.AfterExercises ?? [])
+            afterExercises.Add(exercise with { ExerciseId = await runtime.Outbox.ResolveAsync(exercise.ExerciseId, cancellationToken) });
+        request = request with { Exercises = exercises, Sets = sets, AfterExercises = afterExercises };
+        var plans = await LoadPlansAsync(cancellationToken);
+
+        async Task<TrainingPlanApiResponse> ProjectAsync()
+        {
+            var plan = (await LoadPlansAsync(cancellationToken)).Find(planId)
+                ?? new TrainingPlanApiResponse(planId, string.Empty, timeProvider.GetLocalNow().Date, []);
+            var updated = OfflineProjections.ApplyRestTimers(plan, request);
+            await UpdatePlansAsync(x => x.Upsert(updated, listed: x.Order.Contains(planId)), cancellationToken);
+            return updated;
+        }
+
+        // Упражнения свободной тренировки, добавленные без связи, сервер не знает:
+        // их таймеры уедут вместе с завершением тренировки.
+        if (await KeepsOnPhoneAsync(planId, exerciseId: null, cancellationToken) ||
+            (await IsFreeDraftPlanAsync(planId, cancellationToken) &&
+             exercises.Select(x => x.ExerciseId)
+                 .Concat(sets.Select(x => x.ExerciseId))
+                 .Concat(afterExercises.Select(x => x.ExerciseId))
+                 .Any(OfflineIds.IsLocal)))
+        {
+            return ApiResult<TrainingPlanApiResponse>.Success(await ProjectAsync());
+        }
+
+        var operation = runtime.Outbox.Create(
+            OutboxKinds.UpdateRestTimers,
+            HttpMethod.Put,
+            $"api/v1/training-plans/{planId}/rest-timers",
+            JsonSerializer.Serialize(request, Json),
+            plans.Find(planId)?.WorkoutName);
+        return await runtime.SubmitAsync(
+            operation,
+            ProjectAsync,
+            body => AcceptPlanAsync(body, cancellationToken),
+            cancellationToken);
+    }
+
     public Task<ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>> GetExerciseDefinitionsAsync(CancellationToken cancellationToken = default) =>
         runtime.ReadAsync(
             inner.GetExerciseDefinitionsAsync,
@@ -205,7 +254,12 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
 
         async Task<ExerciseApiResponse> ProjectAsync()
         {
-            var exercise = OfflineProjections.Exercise(id, current?.TrainingPlanId ?? 0, request, current?.HasPhoto ?? false);
+            var exercise = OfflineProjections.Exercise(
+                id,
+                current?.TrainingPlanId ?? 0,
+                request,
+                current?.HasPhoto ?? false,
+                current);
             await UpdatePlansAsync(x => x.UpsertExercise(exercise), cancellationToken);
             return exercise;
         }

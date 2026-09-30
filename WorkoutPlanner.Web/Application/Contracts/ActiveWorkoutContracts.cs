@@ -5,14 +5,17 @@ public sealed record ActiveWorkout(
     int TrainingPlanId,
     string WorkoutName,
     DateTime ScheduledDate,
-    IReadOnlyList<ActiveWorkoutExercise> Exercises);
+    IReadOnlyList<ActiveWorkoutExercise> Exercises,
+    int RestBetweenExercisesSeconds = global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenExercisesSeconds);
 
 public sealed record ActiveWorkoutExercise(
     int ExerciseId,
     string Name,
     int Order,
     int? SupersetGroupId,
-    IReadOnlyList<ActiveWorkoutSet> Sets);
+    IReadOnlyList<ActiveWorkoutSet> Sets,
+    int RestBetweenSetsSeconds = global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenSetsSeconds,
+    int? RestAfterExerciseSeconds = null);
 
 public sealed record ActiveWorkoutSet(
     int SetId,
@@ -21,7 +24,8 @@ public sealed record ActiveWorkoutSet(
     int Repetitions,
     bool Completed,
     bool IsWarmup,
-    long Version);
+    long Version,
+    int? RestAfterSeconds = null);
 
 public sealed record UpdateWorkoutSet(
     double Weight,

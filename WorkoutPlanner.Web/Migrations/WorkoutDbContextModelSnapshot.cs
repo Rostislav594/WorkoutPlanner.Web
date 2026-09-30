@@ -295,6 +295,12 @@ namespace WorkoutPlanner.Web.Migrations
                     b.Property<string>("PhotoPath")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("RestAfterExerciseSeconds")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RestBetweenSetsSeconds")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Set1Completed")
                         .HasColumnType("INTEGER");
 
@@ -440,6 +446,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Repetitions")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RestAfterSeconds")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("SetNumber")
@@ -869,6 +878,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsFreeDraft")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RestBetweenExercisesSeconds")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")

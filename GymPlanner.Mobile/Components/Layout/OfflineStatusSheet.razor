@@ -1,10 +1,9 @@
 @implements IDisposable
 @using GymPlanner.Mobile.Offline
 @inject OfflineStatusService Status
-@inject IAppLanguageService Language
 @inject IAppText Text
 
-@* Короткое уведомление и лист «Офлайн-режим». Живут вне шапки: её
+@* Короткое уведомление и окно «Нет связи с сервером». Живут вне шапки: её
    backdrop-filter сделал бы fixed-элементы привязанными к шапке, а не к экрану. *@
 @if (Status.Notice is { } notice && !Status.IsSheetOpen)
 {
@@ -15,9 +14,12 @@
             <strong>@notice.Title</strong>
             <span>@notice.Body</span>
         </span>
-        <button class="offline-notice__more" type="button" @onclick="Status.OpenSheet">
-            @Text["Offline_NoticeMore"]
-        </button>
+        @if (notice.IsProblem)
+        {
+            <button class="offline-notice__more" type="button" @onclick="Status.OpenSheet">
+                @Text["Offline_NoticeMore"]
+            </button>
+        }
     </div>
 }
 
@@ -26,28 +28,18 @@
     <div class="offline-overlay" @onclick="Status.CloseSheet">
         <section class="offline-sheet" role="dialog" aria-modal="true" aria-labelledby="offline-sheet-title"
                  @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
-            <div class="offline-sheet__heading">
-                <div>
-                    <span class="offline-sheet__eyebrow">@Text["Offline_SheetEyebrow"]</span>
-                    <h2 id="offline-sheet-title">@Text["Offline_SheetTitle"]</h2>
-                </div>
-                <button class="offline-sheet__close" type="button" aria-label="@Text["Common_Close"]" @onclick="Status.CloseSheet">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                </button>
+            <div class="offline-sheet__title @(Status.IsOffline ? null : "offline-sheet__title--problem")">
+                <span class="material-symbols-rounded" aria-hidden="true">@(Status.IsOffline ? "cloud_off" : "sync_problem")</span>
+                <h2 id="offline-sheet-title">@Text[Status.IsOffline ? "Offline_StatusOffline" : "Offline_IssuesTitle"]</h2>
             </div>
 
-            <div class="offline-sheet__status @(Status.IsOffline ? "offline-sheet__status--offline" : "offline-sheet__status--online")"
-                 role="status" aria-atomic="true">
-                <span class="material-symbols-rounded" aria-hidden="true">@StatusIcon</span>
-                <span>
-                    <strong>@StatusTitle</strong>
-                    <span class="offline-sheet__contact">@LastContactText</span>
-                </span>
-            </div>
-
+            @* Отклонённое сервером человек должен увидеть: иначе изменение пропадёт молча. *@
             @if (Status.Issues.Count > 0)
             {
-                <h3 class="offline-sheet__section offline-sheet__section--problem">@Text["Offline_IssuesTitle"]</h3>
+                @if (Status.IsOffline)
+                {
+                    <h3 class="offline-sheet__section offline-sheet__section--problem">@Text["Offline_IssuesTitle"]</h3>
+                }
                 <ul class="offline-sheet__list offline-sheet__list--issues">
                     @foreach (var issue in Status.Issues)
                     {
@@ -65,44 +57,6 @@
                 </button>
             }
 
-            @if (Status.Pending.Count > 0)
-            {
-                <h3 class="offline-sheet__section">@Text.Format("Offline_PendingTitle", Status.Pending.Count)</h3>
-                <ul class="offline-sheet__list offline-sheet__list--pending">
-                    @foreach (var operation in Status.Pending)
-                    {
-                        <li>
-                            <span class="material-symbols-rounded" aria-hidden="true">schedule</span>
-                            <span>@OperationTitle(operation.Kind, operation.Label)</span>
-                        </li>
-                    }
-                </ul>
-            }
-
-            <h3 class="offline-sheet__section">@Text["Offline_WorksTitle"]</h3>
-            <ul class="offline-sheet__list offline-sheet__list--works">
-                @foreach (var key in WorksOffline)
-                {
-                    <li>
-                        <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
-                        <span>@Text[key]</span>
-                    </li>
-                }
-            </ul>
-
-            <h3 class="offline-sheet__section">@Text["Offline_NeedsTitle"]</h3>
-            <ul class="offline-sheet__list offline-sheet__list--needs">
-                @foreach (var key in NeedsInternet)
-                {
-                    <li>
-                        <span class="material-symbols-rounded" aria-hidden="true">wifi_off</span>
-                        <span>@Text[key]</span>
-                    </li>
-                }
-            </ul>
-
-            <p class="offline-sheet__hint">@Text["Offline_SyncHint"]</p>
-
             <div class="offline-sheet__actions">
                 @if (Status.IsOffline)
                 {
@@ -118,56 +72,10 @@
 }
 
 @code {
-    // Порядок — от главного для зала к второстепенному.
-    private static readonly string[] WorksOffline =
-    [
-        "Offline_Works_Workout",
-        "Offline_Works_Plans",
-        "Offline_Works_Calendar",
-        "Offline_Works_Progress",
-        "Offline_Works_Profile",
-        "Offline_Works_Notebook"
-    ];
-
-    private static readonly string[] NeedsInternet =
-    [
-        "Offline_Needs_Account",
-        "Offline_Needs_Watch",
-        "Offline_Needs_Media",
-        "Offline_Needs_Inbox"
-    ];
-
     private bool _checking;
     private bool _clearingIssues;
 
     protected override void OnInitialized() => Status.Changed += OnStatusChanged;
-
-    private string StatusIcon =>
-        Status.IsOffline ? "cloud_off"
-        : Status.IsSyncing ? "cloud_sync"
-        : Status.Pending.Count > 0 ? "cloud_upload"
-        : "cloud_done";
-
-    private string StatusTitle =>
-        Status.IsOffline ? Text["Offline_StatusOffline"]
-        : Status.IsSyncing ? Text["Offline_StatusSyncing"]
-        : Text["Offline_StatusOnline"];
-
-    private string LastContactText
-    {
-        get
-        {
-            if (Status.LastServerContactUtc is not { } contact)
-                return Text["Offline_LastContactUnknown"];
-
-            var culture = System.Globalization.CultureInfo.GetCultureInfo(Language.Current);
-            var local = contact.ToLocalTime();
-            var value = local.Date == DateTime.Today
-                ? local.ToString("t", culture)
-                : local.ToString("g", culture);
-            return Text.Format("Offline_LastContact", value);
-        }
-    }
 
     private string OperationTitle(string kind, string? label)
     {
@@ -178,6 +86,7 @@
             OutboxKinds.UpdateExercise => "Offline_Op_UpdateExercise",
             OutboxKinds.DeleteExercise => "Offline_Op_DeleteExercise",
             OutboxKinds.ReorderSuperset => "Offline_Op_ReorderSuperset",
+            OutboxKinds.UpdateRestTimers => "Offline_Op_UpdateRestTimers",
             OutboxKinds.CreatePlan => "Offline_Op_CreatePlan",
             OutboxKinds.RenamePlan => "Offline_Op_RenamePlan",
             OutboxKinds.DeletePlan => "Offline_Op_DeletePlan",

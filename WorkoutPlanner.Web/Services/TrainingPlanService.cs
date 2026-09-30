@@ -158,6 +158,54 @@ public sealed class TrainingPlanService : ITrainingPlanService
         await db.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<RestTimersUpdateResult> UpdateRestTimersAsync(
+        int id,
+        int? restBetweenExercisesSeconds,
+        IReadOnlyDictionary<int, int> restBetweenSetsByExerciseId,
+        IReadOnlyDictionary<(int ExerciseId, int SetNumber), int> restAfterBySet,
+        IReadOnlyDictionary<int, int> restAfterByExerciseId,
+        CancellationToken cancellationToken = default)
+    {
+        var userId = await _currentUser.GetRequiredUserIdAsync();
+        await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
+        var plan = await db.TrainingPlans
+            .Include(x => x.Exercises)
+                .ThenInclude(x => x.Sets)
+            .FirstOrDefaultAsync(
+                x => x.Id == id && x.UserId == userId,
+                cancellationToken);
+        if (plan is null)
+            return RestTimersUpdateResult.NotFound;
+
+        var exercises = plan.Exercises.ToDictionary(x => x.Id);
+        if (restBetweenSetsByExerciseId.Keys.Concat(restAfterByExerciseId.Keys).Any(x => !exercises.ContainsKey(x)))
+            return RestTimersUpdateResult.UnknownExercise;
+
+        var sets = new List<(Models.ExerciseTemplateSet Set, int Seconds)>();
+        foreach (var ((exerciseId, setNumber), seconds) in restAfterBySet)
+        {
+            var set = exercises.GetValueOrDefault(exerciseId)?.Sets
+                .FirstOrDefault(x => x.SetNumber == setNumber);
+            if (set is null)
+                return RestTimersUpdateResult.UnknownExercise;
+            sets.Add((set, seconds));
+        }
+
+        if (restBetweenExercisesSeconds is { } betweenExercises)
+            plan.RestBetweenExercisesSeconds = betweenExercises;
+        foreach (var (exerciseId, betweenSets) in restBetweenSetsByExerciseId)
+            exercises[exerciseId].RestBetweenSetsSeconds = betweenSets;
+        // Версия подхода не растёт: она нужна часам, чтобы замечать правку веса
+        // и повторов, а таймер к ним не относится.
+        foreach (var (set, seconds) in sets)
+            set.RestAfterSeconds = seconds;
+        foreach (var (exerciseId, seconds) in restAfterByExerciseId)
+            exercises[exerciseId].RestAfterExerciseSeconds = seconds;
+
+        await db.SaveChangesAsync(cancellationToken);
+        return RestTimersUpdateResult.Updated;
+    }
+
     private static Task<bool> ExistsAsync(
         WorkoutDbContext db,
         string workoutName,

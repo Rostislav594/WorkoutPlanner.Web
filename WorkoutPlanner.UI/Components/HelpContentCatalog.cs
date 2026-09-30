@@ -170,7 +170,6 @@ public static class HelpContentCatalog
         "Help_Profile_Intro",
         [
             new("Help_Profile_S1_Title", "Help_Profile_S1_Text", ["Help_Profile_S1_Step1", "Help_Profile_S1_Step2", "Help_Profile_S1_Step3"]),
-            new("Help_Profile_S2_Title", "Help_Profile_S2_Text", ["Help_Profile_S2_Step1", "Help_Profile_S2_Step2", "Help_Profile_S2_Step3"]),
             new("Help_Profile_S3_Title", "Help_Profile_S3_Text", ["Help_Profile_S3_Step1", "Help_Profile_S3_Step2"]),
             new("Help_Profile_S4_Title", "Help_Profile_S4_Text", ["Help_Profile_S4_Step1", "Help_Profile_S4_Step2", "Help_Profile_S4_Step3", "Help_Profile_S4_Step4"])
         ]);

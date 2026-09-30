@@ -22,7 +22,7 @@ public static class OfflineProjections
                     {
                         Status = result.Status,
                         SetsCount = result.Sets.Count,
-                        Sets = result.Sets.OrderBy(x => x.SetNumber).Select(ToSet).ToList()
+                        Sets = result.Sets.OrderBy(x => x.SetNumber).Select(set => ToSet(set, exercise.Sets)).ToList()
                     }
                     : exercise)
                 .ToList()
@@ -58,7 +58,7 @@ public static class OfflineProjections
                 .Select(x => new WorkoutHistoryExerciseApiResponse(
                     x.Name.Trim(),
                     x.Status,
-                    (x.Sets ?? []).OrderBy(set => set.SetNumber).Select(ToSet).ToList(),
+                    (x.Sets ?? []).OrderBy(set => set.SetNumber).Select(set => ToSet(set)).ToList(),
                     x.SupersetGroupId))
                 .ToList());
 
@@ -81,14 +81,21 @@ public static class OfflineProjections
                     x.ExerciseDefinitionId,
                     false,
                     (x.Sets ?? []).OrderBy(set => set.SetNumber).Select(set => ToSet(set) with { Completed = false }).ToList(),
-                    x.SupersetGroupId))
-                .ToList());
+                    x.SupersetGroupId,
+                    x.RestBetweenSetsSeconds ?? RestTimerDefaults.BetweenSetsSeconds,
+                    x.RestAfterExerciseSeconds))
+                .ToList(),
+            request.RestBetweenExercisesSeconds ?? RestTimerDefaults.BetweenExercisesSeconds);
 
+    /// <param name="current">
+    /// Сохранённое упражнение: запрос без таймеров их не меняет, как и на сервере.
+    /// </param>
     public static ExerciseApiResponse Exercise(
         int id,
         int trainingPlanId,
         SaveExerciseRequest request,
-        bool hasPhoto) =>
+        bool hasPhoto,
+        ExerciseApiResponse? current = null) =>
         new(
             id,
             request.Name.Trim(),
@@ -97,8 +104,46 @@ public static class OfflineProjections
             trainingPlanId,
             request.ExerciseDefinitionId,
             hasPhoto,
-            (request.Sets ?? []).OrderBy(x => x.SetNumber).Select(ToSet).ToList(),
-            request.SupersetGroupId);
+            (request.Sets ?? []).OrderBy(x => x.SetNumber).Select(set => ToSet(set, current?.Sets)).ToList(),
+            request.SupersetGroupId,
+            request.RestBetweenSetsSeconds
+                ?? current?.RestBetweenSetsSeconds
+                ?? RestTimerDefaults.BetweenSetsSeconds,
+            request.RestAfterExerciseSeconds ?? current?.RestAfterExerciseSeconds);
+
+    /// <summary>Таймеры отдыха шаблона; незаданное остаётся как было.</summary>
+    public static TrainingPlanApiResponse ApplyRestTimers(
+        TrainingPlanApiResponse plan,
+        UpdateRestTimersRequest request)
+    {
+        var restBetweenSets = (request.Exercises ?? [])
+            .GroupBy(x => x.ExerciseId)
+            .ToDictionary(x => x.Key, x => x.Last().RestBetweenSetsSeconds);
+        var restAfterExercises = (request.AfterExercises ?? [])
+            .GroupBy(x => x.ExerciseId)
+            .ToDictionary(x => x.Key, x => x.Last().RestAfterSeconds);
+        var restAfterSets = (request.Sets ?? [])
+            .GroupBy(x => (x.ExerciseId, x.SetNumber))
+            .ToDictionary(x => x.Key, x => x.Last().RestAfterSeconds);
+        return plan with
+        {
+            RestBetweenExercisesSeconds = request.RestBetweenExercisesSeconds ?? plan.RestBetweenExercisesSeconds,
+            Exercises = plan.Exercises
+                .Select(exercise => exercise with
+                {
+                    RestBetweenSetsSeconds = restBetweenSets.GetValueOrDefault(exercise.Id, exercise.RestBetweenSetsSeconds),
+                    RestAfterExerciseSeconds = restAfterExercises.TryGetValue(exercise.Id, out var afterExercise)
+                        ? afterExercise
+                        : exercise.RestAfterExerciseSeconds,
+                    Sets = exercise.Sets
+                        .Select(set => restAfterSets.TryGetValue((exercise.Id, set.SetNumber), out var seconds)
+                            ? set with { RestAfterSeconds = seconds }
+                            : set)
+                        .ToList()
+                })
+                .ToList()
+        };
+    }
 
     /// <summary>Порядок упражнений внутри суперсета; остальные остаются на местах.</summary>
     public static TrainingPlanApiResponse ReorderSuperset(
@@ -124,6 +169,15 @@ public static class OfflineProjections
         return plan with { Exercises = exercises };
     }
 
-    private static ExerciseSetApiResponse ToSet(SaveExerciseSetRequest set) =>
-        new(set.SetNumber, set.Repetitions, set.Weight, set.Completed, set.IsWarmup);
+    /// <param name="current">Сохранённые подходы: подход без таймера оставляет прежний.</param>
+    private static ExerciseSetApiResponse ToSet(
+        SaveExerciseSetRequest set,
+        IReadOnlyList<ExerciseSetApiResponse>? current = null) =>
+        new(
+            set.SetNumber,
+            set.Repetitions,
+            set.Weight,
+            set.Completed,
+            set.IsWarmup,
+            set.RestAfterSeconds ?? current?.FirstOrDefault(x => x.SetNumber == set.SetNumber)?.RestAfterSeconds);
 }

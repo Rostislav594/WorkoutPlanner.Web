@@ -1540,6 +1540,221 @@ public sealed class MobileApiTests
     }
 
     [Fact]
+    public async Task RestTimers_LiveInExercisesAndTemplate_AndReachTheWatch()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var owner = CreateClient(factory);
+        using var watch = CreateClient(factory);
+        using var stranger = CreateClient(factory);
+        await RegisterLoginAndPairWatchAsync(
+            owner,
+            watch,
+            "rest-timers@example.test",
+            "rest-timers-watch");
+        using (var registration = await stranger.PostAsJsonAsync(
+                   "/api/v1/auth/register",
+                   new MobileRegisterRequest("rest-timers-b@example.test", "password1")))
+        {
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        }
+        SetBearer(
+            stranger,
+            (await LoginAsync(stranger, "rest-timers-b@example.test", "password1", "Stranger")).AccessToken);
+
+        using var createPlan = await owner.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("Rest timers"));
+        var plan = (await createPlan.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+        Assert.Equal(RestTimerDefaults.BetweenExercisesSeconds, plan.RestBetweenExercisesSeconds);
+
+        async Task<ExerciseApiResponse?> SaveAsync(
+            bool create,
+            string path,
+            string name,
+            int? restBetweenSets,
+            HttpStatusCode expected)
+        {
+            var request = new SaveExerciseRequest(
+                name,
+                2,
+                "NotCompleted",
+                null,
+                [new SaveExerciseSetRequest(1, 8, 0, false), new SaveExerciseSetRequest(2, 8, 0, false)],
+                null,
+                restBetweenSets);
+            using var response = create
+                ? await owner.PostAsJsonAsync(path, request)
+                : await owner.PutAsJsonAsync(path, request);
+            Assert.Equal(expected, response.StatusCode);
+            return response.IsSuccessStatusCode
+                ? await response.Content.ReadFromJsonAsync<ExerciseApiResponse>()
+                : null;
+        }
+
+        var exercisesPath = $"/api/v1/training-plans/{plan.Id}/exercises";
+        var pullUps = (await SaveAsync(true, exercisesPath, "Pull-ups", null, HttpStatusCode.Created))!;
+        var pushUps = (await SaveAsync(true, exercisesPath, "Push-ups", 45, HttpStatusCode.Created))!;
+        Assert.Equal(RestTimerDefaults.BetweenSetsSeconds, pullUps.RestBetweenSetsSeconds);
+        Assert.Equal(45, pushUps.RestBetweenSetsSeconds);
+
+        // Правка без таймера (подходы, суперсет, старая сборка) его не сбрасывает.
+        var pullUpsPath = $"/api/v1/exercises/{pullUps.Id}";
+        Assert.Equal(150, (await SaveAsync(false, pullUpsPath, "Pull-ups", 150, HttpStatusCode.OK))!.RestBetweenSetsSeconds);
+        Assert.Equal(150, (await SaveAsync(false, pullUpsPath, "Pull-ups", null, HttpStatusCode.OK))!.RestBetweenSetsSeconds);
+        await SaveAsync(false, pullUpsPath, "Pull-ups", 4, HttpStatusCode.BadRequest);
+
+        var restPath = $"/api/v1/training-plans/{plan.Id}/rest-timers";
+        using (var update = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(200, [new ExerciseRestTimerRequest(pushUps.Id, 60)])))
+        {
+            Assert.Equal(HttpStatusCode.OK, update.StatusCode);
+            var updated = (await update.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+            Assert.Equal(200, updated.RestBetweenExercisesSeconds);
+            Assert.Equal(150, updated.Exercises.Single(x => x.Id == pullUps.Id).RestBetweenSetsSeconds);
+            Assert.Equal(60, updated.Exercises.Single(x => x.Id == pushUps.Id).RestBetweenSetsSeconds);
+        }
+
+        using (var onlyExercise = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, [new ExerciseRestTimerRequest(pullUps.Id, 100)])))
+        {
+            var updated = (await onlyExercise.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+            Assert.Equal(200, updated.RestBetweenExercisesSeconds);
+            Assert.Equal(100, updated.Exercises.Single(x => x.Id == pullUps.Id).RestBetweenSetsSeconds);
+        }
+
+        // Отдых после отдельного подхода; соседние подходы не меняются.
+        using (var setRest = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, null, [new SetRestTimerRequest(pushUps.Id, 1, 30)])))
+        {
+            Assert.Equal(HttpStatusCode.OK, setRest.StatusCode);
+            var updated = (await setRest.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+            var sets = updated.Exercises.Single(x => x.Id == pushUps.Id).Sets;
+            Assert.Equal(new int?[] { 30, null }, sets.Select(x => x.RestAfterSeconds));
+            Assert.Equal(60, updated.Exercises.Single(x => x.Id == pushUps.Id).RestBetweenSetsSeconds);
+        }
+
+        // Правка подходов без таймера не сбрасывает отдых после подхода.
+        var pushUpsAfterEdit = (await SaveAsync(false, $"/api/v1/exercises/{pushUps.Id}", "Push-ups", null, HttpStatusCode.OK))!;
+        Assert.Equal(new int?[] { 30, null }, pushUpsAfterEdit.Sets.Select(x => x.RestAfterSeconds));
+
+        // Отдых после отдельного упражнения; у остальных — отдых шаблона.
+        using (var afterExercise = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, null, null, [new ExerciseRestAfterRequest(pullUps.Id, 45)])))
+        {
+            Assert.Equal(HttpStatusCode.OK, afterExercise.StatusCode);
+            var updated = (await afterExercise.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+            Assert.Equal(new int?[] { 45, null }, updated.Exercises.Select(x => x.RestAfterExerciseSeconds));
+            Assert.Equal(200, updated.RestBetweenExercisesSeconds);
+        }
+
+        var pullUpsAfterEdit = (await SaveAsync(false, pullUpsPath, "Pull-ups", null, HttpStatusCode.OK))!;
+        Assert.Equal(45, pullUpsAfterEdit.RestAfterExerciseSeconds);
+        using (var afterTooLong = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, null, null, [new ExerciseRestAfterRequest(pullUps.Id, 4000)])))
+            Assert.Equal(HttpStatusCode.BadRequest, afterTooLong.StatusCode);
+
+        using (var unknownSet = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, null, [new SetRestTimerRequest(pushUps.Id, 9, 30)])))
+            Assert.Equal(HttpStatusCode.BadRequest, unknownSet.StatusCode);
+        using (var setTooShort = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, null, [new SetRestTimerRequest(pushUps.Id, 1, 2)])))
+            Assert.Equal(HttpStatusCode.BadRequest, setTooShort.StatusCode);
+
+        using (var tooShort = await owner.PutAsJsonAsync(restPath, new UpdateRestTimersRequest(4, null)))
+            Assert.Equal(HttpStatusCode.BadRequest, tooShort.StatusCode);
+        using (var tooLong = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(null, [new ExerciseRestTimerRequest(pullUps.Id, 3601)])))
+            Assert.Equal(HttpStatusCode.BadRequest, tooLong.StatusCode);
+        using (var twice = await owner.PutAsJsonAsync(
+                   restPath,
+                   new UpdateRestTimersRequest(
+                       null,
+                       [new ExerciseRestTimerRequest(pullUps.Id, 60), new ExerciseRestTimerRequest(pullUps.Id, 70)])))
+            Assert.Equal(HttpStatusCode.BadRequest, twice.StatusCode);
+
+        using var otherPlanResponse = await owner.PostAsJsonAsync(
+            "/api/v1/training-plans",
+            new CreateTrainingPlanRequest("Other plan"));
+        var otherPlan = (await otherPlanResponse.Content.ReadFromJsonAsync<TrainingPlanApiResponse>())!;
+        using (var foreignExercise = await owner.PutAsJsonAsync(
+                   $"/api/v1/training-plans/{otherPlan.Id}/rest-timers",
+                   new UpdateRestTimersRequest(null, [new ExerciseRestTimerRequest(pullUps.Id, 60)])))
+            Assert.Equal(HttpStatusCode.BadRequest, foreignExercise.StatusCode);
+        using (var foreignPlan = await stranger.PutAsJsonAsync(restPath, new UpdateRestTimersRequest(30, null)))
+            Assert.Equal(HttpStatusCode.NotFound, foreignPlan.StatusCode);
+
+        var saved = (await owner.GetFromJsonAsync<TrainingPlanApiResponse>($"/api/v1/training-plans/{plan.Id}"))!;
+        Assert.Equal(200, saved.RestBetweenExercisesSeconds);
+        Assert.Equal([100, 60], saved.Exercises.Select(x => x.RestBetweenSetsSeconds));
+
+        // Часы получают отдых каждого упражнения и отдых между упражнениями шаблона.
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var dbFactory = scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<WorkoutDbContext>>();
+            await using var db = await dbFactory.CreateDbContextAsync();
+            var userId = await db.Users
+                .Where(x => x.Email == "rest-timers@example.test")
+                .Select(x => x.Id)
+                .SingleAsync();
+            db.WorkoutDays.Add(new WorkoutPlanner.Web.Models.WorkoutDay
+            {
+                UserId = userId,
+                Date = DateTime.Today,
+                TrainingPlanId = plan.Id
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var active = (await watch.GetFromJsonAsync<WatchActiveWorkoutResponse>(
+            "/api/watch/workouts/active"))!;
+        Assert.Equal(200, active.RestBetweenExercisesSeconds);
+        Assert.Equal(100, active.RestBetweenSetsSeconds);
+        Assert.Equal([100, 60], active.Exercises.OrderBy(x => x.Order).Select(x => x.RestBetweenSetsSeconds));
+        Assert.Equal(
+            new int?[] { 30, null },
+            active.Exercises.Single(x => x.ExerciseId == pushUps.Id).Sets.OrderBy(x => x.SetNumber).Select(x => x.RestAfterSeconds));
+        Assert.Equal(
+            new int?[] { 45, null },
+            active.Exercises.OrderBy(x => x.Order).Select(x => x.RestAfterExerciseSeconds));
+
+        // Свободная тренировка, сохранённая шаблоном, уносит свои таймеры в шаблон.
+        var definition = (await owner.GetFromJsonAsync<List<ExerciseDefinitionApiResponse>>(
+            "/api/v1/exercise-definitions"))!.First();
+        using var freeResponse = await owner.PostAsJsonAsync(
+            "/api/v1/workouts/free/complete",
+            new CompleteFreeWorkoutRequest(
+                true,
+                "Free with rest",
+                [
+                    new SaveExerciseRequest(
+                        definition.Name,
+                        1,
+                        "Hard",
+                        definition.Id,
+                        [new SaveExerciseSetRequest(1, 10, 20, true)],
+                        null,
+                        75)
+                ],
+                null,
+                180));
+        Assert.Equal(HttpStatusCode.Created, freeResponse.StatusCode);
+        var free = (await freeResponse.Content.ReadFromJsonAsync<CompleteFreeWorkoutResponse>())!;
+        var template = (await owner.GetFromJsonAsync<TrainingPlanApiResponse>(
+            $"/api/v1/training-plans/{free.TrainingPlanId}"))!;
+        Assert.Equal(180, template.RestBetweenExercisesSeconds);
+        Assert.Equal(75, Assert.Single(template.Exercises).RestBetweenSetsSeconds);
+    }
+
+    [Fact]
     public async Task WorkoutLifecycleApi_CompletesAtomically_AndReturnsImmutableSnapshot()
     {
         using var factory = new GymPlannerApiFactory();

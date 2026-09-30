@@ -19,4 +19,16 @@ public interface ITrainingPlanService
     Task DeleteAsync(
         int id,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Сохраняет таймеры отдыха шаблона: отдых между упражнениями и отдых
+    /// между подходами перечисленных упражнений. Незаданное не меняется.
+    /// </summary>
+    Task<RestTimersUpdateResult> UpdateRestTimersAsync(
+        int id,
+        int? restBetweenExercisesSeconds,
+        IReadOnlyDictionary<int, int> restBetweenSetsByExerciseId,
+        IReadOnlyDictionary<(int ExerciseId, int SetNumber), int> restAfterBySet,
+        IReadOnlyDictionary<int, int> restAfterByExerciseId,
+        CancellationToken cancellationToken = default);
 }

@@ -72,6 +72,9 @@ public sealed class FreeWorkoutCompletion
     public List<Exercise> Exercises { get; set; } = [];
     /// <summary>Время окончания от клиента; <c>null</c> — сейчас по часам сервера.</summary>
     public DateTime? CompletedAt { get; set; }
+    /// <summary>Отдых между упражнениями для шаблона, если тренировку сохраняют шаблоном.</summary>
+    public int RestBetweenExercisesSeconds { get; set; } =
+        global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenExercisesSeconds;
 }
 
 /// <summary>Итоги запланированной тренировки, пришедшие с телефона.</summary>

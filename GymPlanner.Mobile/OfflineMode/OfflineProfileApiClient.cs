@@ -56,36 +56,6 @@ public sealed class OfflineProfileApiClient(ProfileApiClient inner, OfflineRunti
             cancellationToken);
     }
 
-    public async Task<ApiResult<RestTimerSettingsResponse>> SaveRestTimerSettingsAsync(
-        UpdateRestTimerSettingsRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var operation = runtime.Outbox.Create(
-            OutboxKinds.SaveRestTimers,
-            HttpMethod.Put,
-            "api/v1/profile/rest-timers",
-            JsonSerializer.Serialize(request, Json));
-
-        async Task<RestTimerSettingsResponse> ApplyAsync(RestTimerSettingsResponse timers)
-        {
-            await UpdateProfileAsync(
-                x => x with
-                {
-                    RestBetweenSetsSeconds = timers.RestBetweenSetsSeconds,
-                    RestBetweenExercisesSeconds = timers.RestBetweenExercisesSeconds
-                },
-                cancellationToken);
-            return timers;
-        }
-
-        return await runtime.SubmitAsync(
-            operation,
-            () => ApplyAsync(new RestTimerSettingsResponse(request.RestBetweenSetsSeconds, request.RestBetweenExercisesSeconds)),
-            body => ApplyAsync(JsonSerializer.Deserialize<RestTimerSettingsResponse>(body, Json)
-                ?? throw new JsonException("Empty rest timer response.")),
-            cancellationToken);
-    }
-
     public async Task<ApiResult<LanguageSettingsResponse>> SaveLanguageAsync(
         UpdateLanguageRequest request,
         CancellationToken cancellationToken = default)

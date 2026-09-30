@@ -284,33 +284,10 @@
     cursor: pointer;
     transition: background-color .18s ease, color .18s ease;
     animation: offline-indicator-in 220ms ease-out;
-    position: relative;
-}
-
-.offline-indicator--pending {
-    color: var(--color-text-muted);
 }
 
 .offline-indicator--problem {
     color: var(--color-danger-soft, var(--color-danger));
-}
-
-/* Число изменений в очереди — вспомогательное: полное описание в aria-label кнопки. */
-.offline-indicator__count {
-    position: absolute;
-    top: 6px;
-    right: 4px;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    border-radius: 999px;
-    background: var(--color-accent);
-    /* Тёмная цифра на оранжевом читается (≈7.9:1), белая — нет. */
-    color: var(--color-bg);
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 16px;
-    text-align: center;
 }
 
 .offline-indicator:hover,
@@ -518,7 +495,15 @@
         radial-gradient(circle, rgba(255, 255, 255, .26) 0 .68px, transparent 1.3px),
         radial-gradient(circle, rgba(255, 122, 26, .17) 0 .52px, transparent 1.15px),
         radial-gradient(circle, rgba(255, 255, 255, .2) 0 .48px, transparent 1.08px),
-        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .6px, transparent 1.25px);
+        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .6px, transparent 1.25px),
+        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .5px, transparent 1.1px),
+        radial-gradient(circle, rgba(255, 122, 26, .16) 0 .55px, transparent 1.2px),
+        radial-gradient(circle, rgba(255, 255, 255, .24) 0 .6px, transparent 1.25px),
+        radial-gradient(circle, rgba(255, 255, 255, .18) 0 .45px, transparent 1.05px),
+        radial-gradient(circle, rgba(255, 122, 26, .18) 0 .62px, transparent 1.3px),
+        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .66px, transparent 1.35px),
+        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .5px, transparent 1.15px),
+        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .52px, transparent 1.12px);
     background-position:
         17px 43px,
         113px 197px,
@@ -531,7 +516,15 @@
         163px 277px,
         -97px 347px,
         389px -173px,
-        -281px 109px;
+        -281px 109px,
+        41px 7px,
+        -53px 131px,
+        199px 61px,
+        -127px -19px,
+        71px 233px,
+        263px 97px,
+        -173px 181px,
+        137px -89px;
     background-size:
         133px 164px,
         179px 213px,
@@ -544,7 +537,15 @@
         536px 603px,
         603px 669px,
         669px 734px,
-        734px 805px;
+        734px 805px,
+        97px 121px,
+        151px 187px,
+        199px 239px,
+        247px 289px,
+        293px 341px,
+        343px 397px,
+        391px 449px,
+        443px 509px;
     opacity: .6;
     animation: ambient-dust-far 34s ease-in-out infinite alternate;
 }
@@ -558,7 +559,13 @@
         radial-gradient(circle, rgba(255, 255, 255, .36) 0 1px, rgba(255, 255, 255, .08) 1.7px, transparent 2.6px),
         radial-gradient(circle, rgba(255, 122, 26, .28) 0 1.15px, rgba(255, 122, 26, .08) 2px, transparent 3.1px),
         radial-gradient(circle, rgba(255, 255, 255, .42) 0 .95px, rgba(255, 255, 255, .09) 1.65px, transparent 2.65px),
-        radial-gradient(circle, rgba(255, 122, 26, .24) 0 .82px, rgba(255, 122, 26, .07) 1.5px, transparent 2.4px);
+        radial-gradient(circle, rgba(255, 122, 26, .24) 0 .82px, rgba(255, 122, 26, .07) 1.5px, transparent 2.4px),
+        radial-gradient(circle, rgba(255, 255, 255, .34) 0 .85px, rgba(255, 255, 255, .09) 1.5px, transparent 2.4px),
+        radial-gradient(circle, rgba(255, 122, 26, .28) 0 .95px, rgba(255, 122, 26, .07) 1.7px, transparent 2.7px),
+        radial-gradient(circle, rgba(255, 255, 255, .4) 0 1.05px, rgba(255, 255, 255, .1) 1.75px, transparent 2.8px),
+        radial-gradient(circle, rgba(255, 122, 26, .3) 0 .88px, rgba(255, 122, 26, .08) 1.6px, transparent 2.6px),
+        radial-gradient(circle, rgba(255, 255, 255, .38) 0 1.1px, rgba(255, 255, 255, .1) 1.85px, transparent 2.9px),
+        radial-gradient(circle, rgba(255, 122, 26, .26) 0 .8px, rgba(255, 122, 26, .07) 1.5px, transparent 2.5px);
     background-position:
         31px 71px,
         173px 229px,
@@ -567,7 +574,13 @@
         -191px 311px,
         97px -173px,
         353px 197px,
-        -263px 43px;
+        -263px 43px,
+        59px 13px,
+        -127px 97px,
+        211px 173px,
+        -37px -113px,
+        149px 263px,
+        -229px 211px;
     background-size:
         193px 230px,
         249px 297px,
@@ -576,7 +589,13 @@
         445px 499px,
         516px 575px,
         596px 654px,
-        688px 754px;
+        688px 754px,
+        157px 187px,
+        223px 263px,
+        281px 331px,
+        341px 389px,
+        409px 461px,
+        479px 541px;
     opacity: .68;
     animation: ambient-dust-near 19s ease-in-out infinite alternate;
 }

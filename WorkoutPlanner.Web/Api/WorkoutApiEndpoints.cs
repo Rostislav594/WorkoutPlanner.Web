@@ -42,6 +42,13 @@ public static class WorkoutApiEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
+        plans.MapPut("/{id:int}/rest-timers", UpdateRestTimersAsync)
+            .Produces<TrainingPlanApiResponse>()
+            .ProducesValidationProblem()
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         plans.MapGet("/{planId:int}/exercises", GetExercisesAsync)
             .Produces<List<ExerciseApiResponse>>()
             .Produces(StatusCodes.Status404NotFound)
@@ -187,6 +194,61 @@ public static class WorkoutApiEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> UpdateRestTimersAsync(
+        int id,
+        UpdateRestTimersRequest request,
+        ITrainingPlanService trainingPlans,
+        CancellationToken cancellationToken)
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (request.RestBetweenExercisesSeconds is { } betweenExercises &&
+            !RestTimerDefaults.IsValid(betweenExercises))
+        {
+            errors[nameof(request.RestBetweenExercisesSeconds)] = [RestRangeError];
+        }
+
+        var exercises = request.Exercises ?? [];
+        if (exercises.Any(x => !RestTimerDefaults.IsValid(x.RestBetweenSetsSeconds)))
+            errors[nameof(request.Exercises)] = [RestRangeError];
+        else if (exercises.Select(x => x.ExerciseId).Distinct().Count() != exercises.Count)
+            errors[nameof(request.Exercises)] = ["Every exercise may be listed only once."];
+
+        var afterExercises = request.AfterExercises ?? [];
+        if (afterExercises.Any(x => !RestTimerDefaults.IsValid(x.RestAfterSeconds)))
+            errors[nameof(request.AfterExercises)] = [RestRangeError];
+        else if (afterExercises.Select(x => x.ExerciseId).Distinct().Count() != afterExercises.Count)
+            errors[nameof(request.AfterExercises)] = ["Every exercise may be listed only once."];
+
+        var sets = request.Sets ?? [];
+        if (sets.Any(x => !RestTimerDefaults.IsValid(x.RestAfterSeconds)))
+            errors[nameof(request.Sets)] = [RestRangeError];
+        else if (sets.Select(x => (x.ExerciseId, x.SetNumber)).Distinct().Count() != sets.Count)
+            errors[nameof(request.Sets)] = ["Every set may be listed only once."];
+
+        if (errors.Count > 0)
+            return Results.ValidationProblem(errors);
+
+        var result = await trainingPlans.UpdateRestTimersAsync(
+            id,
+            request.RestBetweenExercisesSeconds,
+            exercises.ToDictionary(x => x.ExerciseId, x => x.RestBetweenSetsSeconds),
+            sets.ToDictionary(x => (x.ExerciseId, x.SetNumber), x => x.RestAfterSeconds),
+            afterExercises.ToDictionary(x => x.ExerciseId, x => x.RestAfterSeconds),
+            cancellationToken);
+        if (result == AppContracts.RestTimersUpdateResult.NotFound)
+            return Results.NotFound();
+        if (result == AppContracts.RestTimersUpdateResult.UnknownExercise)
+        {
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [nameof(request.Exercises)] = ["Every exercise and set must belong to this training plan."]
+            });
+        }
+
+        var plan = await trainingPlans.GetByIdAsync(id, cancellationToken);
+        return plan is null ? Results.NotFound() : Results.Ok(ToApiResponse(plan));
+    }
+
     private static async Task<IResult> GetExercisesAsync(
         int planId,
         ITrainingPlanService trainingPlans,
@@ -218,6 +280,9 @@ public static class WorkoutApiEndpoints
             return Results.ValidationProblem(validation.Errors);
 
         var exercise = ToContract(request, validation.Status, plan, id: 0);
+        exercise.RestBetweenSetsSeconds =
+            request.RestBetweenSetsSeconds ?? RestTimerDefaults.BetweenSetsSeconds;
+        exercise.RestAfterExerciseSeconds = request.RestAfterExerciseSeconds;
         await exercises.AddExerciseAsync(exercise, cancellationToken);
         return Results.Created(
             $"/api/v1/exercises/{exercise.Id}",
@@ -263,6 +328,10 @@ public static class WorkoutApiEndpoints
             },
             id);
         updated.PhotoPath = existing.PhotoPath;
+        updated.RestBetweenSetsSeconds =
+            request.RestBetweenSetsSeconds ?? existing.RestBetweenSetsSeconds;
+        updated.RestAfterExerciseSeconds =
+            request.RestAfterExerciseSeconds ?? existing.RestAfterExerciseSeconds;
         await exercises.UpdateExerciseAsync(updated, cancellationToken);
         return Results.Ok(ToResponse(updated));
     }
@@ -330,7 +399,8 @@ public static class WorkoutApiEndpoints
             plan.Id,
             plan.WorkoutName,
             plan.Date,
-            plan.Exercises.Select(ToResponse).ToList());
+            plan.Exercises.Select(ToResponse).ToList(),
+            plan.RestBetweenExercisesSeconds);
 
     private static ExerciseApiResponse ToResponse(
         AppContracts.Exercise exercise) =>
@@ -349,9 +419,12 @@ public static class WorkoutApiEndpoints
                     x.Repetitions,
                     x.Weight,
                     x.Completed,
-                    x.IsWarmup))
+                    x.IsWarmup,
+                    x.RestAfterSeconds))
                 .ToList(),
-            exercise.SupersetGroupId);
+            exercise.SupersetGroupId,
+            exercise.RestBetweenSetsSeconds,
+            exercise.RestAfterExerciseSeconds);
 
     private static AppContracts.Exercise ToContract(
         SaveExerciseRequest request,
@@ -376,7 +449,8 @@ public static class WorkoutApiEndpoints
                     Repetitions = x.Repetitions,
                     Weight = x.Weight,
                     Completed = x.Completed,
-                    IsWarmup = x.IsWarmup
+                    IsWarmup = x.IsWarmup,
+                    RestAfterSeconds = x.RestAfterSeconds
                 })
                 .ToList()
         };
@@ -440,6 +514,23 @@ public static class WorkoutApiEndpoints
                 errors[nameof(request.Sets)] =
                     ["Every set must have 1-1000 repetitions and a weight from 0 to 2000."];
             }
+            else if (request.Sets.Any(x =>
+                         x.RestAfterSeconds is { } rest && !RestTimerDefaults.IsValid(rest)))
+            {
+                errors[nameof(request.Sets)] = [RestRangeError];
+            }
+        }
+
+        if (request.RestBetweenSetsSeconds is { } restBetweenSets &&
+            !RestTimerDefaults.IsValid(restBetweenSets))
+        {
+            errors[nameof(request.RestBetweenSetsSeconds)] = [RestRangeError];
+        }
+
+        if (request.RestAfterExerciseSeconds is { } restAfterExercise &&
+            !RestTimerDefaults.IsValid(restAfterExercise))
+        {
+            errors[nameof(request.RestAfterExerciseSeconds)] = [RestRangeError];
         }
 
         if (request.ExerciseDefinitionId is { } definitionId &&
@@ -451,6 +542,9 @@ public static class WorkoutApiEndpoints
 
         return new ExerciseValidationResult(errors, status);
     }
+
+    private const string RestRangeError =
+        "Rest duration must be between 5 seconds and 60 minutes.";
 
     private sealed record ExerciseValidationResult(
         Dictionary<string, string[]> Errors,

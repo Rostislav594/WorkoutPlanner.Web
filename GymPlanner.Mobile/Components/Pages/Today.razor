@@ -6,7 +6,6 @@
 @inject IWorkoutApiClient WorkoutClient
 @inject IWorkoutLifecycleApiClient LifecycleClient
 @inject IExercisePhotoApiClient PhotoClient
-@inject IProfileApiClient ProfileClient
 @inject IMobilePhotoPicker PhotoPicker
 @inject NavigationManager Navigation
 @inject IAppText Text
@@ -34,10 +33,13 @@
             }
             else if (!_isLoading)
             {
-                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%" aria-label="@Text.Format("Today_FreeProgressAria", ProgressPercent.ToString("0"))">
+                @* Для тренировки из календаря показываем название шаблона, а не «Свободная тренировка». *@
+                var planName = _isFreeWorkout ? null : _workout?.TrainingPlan.WorkoutName;
+                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+                     aria-label="@(planName is null ? Text.Format("Today_FreeProgressAria", ProgressPercent.ToString("0")) : Text.Format("Today_PlanProgressAria", planName, ProgressPercent.ToString("0")))">
                     <div class="workout-progress-indicator__content">
-                        <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
-                        <span>@Text["Today_FreeWorkout"]</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">@(planName is null ? "bolt" : "fitness_center")</span>
+                        <span class="workout-progress-indicator__label">@(planName ?? Text["Today_FreeWorkout"])</span>
                     </div>
                 </div>
             }
@@ -49,14 +51,6 @@
                 </button>
             }
         </div>
-
-        @if (!_isFreeWorkout && _workout is not null)
-        {
-            <div class="workout-chip">
-                <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
-                <span>@_workout.TrainingPlan.WorkoutName</span>
-            </div>
-        }
     </header>
 
     @if (_errors.Count > 0)
@@ -380,7 +374,7 @@
             <button class="finish-button finish-button--hold"
                     type="button"
                     disabled="@_isBusy"
-                    aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text["Today_HoldToFinishAria"])"
+                    aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text.Format("Today_HoldToFinishAria", FinishHoldDuration.TotalSeconds))"
                     @onpointerdown="BeginFinishHoldAsync"
                     @onpointerup="CancelFinishHold"
                     @onpointercancel="CancelFinishHold"
@@ -389,6 +383,13 @@
                     @onkeyup="HandleFinishKeyUp"
                     @oncontextmenu:preventDefault="true">
                 <span class="finish-button-label">@(_isBusy ? Text["Today_SavingWorkout"] : Text["Today_FinishWorkout"])</span>
+                @if (!_isBusy)
+                {
+                    <span class="finish-button-hold-hint" aria-hidden="true">
+                        <span class="material-symbols-rounded" aria-hidden="true">touch_app</span>
+                        <span>@Text.Format("Today_FinishHoldDuration", FinishHoldDuration.TotalSeconds)</span>
+                    </span>
+                }
             </button>
         }
     }
@@ -404,10 +405,14 @@
                         <stop offset="90%" stop-color="#4fc46b" />
                         <stop offset="100%" stop-color="#265e33" />
                     </radialGradient>
+                    <mask id="finish-outer-glow-mask" maskUnits="userSpaceOnUse" x="-30" y="-30" width="180" height="180">
+                        <rect x="-30" y="-30" width="180" height="180" fill="white" />
+                        <circle cx="60" cy="60" r="54.5" fill="black" />
+                    </mask>
                 </defs>
-                <circle class="finish-hold-glow" cx="60" cy="60" r="52" stroke="url(#finish-ring-gradient)" />
+                <circle class="finish-hold-glow" cx="60" cy="60" r="52" stroke="url(#finish-ring-gradient)" mask="url(#finish-outer-glow-mask)" />
                 <circle class="finish-hold-progress" cx="60" cy="60" r="52" stroke="url(#finish-ring-gradient)" />
-                <path class="finish-hold-check" d="M32 61 L53 83 L88 29" />
+                <path class="finish-hold-check" d="M36 61 L54 80 L84 34" />
             </svg>
         </div>
     </div>
@@ -416,29 +421,29 @@
 
 @if (_selectedRestTimer is not null)
 {
-    <div class="modal-overlay" @onclick="CloseRestTimer">
-        <section class="modal-window rest-timer-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timer-title" @onclick:stopPropagation="true">
+    <div class="modal-overlay" @onclick="CloseRestTimerAsync">
+        <section class="modal-window rest-timer-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timer-title" aria-describedby="rest-timer-hint" @onclick:stopPropagation="true">
             <div class="editor-heading">
                 <div>
                     <span>@Text["Today_RestTimer"]</span>
                     <h2 id="rest-timer-title">@(_selectedRestTimer.Kind == RestTimerKind.BetweenSets ? Text["Today_BetweenSets"] : Text["Today_BetweenExercises"])</h2>
                 </div>
-                <button class="quick-action-close editor-close" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseRestTimer">
+                <button class="quick-action-close editor-close" type="button" aria-label="@Text["Common_Close"]" @onclick="CloseRestTimerAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </div>
             <label class="editor-field">
                 <span>@Text["Today_RestSeconds"]</span>
-                <input class="editor-control" type="number" min="5" max="3600" @bind="_selectedRestTimer.DurationSeconds" />
+                <input class="editor-control" type="number" inputmode="numeric" min="@RestTimerDefaults.MinSeconds" max="@RestTimerDefaults.MaxSeconds" @bind="_restDraftSeconds" />
             </label>
-            <p class="rest-timer-dialog-hint">@Text["Today_RestTimerHint"]</p>
+            <p id="rest-timer-hint" class="rest-timer-dialog-hint">@RestTimerHint(_selectedRestTimer)</p>
             <div class="editor-actions rest-timer-actions">
-                <button class="edit-workout-button" type="button" disabled="@_selectedRestTimer.IsQueued" @onclick="StartSelectedRestTimer">@(_selectedRestTimer.IsRunning ? Text["Today_Restart"] : _selectedRestTimer.IsQueued ? Text["Today_Queued"] : Text["Today_Start"])</button>
+                <button class="edit-workout-button" type="button" disabled="@_selectedRestTimer.IsQueued" @onclick="StartSelectedRestTimerAsync">@(_selectedRestTimer.IsRunning ? Text["Today_Restart"] : _selectedRestTimer.IsQueued ? Text["Today_Queued"] : Text["Today_Start"])</button>
                 @if (_selectedRestTimer.IsRunning)
                 {
                     <button class="secondary-button" type="button" @onclick="PauseSelectedRestTimer">@Text["Today_Pause"]</button>
                 }
-                <button class="secondary-button" type="button" @onclick="CloseRestTimer">@Text["Common_Done"]</button>
+                <button class="secondary-button" type="button" @onclick="CloseRestTimerAsync">@Text["Common_Done"]</button>
             </div>
         </section>
     </div>
@@ -822,6 +827,8 @@
     private bool _photoBusy;
     private bool _confirmPhotoDelete;
     private bool _isCreatingFreeExercise;
+    private static readonly TimeSpan FinishHoldFeedbackDelay = TimeSpan.FromMilliseconds(100);
+    private static readonly TimeSpan FinishHoldDuration = TimeSpan.FromMilliseconds(3400);
     private bool _isFinishHoldActive;
     private bool _isFinishAnimationActive;
     private int _nextFreeExerciseId = -1;
@@ -850,8 +857,11 @@
     private readonly Dictionary<string, RestTimerState> _restTimers = [];
     private readonly List<RestTimerState> _queuedRestTimers = [];
     private RestTimerState? _selectedRestTimer;
-    private int _restBetweenSetsSeconds = 90;
-    private int _restBetweenExercisesSeconds = 120;
+    // Значение поля в окне таймера: применяется к таймерам и шаблону, когда окно закрывают.
+    private int _restDraftSeconds;
+    // Отдых между подходами хранится в упражнениях, а этот — в шаблоне (или в
+    // черновике свободной тренировки) и общий для всех переходов между упражнениями.
+    private int _restBetweenExercisesSeconds = RestTimerDefaults.BetweenExercisesSeconds;
 
     private IReadOnlyList<SystemChoiceOption> ExerciseDefinitionOptions =>
         _exerciseDefinitions
@@ -1060,10 +1070,10 @@
 
         try
         {
-            await Task.Delay(100, holdCts.Token);
+            await Task.Delay(FinishHoldFeedbackDelay, holdCts.Token);
             _isFinishAnimationActive = true;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(3300, holdCts.Token);
+            await Task.Delay(FinishHoldDuration - FinishHoldFeedbackDelay, holdCts.Token);
             if (!holdCts.IsCancellationRequested)
                 await CompleteAsync();
         }
@@ -1476,15 +1486,12 @@
         CloseEditWorkoutAction();
         _errors.Clear();
         _photoThumbnails.Clear();
+        // Длительности таймеров берутся из загруженного шаблона заново.
+        _selectedRestTimer = null;
+        _restTimers.Clear();
+        _queuedRestTimers.Clear();
         try
         {
-            var profileResult = await ProfileClient.GetAsync(_disposeCts.Token);
-            if (profileResult.Succeeded && profileResult.Value is { } profile)
-            {
-                _restBetweenSetsSeconds = profile.RestBetweenSetsSeconds;
-                _restBetweenExercisesSeconds = profile.RestBetweenExercisesSeconds;
-            }
-
             // Черновик спрашивается у сервера, а не читается из памяти телефона:
             // тренировку мог продолжать кто угодно из двух устройств, и правда
             // о ней теперь одна — серверная.
@@ -1500,6 +1507,7 @@
                     _isFreeWorkout = true;
                     _freeDraftPlanId = draft.TrainingPlanId;
                     _workout = null;
+                    _restBetweenExercisesSeconds = plan.RestBetweenExercisesSeconds;
                     _exercises.Clear();
                     _exercises.AddRange(plan.Exercises.Select(ExerciseDraft.From));
                     await RestoreSessionAsync(draft.TrainingPlanId, null);
@@ -1524,6 +1532,7 @@
             _exercises.Clear();
             if (_workout is not null)
             {
+                _restBetweenExercisesSeconds = _workout.TrainingPlan.RestBetweenExercisesSeconds;
                 _exercises.AddRange(_workout.TrainingPlan.Exercises
                     .Select(ExerciseDraft.From));
                 await RestoreSessionAsync(_workout.TrainingPlan.Id, _workout.Day.Id);
@@ -1747,9 +1756,18 @@
     private void OpenRestTimer(int exerciseId, int setNumber, RestTimerKind kind)
     {
         _selectedRestTimer = GetRestTimer(exerciseId, setNumber, kind);
+        _restDraftSeconds = _selectedRestTimer.DurationSeconds;
     }
 
-    private void CloseRestTimer() => _selectedRestTimer = null;
+    private async Task CloseRestTimerAsync()
+    {
+        if (_selectedRestTimer is not { } timer)
+            return;
+
+        _selectedRestTimer = null;
+        if (ApplyRestDuration(timer, _restDraftSeconds))
+            await SaveRestDurationAsync(timer);
+    }
 
     private RestTimerState GetRestTimer(int exerciseId, int setNumber, RestTimerKind kind)
     {
@@ -1757,14 +1775,130 @@
         if (_restTimers.TryGetValue(key, out var timer))
             return timer;
 
+        var duration = kind == RestTimerKind.BetweenSets
+            ? RestAfterSet(exerciseId, setNumber)
+            : _exercises.FirstOrDefault(x => x.Id == exerciseId)?.RestAfterExerciseSeconds ?? _restBetweenExercisesSeconds;
         timer = new RestTimerState
         {
             Kind = kind,
-            DurationSeconds = kind == RestTimerKind.BetweenSets ? _restBetweenSetsSeconds : _restBetweenExercisesSeconds,
-            RemainingSeconds = kind == RestTimerKind.BetweenSets ? _restBetweenSetsSeconds : _restBetweenExercisesSeconds
+            ExerciseId = exerciseId,
+            SetNumber = setNumber,
+            DurationSeconds = duration,
+            RemainingSeconds = duration
         };
         _restTimers.Add(key, timer);
         return timer;
+    }
+
+    /// <summary>
+    /// Отдых после подхода из шаблона: свой у подхода, иначе общий отдых
+    /// упражнения. У суперсета его несёт первое упражнение группы.
+    /// </summary>
+    private int RestAfterSet(int exerciseId, int setNumber)
+    {
+        var exercise = _exercises.FirstOrDefault(x => x.Id == exerciseId);
+        return exercise?.Sets.FirstOrDefault(x => x.SetNumber == setNumber)?.RestAfterSeconds
+            ?? exercise?.RestBetweenSetsSeconds
+            ?? RestTimerDefaults.BetweenSetsSeconds;
+    }
+
+    /// <summary>
+    /// Упражнения, которым принадлежит отдых между подходами: одно упражнение
+    /// или все упражнения суперсета — у суперсета это отдых между кругами.
+    /// </summary>
+    private IReadOnlyList<ExerciseDraft> RestOwners(RestTimerState timer)
+    {
+        var exercise = _exercises.FirstOrDefault(x => x.Id == timer.ExerciseId);
+        if (exercise is null)
+            return [];
+
+        return exercise.SupersetGroupId is { } groupId
+            ? _exercises.Where(x => x.SupersetGroupId == groupId).ToList()
+            : [exercise];
+    }
+
+    /// <summary>
+    /// Меняется только этот таймер: отдых после этого подхода (у суперсета —
+    /// круга) или после этого упражнения (суперсета). Уже идущий отсчёт не
+    /// прерывается. Возвращает, изменилось ли что-нибудь.
+    /// </summary>
+    private bool ApplyRestDuration(RestTimerState timer, int seconds)
+    {
+        seconds = Math.Clamp(seconds, RestTimerDefaults.MinSeconds, RestTimerDefaults.MaxSeconds);
+        if (seconds == timer.DurationSeconds)
+            return false;
+
+        if (timer.Kind == RestTimerKind.BetweenExercises)
+        {
+            foreach (var exercise in RestOwners(timer))
+                exercise.RestAfterExerciseSeconds = seconds;
+        }
+        else
+        {
+            foreach (var set in RestOwners(timer).SelectMany(x => x.Sets).Where(x => x.SetNumber == timer.SetNumber))
+                set.RestAfterSeconds = seconds;
+        }
+
+        timer.DurationSeconds = seconds;
+        if (!timer.IsRunning)
+            timer.RemainingSeconds = seconds;
+        return true;
+    }
+
+    /// <summary>Сохраняет длительность в шаблон, чтобы она осталась и в следующих тренировках.</summary>
+    private async Task SaveRestDurationAsync(RestTimerState timer)
+    {
+        var planId = _isFreeWorkout ? _freeDraftPlanId : _workout?.TrainingPlan.Id;
+        if (planId is null)
+            return;
+
+        // Незаполненная карточка свободной тренировки ещё не сохранена нигде.
+        var owners = RestOwners(timer)
+            .Where(x => x.Id >= 0 || OfflineIds.IsLocal(x.Id))
+            .ToList();
+        UpdateRestTimersRequest request;
+        if (timer.Kind == RestTimerKind.BetweenExercises)
+        {
+            if (owners.Count == 0)
+                return;
+            request = new(null, null, null, owners
+                .Select(x => new ExerciseRestAfterRequest(x.Id, timer.DurationSeconds))
+                .ToList());
+        }
+        else
+        {
+            var sets = owners
+                .Where(x => x.Sets.Any(set => set.SetNumber == timer.SetNumber))
+                .Select(x => new SetRestTimerRequest(x.Id, timer.SetNumber, timer.DurationSeconds))
+                .ToList();
+            if (sets.Count == 0)
+                return;
+            request = new(null, null, sets);
+        }
+
+        try
+        {
+            var result = await WorkoutClient.UpdateRestTimersAsync(planId.Value, request, _disposeCts.Token);
+            if (!result.Succeeded)
+                _errors.AddRange(result.Errors);
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+    }
+
+    private string RestTimerHint(RestTimerState timer)
+    {
+        if (_isFreeWorkout)
+            return Text["Today_RestHintFree"];
+        var owners = RestOwners(timer);
+        var names = string.Join(" / ", owners.Select(x => x.Name));
+        if (timer.Kind == RestTimerKind.BetweenExercises)
+            return Text.Format("Today_RestHintBetweenExercises", names);
+
+        return owners.Count > 1
+            ? Text.Format("Today_RestHintSuperset", timer.SetNumber, string.Join(" / ", owners.Select(x => x.Name)))
+            : Text.Format("Today_RestHintBetweenSets", timer.SetNumber, owners.FirstOrDefault()?.Name ?? string.Empty);
     }
 
     private string GetRestTimerLabel(int exerciseId, int setNumber, RestTimerKind kind)
@@ -1779,15 +1913,17 @@
                 : FormatDuration(timer.DurationSeconds);
     }
 
-    private void StartSelectedRestTimer()
+    private async Task StartSelectedRestTimerAsync()
     {
-        if (_selectedRestTimer is null) return;
-        _selectedRestTimer.DurationSeconds = Math.Clamp(_selectedRestTimer.DurationSeconds, 5, 3600);
-        if (_selectedRestTimer.IsRunning)
-            StartRestTimer(_selectedRestTimer);
+        if (_selectedRestTimer is not { } timer) return;
+        _selectedRestTimer = null;
+        var changed = ApplyRestDuration(timer, _restDraftSeconds);
+        if (timer.IsRunning)
+            StartRestTimer(timer);
         else
-            RequestStartRestTimer(_selectedRestTimer);
-        CloseRestTimer();
+            RequestStartRestTimer(timer);
+        if (changed)
+            await SaveRestDurationAsync(timer);
     }
 
     private void RequestStartRestTimer(RestTimerState timer)
@@ -1969,7 +2105,8 @@
                     saveAsTemplate,
                     templateName,
                     _exercises.Select(x => x.ToRequest()).ToArray(),
-                    Clock.GetLocalNow().DateTime),
+                    Clock.GetLocalNow().DateTime,
+                    _restBetweenExercisesSeconds),
                 _disposeCts.Token);
             if (!result.Succeeded)
             {
@@ -2221,6 +2358,10 @@
     private sealed class RestTimerState
     {
         public RestTimerKind Kind { get; init; }
+        /// <summary>Упражнение, после подходов которого идёт отдых; у суперсета — первое в группе.</summary>
+        public int ExerciseId { get; init; }
+        /// <summary>Подход (у суперсета — круг), после которого идёт отдых; 0 — отдых между упражнениями.</summary>
+        public int SetNumber { get; init; }
         public int DurationSeconds { get; set; }
         public int RemainingSeconds { get; set; }
         public bool IsRunning { get; set; }
@@ -2239,6 +2380,10 @@
         public string Status { get; set; } = "NotCompleted";
         public bool HasPhoto { get; set; }
         public int? SupersetGroupId { get; set; }
+        /// <summary>Отдых между подходами из шаблона; у суперсета — между кругами.</summary>
+        public int RestBetweenSetsSeconds { get; set; } = RestTimerDefaults.BetweenSetsSeconds;
+        /// <summary>Отдых после упражнения из шаблона; null — отдых между упражнениями шаблона.</summary>
+        public int? RestAfterExerciseSeconds { get; set; }
         public List<SetDraft> Sets { get; } = [];
         public bool IsConfigured => Id >= 0 ||
             (ExerciseDefinitionId is not null &&
@@ -2262,7 +2407,9 @@
                 ExerciseDefinitionId = source.ExerciseDefinitionId,
                 Status = source.Status,
                 HasPhoto = source.HasPhoto,
-                SupersetGroupId = source.SupersetGroupId
+                SupersetGroupId = source.SupersetGroupId,
+                RestBetweenSetsSeconds = source.RestBetweenSetsSeconds,
+                RestAfterExerciseSeconds = source.RestAfterExerciseSeconds
             };
             draft.Sets.AddRange(source.Sets
                 .OrderBy(x => x.SetNumber)
@@ -2280,8 +2427,11 @@
                 x.Repetitions,
                 x.Weight,
                 x.Completed,
-                x.IsWarmup)).ToArray(),
-            SupersetGroupId);
+                x.IsWarmup,
+                x.RestAfterSeconds)).ToArray(),
+            SupersetGroupId,
+            RestBetweenSetsSeconds,
+            RestAfterExerciseSeconds);
 
         public ExerciseApiResponse ToResponse() => new(
             Id,
@@ -2296,8 +2446,11 @@
                 x.Repetitions,
                 x.Weight,
                 x.Completed,
-                x.IsWarmup)).ToList(),
-            SupersetGroupId);
+                x.IsWarmup,
+                x.RestAfterSeconds)).ToList(),
+            SupersetGroupId,
+            RestBetweenSetsSeconds,
+            RestAfterExerciseSeconds);
 
         public ExerciseDraft Clone()
         {
@@ -2309,7 +2462,9 @@
                 ExerciseDefinitionId = ExerciseDefinitionId,
                 Status = Status,
                 HasPhoto = HasPhoto,
-                SupersetGroupId = SupersetGroupId
+                SupersetGroupId = SupersetGroupId,
+                RestBetweenSetsSeconds = RestBetweenSetsSeconds,
+                RestAfterExerciseSeconds = RestAfterExerciseSeconds
             };
             clone.Sets.AddRange(Sets.Select(x => x.Clone()));
             return clone;
@@ -2333,15 +2488,20 @@
                 Sets[index].SetNumber = index + 1;
         }
 
+        // Таймер отсюда не берётся: снимок сессии, сохранённый прежней сборкой,
+        // не знает его и подставил бы значение по умолчанию вместо шаблонного.
         public void UpdateFrom(ExerciseApiResponse source)
         {
             Status = source.Status;
             HasPhoto = source.HasPhoto;
             SupersetGroupId = source.SupersetGroupId;
+            var restAfter = Sets.ToDictionary(x => x.SetNumber, x => x.RestAfterSeconds);
             Sets.Clear();
             Sets.AddRange(source.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(SetDraft.From));
+            foreach (var set in Sets)
+                set.RestAfterSeconds ??= restAfter.GetValueOrDefault(set.SetNumber);
         }
     }
 
@@ -2354,6 +2514,8 @@
         public double Weight { get; set; }
         public bool Completed { get; set; }
         public bool IsWarmup { get; set; }
+        /// <summary>Отдых после подхода из шаблона; null — отдых упражнения.</summary>
+        public int? RestAfterSeconds { get; set; }
 
         public SetDraft Clone() => new()
         {
@@ -2361,7 +2523,8 @@
             Repetitions = Repetitions,
             Weight = Weight,
             Completed = Completed,
-            IsWarmup = IsWarmup
+            IsWarmup = IsWarmup,
+            RestAfterSeconds = RestAfterSeconds
         };
 
         public static SetDraft From(ExerciseSetApiResponse source) => new()
@@ -2370,7 +2533,8 @@
             Repetitions = source.Repetitions,
             Weight = source.Weight,
             Completed = source.Completed,
-            IsWarmup = source.IsWarmup
+            IsWarmup = source.IsWarmup,
+            RestAfterSeconds = source.RestAfterSeconds
         };
     }
 }

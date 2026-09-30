@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Services;
 
 namespace WorkoutPlanner.Web.Models;
@@ -35,6 +36,18 @@ public class Exercise
     public int? SupersetOrder { get; set; }
 
     public ExerciseDefinition? ExerciseDefinition { get; set; }
+
+    /// <summary>
+    /// Отдых между подходами этого упражнения, в секундах. У суперсета —
+    /// отдых между кругами; его хранят все упражнения группы.
+    /// </summary>
+    public int RestBetweenSetsSeconds { get; set; } = RestTimerDefaults.BetweenSetsSeconds;
+
+    /// <summary>
+    /// Отдых после этого упражнения перед следующим, в секундах; у суперсета его
+    /// хранят все упражнения группы. <c>null</c> — отдых между упражнениями шаблона.
+    /// </summary>
+    public int? RestAfterExerciseSeconds { get; set; }
 
     public List<ExerciseTemplateSet> Sets { get; set; } = new();
 

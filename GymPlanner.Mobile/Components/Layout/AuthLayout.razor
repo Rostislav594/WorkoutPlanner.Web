@@ -22,5 +22,59 @@
 </svg>
 
 <main class="auth-shell">
-    @Body
+    <div class="auth-motion-art" aria-hidden="true">
+        <svg class="auth-route-map"
+             viewBox="0 0 390 844"
+             preserveAspectRatio="xMidYMid meet"
+             focusable="false">
+            <defs>
+                <path id="auth-route-top"
+                      d="M -18 224 C 46 151 96 174 171 170 S 252 121 299 116 S 335 52 408 42" />
+                <path id="auth-route-bottom"
+                      d="M -18 699 C 78 691 118 742 211 744 S 316 713 408 604" />
+                <path id="auth-route-bottom-reversed"
+                      d="M 408 604 C 316 713 304 746 211 744 C 118 742 78 691 -18 699" />
+            </defs>
+
+            <g class="auth-route-cluster auth-route-cluster--top">
+                <use href="#auth-route-top" class="auth-route-line auth-route-line--ghost" transform="translate(0 -34)" />
+                <use href="#auth-route-top" class="auth-route-line auth-route-line--primary" />
+                <use href="#auth-route-top" class="auth-route-line auth-route-line--ghost" transform="translate(0 35)" />
+            </g>
+
+            <g class="auth-route-cluster auth-route-cluster--bottom">
+                <use href="#auth-route-bottom" class="auth-route-line auth-route-line--ghost" transform="translate(0 -33)" />
+                <use href="#auth-route-bottom" class="auth-route-line auth-route-line--primary" />
+                <use href="#auth-route-bottom" class="auth-route-line auth-route-line--ghost" transform="translate(0 34)" />
+            </g>
+
+            <g class="auth-route-node auth-route-node--top auth-route-node--animated">
+                <circle class="auth-route-node-halo" r="14" />
+                <circle class="auth-route-node-ring" r="8.5" />
+                <circle class="auth-route-node-core" r="3.5" />
+            </g>
+
+            <g class="auth-route-node auth-route-node--bottom auth-route-node--animated">
+                <circle class="auth-route-node-halo" r="14" />
+                <circle class="auth-route-node-ring" r="8.5" />
+                <circle class="auth-route-node-core" r="3.5" />
+            </g>
+
+            <g class="auth-route-node auth-route-node--top auth-route-node--static" transform="translate(299 116)">
+                <circle class="auth-route-node-halo" r="14" />
+                <circle class="auth-route-node-ring" r="8.5" />
+                <circle class="auth-route-node-core" r="3.5" />
+            </g>
+
+            <g class="auth-route-node auth-route-node--bottom auth-route-node--static" transform="translate(211 744)">
+                <circle class="auth-route-node-halo" r="14" />
+                <circle class="auth-route-node-ring" r="8.5" />
+                <circle class="auth-route-node-core" r="3.5" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="auth-content">
+        @Body
+    </div>
 </main>

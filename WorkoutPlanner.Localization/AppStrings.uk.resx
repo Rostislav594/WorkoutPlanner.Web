@@ -337,6 +337,21 @@
   <data name="Login_Title" xml:space="preserve">
     <value>Вхід</value>
   </data>
+  <data name="Auth_Subtitle" xml:space="preserve">
+    <value>Продовжуйте ставати сильнішими</value>
+  </data>
+  <data name="Auth_EmailPlaceholder" xml:space="preserve">
+    <value>Введіть email</value>
+  </data>
+  <data name="Auth_PasswordPlaceholder" xml:space="preserve">
+    <value>Введіть пароль</value>
+  </data>
+  <data name="Common_ShowPassword" xml:space="preserve">
+    <value>Показати пароль</value>
+  </data>
+  <data name="Common_HidePassword" xml:space="preserve">
+    <value>Сховати пароль</value>
+  </data>
   <data name="Login_Submit" xml:space="preserve">
     <value>Увійти</value>
   </data>
@@ -682,6 +697,33 @@
   <data name="History_DeleteEntry" xml:space="preserve">
     <value>Видалити запис</value>
   </data>
+  <data name="History_RecentEmptyTitle" xml:space="preserve">
+    <value>За останній місяць тренувань немає</value>
+  </data>
+  <data name="History_RecentEmptyBody" xml:space="preserve">
+    <value>Старші тренування лежать в архіві.</value>
+  </data>
+  <data name="HistoryArchive_Open" xml:space="preserve">
+    <value>Відкрити архів</value>
+  </data>
+  <data name="HistoryArchive_Title" xml:space="preserve">
+    <value>Архів</value>
+  </data>
+  <data name="HistoryArchive_BackToHistory" xml:space="preserve">
+    <value>Назад до історії</value>
+  </data>
+  <data name="HistoryArchive_BackToArchive" xml:space="preserve">
+    <value>Назад до архіву</value>
+  </data>
+  <data name="HistoryArchive_EmptyTitle" xml:space="preserve">
+    <value>Архів поки порожній</value>
+  </data>
+  <data name="HistoryArchive_EmptyBody" xml:space="preserve">
+    <value>Тренування, старші за місяць, переїжджають сюди з історії та розкладаються за місяцями.</value>
+  </data>
+  <data name="HistoryArchive_MonthEmpty" xml:space="preserve">
+    <value>У цій папці немає тренувань</value>
+  </data>
   <data name="Progress_BackToSections" xml:space="preserve">
     <value>Повернутися до розділів прогресу</value>
   </data>
@@ -850,9 +892,6 @@
   <data name="ProfileItem_PersonalInformation" xml:space="preserve">
     <value>Особиста інформація</value>
   </data>
-  <data name="ProfileItem_RestTimers" xml:space="preserve">
-    <value>Таймери відпочинку</value>
-  </data>
   <data name="ProfileSection_Devices" xml:space="preserve">
     <value>Пристрої</value>
   </data>
@@ -931,18 +970,6 @@
   <data name="Profile_PasswordBusy" xml:space="preserve">
     <value>Виконуємо…</value>
   </data>
-  <data name="Profile_RestTimersHint" xml:space="preserve">
-    <value>Ці значення стануть часом за замовчуванням для всіх таймерів відпочинку.</value>
-  </data>
-  <data name="Profile_RestBetweenSets" xml:space="preserve">
-    <value>Між підходами, с.</value>
-  </data>
-  <data name="Profile_RestBetweenExercises" xml:space="preserve">
-    <value>Між вправами, с.</value>
-  </data>
-  <data name="Profile_ApplyToAllTimers" xml:space="preserve">
-    <value>Застосувати до всіх таймерів</value>
-  </data>
   <data name="Profile_SupportEyebrow" xml:space="preserve">
     <value>Довідка та підтримка</value>
   </data>
@@ -996,12 +1023,6 @@
   </data>
   <data name="Profile_Saved" xml:space="preserve">
     <value>Профіль збережено.</value>
-  </data>
-  <data name="Profile_RestTimerRange" xml:space="preserve">
-    <value>Вкажіть час від 5 секунд до 60 хвилин.</value>
-  </data>
-  <data name="Profile_RestTimersApplied" xml:space="preserve">
-    <value>Налаштування таймерів відпочинку застосовано до всіх таймерів.</value>
   </data>
   <data name="Profile_SupportTooShort" xml:space="preserve">
     <value>Опишіть проблему хоча б у 10 символах.</value>
@@ -1436,13 +1457,16 @@
     <value>Зберігаємо тренування</value>
   </data>
   <data name="Today_HoldToFinishAria" xml:space="preserve">
-    <value>Утримуйте, щоб завершити тренування</value>
+    <value>Утримуйте {0:0.#} секунди, щоб завершити тренування</value>
   </data>
   <data name="Today_SavingWorkout" xml:space="preserve">
     <value>Зберігаємо тренування…</value>
   </data>
   <data name="Today_FinishWorkout" xml:space="preserve">
     <value>Завершити тренування</value>
+  </data>
+  <data name="Today_FinishHoldDuration" xml:space="preserve">
+    <value>{0:0.#} с</value>
   </data>
   <data name="Today_HoldUntilAnimation" xml:space="preserve">
     <value>Утримуйте кнопку до завершення анімації</value>
@@ -1458,9 +1482,6 @@
   </data>
   <data name="Today_RestSeconds" xml:space="preserve">
     <value>Час відпочинку, с.</value>
-  </data>
-  <data name="Today_RestTimerHint" xml:space="preserve">
-    <value>Це значення змінить лише цей таймер. Загальні значення налаштовуються в профілі.</value>
   </data>
   <data name="Today_Restart" xml:space="preserve">
     <value>Перезапустити</value>
@@ -1790,7 +1811,7 @@
     <value>Запустити відпочинок</value>
   </data>
   <data name="Help_Today_S4_Text" xml:space="preserve">
-    <value>Плашка відпочинку стоїть між підходами та між вправами, а її тривалість береться з налаштувань профілю.</value>
+    <value>Плашка відпочинку стоїть після кожного підходу та після кожної вправи. Тривалість береться з шаблону, а змінена тут зберігається в шаблон лише для цієї плашки.</value>
   </data>
   <data name="Help_TodayWeb_Intro" xml:space="preserve">
     <value>Тут відбувається тренування, яке ви заздалегідь призначили в календарі.</value>
@@ -1934,19 +1955,13 @@
     <value>Профіль</value>
   </data>
   <data name="Help_Profile_Intro" xml:space="preserve">
-    <value>Профіль — це зміст налаштувань: особисті дані, таймери відпочинку, пристрої, мова, безпека та підтримка.</value>
+    <value>Профіль — це зміст налаштувань: особисті дані, пристрої, мова, безпека та підтримка.</value>
   </data>
   <data name="Help_Profile_S1_Title" xml:space="preserve">
     <value>Змінити особисті дані</value>
   </data>
   <data name="Help_Profile_S1_Text" xml:space="preserve">
     <value>Email змінити не можна — він прив'язаний до акаунта.</value>
-  </data>
-  <data name="Help_Profile_S2_Title" xml:space="preserve">
-    <value>Налаштувати таймери відпочинку</value>
-  </data>
-  <data name="Help_Profile_S2_Text" xml:space="preserve">
-    <value>Ці значення підставляються за замовчуванням у всі таймери відпочинку на сторінці «Сьогодні».</value>
   </data>
   <data name="Help_Profile_S3_Title" xml:space="preserve">
     <value>Змінити мову</value>
@@ -3394,15 +3409,6 @@
   <data name="Help_Profile_S1_Step3" xml:space="preserve">
     <value>Натисніть «Зберегти зміни».</value>
   </data>
-  <data name="Help_Profile_S2_Step1" xml:space="preserve">
-    <value>Натисніть «Таймери відпочинку».</value>
-  </data>
-  <data name="Help_Profile_S2_Step2" xml:space="preserve">
-    <value>Задайте «Між підходами, с.» і «Між вправами, с.».</value>
-  </data>
-  <data name="Help_Profile_S2_Step3" xml:space="preserve">
-    <value>Натисніть «Застосувати до всіх таймерів».</value>
-  </data>
   <data name="Help_Profile_S3_Step1" xml:space="preserve">
     <value>Натисніть «Мова».</value>
   </data>
@@ -3481,45 +3487,26 @@
   <data name="ProfilePush_Updating" xml:space="preserve"><value>Зберігаємо налаштування…</value></data>
   <data name="ProfilePush_TokenUnavailable" xml:space="preserve"><value>Не вдалося підключити push-сповіщення на цьому пристрої. Спробуйте пізніше.</value></data>
   <data name="ProfilePush_UpdateFailed" xml:space="preserve"><value>Не вдалося змінити налаштування. Перевірте з’єднання та спробуйте знову.</value></data>
-  <data name="Offline_IndicatorLabel" xml:space="preserve"><value>Немає зв'язку із сервером. Відкрити офлайн-режим</value></data>
+  <data name="Offline_IndicatorLabel" xml:space="preserve"><value>Немає зв'язку із сервером</value></data>
   <data name="Offline_NoticeTitle" xml:space="preserve"><value>Немає зв'язку із сервером</value></data>
   <data name="Offline_NoticeBody" xml:space="preserve"><value>Показуємо збережені дані.</value></data>
   <data name="Offline_NoticeMore" xml:space="preserve"><value>Докладніше</value></data>
-  <data name="Offline_SheetEyebrow" xml:space="preserve"><value>Зв'язок</value></data>
-  <data name="Offline_SheetTitle" xml:space="preserve"><value>Режим без мережі</value></data>
   <data name="Offline_StatusOffline" xml:space="preserve"><value>Немає зв'язку із сервером</value></data>
-  <data name="Offline_StatusOnline" xml:space="preserve"><value>Зв'язок із сервером є</value></data>
-  <data name="Offline_LastContact" xml:space="preserve"><value>Дані оновлено: {0}</value></data>
-  <data name="Offline_LastContactUnknown" xml:space="preserve"><value>Дані ще не оновлювалися із сервера</value></data>
-  <data name="Offline_WorksTitle" xml:space="preserve"><value>Працює без інтернету</value></data>
-  <data name="Offline_Works_Progress" xml:space="preserve"><value>Графіки прогресу — останні збережені</value></data>
-  <data name="Offline_Works_Profile" xml:space="preserve"><value>Профіль, таймери відпочинку та мова</value></data>
-  <data name="Offline_Works_Notebook" xml:space="preserve"><value>Нотатник</value></data>
-  <data name="Offline_NeedsTitle" xml:space="preserve"><value>Потрібен інтернет</value></data>
-  <data name="Offline_Needs_Account" xml:space="preserve"><value>Вхід, пароль, сеанси та видалення акаунта</value></data>
-  <data name="Offline_Needs_Watch" xml:space="preserve"><value>Підключення та керування годинником</value></data>
-  <data name="Offline_Needs_Media" xml:space="preserve"><value>Завантаження фото вправ і звернення до підтримки</value></data>
-  <data name="Offline_Needs_Inbox" xml:space="preserve"><value>Дії у вхідних та очищення прогресу</value></data>
-  <data name="Offline_SyncHint" xml:space="preserve"><value>Коли зв'язок повернеться, зміни надішлються самі — нічого натискати не потрібно.</value></data>
   <data name="Offline_CheckConnection" xml:space="preserve"><value>Перевірити зв'язок</value></data>
   <data name="Offline_Checking" xml:space="preserve"><value>Перевіряємо…</value></data>
   <data name="Offline_StaleNote" xml:space="preserve"><value>Збережені дані — оновляться після підключення.</value></data>
   <data name="Today_SavedOffline" xml:space="preserve"><value>Тренування збережено на телефоні, воно надішлеться на сервер, щойно з'явиться зв'язок.</value></data>
-  <data name="Offline_IndicatorPending" xml:space="preserve"><value>Змін чекають на надсилання: {0}. Відкрити режим без мережі</value></data>
   <data name="Offline_IndicatorProblem" xml:space="preserve"><value>Не всі зміни збереглися. Відкрити подробиці</value></data>
   <data name="Offline_IssueNoticeTitle" xml:space="preserve"><value>Зміну не збережено</value></data>
   <data name="Offline_Issue_AlreadyCompleted" xml:space="preserve"><value>Це тренування вже завершили на іншому пристрої — залишили ту версію.</value></data>
-  <data name="Offline_StatusSyncing" xml:space="preserve"><value>Надсилаємо зміни…</value></data>
   <data name="Offline_IssuesTitle" xml:space="preserve"><value>Не збереглося</value></data>
   <data name="Offline_IssuesDismiss" xml:space="preserve"><value>Зрозуміло, сховати</value></data>
-  <data name="Offline_PendingTitle" xml:space="preserve"><value>Чекають на надсилання: {0}</value></data>
   <data name="Offline_Op_CompleteWorkout" xml:space="preserve"><value>Завершення тренування</value></data>
   <data name="Offline_Op_DiscardDraft" xml:space="preserve"><value>Скасування вільного тренування</value></data>
   <data name="Offline_Op_UpdateExercise" xml:space="preserve"><value>Зміна вправи</value></data>
   <data name="Offline_Op_DeleteExercise" xml:space="preserve"><value>Видалення вправи</value></data>
   <data name="Offline_Op_ReorderSuperset" xml:space="preserve"><value>Порядок вправ у суперсеті</value></data>
   <data name="Offline_Op_Other" xml:space="preserve"><value>Зміна</value></data>
-  <data name="Offline_Works_Workout" xml:space="preserve"><value>Тренування: підходи, ваги, суперсети та завершення</value></data>
   <data name="Offline_Op_CreatePlan" xml:space="preserve"><value>Новий план</value></data>
   <data name="Offline_Op_RenamePlan" xml:space="preserve"><value>Перейменування плану</value></data>
   <data name="Offline_Op_DeletePlan" xml:space="preserve"><value>Видалення плану</value></data>
@@ -3529,11 +3516,15 @@
   <data name="Offline_Op_DeleteWorkoutDay" xml:space="preserve"><value>Видалення з календаря</value></data>
   <data name="Offline_Op_DeleteHistory" xml:space="preserve"><value>Видалення з історії</value></data>
   <data name="Offline_Op_SaveProfile" xml:space="preserve"><value>Налаштування профілю</value></data>
-  <data name="Offline_Works_Plans" xml:space="preserve"><value>Плани та вправи: створення, редагування й видалення</value></data>
-  <data name="Offline_Works_Calendar" xml:space="preserve"><value>Календар, історія та нагадування про тренування</value></data>
   <data name="Offline_NeedsInternetHint" xml:space="preserve"><value>Для цього потрібен зв'язок із сервером — без нього кнопки неактивні.</value></data>
   <data name="Offline_PhotoNeedsInternet" xml:space="preserve"><value>Завантажити чи видалити фото можна лише за зв'язку із сервером. Збережене фото видно й без нього.</value></data>
   <data name="Offline_InboxReadOnly" xml:space="preserve"><value>Без зв'язку вхідні відкриті лише для читання.</value></data>
   <data name="Offline_LogoutUnsent" xml:space="preserve"><value>Змін, не надісланих на сервер: {0}. Після виходу вони зникнуть. Підключіться до інтернету, щоб вони надіслалися, або вийдіть усе одно.</value></data>
   <data name="Offline_LogoutAnyway" xml:space="preserve"><value>Вийти все одно</value></data>
+  <data name="Today_PlanProgressAria" xml:space="preserve"><value>{0}. Виконано {1} відсотків тренування</value></data>
+  <data name="Today_RestHintBetweenSets" xml:space="preserve"><value>Збережеться в шаблоні для {0}-го підходу вправи «{1}». Інші підходи не зміняться.</value></data>
+  <data name="Today_RestHintSuperset" xml:space="preserve"><value>Збережеться в шаблоні для {0}-го кола суперсету {1}. Інші кола не зміняться.</value></data>
+  <data name="Today_RestHintBetweenExercises" xml:space="preserve"><value>Збережеться в шаблоні для відпочинку після «{0}». Інші переходи між вправами не зміняться.</value></data>
+  <data name="Today_RestHintFree" xml:space="preserve"><value>Діє до кінця тренування і потрапить у шаблон, якщо збережете тренування шаблоном.</value></data>
+  <data name="Offline_Op_UpdateRestTimers" xml:space="preserve"><value>Таймери відпочинку</value></data>
 </root>

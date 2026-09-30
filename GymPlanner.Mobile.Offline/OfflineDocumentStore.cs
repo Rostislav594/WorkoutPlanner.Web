@@ -143,6 +143,28 @@ public sealed class OfflineDocumentStore
         }
     }
 
+    /// <summary>Ключи всего, что лежит у текущего аккаунта: и документов, и файлов.</summary>
+    public async Task<IReadOnlyList<string>> ListKeysAsync(CancellationToken cancellationToken = default)
+    {
+        await _gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (_accountDirectory is null || !Directory.Exists(_accountDirectory))
+                return [];
+
+            return Directory.EnumerateFiles(_accountDirectory)
+                .Where(x => x.EndsWith(".json", StringComparison.Ordinal) || x.EndsWith(".bin", StringComparison.Ordinal))
+                .Select(Path.GetFileNameWithoutExtension)
+                .OfType<string>()
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async Task<byte[]?> ReadBytesAsync(string key, CancellationToken cancellationToken = default)
     {
         await _gate.WaitAsync(cancellationToken);

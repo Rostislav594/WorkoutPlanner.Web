@@ -7,11 +7,7 @@
 @inject IAppText Text
 
 <section class="auth-card" aria-labelledby="login-title">
-    <div class="auth-brand">
-        <img src="_content/WorkoutPlanner.UI/images/Emblem.png" alt="GPlanner" />
-    </div>
     <h1 id="login-title" class="auth-title">@Text["Login_Title"]</h1>
-    
 
     @if (_errors.Count > 0)
     {
@@ -23,18 +19,41 @@
         </div>
     }
 
-    <EditForm Model="_input" OnValidSubmit="LoginAsync">
+    <EditForm class="auth-form" Model="_input" OnValidSubmit="LoginAsync">
         <DataAnnotationsValidator />
 
         <div class="auth-field">
             <label for="login-email">Email</label>
-            <InputText id="login-email" class="auth-input" @bind-Value="_input.Email" autocomplete="username" inputmode="email" />
+            <div class="auth-input-shell">
+                <span class="auth-field-icon material-symbols-rounded" aria-hidden="true">mail</span>
+                <InputText id="login-email"
+                           class="auth-input"
+                           @bind-Value="_input.Email"
+                           autocomplete="username"
+                           inputmode="email"
+                           placeholder="@Text["Auth_EmailPlaceholder"]" />
+            </div>
             <LocalizedValidationMessage For="@(() => _input.Email)" />
         </div>
 
         <div class="auth-field">
             <label for="login-password">@Text["Common_Password"]</label>
-            <InputText id="login-password" class="auth-input" type="password" @bind-Value="_input.Password" autocomplete="current-password" />
+            <div class="auth-input-shell auth-input-shell--password">
+                <span class="auth-field-icon material-symbols-rounded" aria-hidden="true">lock</span>
+                <InputText id="login-password"
+                           class="auth-input"
+                           type="@(_showPassword ? "text" : "password")"
+                           @bind-Value="_input.Password"
+                           autocomplete="current-password"
+                           placeholder="@Text["Auth_PasswordPlaceholder"]" />
+                <button class="auth-visibility-toggle"
+                        type="button"
+                        aria-label="@Text[_showPassword ? "Common_HidePassword" : "Common_ShowPassword"]"
+                        aria-pressed="@(_showPassword ? "true" : "false")"
+                        @onclick="TogglePasswordVisibility">
+                    <span class="material-symbols-rounded" aria-hidden="true">@(_showPassword ? "visibility_off" : "visibility")</span>
+                </button>
+            </div>
             <LocalizedValidationMessage For="@(() => _input.Password)" />
         </div>
 
@@ -53,6 +72,9 @@
     private readonly LoginInput _input = new();
     private readonly List<string> _errors = [];
     private bool _isBusy;
+    private bool _showPassword;
+
+    private void TogglePasswordVisibility() => _showPassword = !_showPassword;
 
     private async Task LoginAsync()
     {

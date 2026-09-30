@@ -83,6 +83,8 @@ public sealed class ExerciseService : IExerciseService
             ExerciseDefinitionId = exercise.ExerciseDefinitionId,
             SupersetGroupId = exercise.SupersetGroupId,
             PhotoPath = exercise.PhotoPath,
+            RestBetweenSetsSeconds = exercise.RestBetweenSetsSeconds,
+            RestAfterExerciseSeconds = exercise.RestAfterExerciseSeconds,
             Sets = exercise.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(x => new Models.ExerciseTemplateSet
@@ -91,7 +93,8 @@ public sealed class ExerciseService : IExerciseService
                     Repetitions = x.Repetitions,
                     Weight = x.Weight,
                     Completed = x.Completed,
-                    IsWarmup = x.IsWarmup
+                    IsWarmup = x.IsWarmup,
+                    RestAfterSeconds = x.RestAfterSeconds
                 })
                 .ToList()
         };
@@ -173,6 +176,8 @@ public sealed class ExerciseService : IExerciseService
             entity.SupersetOrder = null;
         entity.SupersetGroupId = exercise.SupersetGroupId;
         entity.PhotoPath = exercise.PhotoPath;
+        entity.RestBetweenSetsSeconds = exercise.RestBetweenSetsSeconds;
+        entity.RestAfterExerciseSeconds = exercise.RestAfterExerciseSeconds;
 
         var retainedSetIds = new HashSet<int>();
 
@@ -201,6 +206,10 @@ public sealed class ExerciseService : IExerciseService
             targetSet.Weight = sourceSet.Weight;
             targetSet.Completed = sourceSet.Completed;
             targetSet.IsWarmup = sourceSet.IsWarmup;
+            // Без значения таймер подхода остаётся прежним: правки веса,
+            // повторов и суперсетов его не сбрасывают.
+            if (sourceSet.RestAfterSeconds is { } restAfter)
+                targetSet.RestAfterSeconds = restAfter;
             if (setChanged)
                 targetSet.Version++;
 

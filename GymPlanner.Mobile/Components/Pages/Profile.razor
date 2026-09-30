@@ -200,41 +200,6 @@
     </div>
 }
 
-@if (_dialog == ProfileDialog.RestTimers)
-{
-    <div class="modal-overlay" @onclick="CloseDialog">
-        <section class="modal-window profile-dialog" role="dialog" aria-modal="true" aria-labelledby="rest-timers-title" @onclick:stopPropagation="true">
-            <header class="dialog-header">
-                <div>
-                    <p class="profile-eyebrow">@Text["Nav_Workouts"]</p>
-                    <h2 id="rest-timers-title">@Text["ProfileItem_RestTimers"]</h2>
-                </div>
-                <button class="dialog-close" type="button" aria-label="@Text["Common_Close"]" disabled="@_isSaving" @onclick="CloseDialog">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                </button>
-            </header>
-            <p class="timer-settings-hint">@Text["Profile_RestTimersHint"]</p>
-            @if (_operationErrors.Count > 0)
-            {
-                <div class="auth-error operation-error" role="alert">@string.Join(" ", _operationErrors)</div>
-            }
-            <div class="profile-form-grid">
-                <label class="field" for="rest-between-sets">
-                    <span>@Text["Profile_RestBetweenSets"]</span>
-                    <input id="rest-between-sets" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" />
-                </label>
-                <label class="field" for="rest-between-exercises">
-                    <span>@Text["Profile_RestBetweenExercises"]</span>
-                    <input id="rest-between-exercises" class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" />
-                </label>
-            </div>
-            <button class="profile-primary-action" type="button" disabled="@_isSaving" @onclick="SaveRestTimersAsync">
-                @(_isSaving ? Text["Common_Saving"] : Text["Profile_ApplyToAllTimers"])
-            </button>
-        </section>
-    </div>
-}
-
 @if (_dialog == ProfileDialog.ReportProblem)
 {
     <div class="modal-overlay" @onclick="CloseDialog">
@@ -348,7 +313,6 @@
     private IReadOnlyList<ProfileSection> ProfileSections =>
     [
         new("personal-data", Text["ProfileSection_PersonalData"], [new("badge", Text["ProfileItem_PersonalInformation"], "/profile/personal-information")]),
-        new("training", Text["Nav_Workouts"], [new("timer", Text["ProfileItem_RestTimers"], "/profile/rest-timers")]),
         new("devices", Text["ProfileSection_Devices"], [new("watch", Text["ProfileItem_Watch"], "/profile/devices")]),
         new("application", Text["ProfileSection_Application"], [new("notifications", Text["ProfileItem_Notifications"], "/profile/notifications"), new("language", Text["Profile_Language_Title"], "/profile/language")]),
         new("sessions", Text["ProfileItem_Sessions"], [new("devices_other", Text["ProfileItem_Sessions"], "/profile/sessions")]),
@@ -373,8 +337,6 @@
     private bool _confirmDeletion;
     private string? _message;
     private string _supportMessage = string.Empty;
-    private int _restBetweenSetsSeconds = 90;
-    private int _restBetweenExercisesSeconds = 120;
     private string FullName => $"{_profileInput.FirstName} {_profileInput.LastName}".Trim();
     private string DisplayName => string.IsNullOrWhiteSpace(FullName) ? Text["Profile_DefaultName"] : FullName;
     private string DisplayEmail => _profile?.Email ?? Authentication.CurrentEmail ?? string.Empty;
@@ -409,8 +371,6 @@
             _profileInput.LastName = _profile.LastName;
             _profileInput.BirthDate = _profile.BirthDate;
             _profileInput.Gender = _profile.Gender;
-            _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds;
-            _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds;
         }
         _isLoading = false;
     }
@@ -450,37 +410,6 @@
         finally { _isSecurityBusy = false; }
     }
 
-    private async Task SaveRestTimersAsync()
-    {
-        if (_isSaving) return;
-        if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600)
-        {
-            _operationErrors.Clear();
-            _operationErrors.Add(Text["Profile_RestTimerRange"]);
-            return;
-        }
-
-        _isSaving = true;
-        ClearOperationState();
-        try
-        {
-            var result = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds));
-            if (!result.Succeeded)
-            {
-                _operationErrors.AddRange(result.Errors);
-                return;
-            }
-
-            _restBetweenSetsSeconds = result.Value!.RestBetweenSetsSeconds;
-            _restBetweenExercisesSeconds = result.Value.RestBetweenExercisesSeconds;
-            if (_profile is not null)
-                _profile = _profile with { RestBetweenSetsSeconds = _restBetweenSetsSeconds, RestBetweenExercisesSeconds = _restBetweenExercisesSeconds };
-            _message = Text["Profile_RestTimersApplied"];
-            _dialog = ProfileDialog.None;
-        }
-        finally { _isSaving = false; }
-    }
-
     private async Task HandleActionAsync(ProfileAction action)
     {
         ClearOperationState();
@@ -488,9 +417,6 @@
         {
             case ProfileAction.ChangePassword:
                 _dialog = ProfileDialog.ChangePassword;
-                break;
-            case ProfileAction.RestTimers:
-                _dialog = ProfileDialog.RestTimers;
                 break;
             case ProfileAction.ReportProblem:
                 _supportErrors.Clear();
@@ -647,7 +573,6 @@
         "/profile/devices" or
         "/profile/my-data" or
         "/profile/sessions" or
-        "/profile/rest-timers" or
         "/profile/change-password" or
         "/profile/report-problem" or
         "/profile/suggest-idea" or
@@ -673,6 +598,6 @@
 
     private sealed record ProfileSection(string Id, string Title, IReadOnlyList<ProfileItem> Items);
     private sealed record ProfileItem(string Icon, string Label, string Route, string? Value = null, bool ShowChevron = true, ProfileAction? Action = null, bool IsStatus = false, bool IsStandalone = false, bool IsDanger = false, bool IsAvailable = true);
-    private enum ProfileAction { ChangePassword, RestTimers, ReportProblem, Logout, DeleteAccount }
-    private enum ProfileDialog { None, EditProfile, ChangePassword, RestTimers, ReportProblem }
+    private enum ProfileAction { ChangePassword, ReportProblem, Logout, DeleteAccount }
+    private enum ProfileDialog { None, EditProfile, ChangePassword, ReportProblem }
 }

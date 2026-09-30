@@ -15,12 +15,18 @@ public sealed record WatchActiveWorkoutResponse(
     // сохранять ли её шаблоном.
     bool IsFreeWorkout = false);
 
+/// <param name="RestBetweenSetsSeconds">
+/// Отдых между подходами этого упражнения; у суперсета — между кругами.
+/// </param>
 public sealed record WatchExerciseResponse(
     int ExerciseId,
     string Name,
     int Order,
     int? SupersetGroupId,
-    IReadOnlyList<WatchSetResponse> Sets);
+    IReadOnlyList<WatchSetResponse> Sets,
+    int RestBetweenSetsSeconds = RestTimerDefaults.BetweenSetsSeconds,
+    // Отдых после упражнения; null — отдых между упражнениями тренировки.
+    int? RestAfterExerciseSeconds = null);
 
 public sealed record WatchSetResponse(
     int SetId,
@@ -29,7 +35,9 @@ public sealed record WatchSetResponse(
     int Repetitions,
     bool IsCompleted,
     bool IsWarmup,
-    long Version);
+    long Version,
+    // Отдых после подхода; null — отдых упражнения.
+    int? RestAfterSeconds = null);
 
 public sealed record CompleteWatchSetRequest(
     Guid OperationId,

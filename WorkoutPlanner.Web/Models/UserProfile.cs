@@ -23,6 +23,8 @@ public class UserProfile
     [MaxLength(30)]
     public string Gender { get; set; } = string.Empty;
 
+    // Устарело: таймеры отдыха теперь живут в упражнениях и шаблонах.
+    // Поля остаются ради старых сборок приложения, которые ещё шлют их в профиль.
     public int RestBetweenSetsSeconds { get; set; } = 90;
 
     public int RestBetweenExercisesSeconds { get; set; } = 120;

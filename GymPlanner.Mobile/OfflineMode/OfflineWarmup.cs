@@ -14,6 +14,8 @@ namespace GymPlanner.Mobile.OfflineMode;
 /// не заглянувший в календарь, остался бы офлайн без сегодняшней тренировки.
 /// Чтения идут через офлайн-клиенты, поэтому ответы сразу попадают в копию.
 /// Графики по упражнениям не подкачиваются: они сохраняются, когда их открывают.
+/// После удачной подкачки из копии убирается то, чего на сервере уже нет,
+/// — чтобы память телефона не засорялась фото и графиками удалённого.
 /// </remarks>
 public sealed class OfflineWarmup(
     IWorkoutApiClient workouts,
@@ -26,6 +28,7 @@ public sealed class OfflineWarmup(
     MobileAuthenticationService authentication,
     ServerReachability reachability,
     OutboxSync outbox,
+    OfflineRuntime runtime,
     MobileLifecycleService appLifecycle,
     TimeProvider timeProvider,
     ILogger<OfflineWarmup> logger)
@@ -129,7 +132,7 @@ public sealed class OfflineWarmup(
             await Task.Delay(TimeSpan.FromSeconds(2), timeProvider);
             // Сначала то, что сделано без связи, иначе свежие данные с сервера его затрут.
             await outbox.FlushAsync();
-            await workouts.GetPlansAsync();
+            var plans = await workouts.GetPlansAsync();
             await workouts.GetExerciseDefinitionsAsync();
 
             var today = timeProvider.GetLocalNow().Date;
@@ -143,7 +146,7 @@ public sealed class OfflineWarmup(
             await lifecycle.GetHistoryAsync();
             await profile.GetAsync();
             await welcomeGuide.GetStateAsync();
-            await progress.GetOverviewAsync();
+            var overview = await progress.GetOverviewAsync();
             await inbox.GetMessagesAsync();
 
             // Фото нужны на экране тренировки; остальные сохранятся, когда их откроют.
@@ -154,7 +157,18 @@ public sealed class OfflineWarmup(
             }
 
             if (!reachability.IsOffline)
+            {
                 _lastRunUtc = timeProvider.GetUtcNow();
+
+                // Чистим, только когда всё, по чему судим о «лишнем», пришло с сервера:
+                // иначе можно выбросить черновик идущей тренировки или нужные графики.
+                if (plans.Succeeded && overview.Succeeded && draft.Succeeded)
+                {
+                    var removed = await runtime.CleanUpCopyAsync(draft.Value?.TrainingPlanId);
+                    if (removed > 0)
+                        logger.LogInformation("Removed {Count} stale offline records.", removed);
+                }
+            }
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {

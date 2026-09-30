@@ -25,6 +25,10 @@ public class TrainingPlan
 
     public DateTime Date { get; set; }
 
+    /// <summary>Отдых между упражнениями этого шаблона, в секундах.</summary>
+    public int RestBetweenExercisesSeconds { get; set; } =
+        global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenExercisesSeconds;
+
     public List<Exercise> Exercises { get; set; } = new();
 
     [NotMapped]

@@ -675,7 +675,9 @@ public static class WatchApiEndpoints
                 x.Name,
                 x.Order,
                 x.SupersetGroupId,
-                x.Sets.Select(ToResponse).ToList()))
+                x.Sets.Select(ToResponse).ToList(),
+                x.RestBetweenSetsSeconds,
+                x.RestAfterExerciseSeconds))
             .ToList();
         var current = OrderSetsForWatch(workout)
             .FirstOrDefault(x => !x.Set.Completed);
@@ -742,7 +744,8 @@ public static class WatchApiEndpoints
             set.Repetitions,
             set.Completed,
             set.IsWarmup,
-            set.Version);
+            set.Version,
+            set.RestAfterSeconds);
 
     private static Guid GetRequiredWatchDeviceId(ClaimsPrincipal principal) =>
         Guid.TryParse(

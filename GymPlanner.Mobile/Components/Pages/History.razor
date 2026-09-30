@@ -1,4 +1,6 @@
 @page "/history"
+@page "/history/archive"
+@page "/history/archive/{Year:int}/{Month:int}"
 @attribute [Authorize]
 @implements IDisposable
 @using System.Globalization
@@ -9,10 +11,27 @@
 
 <section class="history-page" aria-busy="@_isLoading">
     <header class="history-page-header">
-        <div class="page-title-row">
-            <h1>@Text["History_Title"]</h1>
-            <HelpButton Topic="HelpContentCatalog.History" />
-        </div>
+        @if (_view == HistoryView.Recent)
+        {
+            <div class="page-title-row page-title-row--actions">
+                <h1>@Text["History_Title"]</h1>
+                <a class="history-archive-link" href="/history/archive" aria-label="@Text["HistoryArchive_Open"]">
+                    <span class="material-symbols-rounded" aria-hidden="true">archive</span>
+                </a>
+                <HelpButton Topic="HelpContentCatalog.History" />
+            </div>
+        }
+        else
+        {
+            <div class="page-title-row page-title-row--back">
+                <a class="back-button"
+                   href="@(_view == HistoryView.ArchiveMonth ? "/history/archive" : "/history")"
+                   aria-label="@(_view == HistoryView.ArchiveMonth ? Text["HistoryArchive_BackToArchive"] : Text["HistoryArchive_BackToHistory"])">
+                    <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+                </a>
+                <h1>@(_view == HistoryView.ArchiveMonth ? MonthTitle(Year!.Value, Month!.Value) : Text["HistoryArchive_Title"])</h1>
+            </div>
+        }
         <div class="header-line" aria-hidden="true"></div>
     </header>
 
@@ -34,7 +53,7 @@
             <span>@Text["History_Loading"]</span>
         </div>
     }
-    else if (_history.Count == 0)
+    else if (_history.Count == 0 && _view == HistoryView.Recent)
     {
         <div class="history-empty">
             <div class="history-empty-visual" aria-hidden="true">
@@ -48,10 +67,75 @@
             }
         </div>
     }
+    else if (_view == HistoryView.Archive)
+    {
+        var archiveYears = ArchiveYears;
+        if (archiveYears.Count == 0)
+        {
+            <div class="history-empty">
+                <div class="history-empty-visual" aria-hidden="true">
+                    <span class="material-symbols-rounded">archive</span>
+                </div>
+                <h2>@Text["HistoryArchive_EmptyTitle"]</h2>
+                <p>@Text["HistoryArchive_EmptyBody"]</p>
+                @if (_errors.Count > 0)
+                {
+                    <button class="secondary-button retry-button" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="archive-years">
+                @foreach (var year in archiveYears)
+                {
+                    <section class="archive-year" aria-labelledby="archive-year-@year.Year">
+                        <h2 class="archive-year-title" id="archive-year-@year.Year">
+                            <span>@year.Year</span>
+                            <span class="archive-year-count">@Text.Plural("Workouts", year.Months.Sum(month => month.Count))</span>
+                        </h2>
+                        <div class="history-list">
+                            @foreach (var folder in year.Months)
+                            {
+                                <a class="history-card archive-folder" href="/history/archive/@folder.Year/@folder.Month">
+                                    <span class="archive-folder-icon material-symbols-rounded" aria-hidden="true">folder</span>
+                                    <span class="history-card-content">
+                                        <span class="history-title">@MonthName(folder.Month)</span>
+                                    </span>
+                                    <span class="history-card-aside">
+                                        <span class="card-meta">@Text.Plural("Workouts", folder.Count)</span>
+                                        <span class="material-symbols-rounded card-chevron" aria-hidden="true">chevron_right</span>
+                                    </span>
+                                </a>
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+        }
+    }
+    else if (VisibleHistory.Count == 0)
+    {
+        @* Все тренировки старше месяца: история пуста, но архив — нет. *@
+        <div class="history-empty">
+            <div class="history-empty-visual" aria-hidden="true">
+                <span class="material-symbols-rounded">@(_view == HistoryView.Recent ? "history_toggle_off" : "folder_open")</span>
+            </div>
+            <h2>@(_view == HistoryView.Recent ? Text["History_RecentEmptyTitle"] : Text["HistoryArchive_MonthEmpty"])</h2>
+            @if (_view == HistoryView.Recent)
+            {
+                <p>@Text["History_RecentEmptyBody"]</p>
+            }
+            <a class="history-start-button" href="/history/archive">
+                <span class="material-symbols-rounded" aria-hidden="true">archive</span>
+                @(_view == HistoryView.Recent ? Text["HistoryArchive_Open"] : Text["HistoryArchive_BackToArchive"])
+            </a>
+        </div>
+    }
     else
     {
         <div class="history-list">
-            @foreach (var item in _history)
+            @foreach (var item in VisibleHistory)
             {
                 var isTarget = item.Id == _targetHistoryId;
                 <button class="history-card @(isTarget ? "history-card--targeted" : null)"
@@ -253,12 +337,46 @@
     private bool _confirmDelete;
     private int? _targetHistoryId;
     private bool _targetScrollPending;
+    private HistoryView _view;
+    private bool _isRedirecting;
+    // Граница архива фиксируется при открытии страницы, чтобы списки не
+    // перетасовывались, пока пользователь на ней.
+    private readonly DateTime _archiveCutoff = DateTime.Now.AddMonths(-1);
+
+    [Parameter]
+    public int? Year { get; set; }
+
+    [Parameter]
+    public int? Month { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "workout")]
     public string? TargetWorkout { get; set; }
 
     [Parameter, SupplyParameterFromQuery(Name = "date")]
     public DateTime? TargetDate { get; set; }
+
+    // На «Истории» остаётся только последний месяц, всё старше живёт в архиве.
+    // Это лишь представление: записи на сервере не переносятся и не меняются.
+    private IReadOnlyList<WorkoutHistoryApiResponse> VisibleHistory => _view switch
+    {
+        HistoryView.Recent => _history.Where(item => !IsArchived(item)).ToList(),
+        HistoryView.ArchiveMonth => _history
+            .Where(item => IsArchived(item) && item.Date.Year == Year && item.Date.Month == Month)
+            .ToList(),
+        _ => []
+    };
+
+    private IReadOnlyList<ArchiveYear> ArchiveYears =>
+        _history
+            .Where(IsArchived)
+            .GroupBy(item => (item.Date.Year, item.Date.Month))
+            .Select(group => new ArchiveMonthFolder(group.Key.Year, group.Key.Month, group.Count()))
+            .GroupBy(folder => folder.Year)
+            .OrderByDescending(group => group.Key)
+            .Select(group => new ArchiveYear(
+                group.Key,
+                group.OrderByDescending(folder => folder.Month).ToList()))
+            .ToList();
 
     private IReadOnlyList<HistoryExerciseGroup> SelectedExerciseGroups =>
         (_selected?.Exercises ?? [])
@@ -271,7 +389,11 @@
                 group.Select(item => item.Exercise).ToList()))
             .ToList();
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override Task OnInitializedAsync()
+    {
+        ResolveView();
+        return LoadAsync();
+    }
 
     private async Task LoadAsync()
     {
@@ -302,8 +424,41 @@
 
     protected override void OnParametersSet()
     {
+        ResolveView();
         if (!_isLoading)
             UpdateTargetHistory();
+    }
+
+    // Вызывается и до загрузки: OnInitializedAsync отрабатывает раньше
+    // OnParametersSet, а подсветке карточки после загрузки уже нужен режим.
+    private void ResolveView()
+    {
+        if (Year is null && Month is null)
+        {
+            var route = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/');
+            _view = route.Equals("history/archive", StringComparison.OrdinalIgnoreCase)
+                ? HistoryView.Archive
+                : HistoryView.Recent;
+            return;
+        }
+
+        if (Year is (>= 1 and <= 9999) && Month is (>= 1 and <= 12))
+        {
+            _view = HistoryView.ArchiveMonth;
+            return;
+        }
+
+        _view = HistoryView.Archive;
+        RedirectTo("/history/archive");
+    }
+
+    private void RedirectTo(string uri)
+    {
+        if (_isRedirecting)
+            return;
+
+        _isRedirecting = true;
+        Navigation.NavigateTo(uri, replace: true);
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -327,14 +482,30 @@
             return;
         }
 
-        var targetHistoryId = _history
+        var target = _history
             .Where(item =>
                 string.Equals(item.WorkoutName, TargetWorkout, StringComparison.Ordinal) &&
                 item.Date.Date == TargetDate.Value.Date)
             .OrderBy(item => Math.Abs((item.Date - TargetDate.Value).Ticks))
-            .Select(item => (int?)item.Id)
             .FirstOrDefault();
 
+        // Точка графика может вести на запись, которая уже лежит в архиве:
+        // тогда открываем её папку, сохранив запрос для подсветки карточки.
+        var targetRoute = target is null
+            ? null
+            : IsArchived(target)
+                ? $"/history/archive/{target.Date.Year}/{target.Date.Month}"
+                : "/history";
+        var isTargetVisible = target is not null && (IsArchived(target)
+            ? _view == HistoryView.ArchiveMonth && target.Date.Year == Year && target.Date.Month == Month
+            : _view == HistoryView.Recent);
+        if (target is not null && !isTargetVisible)
+        {
+            RedirectTo($"{targetRoute}{new Uri(Navigation.Uri).Query}");
+            return;
+        }
+
+        var targetHistoryId = target?.Id;
         if (_targetHistoryId == targetHistoryId)
             return;
 
@@ -384,6 +555,10 @@
             _history.RemoveAll(x => x.Id == id);
             _selected = null;
             _confirmDelete = false;
+
+            // Пустую папку архива не показываем — возвращаемся к списку месяцев.
+            if (_view == HistoryView.ArchiveMonth && VisibleHistory.Count == 0)
+                RedirectTo("/history/archive");
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -413,6 +588,28 @@
         _disposeCts.Cancel();
         _disposeCts.Dispose();
     }
+
+    private bool IsArchived(WorkoutHistoryApiResponse item) => item.Date < _archiveCutoff;
+
+    // Название месяца в именительном падеже («август», «серпень») с заглавной буквы.
+    private string MonthName(int month)
+    {
+        var name = UiCulture.DateTimeFormat.GetMonthName(month);
+        return name.Length == 0 ? name : char.ToUpper(name[0], UiCulture) + name[1..];
+    }
+
+    private string MonthTitle(int year, int month) => $"{MonthName(month)} {year}";
+
+    private enum HistoryView
+    {
+        Recent,
+        Archive,
+        ArchiveMonth
+    }
+
+    private sealed record ArchiveMonthFolder(int Year, int Month, int Count);
+
+    private sealed record ArchiveYear(int Year, IReadOnlyList<ArchiveMonthFolder> Months);
 
     private sealed record HistoryExerciseGroup(
         bool IsSuperset,

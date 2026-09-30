@@ -111,6 +111,67 @@ class SupersetAndRestInstrumentedTest {
     }
 
     /**
+     * Отдых после подхода берётся у самого подхода, иначе у упражнения; у
+     * суперсета — у первого упражнения группы. Общее значение тренировки —
+     * только запасное.
+     */
+    @Test
+    fun exerciseRestOverridesWorkoutFallback() = runBlocking {
+        dao.cacheActiveWorkout(
+            workout(),
+            listOf(
+                LocalExercise(
+                    benchId,
+                    workoutId,
+                    "Жим лёжа",
+                    0,
+                    supersetGroupId = 1,
+                    restBetweenSetsSeconds = 40,
+                    restAfterExerciseSeconds = 70,
+                ),
+                LocalExercise(rowId, workoutId, "Тяга", 1, supersetGroupId = 1, restBetweenSetsSeconds = 55),
+                LocalExercise(squatId, workoutId, "Присед", 2, restBetweenSetsSeconds = 200),
+            ),
+            listOf(
+                set(1, benchId, 0),
+                set(2, benchId, 1),
+                set(3, rowId, 0),
+                set(4, rowId, 1),
+                set(5, squatId, 0).copy(restAfterSeconds = 25),
+                set(6, squatId, 1),
+                set(7, squatId, 2),
+            ),
+        )
+        dao.upsertSession(DeviceSessionMetadata(isPaired = true, lastCheckedAtUtcMillis = 1_000))
+        val repository = newRepository()
+
+        assertCurrent(repository, "Жим лёжа", setNumber = 1)
+        repository.completeCurrentSet()
+        assertCurrent(repository, "Тяга", setNumber = 1)
+        repository.completeCurrentSet()
+        assertRest(repository, expectedSeconds = 40)
+        repository.finishRest()
+
+        assertCurrent(repository, "Жим лёжа", setNumber = 2)
+        repository.completeCurrentSet()
+        assertCurrent(repository, "Тяга", setNumber = 2)
+        repository.completeCurrentSet()
+        // После суперсета — его собственный отдых, а не общий отдых тренировки.
+        assertRest(repository, expectedSeconds = 70)
+        repository.finishRest()
+
+        // У первого подхода свой отдых, у второго — отдых упражнения.
+        assertCurrent(repository, "Присед", setNumber = 1)
+        repository.completeCurrentSet()
+        assertRest(repository, expectedSeconds = 25)
+        repository.finishRest()
+
+        assertCurrent(repository, "Присед", setNumber = 2)
+        repository.completeCurrentSet()
+        assertRest(repository, expectedSeconds = 200)
+    }
+
+    /**
      * Ждёт именно ожидаемый подход, а не любой.
      *
      * Состояние — StateFlow: проверка «просто дождаться CurrentSet» проходила бы

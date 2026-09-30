@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PendingSyncOperation::class,
         DeviceSessionMetadata::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(WorkoutConverters::class)
@@ -34,8 +34,21 @@ abstract class WorkoutDatabase : RoomDatabase() {
                     context.applicationContext,
                     WorkoutDatabase::class.java,
                     "workout-planner-wear.db",
-                ).addMigrations(migration1To2, migration2To3, migration3To4).build().also { instance = it }
+                ).addMigrations(migration1To2, migration2To3, migration3To4, migration4To5).build().also { instance = it }
             }
+
+        /**
+         * Таймеры отдыха из шаблона: отдых упражнения по умолчанию, свой отдых
+         * после каждого подхода и после каждого упражнения. NULL — сервер ещё
+         * не прислал, действует запасное.
+         */
+        internal val migration4To5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE local_exercises ADD COLUMN restBetweenSetsSeconds INTEGER")
+                db.execSQL("ALTER TABLE local_exercises ADD COLUMN restAfterExerciseSeconds INTEGER")
+                db.execSQL("ALTER TABLE local_workout_sets ADD COLUMN restAfterSeconds INTEGER")
+            }
+        }
 
         /**
          * Суперсеты и настройки отдыха.

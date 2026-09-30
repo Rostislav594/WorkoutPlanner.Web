@@ -15,11 +15,16 @@ public sealed record WorkoutHistoryExerciseApiResponse(
 /// может дойти до сервера на следующий день, а в истории должен остаться день
 /// тренировки. Старые сборки поле не шлют — тогда берётся время сервера.
 /// </param>
+/// <param name="RestBetweenExercisesSeconds">
+/// Отдых между упражнениями, выставленный во время тренировки: попадает в
+/// шаблон, если тренировку сохраняют шаблоном. <c>null</c> — по умолчанию.
+/// </param>
 public sealed record CompleteFreeWorkoutRequest(
     bool SaveAsTemplate,
     string? TemplateName,
     IReadOnlyList<SaveExerciseRequest> Exercises,
-    DateTime? CompletedAt = null);
+    DateTime? CompletedAt = null,
+    int? RestBetweenExercisesSeconds = null);
 
 /// <summary>
 /// Завершение запланированной тренировки одним запросом: итоги подходов и сама

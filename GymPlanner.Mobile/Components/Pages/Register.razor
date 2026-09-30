@@ -12,12 +12,9 @@
 }
 else
 {
-<section class="auth-card" aria-labelledby="register-title">
-    <div class="auth-brand">
-        <img src="_content/WorkoutPlanner.UI/images/Emblem.png" alt="GPlanner" />
-    </div>
+<section class="auth-card auth-card--register" aria-labelledby="register-title">
     <h1 id="register-title" class="auth-title">@Text["Register_Title"]</h1>
-    
+
     @if (_errors.Count > 0)
     {
         <div class="auth-error" role="alert">
@@ -28,24 +25,62 @@ else
         </div>
     }
 
-    <EditForm Model="_input" OnValidSubmit="RegisterAsync">
+    <EditForm class="auth-form" Model="_input" OnValidSubmit="RegisterAsync">
         <DataAnnotationsValidator />
 
         <div class="auth-field">
             <label for="register-email">Email</label>
-            <InputText id="register-email" class="auth-input" @bind-Value="_input.Email" autocomplete="username" inputmode="email" />
+            <div class="auth-input-shell">
+                <span class="auth-field-icon material-symbols-rounded" aria-hidden="true">mail</span>
+                <InputText id="register-email"
+                           class="auth-input"
+                           @bind-Value="_input.Email"
+                           autocomplete="username"
+                           inputmode="email"
+                           placeholder="@Text["Auth_EmailPlaceholder"]" />
+            </div>
             <LocalizedValidationMessage For="@(() => _input.Email)" />
         </div>
 
         <div class="auth-field">
             <label for="register-password">@Text["Common_Password"]</label>
-            <InputText id="register-password" class="auth-input" type="password" @bind-Value="_input.Password" autocomplete="new-password" />
+            <div class="auth-input-shell auth-input-shell--password">
+                <span class="auth-field-icon material-symbols-rounded" aria-hidden="true">lock</span>
+                <InputText id="register-password"
+                           class="auth-input"
+                           type="@(_showPassword ? "text" : "password")"
+                           @bind-Value="_input.Password"
+                           autocomplete="new-password"
+                           placeholder="@Text["Auth_PasswordPlaceholder"]" />
+                <button class="auth-visibility-toggle"
+                        type="button"
+                        aria-label="@Text[_showPassword ? "Common_HidePassword" : "Common_ShowPassword"]"
+                        aria-pressed="@(_showPassword ? "true" : "false")"
+                        @onclick="TogglePasswordVisibility">
+                    <span class="material-symbols-rounded" aria-hidden="true">@(_showPassword ? "visibility_off" : "visibility")</span>
+                </button>
+            </div>
             <LocalizedValidationMessage For="@(() => _input.Password)" />
         </div>
 
         <div class="auth-field">
             <label for="register-confirm-password">@Text["Register_ConfirmPassword"]</label>
-            <InputText id="register-confirm-password" class="auth-input" type="password" @bind-Value="_input.ConfirmPassword" autocomplete="new-password" />
+            <div class="auth-input-shell auth-input-shell--password">
+                <span class="auth-field-icon material-symbols-rounded" aria-hidden="true">lock_reset</span>
+                <InputText id="register-confirm-password"
+                           class="auth-input"
+                           type="@(_showConfirmPassword ? "text" : "password")"
+                           @bind-Value="_input.ConfirmPassword"
+                           autocomplete="new-password"
+                           placeholder="@Text["Register_ConfirmPassword"]" />
+                <button class="auth-visibility-toggle"
+                        type="button"
+                        aria-label="@Text[_showConfirmPassword ? "Common_HidePassword" : "Common_ShowPassword"]"
+                        aria-pressed="@(_showConfirmPassword ? "true" : "false")"
+                        @onclick="ToggleConfirmPasswordVisibility">
+                    <span class="material-symbols-rounded" aria-hidden="true">@(_showConfirmPassword ? "visibility_off" : "visibility")</span>
+                </button>
+            </div>
             <LocalizedValidationMessage For="@(() => _input.ConfirmPassword)" />
         </div>
 
@@ -63,6 +98,11 @@ else
     private readonly List<string> _errors = [];
     private bool _isBusy;
     private bool _showCreatorIntro;
+    private bool _showPassword;
+    private bool _showConfirmPassword;
+
+    private void TogglePasswordVisibility() => _showPassword = !_showPassword;
+    private void ToggleConfirmPasswordVisibility() => _showConfirmPassword = !_showConfirmPassword;
 
     private async Task RegisterAsync()
     {

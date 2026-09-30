@@ -99,3 +99,137 @@ Items 7–9 and the "Frequency zoning" and "Peak variation" notes below describe
 No blocking polish remains. The exact waveform height naturally varies with microphone gain and the external audio source.
 
 final result: passed
+
+---
+
+# Design QA — mobile authentication redesign
+
+## Source of visual truth
+
+- Selected option 2 reference: `docs/design-qa/auth-option-2-reference.png` (853 × 1844 px).
+- Final login device capture: `docs/design-qa/auth-login-device.png` (1081 × 2341 px).
+- Final registration device capture: `docs/design-qa/auth-register-device.png` (1081 × 2341 px).
+- Normalized side-by-side comparison: `docs/design-qa/auth-login-comparison.png` (796 × 844 px; 390 × 844 px panels separated by a 16 px gutter).
+- Runtime viewport: 393 × 851 CSS px at approximately 2.75 device pixel ratio.
+- Tested state: Russian localization, dark theme, anonymous login and registration routes on the configured Android phone.
+
+## Full-view comparison evidence
+
+The implementation preserves the selected direction: a black atmospheric background, thin upper orange and lower green trajectories, illuminated moving nodes, a large left-aligned title, compact supporting copy, dark outlined fields, and an orange primary action. The registration page uses the same composition and interaction language while accommodating the additional confirmation field without clipping or horizontal overflow.
+
+## Focused detail evidence
+
+- The title uses the existing SVG inner-shadow filter together with a restrained light stroke, producing the requested inset depth rather than a flat text shadow.
+- Both decorative nodes follow their corresponding curved paths. Their positions changed between captures, confirming live motion; uneven keyframe timing adds occasional subtle micro-bursts without abrupt jumps.
+- The lower trajectory and its node are green; the upper trajectory and its node remain orange.
+- Password controls retain a minimum comfortable touch target, keyboard focus treatment, explicit accessible names, and a runtime `aria-pressed` state.
+
+## Required fidelity surfaces
+
+- Fonts and typography: the existing GymPlanner font stack and Material Symbols family are retained. The display title follows the reference's wide, heavy silhouette while remaining compatible with the product's installed fonts.
+- Spacing and layout rhythm: the reference's left alignment and vertical sequence are retained. Field height and inter-control spacing are slightly larger than the concept artwork to improve legibility and touch use on the physical device.
+- Colors and visual tokens: the existing dark product surface and orange action token are reused. The lower decorative accent is deliberately green per the user's revision.
+- Image quality and asset fidelity: the production background contains only atmospheric texture and trajectories; all functional copy, controls, and moving nodes remain native markup so they stay sharp and accessible.
+- Copy and content: existing localized page names, prompts, validation messages, and navigation semantics are preserved. New supporting labels are localized in Russian, English, and Ukrainian.
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain within the authentication redesign scope.
+
+One accepted P3-level difference is intentional: production fields and tap targets are larger than the static reference. This improves accessibility and does not alter the selected visual direction.
+
+## Comparison history
+
+1. Initial device pass: the primary action inherited the application's older green global button rule because of selector specificity.
+2. Fix: scoped the authentication action with a stronger component selector; the final runtime color is `rgb(255, 122, 26)`.
+3. Initial interaction pass: boolean attribute minimization left `aria-pressed` without an explicit textual value in the rendered WebView DOM.
+4. Fix: emit explicit `"false"` and `"true"` values. The final password toggle changes both the input type (`password` to `text`) and pressed state (`false` to `true`).
+5. Final visual pass: login and registration fit the phone viewport without clipping; upper and lower nodes occupy different positions across captures and remain attached to their correct color paths.
+
+## Interactions verified
+
+- Navigation between login and registration pages.
+- Show/hide password on login, password, and confirmation fields.
+- Explicit accessible pressed state on visibility controls.
+- Empty-form submission and localized validation messages (`Введите email.`, `Введите пароль.`).
+- Animated orange and green nodes on their matching trajectories.
+- Reduced-motion fallback is present in CSS and freezes both nodes; the physical phone's OS reduced-motion setting was not changed during the pass.
+- No Blazor error overlay appeared during the exercised flows.
+- The authenticated secure-storage state used before verification was restored after the anonymous-page checks.
+
+## Implementation checklist
+
+- [x] Green lower decorative trajectory and node.
+- [x] Animated orange upper and green lower nodes with gentle uneven timing.
+- [x] Inner-shadow treatment retained for `Вход` and `Регистрация`.
+- [x] Matching responsive login and registration compositions.
+- [x] Hover, focus, validation, visibility-toggle, and reduced-motion states.
+- [x] Physical-device visual and interaction verification.
+
+## Follow-up polish
+
+No blocking polish remains. The registration screen intentionally compresses the upper whitespace slightly so all fields and the account link remain visible on the verified phone.
+
+final result: passed
+
+---
+
+# Design QA — authentication route-motion refinement
+
+## Source of visual truth
+
+- Selected option 2 reference: `docs/design-qa/auth-option-2-reference.png` (853 × 1844 px).
+- Final Android device capture: `docs/design-qa/auth-motion-followup-device.png` (1080 × 2340 px).
+- Normalized comparison: `docs/design-qa/auth-motion-followup-comparison.png` (796 × 844 px; two 390 × 844 px panels with a 16 px divider).
+- Runtime viewport: 393 × 851 CSS px on the configured Android phone.
+- State: Russian login page, dark theme, both decorative route nodes in motion.
+
+## Full-view comparison evidence
+
+The refined implementation preserves the selected composition, form hierarchy, title treatment, orange upper route, and green lower route. The colored routes and their moving nodes are now rendered from shared vector geometry, so each visible stroke passes through the exact geometric center of its node throughout the animation.
+
+## Focused region comparison evidence
+
+The upper and lower route regions are large enough in the normalized comparison to verify the stroke/node relationship. The final device capture shows both colored strokes bisecting their rings. Runtime samples over 2.1 seconds confirmed opposite horizontal travel: the orange node moved from x 178.40 to 251.54 while the green node moved from x 121.59 to 50.87.
+
+## Required fidelity surfaces
+
+- Fonts and typography: unchanged from the previously approved authentication implementation; title inner shadow and hierarchy remain intact.
+- Spacing and layout rhythm: form geometry and responsive insets remain unchanged; the new route layer occupies the same 390 × 844 design coordinate space.
+- Colors and visual tokens: upper route/node use the existing orange accent token; lower route/node use the existing success-green token.
+- Image quality and asset fidelity: the route strokes and nodes are vector-rendered at device resolution. Their shared path geometry eliminates raster/path drift and remains sharp at different densities.
+- Copy and content: no copy or localization changed in this refinement.
+
+## Findings
+
+No actionable P0, P1, or P2 findings remain within the requested motion refinement.
+
+## Comparison history
+
+1. Previous implementation: the visible routes were baked into a raster background while the nodes followed separate approximate CSS paths. P2 — their centers could visibly drift away from the strokes.
+2. First refinement: moved strokes and nodes onto shared SVG geometry, but Android WebView held native SVG motion at one frame. P1 — alignment was correct but motion did not continue.
+3. Final fix: retained the shared vector route geometry and moved animation timing to CSS Motion Path, which is supported by the target WebView. Each node uses the same path coordinates as its visible stroke; the lower path is geometrically reversed.
+4. Final runtime measurement: seven samples at 350 ms intervals showed evenly increasing travel distance. Orange advanced 44.05% → 60.71% while green advanced 70.65% → 85.87% along its reversed path, with no timing jumps.
+
+## Interactions and motion verified
+
+- Orange node moves left-to-right.
+- Green node moves right-to-left.
+- Both nodes remain centered on their respective strokes.
+- Motion uses a single linear 0–100% progression with no intermediate acceleration keyframes.
+- Reduced-motion mode still replaces both animated nodes with static nodes centered on exact path coordinates.
+- No form behavior, navigation, or layout regression was observed on the device.
+
+## Implementation checklist
+
+- [x] One shared coordinate system for routes and nodes.
+- [x] Opposite travel directions.
+- [x] Continuous constant-rate movement without micro-bursts.
+- [x] Reduced-motion fallback.
+- [x] Physical-device verification and runtime position sampling.
+
+## Follow-up polish
+
+No blocking or optional visual polish remains for the requested correction.
+
+final result: passed

@@ -39,23 +39,15 @@ public sealed class WatchWorkoutService(
             cancellationToken);
         if (workout is not null)
         {
-            // Длительности отдыха живут в профиле и настраиваются в приложении.
-            // Часы получают их вместе с тренировкой, чтобы таймер на запястье
-            // совпадал с тем, что человек выставил на телефоне.
-            var rest = await db.UserProfiles
-                .AsNoTracking()
-                .Where(x => x.UserId == userId)
-                .Select(x => new
-                {
-                    x.RestBetweenSetsSeconds,
-                    x.RestBetweenExercisesSeconds,
-                })
-                .FirstOrDefaultAsync(cancellationToken);
+            // Отдых между подходами живёт в каждом упражнении и уходит на часы
+            // вместе с ним. Общее значение на уровне тренировки нужно только
+            // старым сборкам часов: им отдаётся отдых первого упражнения.
             return new(
                 WatchWorkoutAvailability.Active,
                 workout,
-                rest?.RestBetweenSetsSeconds ?? WatchRestDefaults.BetweenSetsSeconds,
-                rest?.RestBetweenExercisesSeconds ?? WatchRestDefaults.BetweenExercisesSeconds);
+                workout.Exercises.OrderBy(x => x.Order).FirstOrDefault()?.RestBetweenSetsSeconds
+                    ?? WatchRestDefaults.BetweenSetsSeconds,
+                workout.RestBetweenExercisesSeconds);
         }
 
         var finished = await db.WorkoutDays.AsNoTracking().AnyAsync(

@@ -18,5 +18,11 @@ public class ExerciseTemplateSet
 
     public bool IsWarmup { get; set; }
 
+    /// <summary>
+    /// Отдых после этого подхода, в секундах; у суперсета — после круга с этим
+    /// номером. <c>null</c> — действует отдых упражнения по умолчанию.
+    /// </summary>
+    public int? RestAfterSeconds { get; set; }
+
     public long Version { get; set; }
 }

@@ -270,14 +270,6 @@
             </article>
         </div>
     }
-    else if (Section == "rest-timers")
-    {
-        <div class="setting-card">
-            <p class="setting-description">@Text["Profile_RestTimersHint"]</p>
-            <div class="setting-form-grid"><label>@Text["Profile_RestBetweenSets"]<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenSetsSeconds" /></label><label>@Text["Profile_RestBetweenExercises"]<input class="auth-input" type="number" min="5" max="3600" @bind="_restBetweenExercisesSeconds" /></label></div>
-            <button class="setting-primary-action" type="button" disabled="@_isBusy" @onclick="SaveRestTimersAsync">@(_isBusy ? Text["Common_Saving"] : Text["Profile_ApplyToAllTimers"])</button>
-        </div>
-    }
     else if (Section == "change-password")
     {
         <EditForm class="setting-card" Model="_passwordInput" OnValidSubmit="ChangePasswordAsync"><DataAnnotationsValidator /><ValidationSummary class="validation-summary" /><div class="setting-form-grid"><label>@Text["Profile_CurrentPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.CurrentPassword" autocomplete="current-password" /></label><label>@Text["Profile_NewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.NewPassword" autocomplete="new-password" /></label><label>@Text["Profile_ConfirmNewPassword"] <InputText class="auth-input" type="password" @bind-Value="_passwordInput.ConfirmPassword" autocomplete="new-password" /></label></div><button class="setting-primary-action" type="submit" disabled="@(_isBusy || IsOffline)">@(_isBusy ? Text["Profile_PasswordBusy"] : Text["ProfileItem_ChangePassword"])</button></EditForm>
@@ -393,7 +385,7 @@
         ? setting
         : new("ProfileSetting_NotFoundTitle", "help", "ProfileSetting_NotFoundDescription", false);
     private static readonly IReadOnlyDictionary<string, ProfileSettingInfo> Settings = new Dictionary<string, ProfileSettingInfo>(StringComparer.OrdinalIgnoreCase) {
-        ["personal-information"] = new("ProfileItem_PersonalInformation", "badge", "", true), ["rest-timers"] = new("ProfileItem_RestTimers", "timer", "", true), ["change-password"] = new("ProfileItem_ChangePassword", "password", "", true), ["report-problem"] = new("ProfileItem_ReportProblem", "bug_report", "", true), ["logout"] = new("ProfileItem_Logout", "logout", "", true), ["delete-account"] = new("ProfileItem_DeleteAccount", "delete_forever", "", true), ["devices"] = new("ProfileItem_ConnectedDevices", "devices", "", true), ["my-data"] = new("ProfileItem_MyData", "database", "", true),
+        ["personal-information"] = new("ProfileItem_PersonalInformation", "badge", "", true), ["change-password"] = new("ProfileItem_ChangePassword", "password", "", true), ["report-problem"] = new("ProfileItem_ReportProblem", "bug_report", "", true), ["logout"] = new("ProfileItem_Logout", "logout", "", true), ["delete-account"] = new("ProfileItem_DeleteAccount", "delete_forever", "", true), ["devices"] = new("ProfileItem_ConnectedDevices", "devices", "", true), ["my-data"] = new("ProfileItem_MyData", "database", "", true),
         ["units"] = new("ProfileItem_Units", "scale", "ProfileSoon_Units", false), ["workout-settings"] = new("ProfileItem_WorkoutSettings", "exercise", "ProfileSoon_WorkoutSettings", false), ["notifications"] = new("ProfileItem_Notifications", "notifications", "", true, RequiresProfile: false), ["appearance"] = new("ProfileItem_Appearance", "palette", "ProfileSoon_Appearance", false), ["language"] = new("Profile_Language_Title", "language", "", true, RequiresProfile: false), ["export"] = new("ProfileItem_Export", "download", "ProfileSoon_Export", false), ["sync"] = new("ProfileItem_Sync", "sync", "ProfileSoon_Sync", false), ["sessions"] = new("ProfileItem_Sessions", "devices_other", "", true, RequiresProfile: false), ["help"] = new("ProfileItem_Help", "help", "ProfileSoon_Help", false), ["suggest-idea"] = new("Profile_SuggestIdea_Title", "lightbulb", "", true, RequiresProfile: false), ["about"] = new("ProfileItem_AboutApp", "info", "ProfileAbout_Description", false), ["privacy"] = new("ProfileItem_Privacy", "privacy_tip", "ProfileSoon_Privacy", false) };
     protected override async Task OnParametersSetAsync()
     {
@@ -430,7 +422,7 @@
         if (!Setting.IsAvailable || !Setting.RequiresProfile) { _isLoading = false; return; }
         var result = await ProfileClient.GetAsync();
         if (!result.Succeeded) _errors.AddRange(result.Errors);
-        else { _profile = result.Value; Language.ApplyFromProfile(_profile!.PreferredLanguage); _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; _restBetweenSetsSeconds = _profile.RestBetweenSetsSeconds; _restBetweenExercisesSeconds = _profile.RestBetweenExercisesSeconds; }
+        else { _profile = result.Value; Language.ApplyFromProfile(_profile!.PreferredLanguage); _profileInput.FirstName = _profile!.FirstName; _profileInput.LastName = _profile.LastName; _profileInput.BirthDate = _profile.BirthDate; _profileInput.Gender = _profile.Gender; }
         _isLoading = false;
     }
     private string? _languageError;
@@ -508,7 +500,6 @@
     private const string InstagramUrl = $"https://www.instagram.com/{InstagramHandle}/";
     private string? _instagramError;
     private async Task OpenInstagramAsync() { _instagramError = null; if (!await LinkOpener.OpenAsync(InstagramUrl)) _instagramError = Text.Format("ProfileSetting_InstagramFailed", InstagramUrl); }
-    private int _restBetweenSetsSeconds = 90; private int _restBetweenExercisesSeconds = 120;
     private async Task LoadWatchDevicesAsync()
     {
         await RunWatchActionAsync(async () =>
@@ -621,7 +612,6 @@
             ? Text["Watch_NeverSynced"]
             : Text.Format("Watch_LastSeen", lastSeenAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm"));
     private async Task SaveProfileAsync() { await RunAsync(async () => { var r = await ProfileClient.SaveAsync(new(_profileInput.FirstName, _profileInput.LastName, _profileInput.BirthDate, _profileInput.Gender)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
-    private async Task SaveRestTimersAsync() { if (_restBetweenSetsSeconds is < 5 or > 3600 || _restBetweenExercisesSeconds is < 5 or > 3600) { _errors.Add(Text["Profile_RestTimerRange"]); return; } await RunAsync(async () => { var r = await ProfileClient.SaveRestTimerSettingsAsync(new(_restBetweenSetsSeconds, _restBetweenExercisesSeconds)); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }
     private async Task ChangePasswordAsync() { await RunAsync(async () => { var r = await ProfileClient.ChangePasswordAsync(new(_passwordInput.CurrentPassword, _passwordInput.NewPassword)); if (!r.Succeeded) _errors.AddRange(r.Errors); else { await Authentication.ClearAsync(); Navigation.NavigateTo("/account/login", replace: true); } }); }
     private async Task PickScreenshotAsync() { var r = await PhotoPicker.PickAsync(MobilePhotoSource.Library); if (r.Succeeded) _screenshot = r.Photo; else if (!r.Cancelled) _errors.AddRange(r.Errors); }
     private async Task SubmitSupportAsync() { await RunAsync(async () => { var r = await SupportClient.CreateAsync(_supportMessage.Trim(), _screenshot, GetDeviceContext()); if (!r.Succeeded) _errors.AddRange(r.Errors); else Navigation.NavigateTo("/profile", replace: true); }); }

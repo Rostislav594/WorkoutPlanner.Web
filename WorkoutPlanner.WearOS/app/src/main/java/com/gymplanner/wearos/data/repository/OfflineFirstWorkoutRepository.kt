@@ -257,7 +257,7 @@ class OfflineFirstWorkoutRepository(
         val restSeconds = restSecondsAfter(
             current = currentSet,
             next = ordered.getOrNull(currentIndex + 1),
-            workout = snapshot.workout,
+            snapshot = snapshot,
         )
         val completed = workoutDao.completeSetAtomically(
             workoutId = snapshot.workout.workoutId,
@@ -413,14 +413,16 @@ class OfflineFirstWorkoutRepository(
     /**
      * Сколько отдыхать после закрытого подхода, или null, если отдыха нет.
      *
-     * Длительности приходят с сервера из профиля пользователя — те самые два
-     * поля, что он настраивает в приложении.
+     * Длительности приходят с сервера из шаблона: отдых между подходами —
+     * у каждого упражнения (у суперсета его несёт первое упражнение группы),
+     * отдых между упражнениями — у тренировки.
      */
     private fun restSecondsAfter(
         current: SetWithExercise,
         next: SetWithExercise?,
-        workout: LocalWorkout,
+        snapshot: LocalWorkoutSnapshot,
     ): Int? {
+        val workout = snapshot.workout
         // Последний подход тренировки: дальше экран завершения, отдыхать не от чего.
         if (next == null) return null
 
@@ -435,9 +437,36 @@ class OfflineFirstWorkoutRepository(
         }
 
         return if (sameExercise || sameGroup) {
-            workout.restBetweenSetsSeconds ?: defaultRestBetweenSetsSeconds
+            // Отдых после подхода — свой у каждого подхода; у суперсета после
+            // круга его несёт подход первого упражнения группы с тем же номером.
+            val owner = if (sameGroup) {
+                snapshot.exercises
+                    .filter { it.exercise.supersetGroupId == group }
+                    .minByOrNull { it.exercise.orderIndex }
+            } else {
+                null
+            }
+            val ownerExercise = owner?.exercise ?: current.exercise
+            val ownerSet = owner?.sets?.firstOrNull { it.orderIndex == current.set.orderIndex } ?: current.set
+            ownerSet.restAfterSeconds
+                ?: ownerExercise.restBetweenSetsSeconds
+                ?: workout.restBetweenSetsSeconds
+                ?: defaultRestBetweenSetsSeconds
         } else {
-            workout.restBetweenExercisesSeconds ?: defaultRestBetweenExercisesSeconds
+            // Отдых после упражнения — свой у каждого; у суперсета его несёт
+            // первое упражнение группы.
+            val finished = if (group != null) {
+                snapshot.exercises
+                    .map { it.exercise }
+                    .filter { it.supersetGroupId == group }
+                    .minByOrNull { it.orderIndex }
+                    ?: current.exercise
+            } else {
+                current.exercise
+            }
+            finished.restAfterExerciseSeconds
+                ?: workout.restBetweenExercisesSeconds
+                ?: defaultRestBetweenExercisesSeconds
         }
     }
 
@@ -452,6 +481,8 @@ class OfflineFirstWorkoutRepository(
                 name = exercise.name,
                 orderIndex = exercise.order,
                 supersetGroupId = exercise.supersetGroupId,
+                restBetweenSetsSeconds = exercise.restBetweenSetsSeconds,
+                restAfterExerciseSeconds = exercise.restAfterExerciseSeconds,
             )
         }
         val sets = response.exercises.flatMap { exercise ->
@@ -464,6 +495,7 @@ class OfflineFirstWorkoutRepository(
                     repetitions = set.repetitions,
                     isCompleted = set.isCompleted,
                     serverVersion = set.version,
+                    restAfterSeconds = set.restAfterSeconds,
                 )
             }
         }
@@ -487,7 +519,7 @@ class OfflineFirstWorkoutRepository(
 
     private companion object {
         // Запасные значения на случай старого сервера: совпадают со значениями
-        // по умолчанию в профиле пользователя.
+        // по умолчанию для шаблонов.
         const val defaultRestBetweenSetsSeconds = 90
         const val defaultRestBetweenExercisesSeconds = 120
         const val millisPerSecond = 1_000L

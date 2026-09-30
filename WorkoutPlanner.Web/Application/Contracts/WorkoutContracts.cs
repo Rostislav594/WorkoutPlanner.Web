@@ -1,3 +1,5 @@
+using WorkoutPlanner.Api.Contracts;
+
 namespace WorkoutPlanner.Web.Application.Contracts;
 
 public sealed class TrainingPlan
@@ -5,6 +7,7 @@ public sealed class TrainingPlan
     public int Id { get; set; }
     public string WorkoutName { get; set; } = string.Empty;
     public DateTime Date { get; set; }
+    public int RestBetweenExercisesSeconds { get; set; } = RestTimerDefaults.BetweenExercisesSeconds;
     public List<Exercise> Exercises { get; set; } = [];
     public string DisplayDate => Date.ToString("dd.MM.yyyy");
 }
@@ -21,6 +24,8 @@ public sealed class Exercise
     public int? ExerciseDefinitionId { get; set; }
     public int? SupersetGroupId { get; set; }
     public ExerciseDefinition? ExerciseDefinition { get; set; }
+    public int RestBetweenSetsSeconds { get; set; } = RestTimerDefaults.BetweenSetsSeconds;
+    public int? RestAfterExerciseSeconds { get; set; }
     public List<ExerciseTemplateSet> Sets { get; set; } = [];
     public bool IsCompleted => Sets.Count > 0 && Sets.All(x => x.Completed);
     public IEnumerable<int> Repetitions => Sets
@@ -54,6 +59,7 @@ public sealed class ExerciseTemplateSet
     public double Weight { get; set; }
     public bool Completed { get; set; }
     public bool IsWarmup { get; set; }
+    public int? RestAfterSeconds { get; set; }
     public long Version { get; set; }
 }
 
@@ -61,6 +67,14 @@ public sealed class ExerciseDefinition
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+}
+
+public enum RestTimersUpdateResult
+{
+    Updated,
+    NotFound,
+    // Среди упражнений или подходов есть чужие для этого шаблона.
+    UnknownExercise
 }
 
 public enum SupersetReorderResult

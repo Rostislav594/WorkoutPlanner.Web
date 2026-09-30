@@ -451,6 +451,14 @@ public static class WorkoutLifecycleApiEndpoints
                 Status = status,
                 ExerciseDefinitionId = source.ExerciseDefinitionId,
                 SupersetGroupId = source.SupersetGroupId,
+                // Таймер не повод терять законченную тренировку: значение вне
+                // границ приводится к ближайшему допустимому.
+                RestBetweenSetsSeconds = ClampRest(
+                    source.RestBetweenSetsSeconds,
+                    RestTimerDefaults.BetweenSetsSeconds),
+                RestAfterExerciseSeconds = source.RestAfterExerciseSeconds is { } restAfterExercise
+                    ? Math.Clamp(restAfterExercise, RestTimerDefaults.MinSeconds, RestTimerDefaults.MaxSeconds)
+                    : null,
                 Sets = source.Sets
                     .Select(set => new ExerciseTemplateSet
                     {
@@ -458,7 +466,10 @@ public static class WorkoutLifecycleApiEndpoints
                         Repetitions = set.Repetitions,
                         Weight = set.Weight,
                         Completed = set.Completed,
-                        IsWarmup = set.IsWarmup
+                        IsWarmup = set.IsWarmup,
+                        RestAfterSeconds = set.RestAfterSeconds is { } restAfter
+                            ? Math.Clamp(restAfter, RestTimerDefaults.MinSeconds, RestTimerDefaults.MaxSeconds)
+                            : null
                     })
                     .ToList()
             });
@@ -470,7 +481,10 @@ public static class WorkoutLifecycleApiEndpoints
                 SaveAsTemplate = request.SaveAsTemplate,
                 TemplateName = request.TemplateName,
                 Exercises = exercises,
-                CompletedAt = request.CompletedAt
+                CompletedAt = request.CompletedAt,
+                RestBetweenExercisesSeconds = ClampRest(
+                    request.RestBetweenExercisesSeconds,
+                    RestTimerDefaults.BetweenExercisesSeconds)
             },
             cancellationToken);
         if (!result.Succeeded || result.History is null)
@@ -502,6 +516,12 @@ public static class WorkoutLifecycleApiEndpoints
                 ToResponse(result.History),
                 result.TrainingPlanId));
     }
+
+    private static int ClampRest(int? seconds, int fallback) =>
+        Math.Clamp(
+            seconds ?? fallback,
+            RestTimerDefaults.MinSeconds,
+            RestTimerDefaults.MaxSeconds);
 
     private static async Task<IResult> GetHistoryAsync(
         IHistoryService history,

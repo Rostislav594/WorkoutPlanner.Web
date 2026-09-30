@@ -10,6 +10,7 @@ public interface IWorkoutApiClient
     Task<ApiResult<TrainingPlanApiResponse>> RenamePlanAsync(int id, RenameTrainingPlanRequest request, CancellationToken cancellationToken = default);
     Task<ApiResult> DeletePlanAsync(int id, CancellationToken cancellationToken = default);
     Task<ApiResult<TrainingPlanApiResponse>> ReorderSupersetAsync(int planId, int supersetGroupId, ReorderSupersetRequest request, CancellationToken cancellationToken = default);
+    Task<ApiResult<TrainingPlanApiResponse>> UpdateRestTimersAsync(int planId, UpdateRestTimersRequest request, CancellationToken cancellationToken = default);
     Task<ApiResult<IReadOnlyList<ExerciseDefinitionApiResponse>>> GetExerciseDefinitionsAsync(CancellationToken cancellationToken = default);
     Task<ApiResult<ExerciseApiResponse>> CreateExerciseAsync(int planId, SaveExerciseRequest request, CancellationToken cancellationToken = default);
     Task<ApiResult<ExerciseApiResponse>> UpdateExerciseAsync(int id, SaveExerciseRequest request, CancellationToken cancellationToken = default);

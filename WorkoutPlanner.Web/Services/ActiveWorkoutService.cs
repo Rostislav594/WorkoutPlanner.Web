@@ -69,7 +69,8 @@ public sealed class ActiveWorkoutService(
             plan.Id,
             plan.WorkoutName,
             day.Date,
-            exercises);
+            exercises,
+            plan.RestBetweenExercisesSeconds);
     }
 
     private static async Task<ActiveWorkout?> LoadFreeDraftAsync(
@@ -93,7 +94,8 @@ public sealed class ActiveWorkoutService(
             draft.Id,
             draft.WorkoutName,
             today,
-            ToActiveExercises(draft));
+            ToActiveExercises(draft),
+            draft.RestBetweenExercisesSeconds);
     }
 
     private static List<ActiveWorkoutExercise> ToActiveExercises(Models.TrainingPlan plan) =>
@@ -107,7 +109,9 @@ public sealed class ActiveWorkoutService(
                     .OrderBy(x => x.SetNumber)
                     .ThenBy(x => x.Id)
                     .Select(ToContract)
-                    .ToList()))
+                    .ToList(),
+                exercise.RestBetweenSetsSeconds,
+                exercise.RestAfterExerciseSeconds))
             .ToList();
 
     public async Task<WorkoutSetUpdateResult> UpdateSetAsync(
@@ -217,5 +221,6 @@ public sealed class ActiveWorkoutService(
             set.Repetitions,
             set.Completed,
             set.IsWarmup,
-            set.Version);
+            set.Version,
+            set.RestAfterSeconds);
 }

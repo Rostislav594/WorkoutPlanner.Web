@@ -414,7 +414,8 @@ public sealed class WorkoutCompletionService(
             {
                 UserId = userId,
                 WorkoutName = workoutName,
-                Date = now.Date
+                Date = now.Date,
+                RestBetweenExercisesSeconds = workout.RestBetweenExercisesSeconds
             };
             templateExercises = workout.Exercises
                 .Select(x => ToTemplateExercise(
@@ -540,6 +541,8 @@ public sealed class WorkoutCompletionService(
             ExerciseDefinitionId = definition.Id,
             ExerciseDefinition = definition,
             SupersetGroupId = source.SupersetGroupId,
+            RestBetweenSetsSeconds = source.RestBetweenSetsSeconds,
+            RestAfterExerciseSeconds = source.RestAfterExerciseSeconds,
             Sets = source.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(x => new Models.ExerciseTemplateSet
@@ -548,7 +551,8 @@ public sealed class WorkoutCompletionService(
                     Repetitions = x.Repetitions,
                     Weight = x.Weight,
                     Completed = false,
-                    IsWarmup = x.IsWarmup
+                    IsWarmup = x.IsWarmup,
+                    RestAfterSeconds = x.RestAfterSeconds
                 })
                 .ToList()
         };

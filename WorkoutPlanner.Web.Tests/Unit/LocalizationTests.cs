@@ -163,6 +163,8 @@ public class ResourceCoverageTests
         (nameof(AppStrings), AppLanguages.Ukrainian, "History_SupersetLabel"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Difficulty_Easy"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Today_Pause"),
+        // «с» — сокращение «секунди», в украинском такое же.
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Today_FinishHoldDuration"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Chart_ColumnDate"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Help_ChartDateAxis"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Picker_Selected"),

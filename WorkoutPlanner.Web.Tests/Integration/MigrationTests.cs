@@ -168,6 +168,51 @@ public sealed class MigrationTests
         Assert.Empty(await db.Database.GetPendingMigrationsAsync());
     }
 
+    [Fact]
+    public async Task AddRestTimersToTemplates_CopiesProfileTimersIntoExistingTemplates()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<WorkoutDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        await using var db = new WorkoutDbContext(options);
+        await db.Database.MigrateAsync("20260928055254_AddMobileIdempotencyRecords");
+
+        db.Users.AddRange(
+            CreateIdentityUser("user-a"),
+            CreateIdentityUser("user-b"));
+        await db.SaveChangesAsync();
+
+        // У первого свои таймеры в профиле, у второго профиля нет вовсе.
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO UserProfiles (UserId, FirstName, LastName, Gender, CreatedAt, UpdatedAt, RestBetweenSetsSeconds, RestBetweenExercisesSeconds, PreferredLanguage)
+            VALUES ('user-a', 'A', 'A', '', '2026-01-01', '2026-01-01', 75, 150, 'ru');
+            INSERT INTO TrainingPlans (UserId, WorkoutName, Date, IsFreeDraft)
+            VALUES ('user-a', 'Plan A', '2026-01-01', 0), ('user-b', 'Plan B', '2026-01-01', 0);
+            INSERT INTO Exercises (UserId, Name, WorkoutName, SetsCount, Set1Completed, Set2Completed, Set3Completed, Status, TrainingPlanId)
+            VALUES
+                ('user-a', 'Pull-ups', 'Plan A', 3, 0, 0, 0, 4, (SELECT Id FROM TrainingPlans WHERE WorkoutName = 'Plan A')),
+                ('user-b', 'Push-ups', 'Plan B', 3, 0, 0, 0, 4, (SELECT Id FROM TrainingPlans WHERE WorkoutName = 'Plan B'));
+            """);
+
+        await db.Database.MigrateAsync();
+
+        var plans = await db.TrainingPlans
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.UserId!, x => x.RestBetweenExercisesSeconds);
+        var exercises = await db.Exercises
+            .AsNoTracking()
+            .ToDictionaryAsync(x => x.UserId!, x => x.RestBetweenSetsSeconds);
+        Assert.Equal(150, plans["user-a"]);
+        Assert.Equal(75, exercises["user-a"]);
+        Assert.Equal(120, plans["user-b"]);
+        Assert.Equal(90, exercises["user-b"]);
+        Assert.Empty(await db.Database.GetPendingMigrationsAsync());
+    }
+
     private static IdentityUser CreateIdentityUser(string id)
     {
         return new IdentityUser

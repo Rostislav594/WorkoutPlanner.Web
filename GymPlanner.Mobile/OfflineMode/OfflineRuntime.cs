@@ -279,6 +279,22 @@ public sealed class OfflineRuntime
             await SaveAsync(() => Store.RemoveAsync(key, cancellationToken));
     }
 
+    /// <summary>
+    /// Удаляет из копии то, чего уже нет на сервере. Только при связи и пустой
+    /// очереди: неотправленное ещё не отразилось на сервере.
+    /// </summary>
+    public async Task<int> CleanUpCopyAsync(int? activeDraftPlanId, CancellationToken cancellationToken = default)
+    {
+        if (Reachability.IsOffline ||
+            !await UseCurrentAccountAsync(cancellationToken) ||
+            await Outbox.HasPendingAsync(cancellationToken))
+        {
+            return 0;
+        }
+
+        return await OfflineCacheCleanup.RunAsync(Store, activeDraftPlanId, cancellationToken);
+    }
+
     public async Task ForgetCurrentAccountAsync()
     {
         if (await UseCurrentAccountAsync(CancellationToken.None))

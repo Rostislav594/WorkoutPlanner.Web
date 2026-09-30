@@ -14,14 +14,13 @@ public sealed record WatchActiveWorkoutResult(
     int RestBetweenExercisesSeconds = WatchRestDefaults.BetweenExercisesSeconds);
 
 /// <summary>
-/// Запасные длительности отдыха: используются, когда профиль ещё не создан.
-/// Совпадают со значениями по умолчанию в <c>UserProfile</c>, иначе часы
-/// показывали бы не то, что человек видит в приложении.
+/// Запасные длительности отдыха, если в тренировке нет упражнений.
+/// Совпадают со значениями по умолчанию для шаблонов.
 /// </summary>
 public static class WatchRestDefaults
 {
-    public const int BetweenSetsSeconds = 90;
-    public const int BetweenExercisesSeconds = 120;
+    public const int BetweenSetsSeconds = global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenSetsSeconds;
+    public const int BetweenExercisesSeconds = global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenExercisesSeconds;
 }
 
 public enum CompleteWatchSetFailure

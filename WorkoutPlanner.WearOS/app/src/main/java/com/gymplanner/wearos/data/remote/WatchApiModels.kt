@@ -72,6 +72,10 @@ data class WatchExerciseResponse(
     val order: Int,
     val supersetGroupId: Int? = null,
     val sets: List<WatchSetResponse>,
+    /** Отдых между подходами этого упражнения; у суперсета — между кругами. null — старый сервер. */
+    val restBetweenSetsSeconds: Int? = null,
+    /** Отдых после упражнения; null — отдых между упражнениями тренировки. */
+    val restAfterExerciseSeconds: Int? = null,
 )
 
 data class WatchSetResponse(
@@ -82,6 +86,8 @@ data class WatchSetResponse(
     val isCompleted: Boolean,
     val isWarmup: Boolean,
     val version: Long,
+    /** Отдых после подхода; null — отдых упражнения. */
+    val restAfterSeconds: Int? = null,
 )
 
 data class CompleteWatchSetRequest(

@@ -38,33 +38,6 @@
     text-transform: capitalize;
 }
 
-.workout-chip {
-    grid-column: 1 / -1;
-    width: fit-content;
-    max-width: 100%;
-    justify-self: start;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, .05);
-    color: var(--color-text);
-    font-size: 17px;
-    font-weight: 600;
-    overflow-wrap: anywhere;
-    white-space: normal;
-    box-shadow: var(--shadow-card);
-}
-
-.workout-chip .material-symbols-rounded {
-    flex: 0 0 auto;
-    color: var(--color-success);
-    font-size: 28px;
-}
-
 .today-error {
     margin-bottom: 16px;
     padding: 12px 14px;
@@ -268,7 +241,8 @@
     display: grid;
     padding: 4px;
     border-radius: var(--radius-md);
-    background: conic-gradient(from -90deg, color-mix(in srgb, var(--color-success) 78%, white) var(--workout-progress), rgba(255, 255, 255, .18) 0);
+    /* Непрозрачная дорожка: сквозь кнопку не должны просвечивать обои. */
+    background: conic-gradient(from -90deg, color-mix(in srgb, var(--color-success) 78%, white) var(--workout-progress), color-mix(in srgb, white 18%, var(--color-bg)) 0);
     box-shadow: 0 6px 18px rgba(63, 185, 80, .1);
     transition: --workout-progress .45s ease-out;
 }
@@ -287,17 +261,20 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 8px;
     padding: 10px 14px;
     border-radius: calc(var(--radius-md) - 4px);
-    background: var(--glass-surface, var(--color-surface));
-    -webkit-backdrop-filter: var(--glass-blur, none);
-    backdrop-filter: var(--glass-blur, none);
+    background: var(--color-surface);
     color: var(--color-text);
     font-weight: 800;
-    white-space: nowrap;
-    overflow: hidden;
+}
+
+/* Название шаблона бывает длинным: переносим, а не обрезаем. */
+.workout-progress-indicator__label {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: center;
 }
 
 .workout-progress-indicator__content .material-symbols-rounded {
@@ -348,7 +325,28 @@
 }
 
 .finish-button--hold {
+    gap: 10px;
     touch-action: manipulation;
+}
+
+.finish-button-label {
+    min-width: 0;
+}
+
+.finish-button-hold-hint {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.finish-button-hold-hint .material-symbols-rounded {
+    color: var(--color-orange);
+    font-size: 18px;
 }
 
 .finish-hold-overlay {
@@ -390,7 +388,9 @@
 .finish-hold-glow {
     stroke-width: 6.32;
     opacity: 0;
-    filter: drop-shadow(0 0 clamp(19px, 5.5vw, 26px) #4fc46b);
+    filter:
+        drop-shadow(0 0 clamp(7px, 2vw, 10px) color-mix(in srgb, var(--color-success-hover) 84%, white))
+        drop-shadow(0 0 clamp(19px, 5.5vw, 28px) rgba(79, 196, 107, .82));
     animation: finish-glow-in .7s ease-out 2.6s forwards;
 }
 
@@ -405,7 +405,7 @@
 
 .finish-hold-check {
     stroke: var(--color-text);
-    stroke-width: 4.75;
+    stroke-width: 6.32;
     stroke-dasharray: 96;
     stroke-dashoffset: 96;
     animation: finish-check-draw .7s cubic-bezier(.22, 1, .36, 1) 1.9s forwards;
@@ -1480,6 +1480,11 @@
 }
 
 @media (max-width: 360px) {
+    .finish-button--hold {
+        gap: 7px;
+        padding-inline: 12px;
+    }
+
     .today-header {
         grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
     }
@@ -1561,10 +1566,6 @@
 @media (min-width: 600px) {
     .today-header {
         align-items: center;
-    }
-
-    .workout-chip {
-        max-width: 55%;
     }
 
     .no-workout-container {

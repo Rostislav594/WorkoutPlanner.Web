@@ -14,7 +14,11 @@ data class LocalWorkout(
     val restCompletedSetId: Long? = null,
     val restEndsAtUtcMillis: Long? = null,
     val restDurationSeconds: Int? = null,
-    /** Из профиля пользователя. NULL — сервер ещё не прислал. */
+    /**
+     * Отдых между упражнениями — из шаблона. Отдых между подходами здесь —
+     * запасное значение старого сервера: теперь он приходит с каждым упражнением.
+     * NULL — сервер ещё не прислал.
+     */
     val restBetweenSetsSeconds: Int? = null,
     val restBetweenExercisesSeconds: Int? = null,
     /** Свободная тренировка, начатая на телефоне без шаблона. */
@@ -40,6 +44,10 @@ data class LocalExercise(
     val orderIndex: Int,
     /** Упражнения с одной группой выполняются вперемежку. NULL — обычное. */
     val supersetGroupId: Int? = null,
+    /** Отдых между подходами из шаблона; у суперсета — между кругами. NULL — старый сервер. */
+    val restBetweenSetsSeconds: Int? = null,
+    /** Отдых после упражнения из шаблона. NULL — отдых между упражнениями тренировки. */
+    val restAfterExerciseSeconds: Int? = null,
 )
 
 @Entity(
@@ -62,6 +70,8 @@ data class LocalWorkoutSet(
     val repetitions: Int?,
     val isCompleted: Boolean,
     val serverVersion: Long,
+    /** Отдых после этого подхода из шаблона. NULL — действует отдых упражнения. */
+    val restAfterSeconds: Int? = null,
 )
 
 @Entity(

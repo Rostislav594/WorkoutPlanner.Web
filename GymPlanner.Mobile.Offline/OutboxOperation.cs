@@ -26,6 +26,7 @@ public static class OutboxKinds
     public const string UpdateExercise = "exercise.update";
     public const string DeleteExercise = "exercise.delete";
     public const string ReorderSuperset = "superset.reorder";
+    public const string UpdateRestTimers = "plan.rest-timers";
     public const string CreatePlan = "plan.create";
     public const string RenamePlan = "plan.rename";
     public const string DeletePlan = "plan.delete";
@@ -35,6 +36,8 @@ public static class OutboxKinds
     public const string DeleteWorkoutDay = "calendar.delete";
     public const string DeleteHistory = "history.delete";
     public const string SaveProfile = "profile.save";
+    // Устарело: таймеры переехали в шаблоны. Остаётся, чтобы подписать операции,
+    // поставленные в очередь прежней сборкой.
     public const string SaveRestTimers = "profile.rest-timers";
     public const string SaveLanguage = "profile.language";
 

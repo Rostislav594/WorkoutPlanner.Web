@@ -13,6 +13,7 @@ internal static class ApplicationContractMapper
             Id = source.Id,
             WorkoutName = source.WorkoutName,
             Date = source.Date,
+            RestBetweenExercisesSeconds = source.RestBetweenExercisesSeconds,
             Exercises = Entities.ExerciseOrdering.InWorkoutOrder(source.Exercises)
                 .Select(ToContract)
                 .ToList()
@@ -33,6 +34,8 @@ internal static class ApplicationContractMapper
             ExerciseDefinitionId = source.ExerciseDefinitionId,
             SupersetGroupId = source.SupersetGroupId,
             ExerciseDefinition = source.ExerciseDefinition?.ToContract(),
+            RestBetweenSetsSeconds = source.RestBetweenSetsSeconds,
+            RestAfterExerciseSeconds = source.RestAfterExerciseSeconds,
             Sets = source.Sets
                 .OrderBy(x => x.SetNumber)
                 .Select(ToContract)
@@ -51,6 +54,7 @@ internal static class ApplicationContractMapper
             Weight = source.Weight,
             Completed = source.Completed,
             IsWarmup = source.IsWarmup,
+            RestAfterSeconds = source.RestAfterSeconds,
             Version = source.Version
         };
     }

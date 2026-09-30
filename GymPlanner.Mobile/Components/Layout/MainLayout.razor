@@ -60,10 +60,6 @@
                                     title="@OfflineIndicatorLabel"
                                     @onclick="OfflineStatus.OpenSheet">
                                 <span class="material-symbols-rounded" aria-hidden="true">@OfflineIndicatorIcon</span>
-                                @if (OfflineStatus.WaitingCount > 0 && !OfflineStatus.HasProblem)
-                                {
-                                    <span class="offline-indicator__count" aria-hidden="true">@OfflineStatus.WaitingCount</span>
-                                }
                             </button>
                         }
                         <a class="profile-button" href="profile" aria-label="@Text["Layout_OpenProfile"]">
@@ -325,7 +321,8 @@
         if (route.Equals("workouts", StringComparison.OrdinalIgnoreCase) ||
             route.StartsWith("workouts/", StringComparison.OrdinalIgnoreCase)) return 1;
         if (route.Length == 0) return 2;
-        if (route.Equals("history", StringComparison.OrdinalIgnoreCase)) return 3;
+        if (route.Equals("history", StringComparison.OrdinalIgnoreCase) ||
+            route.StartsWith("history/", StringComparison.OrdinalIgnoreCase)) return 3;
         if (route.Equals("progress", StringComparison.OrdinalIgnoreCase) ||
             route.StartsWith("progress/", StringComparison.OrdinalIgnoreCase)) return 4;
         return -1;
@@ -676,20 +673,12 @@
     private void OnOfflineStatusChanged() => _ = InvokeAsync(StateHasChanged);
 
     // Проблема важнее всего: пока она не просмотрена, значок говорит о ней.
-    private string OfflineIndicatorIcon =>
-        OfflineStatus.HasProblem ? "sync_problem"
-        : OfflineStatus.IsOffline ? "cloud_off"
-        : "cloud_upload";
+    private string OfflineIndicatorIcon => OfflineStatus.HasProblem ? "sync_problem" : "cloud_off";
 
-    private string OfflineIndicatorClass =>
-        OfflineStatus.HasProblem ? "offline-indicator--problem"
-        : OfflineStatus.IsOffline ? "offline-indicator--offline"
-        : "offline-indicator--pending";
+    private string OfflineIndicatorClass => OfflineStatus.HasProblem ? "offline-indicator--problem" : "offline-indicator--offline";
 
     private string OfflineIndicatorLabel =>
-        OfflineStatus.HasProblem ? Text["Offline_IndicatorProblem"]
-        : OfflineStatus.IsOffline ? Text["Offline_IndicatorLabel"]
-        : Text.Format("Offline_IndicatorPending", OfflineStatus.WaitingCount);
+        OfflineStatus.HasProblem ? Text["Offline_IndicatorProblem"] : Text["Offline_IndicatorLabel"];
 
     public async ValueTask DisposeAsync()
     {

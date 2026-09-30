@@ -9,14 +9,13 @@ public sealed record OfflineNotice(string Icon, string Title, string Body, bool 
 
 /// <summary>
 /// Что показывать в шапке о связи с сервером: значок, короткое уведомление и
-/// лист «Офлайн-режим» с очередью изменений и журналом проблем.
+/// окно «Нет связи с сервером». Очередь изменений человеку не показываем: она
+/// уходит сама. Виден только журнал того, что сервер отклонил.
 /// </summary>
 public sealed class OfflineStatusService : IDisposable
 {
-    private const string LastContactKey = "offline.last-server-contact";
     private static readonly TimeSpan NoticeDuration = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ProblemNoticeDuration = TimeSpan.FromSeconds(8);
-    private static readonly TimeSpan PendingGrace = TimeSpan.FromSeconds(5);
 
     private readonly ServerReachability _reachability;
     private readonly ConnectivityMonitor _monitor;
@@ -45,11 +44,6 @@ public sealed class OfflineStatusService : IDisposable
 
     public bool IsOffline => _reachability.IsOffline;
 
-    public bool IsSyncing => _outbox.IsSyncing;
-
-    /// <summary>Изменения, которые ещё не дошли до сервера.</summary>
-    public IReadOnlyList<OutboxOperation> Pending { get; private set; } = [];
-
     /// <summary>Изменения, которые сервер отклонил.</summary>
     public IReadOnlyList<SyncIssue> Issues { get; private set; } = [];
 
@@ -57,29 +51,8 @@ public sealed class OfflineStatusService : IDisposable
 
     public OfflineNotice? Notice { get; private set; }
 
-    /// <summary>Когда телефон в последний раз получал ответ сервера — в том числе до перезапуска.</summary>
-    public DateTimeOffset? LastServerContactUtc
-    {
-        get
-        {
-            if (_reachability.LastResponseUtc is { } current)
-                return current;
-
-            var stored = Preferences.Default.Get(LastContactKey, 0L);
-            return stored > 0 ? new DateTimeOffset(stored, TimeSpan.Zero) : null;
-        }
-    }
-
-    /// <summary>
-    /// Изменения, которые ждут дольше обычной отправки. При связи каждое изменение
-    /// на долю секунды попадает в очередь — значок не должен мигать после каждого нажатия.
-    /// </summary>
-    public int WaitingCount => IsOffline
-        ? Pending.Count
-        : Pending.Count(x => _timeProvider.GetUtcNow() - x.CreatedAtUtc > PendingGrace);
-
-    /// <summary>Значок нужен только когда что-то не так; при связи и пустой очереди шапка чистая.</summary>
-    public bool ShowsIndicator => IsOffline || WaitingCount > 0 || Issues.Count > 0;
+    /// <summary>Значок нужен только когда что-то не так: нет связи или изменение не сохранилось.</summary>
+    public bool ShowsIndicator => IsOffline || Issues.Count > 0;
 
     public bool HasProblem => Issues.Count > 0;
 
@@ -122,8 +95,8 @@ public sealed class OfflineStatusService : IDisposable
     {
         try
         {
-            Pending = await _outbox.GetPendingAsync();
             Issues = await _outbox.GetIssuesAsync();
+            CloseSheetIfNothingToShow();
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -137,9 +110,6 @@ public sealed class OfflineStatusService : IDisposable
     private void ReachabilityChanged()
     {
         var isOffline = _reachability.IsOffline;
-        if (!isOffline && _reachability.LastResponseUtc is { } contact)
-            Preferences.Default.Set(LastContactKey, contact.UtcTicks);
-
         if (isOffline && !_wasOffline)
         {
             ShowNotice(
@@ -156,7 +126,15 @@ public sealed class OfflineStatusService : IDisposable
         }
 
         _wasOffline = isOffline;
+        CloseSheetIfNothingToShow();
         Changed?.Invoke();
+    }
+
+    // Связь вернулась и проблем нет — окну «Нет связи» больше нечего сказать.
+    private void CloseSheetIfNothingToShow()
+    {
+        if (IsSheetOpen && !ShowsIndicator)
+            IsSheetOpen = false;
     }
 
     private void ShowNotice(OfflineNotice notice, TimeSpan duration)
