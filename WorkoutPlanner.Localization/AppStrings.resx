@@ -1798,7 +1798,7 @@
     <value>Откройте вкладку «Сегодня» — название назначенного плана видно на плашке под заголовком.</value>
   </data>
   <data name="Help_Today_S1_Step2" xml:space="preserve">
-    <value>Если плана нет, нажмите «Свободная тренировка» в правом верхнем углу.</value>
+    <value>Если плана нет, нажмите «Свободная тренировка» под заголовком.</value>
   </data>
   <data name="Help_Today_S1_Step3" xml:space="preserve">
     <value>Карточки упражнений появятся списком — с них и начинается тренировка.</value>
@@ -1885,7 +1885,7 @@
     <value>Удалить шаблон</value>
   </data>
   <data name="Help_Workouts_S4_Text" xml:space="preserve">
-    <value>Удаление шаблона не стирает уже проведённые тренировки — они остаются в истории.</value>
+    <value>Вместе с шаблоном удаляются его упражнения, назначения в календаре и прогресс. Уже проведённые тренировки остаются в истории.</value>
   </data>
   <data name="Help_Calendar_Title" xml:space="preserve">
     <value>Календарь</value>
@@ -1971,20 +1971,8 @@
   <data name="Help_Profile_Title" xml:space="preserve">
     <value>Профиль</value>
   </data>
-  <data name="Help_Profile_Intro" xml:space="preserve">
-    <value>Профиль — это оглавление настроек: личные данные, устройства, язык, безопасность и поддержка.</value>
-  </data>
   <data name="Help_Profile_S1_Title" xml:space="preserve">
     <value>Изменить личные данные</value>
-  </data>
-  <data name="Help_Profile_S1_Text" xml:space="preserve">
-    <value>Email изменить нельзя — он привязан к аккаунту.</value>
-  </data>
-  <data name="Help_Profile_S3_Title" xml:space="preserve">
-    <value>Сменить язык</value>
-  </data>
-  <data name="Help_Profile_S3_Text" xml:space="preserve">
-    <value>Язык меняется сразу, перезапускать приложение не нужно.</value>
   </data>
   <data name="Help_ProfileWeb_Intro" xml:space="preserve">
     <value>В вебе профиль собран на одной странице: личные данные, смена пароля и повтор знакомства идут блоками сверху вниз.</value>
@@ -3021,7 +3009,7 @@
     <value>Нажмите галочку справа в строке — подход отметится выполненным.</value>
   </data>
   <data name="Help_Today_S3_Step4" xml:space="preserve">
-    <value>Внизу карточки в поле «Оценка упражнения» выберите, насколько тяжело оно далось.</value>
+    <value>Внизу карточки, под надписью «Оцени тяжесть упражнения», выберите, насколько тяжело оно далось.</value>
   </data>
   <data name="Help_Today_S4_Step1" xml:space="preserve">
     <value>Нажмите плашку «Отдых между подходами» под только что выполненным подходом.</value>
@@ -3054,13 +3042,16 @@
     <value>Нажмите и удерживайте заголовок карточки упражнения.</value>
   </data>
   <data name="Help_Today_S6_Step2" xml:space="preserve">
-    <value>В открывшемся окне выберите «Изменить тренировку», «Добавить фото» или «Удалить карточку».</value>
+    <value>В открывшемся окне выберите «Изменить тренировку» или «Добавить фото». В свободной тренировке там же есть «Удалить карточку».</value>
+  </data>
+  <data name="Help_Today_S6_Step3" xml:space="preserve">
+    <value>В тренировке из календаря «Изменить тренировку» открывает её шаблон — правки сохранятся в нём.</value>
   </data>
   <data name="Help_Today_S7_Title" xml:space="preserve">
     <value>Завершить тренировку</value>
   </data>
   <data name="Help_Today_S7_Text" xml:space="preserve">
-    <value>Завершение переносит результат в «Историю». Кнопка срабатывает по удержанию, чтобы её нельзя было нажать случайно.</value>
+    <value>Завершение переносит результат в «Историю». Кнопка срабатывает по удержанию, чтобы её нельзя было нажать случайно. Без интернета тренировка сохранится на телефоне и уйдёт на сервер, когда появится связь.</value>
   </data>
   <data name="Help_Today_S7_Step1" xml:space="preserve">
     <value>Нажмите и удерживайте «Завершить тренировку» внизу страницы, пока круг не замкнётся.</value>
@@ -3070,6 +3061,21 @@
   </data>
   <data name="Help_Today_S7_Step3" xml:space="preserve">
     <value>Готовый результат откроется во вкладке «История».</value>
+  </data>
+  <data name="Help_Today_S8_Title" xml:space="preserve">
+    <value>Объединить упражнения в суперсет</value>
+  </data>
+  <data name="Help_Today_S8_Text" xml:space="preserve">
+    <value>Упражнения суперсета выполняются кругами — подход одного, затем подход другого, а отдых идёт после каждой пары подходов.</value>
+  </data>
+  <data name="Help_Today_S8_Step1" xml:space="preserve">
+    <value>Нажмите «Создать суперсет» под заголовком — кнопка появляется, когда в тренировке есть хотя бы два отдельных упражнения.</value>
+  </data>
+  <data name="Help_Today_S8_Step2" xml:space="preserve">
+    <value>Выберите два упражнения и нажмите «Создать».</value>
+  </data>
+  <data name="Help_Today_S8_Step3" xml:space="preserve">
+    <value>Кнопка в заголовке суперсета меняет упражнения местами, а долгое нажатие на карточку открывает меню: разъединить или удалить суперсет.</value>
   </data>
   <data name="Help_TodayWeb_S1_Title" xml:space="preserve">
     <value>Начало тренировки</value>
@@ -3165,7 +3171,7 @@
     <value>Добавить фото упражнения</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Text" xml:space="preserve">
-    <value>Фото помогает вспомнить технику или настройку тренажёра перед подходом.</value>
+    <value>Фото помогает вспомнить технику или настройку тренажёра перед подходом. Загрузить или удалить его можно только при связи с сервером.</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Step1" xml:space="preserve">
     <value>Нажмите на плашку с фото в карточке упражнения.</value>
@@ -3187,6 +3193,9 @@
   </data>
   <data name="Help_WorkoutDetails_S5_Step3" xml:space="preserve">
     <value>Подтвердите — упражнения объединятся в одну карточку.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step4" xml:space="preserve">
+    <value>Кнопка в заголовке суперсета меняет упражнения местами, а долгое нажатие на карточку открывает «Управление суперсетом»: разъединить или удалить.</value>
   </data>
   <data name="Help_WorkoutDetailsWeb_S1_Text" xml:space="preserve">
     <value>Упражнение можно взять из библиотеки или задать собственным названием.</value>
@@ -3311,17 +3320,38 @@
   <data name="Help_History_S3_Step2" xml:space="preserve">
     <value>Подтвердите действие кнопкой «Удалить точно».</value>
   </data>
+  <data name="Help_History_S4_Title" xml:space="preserve">
+    <value>Найти старую тренировку в архиве</value>
+  </data>
+  <data name="Help_History_S4_Text" xml:space="preserve">
+    <value>В «Истории» остаются тренировки за последний месяц. Более старые сами переезжают в архив и раскладываются по папкам: по годам, а внутри — по месяцам.</value>
+  </data>
+  <data name="Help_History_S4_Step1" xml:space="preserve">
+    <value>Нажмите значок архива рядом с «?» в правом верхнем углу.</value>
+  </data>
+  <data name="Help_History_S4_Step2" xml:space="preserve">
+    <value>Откройте папку нужного месяца — они сгруппированы по годам.</value>
+  </data>
+  <data name="Help_History_S4_Step3" xml:space="preserve">
+    <value>Нажмите на тренировку: посмотреть или удалить её можно так же, как в «Истории».</value>
+  </data>
   <data name="Help_Progress_S1_Step1" xml:space="preserve">
     <value>Нажмите «Упражнения», чтобы увидеть динамику отдельного упражнения.</value>
   </data>
   <data name="Help_Progress_S1_Step2" xml:space="preserve">
     <value>Нажмите «Тренировки», чтобы увидеть динамику тренировки целиком.</value>
   </data>
+  <data name="Help_Progress_S1_Step3" xml:space="preserve">
+    <value>На плитках по очереди сменяются короткие итоги: прирост веса в упражнениях за 30 дней и изменение тренировок к прошлому разу.</value>
+  </data>
   <data name="Help_Progress_S2_Step1" xml:space="preserve">
     <value>Завершите хотя бы одну тренировку на странице «Сегодня».</value>
   </data>
   <data name="Help_Progress_S2_Step2" xml:space="preserve">
     <value>Вернитесь в «Прогресс» — данные появятся после завершения.</value>
+  </data>
+  <data name="Help_Progress_S2_Step3" xml:space="preserve">
+    <value>Цифрам на плитках нужно минимум две тренировки — до этого там написано, что данные появятся позже.</value>
   </data>
   <data name="Help_ProgressExercises_Title" xml:space="preserve">
     <value>Прогресс упражнений</value>
@@ -3416,6 +3446,9 @@
   <data name="Help_ProgressWorkouts_S2_Step2" xml:space="preserve">
     <value>Разверните «Показать точные значения», чтобы увидеть числа по датам.</value>
   </data>
+  <data name="Help_ProgressWorkouts_S2_Step3" xml:space="preserve">
+    <value>Нажмите на точку графика — откроется эта тренировка в «Истории» или в архиве.</value>
+  </data>
   <data name="Help_ProgressWorkouts_S3_Title" xml:space="preserve">
     <value>Очистить историю тренировки</value>
   </data>
@@ -3430,39 +3463,6 @@
   </data>
   <data name="Help_ProgressWorkouts_S3_Step3" xml:space="preserve">
     <value>Подтвердите действие в открывшемся окне.</value>
-  </data>
-  <data name="Help_Profile_S1_Step1" xml:space="preserve">
-    <value>Нажмите «Личная информация».</value>
-  </data>
-  <data name="Help_Profile_S1_Step2" xml:space="preserve">
-    <value>Измените имя, фамилию, дату рождения или пол.</value>
-  </data>
-  <data name="Help_Profile_S1_Step3" xml:space="preserve">
-    <value>Нажмите «Сохранить изменения».</value>
-  </data>
-  <data name="Help_Profile_S3_Step1" xml:space="preserve">
-    <value>Нажмите «Язык».</value>
-  </data>
-  <data name="Help_Profile_S3_Step2" xml:space="preserve">
-    <value>Выберите русский, украинский или английский.</value>
-  </data>
-  <data name="Help_Profile_S4_Title" xml:space="preserve">
-    <value>Сообщить о проблеме</value>
-  </data>
-  <data name="Help_Profile_S4_Text" xml:space="preserve">
-    <value>Обращение уходит напрямую разработчику. Не прикладывайте пароли и коды из SMS.</value>
-  </data>
-  <data name="Help_Profile_S4_Step1" xml:space="preserve">
-    <value>Нажмите «Сообщить о проблеме».</value>
-  </data>
-  <data name="Help_Profile_S4_Step2" xml:space="preserve">
-    <value>Опишите, что произошло, в поле «Что произошло?».</value>
-  </data>
-  <data name="Help_Profile_S4_Step3" xml:space="preserve">
-    <value>При необходимости нажмите «Добавить скриншот».</value>
-  </data>
-  <data name="Help_Profile_S4_Step4" xml:space="preserve">
-    <value>Нажмите «Отправить».</value>
   </data>
   <data name="Help_ProfileWeb_S1_Step1" xml:space="preserve">
     <value>Заполните имя, фамилию, дату рождения и пол.</value>

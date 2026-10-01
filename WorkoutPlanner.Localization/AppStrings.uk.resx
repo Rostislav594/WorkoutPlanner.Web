@@ -1781,7 +1781,7 @@
     <value>Відкрийте вкладку «Сьогодні» — назву призначеного плану видно на плашці під заголовком.</value>
   </data>
   <data name="Help_Today_S1_Step2" xml:space="preserve">
-    <value>Якщо плану немає, натисніть «Вільне тренування» у правому верхньому куті.</value>
+    <value>Якщо плану немає, натисніть «Вільне тренування» під заголовком.</value>
   </data>
   <data name="Help_Today_S1_Step3" xml:space="preserve">
     <value>Картки вправ з'являться списком — з них і починається тренування.</value>
@@ -1868,7 +1868,7 @@
     <value>Видалити шаблон</value>
   </data>
   <data name="Help_Workouts_S4_Text" xml:space="preserve">
-    <value>Видалення шаблона не стирає вже проведені тренування — вони залишаються в історії.</value>
+    <value>Разом із шаблоном видаляються його вправи, призначення в календарі та прогрес. Уже проведені тренування залишаються в історії.</value>
   </data>
   <data name="Help_Calendar_Title" xml:space="preserve">
     <value>Календар</value>
@@ -1954,20 +1954,8 @@
   <data name="Help_Profile_Title" xml:space="preserve">
     <value>Профіль</value>
   </data>
-  <data name="Help_Profile_Intro" xml:space="preserve">
-    <value>Профіль — це зміст налаштувань: особисті дані, пристрої, мова, безпека та підтримка.</value>
-  </data>
   <data name="Help_Profile_S1_Title" xml:space="preserve">
     <value>Змінити особисті дані</value>
-  </data>
-  <data name="Help_Profile_S1_Text" xml:space="preserve">
-    <value>Email змінити не можна — він прив'язаний до акаунта.</value>
-  </data>
-  <data name="Help_Profile_S3_Title" xml:space="preserve">
-    <value>Змінити мову</value>
-  </data>
-  <data name="Help_Profile_S3_Text" xml:space="preserve">
-    <value>Мова змінюється одразу, перезапускати застосунок не потрібно.</value>
   </data>
   <data name="Help_ProfileWeb_Intro" xml:space="preserve">
     <value>У вебі профіль зібрано на одній сторінці: особисті дані, зміна пароля та повторення знайомства йдуть блоками згори вниз.</value>
@@ -2990,7 +2978,7 @@
     <value>Натисніть галочку праворуч у рядку — підхід позначиться виконаним.</value>
   </data>
   <data name="Help_Today_S3_Step4" xml:space="preserve">
-    <value>Унизу картки в полі «Оцінка вправи» виберіть, наскільки важко вона далася.</value>
+    <value>Унизу картки, під написом «Оціни складність вправи», виберіть, наскільки важко вона далася.</value>
   </data>
   <data name="Help_Today_S4_Step1" xml:space="preserve">
     <value>Натисніть плашку «Відпочинок між підходами» під щойно виконаним підходом.</value>
@@ -3023,13 +3011,16 @@
     <value>Натисніть і утримуйте заголовок картки вправи.</value>
   </data>
   <data name="Help_Today_S6_Step2" xml:space="preserve">
-    <value>У вікні, що відкриється, виберіть «Змінити тренування», «Додати фото» або «Видалити картку».</value>
+    <value>У вікні, що відкриється, виберіть «Змінити тренування» або «Додати фото». У вільному тренуванні там же є «Видалити картку».</value>
+  </data>
+  <data name="Help_Today_S6_Step3" xml:space="preserve">
+    <value>У тренуванні з календаря «Змінити тренування» відкриває його шаблон — зміни збережуться в ньому.</value>
   </data>
   <data name="Help_Today_S7_Title" xml:space="preserve">
     <value>Завершити тренування</value>
   </data>
   <data name="Help_Today_S7_Text" xml:space="preserve">
-    <value>Завершення переносить результат до «Історії». Кнопка спрацьовує від утримання, щоб її не можна було натиснути випадково.</value>
+    <value>Завершення переносить результат до «Історії». Кнопка спрацьовує від утримання, щоб її не можна було натиснути випадково. Без інтернету тренування збережеться на телефоні й піде на сервер, щойно з'явиться зв'язок.</value>
   </data>
   <data name="Help_Today_S7_Step1" xml:space="preserve">
     <value>Натисніть і утримуйте «Завершити тренування» внизу сторінки, доки коло не замкнеться.</value>
@@ -3039,6 +3030,21 @@
   </data>
   <data name="Help_Today_S7_Step3" xml:space="preserve">
     <value>Готовий результат відкриється у вкладці «Історія».</value>
+  </data>
+  <data name="Help_Today_S8_Title" xml:space="preserve">
+    <value>Об'єднати вправи в суперсет</value>
+  </data>
+  <data name="Help_Today_S8_Text" xml:space="preserve">
+    <value>Вправи суперсету виконуються колами — підхід однієї, потім підхід іншої, а відпочинок іде після кожної пари підходів.</value>
+  </data>
+  <data name="Help_Today_S8_Step1" xml:space="preserve">
+    <value>Натисніть «Створити суперсет» під заголовком — кнопка з'являється, коли в тренуванні є щонайменше дві окремі вправи.</value>
+  </data>
+  <data name="Help_Today_S8_Step2" xml:space="preserve">
+    <value>Виберіть дві вправи й натисніть «Створити».</value>
+  </data>
+  <data name="Help_Today_S8_Step3" xml:space="preserve">
+    <value>Кнопка в заголовку суперсету міняє вправи місцями, а довге натискання на картку відкриває меню: роз'єднати або видалити суперсет.</value>
   </data>
   <data name="Help_TodayWeb_S1_Title" xml:space="preserve">
     <value>Початок тренування</value>
@@ -3134,7 +3140,7 @@
     <value>Додати фото вправи</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Text" xml:space="preserve">
-    <value>Фото допомагає пригадати техніку або налаштування тренажера перед підходом.</value>
+    <value>Фото допомагає пригадати техніку або налаштування тренажера перед підходом. Завантажити чи видалити його можна лише за зв'язку із сервером.</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Step1" xml:space="preserve">
     <value>Натисніть на плашку з фото в картці вправи.</value>
@@ -3156,6 +3162,9 @@
   </data>
   <data name="Help_WorkoutDetails_S5_Step3" xml:space="preserve">
     <value>Підтвердьте — вправи об'єднаються в одну картку.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step4" xml:space="preserve">
+    <value>Кнопка в заголовку суперсету міняє вправи місцями, а довге натискання на картку відкриває «Керування суперсетом»: роз'єднати або видалити.</value>
   </data>
   <data name="Help_WorkoutDetailsWeb_S1_Text" xml:space="preserve">
     <value>Вправу можна взяти з бібліотеки або задати власною назвою.</value>
@@ -3280,17 +3289,38 @@
   <data name="Help_History_S3_Step2" xml:space="preserve">
     <value>Підтвердьте дію кнопкою «Видалити остаточно».</value>
   </data>
+  <data name="Help_History_S4_Title" xml:space="preserve">
+    <value>Знайти старе тренування в архіві</value>
+  </data>
+  <data name="Help_History_S4_Text" xml:space="preserve">
+    <value>В «Історії» залишаються тренування за останній місяць. Старші самі переїжджають до архіву й розкладаються по папках: за роками, а всередині — за місяцями.</value>
+  </data>
+  <data name="Help_History_S4_Step1" xml:space="preserve">
+    <value>Натисніть значок архіву поруч із «?» у правому верхньому куті.</value>
+  </data>
+  <data name="Help_History_S4_Step2" xml:space="preserve">
+    <value>Відкрийте папку потрібного місяця — вони згруповані за роками.</value>
+  </data>
+  <data name="Help_History_S4_Step3" xml:space="preserve">
+    <value>Натисніть на тренування: переглянути чи видалити його можна так само, як в «Історії».</value>
+  </data>
   <data name="Help_Progress_S1_Step1" xml:space="preserve">
     <value>Натисніть «Вправи», щоб побачити динаміку окремої вправи.</value>
   </data>
   <data name="Help_Progress_S1_Step2" xml:space="preserve">
     <value>Натисніть «Тренування», щоб побачити динаміку тренування загалом.</value>
   </data>
+  <data name="Help_Progress_S1_Step3" xml:space="preserve">
+    <value>На плитках по черзі змінюються короткі підсумки: приріст ваги у вправах за 30 днів і зміна тренувань порівняно з минулим разом.</value>
+  </data>
   <data name="Help_Progress_S2_Step1" xml:space="preserve">
     <value>Завершіть хоча б одне тренування на сторінці «Сьогодні».</value>
   </data>
   <data name="Help_Progress_S2_Step2" xml:space="preserve">
     <value>Поверніться до «Прогресу» — дані з'являться після завершення.</value>
+  </data>
+  <data name="Help_Progress_S2_Step3" xml:space="preserve">
+    <value>Цифрам на плитках потрібно щонайменше два тренування — доти там написано, що дані з'являться пізніше.</value>
   </data>
   <data name="Help_ProgressExercises_Title" xml:space="preserve">
     <value>Прогрес вправ</value>
@@ -3385,6 +3415,9 @@
   <data name="Help_ProgressWorkouts_S2_Step2" xml:space="preserve">
     <value>Розгорніть «Показати точні значення», щоб побачити числа за датами.</value>
   </data>
+  <data name="Help_ProgressWorkouts_S2_Step3" xml:space="preserve">
+    <value>Натисніть на точку графіка — відкриється це тренування в «Історії» або в архіві.</value>
+  </data>
   <data name="Help_ProgressWorkouts_S3_Title" xml:space="preserve">
     <value>Очистити історію тренування</value>
   </data>
@@ -3399,39 +3432,6 @@
   </data>
   <data name="Help_ProgressWorkouts_S3_Step3" xml:space="preserve">
     <value>Підтвердьте дію у вікні, що відкриється.</value>
-  </data>
-  <data name="Help_Profile_S1_Step1" xml:space="preserve">
-    <value>Натисніть «Особиста інформація».</value>
-  </data>
-  <data name="Help_Profile_S1_Step2" xml:space="preserve">
-    <value>Змініть ім'я, прізвище, дату народження або стать.</value>
-  </data>
-  <data name="Help_Profile_S1_Step3" xml:space="preserve">
-    <value>Натисніть «Зберегти зміни».</value>
-  </data>
-  <data name="Help_Profile_S3_Step1" xml:space="preserve">
-    <value>Натисніть «Мова».</value>
-  </data>
-  <data name="Help_Profile_S3_Step2" xml:space="preserve">
-    <value>Виберіть російську, українську або англійську.</value>
-  </data>
-  <data name="Help_Profile_S4_Title" xml:space="preserve">
-    <value>Повідомити про проблему</value>
-  </data>
-  <data name="Help_Profile_S4_Text" xml:space="preserve">
-    <value>Звернення йде безпосередньо розробнику. Не додавайте паролі та коди з SMS.</value>
-  </data>
-  <data name="Help_Profile_S4_Step1" xml:space="preserve">
-    <value>Натисніть «Повідомити про проблему».</value>
-  </data>
-  <data name="Help_Profile_S4_Step2" xml:space="preserve">
-    <value>Опишіть, що сталося, у полі «Що сталося?».</value>
-  </data>
-  <data name="Help_Profile_S4_Step3" xml:space="preserve">
-    <value>За потреби натисніть «Додати знімок екрана».</value>
-  </data>
-  <data name="Help_Profile_S4_Step4" xml:space="preserve">
-    <value>Натисніть «Надіслати».</value>
   </data>
   <data name="Help_ProfileWeb_S1_Step1" xml:space="preserve">
     <value>Заповніть ім'я, прізвище, дату народження та стать.</value>

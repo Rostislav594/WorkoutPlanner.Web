@@ -1781,7 +1781,7 @@
     <value>Open the Today tab. The name of the scheduled plan appears on the chip under the heading.</value>
   </data>
   <data name="Help_Today_S1_Step2" xml:space="preserve">
-    <value>If there is no plan, tap Free workout in the top right corner.</value>
+    <value>If there is no plan, tap Free workout under the title.</value>
   </data>
   <data name="Help_Today_S1_Step3" xml:space="preserve">
     <value>The exercise cards appear as a list, and that is where the workout begins.</value>
@@ -1868,7 +1868,7 @@
     <value>Delete a template</value>
   </data>
   <data name="Help_Workouts_S4_Text" xml:space="preserve">
-    <value>Deleting a template does not erase workouts you have already done; they stay in your history.</value>
+    <value>The template is deleted together with its exercises, calendar assignments and progress. Workouts you have already done stay in your history.</value>
   </data>
   <data name="Help_Calendar_Title" xml:space="preserve">
     <value>Calendar</value>
@@ -1954,20 +1954,8 @@
   <data name="Help_Profile_Title" xml:space="preserve">
     <value>Profile</value>
   </data>
-  <data name="Help_Profile_Intro" xml:space="preserve">
-    <value>The profile is a table of contents for your settings: personal data, devices, language, security and support.</value>
-  </data>
   <data name="Help_Profile_S1_Title" xml:space="preserve">
     <value>Edit your personal data</value>
-  </data>
-  <data name="Help_Profile_S1_Text" xml:space="preserve">
-    <value>The email address cannot be changed; it is tied to the account.</value>
-  </data>
-  <data name="Help_Profile_S3_Title" xml:space="preserve">
-    <value>Change the language</value>
-  </data>
-  <data name="Help_Profile_S3_Text" xml:space="preserve">
-    <value>The language switches immediately; no restart is needed.</value>
   </data>
   <data name="Help_ProfileWeb_Intro" xml:space="preserve">
     <value>On the web the profile lives on a single page: personal data, password change and the tour replay follow one another.</value>
@@ -2990,7 +2978,7 @@
     <value>Tap the check mark on the right of the row to mark the set done.</value>
   </data>
   <data name="Help_Today_S3_Step4" xml:space="preserve">
-    <value>At the bottom of the card use Exercise rating to record how hard it felt.</value>
+    <value>At the bottom of the card, under Rate the exercise difficulty, pick how hard it felt.</value>
   </data>
   <data name="Help_Today_S4_Step1" xml:space="preserve">
     <value>Tap the Rest between sets chip under the set you have just finished.</value>
@@ -3023,13 +3011,16 @@
     <value>Press and hold the header of the exercise card.</value>
   </data>
   <data name="Help_Today_S6_Step2" xml:space="preserve">
-    <value>In the dialog choose Edit the workout, Add a photo or Delete the card.</value>
+    <value>In the dialog choose Edit the workout or Add a photo. In a free workout it also has Delete the card.</value>
+  </data>
+  <data name="Help_Today_S6_Step3" xml:space="preserve">
+    <value>In a workout from the calendar, Edit the workout opens its template, and your changes are saved there.</value>
   </data>
   <data name="Help_Today_S7_Title" xml:space="preserve">
     <value>Finish the workout</value>
   </data>
   <data name="Help_Today_S7_Text" xml:space="preserve">
-    <value>Finishing moves the result into History. The button works on a long press so it cannot be hit by accident.</value>
+    <value>Finishing moves the result into History. The button works on a long press so it cannot be hit by accident. Without internet the workout is saved on the phone and sent to the server once you are back online.</value>
   </data>
   <data name="Help_Today_S7_Step1" xml:space="preserve">
     <value>Press and hold Finish the workout at the bottom of the page until the ring closes.</value>
@@ -3039,6 +3030,21 @@
   </data>
   <data name="Help_Today_S7_Step3" xml:space="preserve">
     <value>The saved result then appears in the History tab.</value>
+  </data>
+  <data name="Help_Today_S8_Title" xml:space="preserve">
+    <value>Combine exercises into a superset</value>
+  </data>
+  <data name="Help_Today_S8_Text" xml:space="preserve">
+    <value>Superset exercises are done in rounds: a set of one, then a set of the other, with rest after each pair of sets.</value>
+  </data>
+  <data name="Help_Today_S8_Step1" xml:space="preserve">
+    <value>Tap Create a superset under the title; the button appears once the workout has at least two separate exercises.</value>
+  </data>
+  <data name="Help_Today_S8_Step2" xml:space="preserve">
+    <value>Pick two exercises and tap Create.</value>
+  </data>
+  <data name="Help_Today_S8_Step3" xml:space="preserve">
+    <value>The button in the superset header swaps the exercises, and a long press on the card opens a menu to split or delete the superset.</value>
   </data>
   <data name="Help_TodayWeb_S1_Title" xml:space="preserve">
     <value>Before you start</value>
@@ -3134,7 +3140,7 @@
     <value>Add an exercise photo</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Text" xml:space="preserve">
-    <value>A photo helps you recall the technique or the machine settings before a set.</value>
+    <value>A photo helps you recall the technique or the machine settings before a set. You can upload or delete it only while connected to the server.</value>
   </data>
   <data name="Help_WorkoutDetails_S4_Step1" xml:space="preserve">
     <value>Tap the photo chip on the exercise card.</value>
@@ -3156,6 +3162,9 @@
   </data>
   <data name="Help_WorkoutDetails_S5_Step3" xml:space="preserve">
     <value>Confirm, and the exercises merge into a single card.</value>
+  </data>
+  <data name="Help_WorkoutDetails_S5_Step4" xml:space="preserve">
+    <value>The button in the superset header swaps the exercises, and a long press on the card opens Manage the superset to split or delete it.</value>
   </data>
   <data name="Help_WorkoutDetailsWeb_S1_Text" xml:space="preserve">
     <value>An exercise can come from the library or be given a name of your own.</value>
@@ -3280,17 +3289,38 @@
   <data name="Help_History_S3_Step2" xml:space="preserve">
     <value>Confirm with Delete for good.</value>
   </data>
+  <data name="Help_History_S4_Title" xml:space="preserve">
+    <value>Find an older workout in the archive</value>
+  </data>
+  <data name="Help_History_S4_Text" xml:space="preserve">
+    <value>History keeps the workouts from the last month. Older ones move to the archive on their own and are sorted into folders by year and month.</value>
+  </data>
+  <data name="Help_History_S4_Step1" xml:space="preserve">
+    <value>Tap the archive icon next to the ? in the top right corner.</value>
+  </data>
+  <data name="Help_History_S4_Step2" xml:space="preserve">
+    <value>Open the folder of the month you need; months are grouped by year.</value>
+  </data>
+  <data name="Help_History_S4_Step3" xml:space="preserve">
+    <value>Tap a workout: you can view or delete it just like in History.</value>
+  </data>
   <data name="Help_Progress_S1_Step1" xml:space="preserve">
     <value>Open Exercises to see the trend for a single exercise.</value>
   </data>
   <data name="Help_Progress_S1_Step2" xml:space="preserve">
     <value>Open Workouts to see the trend for a whole workout.</value>
   </data>
+  <data name="Help_Progress_S1_Step3" xml:space="preserve">
+    <value>The tiles cycle through short summaries: weight gains in exercises over 30 days and how workouts changed since last time.</value>
+  </data>
   <data name="Help_Progress_S2_Step1" xml:space="preserve">
     <value>Finish at least one workout on the Today page.</value>
   </data>
   <data name="Help_Progress_S2_Step2" xml:space="preserve">
     <value>Come back to Progress; the data shows up once a workout is finished.</value>
+  </data>
+  <data name="Help_Progress_S2_Step3" xml:space="preserve">
+    <value>The numbers on the tiles need at least two workouts; until then the tiles say the data will appear later.</value>
   </data>
   <data name="Help_ProgressExercises_Title" xml:space="preserve">
     <value>Exercise progress</value>
@@ -3385,6 +3415,9 @@
   <data name="Help_ProgressWorkouts_S2_Step2" xml:space="preserve">
     <value>Expand Show exact values to see the numbers by date.</value>
   </data>
+  <data name="Help_ProgressWorkouts_S2_Step3" xml:space="preserve">
+    <value>Tap a point on the chart to open that workout in History or in the archive.</value>
+  </data>
   <data name="Help_ProgressWorkouts_S3_Title" xml:space="preserve">
     <value>Clear a workout history</value>
   </data>
@@ -3399,39 +3432,6 @@
   </data>
   <data name="Help_ProgressWorkouts_S3_Step3" xml:space="preserve">
     <value>Confirm in the dialog that opens.</value>
-  </data>
-  <data name="Help_Profile_S1_Step1" xml:space="preserve">
-    <value>Open Personal information.</value>
-  </data>
-  <data name="Help_Profile_S1_Step2" xml:space="preserve">
-    <value>Change your first name, last name, date of birth or gender.</value>
-  </data>
-  <data name="Help_Profile_S1_Step3" xml:space="preserve">
-    <value>Tap Save the changes.</value>
-  </data>
-  <data name="Help_Profile_S3_Step1" xml:space="preserve">
-    <value>Open Language.</value>
-  </data>
-  <data name="Help_Profile_S3_Step2" xml:space="preserve">
-    <value>Choose Russian, Ukrainian or English.</value>
-  </data>
-  <data name="Help_Profile_S4_Title" xml:space="preserve">
-    <value>Report a problem</value>
-  </data>
-  <data name="Help_Profile_S4_Text" xml:space="preserve">
-    <value>The report goes straight to the developer. Never include passwords or one-time codes.</value>
-  </data>
-  <data name="Help_Profile_S4_Step1" xml:space="preserve">
-    <value>Open Report a problem.</value>
-  </data>
-  <data name="Help_Profile_S4_Step2" xml:space="preserve">
-    <value>Describe what happened in the What happened field.</value>
-  </data>
-  <data name="Help_Profile_S4_Step3" xml:space="preserve">
-    <value>Attach a screenshot if it helps.</value>
-  </data>
-  <data name="Help_Profile_S4_Step4" xml:space="preserve">
-    <value>Tap Send.</value>
   </data>
   <data name="Help_ProfileWeb_S1_Step1" xml:space="preserve">
     <value>Fill in your first name, last name, date of birth and gender.</value>

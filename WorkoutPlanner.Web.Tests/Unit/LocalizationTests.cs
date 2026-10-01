@@ -259,6 +259,34 @@ public class ResourceCoverageTests
             $"Коды без текста в ApiErrors.resx: {string.Join(", ", missing)}");
     }
 
+    /// <summary>
+    /// Каталог помощи хранит ключи строкой, поэтому опечатка или удалённый ключ
+    /// не ломают сборку, а всплывают только как сырой ключ в окне помощи.
+    /// </summary>
+    [Fact]
+    public void EveryHelpKeyHasAText()
+    {
+        var texts = ReadKeys(CreateManager(nameof(AppStrings)), AppLanguages.Russian);
+
+        var topics = typeof(WorkoutPlanner.UI.Components.HelpContentCatalog)
+            .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(property => property.PropertyType == typeof(WorkoutPlanner.UI.Components.HelpTopic))
+            .Select(property => (WorkoutPlanner.UI.Components.HelpTopic)property.GetValue(null)!)
+            .ToArray();
+        var keys = topics
+            .SelectMany(topic => new[] { topic.TitleKey, topic.IntroductionKey }
+                .Concat(topic.Sections.SelectMany(section =>
+                    new[] { section.TitleKey, section.TextKey }.Concat(section.StepKeys ?? []))))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.NotEmpty(topics);
+        var missing = keys.Except(texts.Keys, StringComparer.Ordinal).ToArray();
+        Assert.True(
+            missing.Length == 0,
+            $"Ключи помощи без текста в AppStrings.resx: {string.Join(", ", missing)}");
+    }
+
     private static ResourceManager CreateManager(string resource) =>
         new($"{typeof(AppStrings).Namespace}.{resource}", typeof(AppStrings).Assembly);
 

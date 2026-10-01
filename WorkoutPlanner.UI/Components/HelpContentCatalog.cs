@@ -42,8 +42,9 @@ public static class HelpContentCatalog
             new("Help_Today_S3_Title", "Help_Today_S3_Text", ["Help_Today_S3_Step1", "Help_Today_S3_Step2", "Help_Today_S3_Step3", "Help_Today_S3_Step4"]),
             new("Help_Today_S4_Title", "Help_Today_S4_Text", ["Help_Today_S4_Step1", "Help_Today_S4_Step2", "Help_Today_S4_Step3"]),
             new("Help_Today_S5_Title", "Help_Today_S5_Text", ["Help_Today_S5_Step1", "Help_Today_S5_Step2"]),
-            new("Help_Today_S6_Title", "Help_Today_S6_Text", ["Help_Today_S6_Step1", "Help_Today_S6_Step2"]),
-            new("Help_Today_S7_Title", "Help_Today_S7_Text", ["Help_Today_S7_Step1", "Help_Today_S7_Step2", "Help_Today_S7_Step3"])
+            new("Help_Today_S6_Title", "Help_Today_S6_Text", ["Help_Today_S6_Step1", "Help_Today_S6_Step2", "Help_Today_S6_Step3"]),
+            new("Help_Today_S7_Title", "Help_Today_S7_Text", ["Help_Today_S7_Step1", "Help_Today_S7_Step2", "Help_Today_S7_Step3"]),
+            new("Help_Today_S8_Title", "Help_Today_S8_Text", ["Help_Today_S8_Step1", "Help_Today_S8_Step2", "Help_Today_S8_Step3"])
         ]);
 
     // У веба свои заголовки секций: свободных тренировок и таймеров отдыха там нет,
@@ -79,7 +80,7 @@ public static class HelpContentCatalog
             new("Help_WorkoutDetails_S2_Title", "Help_WorkoutDetails_S2_Text", ["Help_WorkoutDetails_S2_Step1", "Help_WorkoutDetails_S2_Step2"]),
             new("Help_WorkoutDetails_S3_Title", "Help_WorkoutDetails_S3_Text", ["Help_WorkoutDetails_S3_Step1", "Help_WorkoutDetails_S3_Step2"]),
             new("Help_WorkoutDetails_S4_Title", "Help_WorkoutDetails_S4_Text", ["Help_WorkoutDetails_S4_Step1", "Help_WorkoutDetails_S4_Step2"]),
-            new("Help_WorkoutDetails_S5_Title", "Help_WorkoutDetails_S5_Text", ["Help_WorkoutDetails_S5_Step1", "Help_WorkoutDetails_S5_Step2", "Help_WorkoutDetails_S5_Step3"])
+            new("Help_WorkoutDetails_S5_Title", "Help_WorkoutDetails_S5_Text", ["Help_WorkoutDetails_S5_Step1", "Help_WorkoutDetails_S5_Step2", "Help_WorkoutDetails_S5_Step3", "Help_WorkoutDetails_S5_Step4"])
         ]);
 
     // В вебе карточка упражнения открывает меню, а не реагирует на удержание,
@@ -114,8 +115,18 @@ public static class HelpContentCatalog
             new("Help_CalendarWeb_S3_Title", "Help_CalendarWeb_S3_Text", ["Help_CalendarWeb_S3_Step1", "Help_CalendarWeb_S3_Step2"])
         ]);
 
-    /// <summary>История. Шаги совпадают на мобильном и в вебе.</summary>
     public static HelpTopic History { get; } = new(
+        "Help_History_Title",
+        "Help_History_Intro",
+        [
+            new("Help_History_S1_Title", "Help_History_S1_Text", ["Help_History_S1_Step1", "Help_History_S1_Step2", "Help_History_S1_Step3"]),
+            new("Help_History_S2_Title", "Help_History_S2_Text", ["Help_History_S2_Step1", "Help_History_S2_Step2"]),
+            new("Help_History_S3_Title", "Help_History_S3_Text", ["Help_History_S3_Step1", "Help_History_S3_Step2"]),
+            new("Help_History_S4_Title", "Help_History_S4_Text", ["Help_History_S4_Step1", "Help_History_S4_Step2", "Help_History_S4_Step3"])
+        ]);
+
+    // В вебе нет архива: вся история лежит одним списком.
+    public static HelpTopic HistoryWeb { get; } = new(
         "Help_History_Title",
         "Help_History_Intro",
         [
@@ -124,8 +135,17 @@ public static class HelpContentCatalog
             new("Help_History_S3_Title", "Help_History_S3_Text", ["Help_History_S3_Step1", "Help_History_S3_Step2"])
         ]);
 
-    /// <summary>Обзор раздела прогресса: только выбор между двумя подразделами.</summary>
+    /// <summary>Обзор раздела прогресса: выбор между двумя подразделами и сводки на плитках.</summary>
     public static HelpTopic Progress { get; } = new(
+        "Help_Progress_Title",
+        "Help_Progress_Intro",
+        [
+            new("Help_Progress_S1_Title", "Help_Progress_S1_Text", ["Help_Progress_S1_Step1", "Help_Progress_S1_Step2", "Help_Progress_S1_Step3"]),
+            new("Help_Progress_S2_Title", "Help_Progress_S2_Text", ["Help_Progress_S2_Step1", "Help_Progress_S2_Step2", "Help_Progress_S2_Step3"])
+        ]);
+
+    // В вебе плитки без сводок, поэтому шагов про них нет.
+    public static HelpTopic ProgressWeb { get; } = new(
         "Help_Progress_Title",
         "Help_Progress_Intro",
         [
@@ -155,8 +175,17 @@ public static class HelpContentCatalog
             new("Help_ProgressExercises_S3_Title", "Help_ProgressExercises_S3_Text", ["Help_ProgressExercisesWeb_S3_Step1", "Help_ProgressExercisesWeb_S3_Step2"])
         ]);
 
-    /// <summary>Прогресс тренировок. Шаги совпадают на мобильном и в вебе.</summary>
     public static HelpTopic ProgressWorkouts { get; } = new(
+        "Help_ProgressWorkouts_Title",
+        "Help_ProgressWorkouts_Intro",
+        [
+            new("Help_ProgressWorkouts_S1_Title", "Help_ProgressWorkouts_S1_Text", ["Help_ProgressWorkouts_S1_Step1", "Help_ProgressWorkouts_S1_Step2"]),
+            new("Help_ProgressWorkouts_S2_Title", "Help_ProgressWorkouts_S2_Text", ["Help_ProgressWorkouts_S2_Step1", "Help_ProgressWorkouts_S2_Step2", "Help_ProgressWorkouts_S2_Step3"], Illustration: HelpIllustration.ProgressWorkout),
+            new("Help_ProgressWorkouts_S3_Title", "Help_ProgressWorkouts_S3_Text", ["Help_ProgressWorkouts_S3_Step1", "Help_ProgressWorkouts_S3_Step2", "Help_ProgressWorkouts_S3_Step3"])
+        ]);
+
+    // В вебе точка графика не открывает запись истории.
+    public static HelpTopic ProgressWorkoutsWeb { get; } = new(
         "Help_ProgressWorkouts_Title",
         "Help_ProgressWorkouts_Intro",
         [
@@ -165,17 +194,8 @@ public static class HelpContentCatalog
             new("Help_ProgressWorkouts_S3_Title", "Help_ProgressWorkouts_S3_Text", ["Help_ProgressWorkouts_S3_Step1", "Help_ProgressWorkouts_S3_Step2", "Help_ProgressWorkouts_S3_Step3"])
         ]);
 
-    public static HelpTopic Profile { get; } = new(
-        "Help_Profile_Title",
-        "Help_Profile_Intro",
-        [
-            new("Help_Profile_S1_Title", "Help_Profile_S1_Text", ["Help_Profile_S1_Step1", "Help_Profile_S1_Step2", "Help_Profile_S1_Step3"]),
-            new("Help_Profile_S3_Title", "Help_Profile_S3_Text", ["Help_Profile_S3_Step1", "Help_Profile_S3_Step2"]),
-            new("Help_Profile_S4_Title", "Help_Profile_S4_Text", ["Help_Profile_S4_Step1", "Help_Profile_S4_Step2", "Help_Profile_S4_Step3", "Help_Profile_S4_Step4"])
-        ]);
-
-    // В вебе профиль — одна страница блоками, без списка разделов и без
-    // таймеров отдыха и языка, которые есть только в мобильном приложении.
+    // Подсказка профиля осталась только в вебе, где профиль — одна страница
+    // блоками. В мобильном приложении кнопку помощи на профиле убрали.
     public static HelpTopic ProfileWeb { get; } = new(
         "Help_Profile_Title",
         "Help_ProfileWeb_Intro",
