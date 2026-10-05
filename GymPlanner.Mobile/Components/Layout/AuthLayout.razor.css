@@ -6,142 +6,334 @@
     pointer-events: none;
 }
 
+/* Сверху место под лампу: форма опускается, пока между лампой и заголовком
+   не станет ~5 см (293 px на телефоне ~410 ppi) или пока хватает экрана.
+   Высота задана явно, а не min-height: иначе сетка считала бы место
+   бесконечным и всегда отдавала первому ряду максимум. */
 .auth-shell {
+    --auth-lamp-width: 96px;
+    --auth-lamp-height: 67px;
+    --auth-lamp-gap: 293px;
+    --auth-lamp-gap-min: 2.5rem;
+    --auth-lamp-light: 255 214 165;
+    /* Точка подвеса шнура — над краем экрана: вокруг неё качаются и лампа, и свет. */
+    --auth-lamp-pivot: 220px;
     position: relative;
-    min-height: 100vh;
-    min-height: 100dvh;
+    isolation: isolate;
+    height: 100vh;
+    height: 100dvh;
     display: grid;
-    place-items: center;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows:
+        minmax(calc(var(--auth-lamp-height) + var(--auth-lamp-gap-min)), calc(var(--auth-lamp-height) + var(--auth-lamp-gap)))
+        auto
+        1fr;
+    justify-items: center;
+    align-items: start;
     overflow: hidden auto;
-    padding: calc(7.25rem + env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) calc(7.5rem + env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
+    padding: env(safe-area-inset-top) max(1.5rem, env(safe-area-inset-right)) calc(1rem + env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
     background: var(--color-bg);
     color: var(--color-text);
 }
 
-.auth-motion-art {
+.auth-shell::before {
     position: fixed;
-    z-index: 0;
-    top: 50%;
-    left: 50%;
-    width: 390px;
-    height: 844px;
-    overflow: visible;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .4) 45%, rgba(0, 0, 0, .28)),
+        url('/images/home-gym-background.png');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    content: "";
     pointer-events: none;
-    transform: translate(-50%, -50%);
-    background:
-        radial-gradient(circle at 76% 14%, rgba(255, 122, 26, .055), transparent 24%),
-        radial-gradient(circle at 25% 86%, rgba(63, 185, 80, .045), transparent 25%),
-        radial-gradient(ellipse at center, rgba(255, 255, 255, .018), transparent 60%);
-}
-
-.auth-route-map {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-}
-
-.auth-route-line {
-    fill: none;
-    vector-effect: non-scaling-stroke;
-}
-
-.auth-route-line--ghost {
-    stroke: rgba(255, 255, 255, .19);
-    stroke-width: .72;
-}
-
-.auth-route-line--primary {
-    stroke-width: 1.45;
-}
-
-.auth-route-cluster--top .auth-route-line--primary {
-    stroke: var(--color-accent);
-    filter: drop-shadow(0 0 4px rgba(255, 122, 26, .32));
-}
-
-.auth-route-cluster--bottom .auth-route-line--primary {
-    stroke: var(--color-success);
-    filter: drop-shadow(0 0 4px rgba(63, 185, 80, .32));
-}
-
-.auth-route-node {
-    offset-anchor: center;
-    offset-rotate: 0deg;
-    transform-box: fill-box;
-}
-
-.auth-route-node--animated {
-    will-change: offset-distance;
-    animation: auth-route-travel linear infinite;
-}
-
-.auth-route-node--top {
-    color: var(--color-accent);
-    filter: drop-shadow(0 0 6px rgba(255, 122, 26, .82));
-    offset-path: path("M -18 224 C 46 151 96 174 171 170 S 252 121 299 116 S 335 52 408 42");
-    animation-duration: 12.6s;
-    animation-delay: -4.2s;
-}
-
-.auth-route-node--bottom {
-    color: var(--color-success);
-    filter: drop-shadow(0 0 7px rgba(63, 185, 80, .86));
-    offset-path: path("M 408 604 C 316 713 304 746 211 744 C 118 742 78 691 -18 699");
-    animation-duration: 13.8s;
-    animation-delay: -8.4s;
-}
-
-.auth-route-node-halo {
-    fill: currentColor;
-    opacity: .16;
-}
-
-.auth-route-node-ring {
-    fill: rgba(8, 8, 9, .96);
-    stroke: currentColor;
-    stroke-width: 2.5;
-    vector-effect: non-scaling-stroke;
-}
-
-.auth-route-node-core {
-    fill: currentColor;
-}
-
-.auth-route-node--static {
-    display: none;
-}
-
-@keyframes auth-route-travel {
-    from { offset-distance: 0%; }
-    to { offset-distance: 100%; }
 }
 
 .auth-content {
     position: relative;
-    z-index: 1;
+    grid-row: 2;
     width: min(100%, 28rem);
+    min-width: 0;
+}
+
+/* ===== Лампа ===============================================================
+   Заголовок — якорь: лампа висит над серединой его текста, на расстоянии
+   --auth-lamp-gap, но не выше верхнего края экрана. Ширина заголовка по
+   тексту нужна только для середины якоря, на вид надписи не влияет. */
+.auth-content ::deep .auth-title {
+    anchor-name: --auth-title;
+    width: fit-content;
+}
+
+.auth-lamp {
+    position: absolute;
+    z-index: 2;
+    top: max(env(safe-area-inset-top), calc(anchor(--auth-title top) - var(--auth-lamp-gap) - var(--auth-lamp-height)));
+    left: anchor(--auth-title center);
+    width: var(--auth-lamp-width);
+    height: var(--auth-lamp-height);
+    translate: -50% 0;
+    transform-origin: 50% calc(-1 * var(--auth-lamp-pivot));
+    pointer-events: none;
+}
+
+/* Шнур уходит к потолку — за верхний край экрана. */
+.auth-lamp::before {
+    position: absolute;
+    bottom: calc(100% - 1px);
+    left: 50%;
+    width: 2px;
+    height: 100vh;
+    translate: -50% 0;
+    background: linear-gradient(180deg, #000000, #1c1c1f);
+    content: "";
+}
+
+.auth-lamp__body {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6));
+}
+
+/* Свет лампы — отдельный узел от-под купола до заголовка: он качается
+   вокруг той же точки, что и лампа, и смешивается со страницей целиком
+   (screen), поэтому луч мягко проходит сквозь надпись и гаснет под ней.
+   Отдельно от лампы — потому что в screen тёмный купол стал бы прозрачным.
+   Место свет считает по той же формуле от заголовка, что и лампа, а не от
+   самой лампы: якорь в Chrome учитывает её поворот, и свет качался бы дважды. */
+.auth-lamp-light {
+    position: absolute;
+    z-index: 1;
+    top: calc(max(env(safe-area-inset-top), calc(anchor(--auth-title top) - var(--auth-lamp-gap) - var(--auth-lamp-height))) + var(--auth-lamp-height) - 6px);
+    bottom: calc(anchor(--auth-title bottom) - 48px);
+    left: anchor(--auth-title center);
+    width: 760px;
+    translate: -50% 0;
+    transform-origin: 50% calc(-1 * (var(--auth-lamp-pivot) + var(--auth-lamp-height) - 6px));
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+/* Конус. Вершина вынесена выше купола (at 50% -90px), поэтому луч выходит
+   из-под всего плафона, а не острым углом из точки. Края и начало мягкие:
+   широкие переходы в conic-gradient и плавное разгорание сверху; затухание
+   под надписью — в той же линейной маске. */
+.auth-lamp-beam {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg,
+        rgb(var(--auth-lamp-light) / .34),
+        rgb(var(--auth-lamp-light) / .22) 45%,
+        rgb(var(--auth-lamp-light) / .17) 82%,
+        rgb(var(--auth-lamp-light) / .1));
+    -webkit-mask-image:
+        conic-gradient(from 0deg at 50% -90px, transparent 126deg, #000 152deg, #000 208deg, transparent 234deg),
+        linear-gradient(180deg, transparent, #000 44px, #000 calc(100% - 130px), transparent);
+    mask-image:
+        conic-gradient(from 0deg at 50% -90px, transparent 126deg, #000 152deg, #000 208deg, transparent 234deg),
+        linear-gradient(180deg, transparent, #000 44px, #000 calc(100% - 130px), transparent);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+}
+
+/* Свечение прямо под куполом — оно же скрывает, где начинается луч. */
+.auth-lamp-glow {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 200px;
+    height: 76px;
+    translate: -50% 0;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(var(--auth-lamp-light) / .55), rgb(var(--auth-lamp-light) / .2) 50%, transparent);
+    filter: blur(8px);
+}
+
+/* Пыль видна только в ярком ядре луча, а не на его мягких краях: у неё своя,
+   более узкая маска, которая качается вместе с лучом. */
+.auth-lamp-dust-light {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: conic-gradient(from 0deg at 50% -90px, transparent 140deg, #000 160deg, #000 200deg, transparent 220deg);
+    mask-image: conic-gradient(from 0deg at 50% -90px, transparent 140deg, #000 160deg, #000 200deg, transparent 220deg);
+}
+
+/* Пыль летает сама по себе: поле пылинок поворачивается обратно качанию,
+   поэтому на экране оно стоит на месте, а качается только маска луча.
+   Пылинки пролетают через луч насквозь и видны лишь там, куда падает свет. */
+.auth-lamp-dust-field {
+    position: absolute;
+    inset: 0;
+    transform-origin: 50% calc(-1 * (var(--auth-lamp-pivot) + var(--auth-lamp-height) - 6px));
+}
+
+.auth-lamp-dust {
+    position: absolute;
+    left: var(--x);
+    top: var(--y);
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: rgb(255 240 220);
+    box-shadow: 0 0 4px rgb(var(--auth-lamp-light) / .9);
+    opacity: 0;
+    animation: auth-dust-drift var(--t) linear var(--delay) infinite;
+}
+
+.auth-lamp-dust:nth-child(1) { --x: 30%; --y: 20%; --s: 1.6px; --dx: 120px; --dy: 18px; --t: 16s; --delay: -3s; --o: .75; }
+.auth-lamp-dust:nth-child(2) { --x: 66%; --y: 28%; --s: 2.2px; --dx: -130px; --dy: 24px; --t: 19s; --delay: -11s; --o: .6; }
+.auth-lamp-dust:nth-child(3) { --x: 44%; --y: 36%; --s: 1.4px; --dx: 90px; --dy: -16px; --t: 14s; --delay: -6s; --o: .85; }
+.auth-lamp-dust:nth-child(4) { --x: 72%; --y: 44%; --s: 1.8px; --dx: -140px; --dy: 20px; --t: 21s; --delay: -15s; --o: .6; }
+.auth-lamp-dust:nth-child(5) { --x: 26%; --y: 52%; --s: 2.4px; --dx: 150px; --dy: 26px; --t: 22s; --delay: -8s; --o: .5; }
+.auth-lamp-dust:nth-child(6) { --x: 56%; --y: 58%; --s: 1.3px; --dx: -100px; --dy: -20px; --t: 15s; --delay: -2s; --o: .8; }
+.auth-lamp-dust:nth-child(7) { --x: 36%; --y: 64%; --s: 2px; --dx: 110px; --dy: 30px; --t: 18s; --delay: -13s; --o: .6; }
+.auth-lamp-dust:nth-child(8) { --x: 70%; --y: 70%; --s: 1.6px; --dx: -120px; --dy: -14px; --t: 17s; --delay: -5s; --o: .75; }
+.auth-lamp-dust:nth-child(9) { --x: 48%; --y: 24%; --s: 2.6px; --dx: -80px; --dy: 34px; --t: 20s; --delay: -17s; --o: .45; }
+.auth-lamp-dust:nth-child(10) { --x: 60%; --y: 40%; --s: 1.4px; --dx: 70px; --dy: 22px; --t: 13s; --delay: -9s; --o: .85; }
+.auth-lamp-dust:nth-child(11) { --x: 22%; --y: 76%; --s: 1.8px; --dx: 160px; --dy: -24px; --t: 23s; --delay: -19s; --o: .6; }
+.auth-lamp-dust:nth-child(12) { --x: 76%; --y: 60%; --s: 1.5px; --dx: -150px; --dy: 16px; --t: 19s; --delay: -7s; --o: .7; }
+.auth-lamp-dust:nth-child(13) { --x: 40%; --y: 46%; --s: 1.2px; --dx: -90px; --dy: 40px; --t: 16s; --delay: -12s; --o: .8; }
+.auth-lamp-dust:nth-child(14) { --x: 52%; --y: 14%; --s: 2px; --dx: 60px; --dy: 36px; --t: 18s; --delay: -4s; --o: .55; }
+.auth-lamp-dust:nth-child(15) { --x: 64%; --y: 82%; --s: 1.3px; --dx: -110px; --dy: -30px; --t: 15s; --delay: -10s; --o: .75; }
+.auth-lamp-dust:nth-child(16) { --x: 32%; --y: 30%; --s: 2.2px; --dx: 100px; --dy: -12px; --t: 20s; --delay: -14s; --o: .5; }
+.auth-lamp-dust:nth-child(17) { --x: 46%; --y: 72%; --s: 1.6px; --dx: 120px; --dy: 14px; --t: 17s; --delay: -1s; --o: .7; }
+.auth-lamp-dust:nth-child(18) { --x: 58%; --y: 50%; --s: 2.4px; --dx: -60px; --dy: -26px; --t: 22s; --delay: -16s; --o: .45; }
+.auth-lamp-dust:nth-child(19) { --x: 28%; --y: 62%; --s: 1.4px; --dx: -70px; --dy: 20px; --t: 14s; --delay: -9.5s; --o: .8; }
+.auth-lamp-dust:nth-child(20) { --x: 74%; --y: 34%; --s: 1.7px; --dx: 80px; --dy: 28px; --t: 19s; --delay: -6.5s; --o: .65; }
+.auth-lamp-dust:nth-child(21) { --x: 50%; --y: 88%; --s: 1.5px; --dx: -130px; --dy: -10px; --t: 18s; --delay: -12.5s; --o: .7; }
+.auth-lamp-dust:nth-child(22) { --x: 38%; --y: 10%; --s: 1.9px; --dx: 140px; --dy: 30px; --t: 21s; --delay: -18s; --o: .55; }
+
+/* Путь чуть петляет, а вспыхивает и гаснет пылинка по краям пути — чаще
+   всего она и так за пределами луча. */
+@keyframes auth-dust-drift {
+    0% { translate: 0 0; opacity: 0; }
+    12% { opacity: var(--o); }
+    33% { translate: calc(var(--dx) * .33) calc(var(--dy) * .33 - 7px); }
+    66% { translate: calc(var(--dx) * .66) calc(var(--dy) * .66 + 7px); }
+    88% { opacity: var(--o); }
+    100% { translate: var(--dx) var(--dy); opacity: 0; }
+}
+
+/* При появлении страницы (и при переходе вход ↔ регистрация) лампа падает
+   из-за верхнего края на шнуре и пружинит. Приземлившись, зажигается — пара
+   коротких вспышек, потом ровный свет — и дальше чуть качается: лампа и свет
+   одним маятником. Свет до приземления погашен, поэтому падать ему не нужно.
+   Падение — через transform, потому что translate держит лампу по центру
+   над заголовком, а rotate занят покачиванием. */
+.auth-shell {
+    --auth-lamp-drop: 1.4s;
+}
+
+.auth-lamp {
+    animation:
+        auth-lamp-drop var(--auth-lamp-drop) both,
+        auth-lamp-sway 10s var(--auth-lamp-drop) infinite;
+}
+
+.auth-lamp-light {
+    animation:
+        auth-lamp-on 1.5s linear var(--auth-lamp-drop) both,
+        auth-lamp-sway 10s var(--auth-lamp-drop) infinite;
+}
+
+.auth-lamp-dust-field {
+    animation: auth-lamp-sway-back 10s var(--auth-lamp-drop) infinite;
+}
+
+.auth-lamp__lit {
+    animation: auth-lamp-on 1.5s linear var(--auth-lamp-drop) both;
+}
+
+/* Сначала лампа целиком за краем экрана, падает с ускорением, проскакивает
+   вниз на натянутом шнуре и затухающе пружинит. */
+@keyframes auth-lamp-drop {
+    0% {
+        transform: translateY(calc(-1 * (var(--auth-lamp-height) + 60px)));
+        animation-timing-function: cubic-bezier(.45, 0, .85, .4);
+    }
+    40% { transform: translateY(18px); animation-timing-function: ease-in-out; }
+    56% { transform: translateY(-9px); animation-timing-function: ease-in-out; }
+    70% { transform: translateY(5px); animation-timing-function: ease-in-out; }
+    84% { transform: translateY(-2px); animation-timing-function: ease-in-out; }
+    100% { transform: translateY(0); }
+}
+
+@keyframes auth-lamp-on {
+    0% { opacity: 0; }
+    7% { opacity: .75; }
+    11% { opacity: .08; }
+    20% { opacity: .9; }
+    25% { opacity: .2; }
+    38%, 100% { opacity: 1; }
+}
+
+/* Маятник стартует из середины: к краям замедляется, через
+   середину проходит быстрее всего. */
+@keyframes auth-lamp-sway {
+    0% { rotate: 0deg; animation-timing-function: ease-out; }
+    25% { rotate: 1.4deg; animation-timing-function: ease-in; }
+    50% { rotate: 0deg; animation-timing-function: ease-out; }
+    75% { rotate: -1.4deg; animation-timing-function: ease-in; }
+    100% { rotate: 0deg; }
+}
+
+/* Обратное качание для поля пыли — тот же темп, другой знак. */
+@keyframes auth-lamp-sway-back {
+    0% { rotate: 0deg; animation-timing-function: ease-out; }
+    25% { rotate: -1.4deg; animation-timing-function: ease-in; }
+    50% { rotate: 0deg; animation-timing-function: ease-out; }
+    75% { rotate: 1.4deg; animation-timing-function: ease-in; }
+    100% { rotate: 0deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .auth-route-node--animated {
-        display: none;
+    .auth-lamp,
+    .auth-lamp-light,
+    .auth-lamp__lit {
+        animation: none;
     }
 
-    .auth-route-node--static {
-        display: block;
+    .auth-lamp-dust {
+        display: none;
     }
 }
 
+/* Без якорного позиционирования лампу не к чему привязать, а без заголовка
+   (например, во время приветствия после регистрации) ей не над чем висеть. */
+@supports not (anchor-name: --auth-title) {
+    .auth-lamp,
+    .auth-lamp-light {
+        display: none;
+    }
+}
+
+.auth-shell:not(:has(.auth-title)) .auth-lamp,
+.auth-shell:not(:has(.auth-title)) .auth-lamp-light {
+    display: none;
+}
+
+/* Низкий горизонтальный экран: места под лампу нет — форма, как раньше,
+   от верхнего края с прокруткой. */
 @media (max-height: 36rem) {
     .auth-shell {
+        height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
+        grid-template-rows: none;
         place-items: start center;
         padding-block: calc(3rem + env(safe-area-inset-top)) calc(3rem + env(safe-area-inset-bottom));
     }
-}
 
-@media (min-width: 48rem) {
-    .auth-motion-art {
-        transform: translate(-50%, -50%) scale(1.08);
+    .auth-content {
+        grid-row: auto;
+    }
+
+    .auth-lamp,
+    .auth-lamp-light {
+        display: none;
     }
 }
