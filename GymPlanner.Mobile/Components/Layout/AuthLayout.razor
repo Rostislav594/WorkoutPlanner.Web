@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
 <svg class="auth-effects" aria-hidden="true" focusable="false">
     <defs>
@@ -25,4 +26,79 @@
     <div class="auth-content">
         @Body
     </div>
+
+    @* Лампа над заголовком страницы — часть обоев зала: висит на шнуре с
+       потолка и светит конусом вниз на заголовок. Привязана к
+       заголовку через CSS anchor positioning, поэтому одинаково работает
+       для входа и регистрации. Луч света идёт от лампы и заканчивается на
+       заголовке, мягко проходя сквозь надпись. При появлении страницы лампа
+       падает сверху и пружинит, потом зажигается и чуть качается; в луче
+       летает пыль. Свет стоит после лампы — она его якорь, а якорь
+       должен быть в разметке раньше. *@
+    <div class="auth-lamp" aria-hidden="true" @key="@($"lamp:{PagePath}")">
+        <svg class="auth-lamp__body" viewBox="0 0 120 84" focusable="false">
+            <defs>
+                <linearGradient id="auth-lamp-metal" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#050506" />
+                    <stop offset=".2" stop-color="#2a2b2e" />
+                    <stop offset=".36" stop-color="#17181a" />
+                    <stop offset=".74" stop-color="#0d0d0f" />
+                    <stop offset="1" stop-color="#030304" />
+                </linearGradient>
+                <linearGradient id="auth-lamp-fitting" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#08080a" />
+                    <stop offset=".35" stop-color="#3b3c40" />
+                    <stop offset="1" stop-color="#060607" />
+                </linearGradient>
+                <radialGradient id="auth-lamp-inside" cx=".5" cy=".5" r=".5">
+                    <stop offset="0" stop-color="#fffaf0" />
+                    <stop offset=".28" stop-color="#ffe2b4" />
+                    <stop offset=".72" stop-color="#a8743f" />
+                    <stop offset="1" stop-color="#2e2116" />
+                </radialGradient>
+                <linearGradient id="auth-lamp-edge" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#ffd59c" stop-opacity="0" />
+                    <stop offset=".5" stop-color="#ffd59c" stop-opacity=".75" />
+                    <stop offset="1" stop-color="#ffd59c" stop-opacity="0" />
+                </linearGradient>
+            </defs>
+
+            <rect x="54" y="0" width="12" height="11" rx="1.5" fill="url(#auth-lamp-fitting)" />
+            <rect x="50.5" y="10" width="19" height="5.5" rx="1.6" fill="url(#auth-lamp-fitting)" />
+            <path d="M49 15.5H71C73 28 84 38 99 47C111 54 117 62 118 70H2C3 62 9 54 21 47C36 38 47 28 49 15.5Z"
+                  fill="url(#auth-lamp-metal)" />
+            <path d="M45 23C39 33 27 42 14 52" fill="none" stroke="#ffffff" stroke-opacity=".13" stroke-width="2.2" stroke-linecap="round" />
+
+            @* Нижняя сторона купола: тёмная, пока лампа не зажглась. *@
+            <ellipse cx="60" cy="70.5" rx="57.5" ry="7" fill="#111113" />
+            <g class="auth-lamp__lit">
+                <ellipse cx="60" cy="70.5" rx="57.5" ry="7" fill="url(#auth-lamp-inside)" />
+                <ellipse cx="60" cy="70" rx="14" ry="3.4" fill="#fffdf6" />
+                <path d="M3 70.5C20 76 100 76 117 70.5" fill="none" stroke="url(#auth-lamp-edge)" stroke-width="1.2" />
+            </g>
+        </svg>
+    </div>
+
+    <div class="auth-lamp-light" aria-hidden="true" @key="@($"light:{PagePath}")">
+        <div class="auth-lamp-glow"></div>
+        <div class="auth-lamp-beam">
+            <div class="auth-lamp-dust-light">
+                <div class="auth-lamp-dust-field">
+                    @for (var i = 0; i < DustCount; i++)
+                    {
+                        <span class="auth-lamp-dust"></span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </main>
+
+@code {
+    // Пылинок в луче: место и путь каждой задаёт стиль по её номеру.
+    private const int DustCount = 22;
+
+    // Лампа и свет пересоздаются при смене страницы (вход ↔ регистрация),
+    // поэтому падение и включение света проигрываются заново.
+    private string PagePath => new Uri(Navigation.Uri).AbsolutePath;
+}
