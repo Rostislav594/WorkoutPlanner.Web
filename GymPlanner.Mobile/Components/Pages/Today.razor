@@ -3,8 +3,8 @@
 @implements IDisposable
 @inject IJSRuntime JS
 @using WorkoutPlanner.Api.Contracts
-@inject IWorkoutApiClient WorkoutClient
-@inject IWorkoutLifecycleApiClient LifecycleClient
+@inject IWorkoutApiClient ServerWorkoutClient
+@inject IWorkoutLifecycleApiClient ServerLifecycleClient
 @inject IExercisePhotoApiClient PhotoClient
 @inject IMobilePhotoPicker PhotoPicker
 @inject NavigationManager Navigation
@@ -21,12 +21,12 @@
             <p class="today-date">@DateTime.Today.ToString("dd MMMM, dddd")</p>
         </div>
 
-        <div class="today-help"><HelpButton Topic="HelpContentCatalog.Today" /></div>
+        <div class="today-help"><HelpButton Label="@Text["Tutorial_Today_Open"]" Disabled="@(!CanStartTutorial)" OnActivate="StartTutorialAsync" /></div>
 
         <div class="today-header-actions">
             @if (!_isLoading && _workout is null && !_isFreeWorkout)
             {
-                <button class="free-workout-button" type="button" disabled="@_isBusy" @onclick="CreateFreeWorkoutAsync">
+                <button class="free-workout-button" data-tour="free-start" type="button" disabled="@_isBusy" @onclick="CreateFreeWorkoutAsync">
                     <span class="material-symbols-rounded" aria-hidden="true">bolt</span>
                     <span>@Text["Today_FreeWorkout"]</span>
                 </button>
@@ -45,7 +45,7 @@
             }
             @if (SupersetCandidates.Count >= 2)
             {
-                <button class="secondary-button superset-button" type="button" aria-haspopup="dialog" disabled="@_isBusy" @onclick="OpenSupersetDialog">
+                <button class="secondary-button superset-button" data-tour="superset-create" type="button" aria-haspopup="dialog" disabled="@_isBusy" @onclick="OpenSupersetDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
                     @Text["WorkoutDetails_CreateSuperset"]
                 </button>
@@ -151,7 +151,7 @@
                                             if (set is null)
                                                 continue;
 
-                                            <fieldset class="set-row superset-set-row @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" @key="@($"set-{exercise.Id}-{set.SetNumber}")" data-flip-key="@($"set-{exercise.Id}-{set.SetNumber}")" aria-label="@Text.Format("Today_ExerciseSetLabel", exercise.Name, set.SetNumber)" @onpointerdown:stopPropagation="true">
+                                            <fieldset class="set-row superset-set-row @(exerciseIndex == 0 ? "superset-tone-a" : "superset-tone-b")" data-tour="@($"sset-{exercise.Id}-{set.SetNumber}")" @key="@($"set-{exercise.Id}-{set.SetNumber}")" data-flip-key="@($"set-{exercise.Id}-{set.SetNumber}")" aria-label="@Text.Format("Today_ExerciseSetLabel", exercise.Name, set.SetNumber)" @onpointerdown:stopPropagation="true">
                                                 <legend class="visually-hidden">@Text.Format("Today_ExerciseSetLabel", exercise.Name, set.SetNumber)</legend>
 
                                                 <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
@@ -184,7 +184,7 @@
 
                                     @if (HasFollowingSupersetRound(group, roundNumber))
                                     {
-                                         <button class="rest-timer-box superset-rest-timer" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)">
+                                         <button class="rest-timer-box superset-rest-timer" data-tour="@($"rest-{roundNumber}")" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets)">
                                             <span class="rest-timer-icon @(GetRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(group.Exercises[0].Id, roundNumber, RestTimerKind.BetweenSets).StartAnimationVersion" aria-hidden="true">
                                                 <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
                                                 <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
@@ -207,7 +207,7 @@
                                                   Label="@Text["Today_SelectSupersetRating"]" />
                             @if (HasFollowingGroup(group))
                             {
-                                <button class="rest-timer-box rest-timer-box--exercise" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)">
+                                <button class="rest-timer-box rest-timer-box--exercise" data-tour="rest-next" type="button" @onpointerdown:stopPropagation="true" @onclick="() => OpenRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises)">
                                     <span class="rest-timer-icon @(GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(group.Exercises[0].Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion" aria-hidden="true">
                                         <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
                                         <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
@@ -226,7 +226,7 @@
                 {
                 @foreach (var exercise in group.Exercises)
                 {
-                <article class="exercise-card">
+                <article class="exercise-card" data-tour-exercise="@exercise.Id">
                     <header class="exercise-header edit-hold-target"
                             tabindex="0"
                             aria-label="@Text.Format("Today_ExerciseCardHint", exercise.Name)"
@@ -283,7 +283,7 @@
                         <div class="sets-block">
                             @foreach (var set in exercise.Sets)
                             {
-                                <fieldset class="set-row" aria-label="@Text.Format("Common_SetNumber", set.SetNumber)">
+                                <fieldset class="set-row" data-tour="@($"set-{set.SetNumber}")" aria-label="@Text.Format("Common_SetNumber", set.SetNumber)">
                                     <legend class="visually-hidden">@Text.Format("Common_SetNumber", set.SetNumber)</legend>
 
                                     <button class="set-number @(set.IsWarmup ? "warmup" : "working")"
@@ -313,7 +313,7 @@
                                 </fieldset>
                                 @if (HasFollowingSet(exercise, set))
                                 {
-                                    <button class="rest-timer-box" type="button" @onclick="() => OpenRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)">
+                                    <button class="rest-timer-box" data-tour="@($"rest-{set.SetNumber}")" type="button" @onclick="() => OpenRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets)">
                                         <span class="rest-timer-icon @(GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets).StartAnimationVersion" aria-hidden="true">
                                             <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
                                             <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
@@ -335,7 +335,7 @@
                                               Label="@Text["Today_SelectExerciseRating"]" />
                         @if (HasFollowingExercise(exercise))
                         {
-                            <button class="rest-timer-box rest-timer-box--exercise" type="button" @onclick="() => OpenRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises)">
+                            <button class="rest-timer-box rest-timer-box--exercise" data-tour="rest-next" type="button" @onclick="() => OpenRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises)">
                                 <span class="rest-timer-icon @(GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion > 0 ? "rest-timer-icon--started" : null)" @key="GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises).StartAnimationVersion" aria-hidden="true">
                                     <span class="material-symbols-rounded rest-timer-icon__glyph">timer</span>
                                     <svg class="rest-timer-icon__rays" viewBox="0 0 30 16" fill="none" aria-hidden="true"><path d="M6 13 2 7M15 10V3M24 13l4-6" /></svg>
@@ -360,6 +360,7 @@
         {
             <div class="free-exercise-action">
                 <button class="compact-create-button add-free-exercise-button"
+                        data-tour="add-exercise"
                         type="button"
                         disabled="@_isBusy"
                         @onclick="BeginFreeExerciseCreateAsync">
@@ -372,6 +373,7 @@
         @if (HasFinishableExercise)
         {
             <button class="finish-button finish-button--hold"
+                    data-tour="finish"
                     type="button"
                     disabled="@_isBusy"
                     aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text.Format("Today_HoldToFinishAria", FinishHoldDuration.TotalSeconds))"
@@ -397,7 +399,7 @@
 
 @if (_isFinishAnimationActive)
 {
-    <div class="finish-hold-overlay" aria-hidden="true">
+    <div class="finish-hold-overlay @(_tutorial is null ? null : "finish-hold-overlay--fast")" aria-hidden="true">
         <div class="finish-hold-animation">
             <svg class="finish-hold-symbol" viewBox="0 0 120 120" focusable="false">
                 <defs>
@@ -432,7 +434,7 @@
                     <span class="material-symbols-rounded" aria-hidden="true">close</span>
                 </button>
             </div>
-            <label class="editor-field">
+            <label class="editor-field" data-tour="rest-seconds">
                 <span>@Text["Today_RestSeconds"]</span>
                 <input class="editor-control" type="number" inputmode="numeric" min="@RestTimerDefaults.MinSeconds" max="@RestTimerDefaults.MaxSeconds" @bind="_restDraftSeconds" />
             </label>
@@ -443,7 +445,7 @@
                 {
                     <button class="secondary-button" type="button" @onclick="PauseSelectedRestTimer">@Text["Today_Pause"]</button>
                 }
-                <button class="secondary-button" type="button" @onclick="CloseRestTimerAsync">@Text["Common_Done"]</button>
+                <button class="secondary-button" data-tour="rest-done" type="button" @onclick="CloseRestTimerAsync">@Text["Common_Done"]</button>
             </div>
         </section>
     </div>
@@ -608,7 +610,7 @@
                 <div class="editor-error" role="alert">@string.Join(" ", _freeEditorErrors)</div>
             }
 
-            <label class="editor-field">
+            <label class="editor-field" data-tour="editor-exercise">
                 <span>@Text["Common_Exercise"]</span>
                 <SystemChoiceField class="editor-control"
                                    Title="@Text["Today_PickExercise"]"
@@ -619,7 +621,7 @@
                                    AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
             </label>
 
-            <label class="editor-field">
+            <label class="editor-field" data-tour="editor-sets">
                 <span>@Text["WorkoutDetails_SetsCount"]</span>
                 <input class="editor-control"
                        type="number"
@@ -632,13 +634,13 @@
             <div class="free-set-editor-list">
                 @foreach (var set in _freeEditorDraft.Sets)
                 {
-                    <fieldset>
+                    <fieldset data-tour="@($"editor-set-{set.SetNumber}")">
                         <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
-                        <label>
+                        <label data-tour="@($"editor-weight-{set.SetNumber}")">
                             <span>@Text["WorkoutDetails_WeightKg"]</span>
                             <input class="editor-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                         </label>
-                        <label>
+                        <label data-tour="@($"editor-reps-{set.SetNumber}")">
                             <span>@Text["WorkoutDetails_Reps"]</span>
                             <input class="editor-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
                         </label>
@@ -647,7 +649,7 @@
             </div>
 
             <div class="editor-actions">
-                <button class="edit-workout-button" type="button" @onclick="SaveFreeExerciseEdit">
+                <button class="edit-workout-button" data-tour="editor-save" type="button" @onclick="SaveFreeExerciseEdit">
                     @(_isCreatingFreeExercise ? Text["WorkoutDetails_AddExercise"] : Text["Common_Save"])
                 </button>
             </div>
@@ -675,7 +677,7 @@
             }
             <div class="prompt-actions">
                 <button class="edit-workout-button" type="button" @onclick="OpenTemplateNamePrompt">@Text["Common_Yes"]</button>
-                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithoutTemplateAsync">@Text["Common_No"]</button>
+                <button class="secondary-button" data-tour="template-no" type="button" disabled="@_isBusy" @onclick="CompleteFreeWithoutTemplateAsync">@Text["Common_No"]</button>
             </div>
         </section>
     </div>
@@ -716,6 +718,7 @@
 {
     <div class="modal-overlay" @onclick="CloseCompletion">
         <section class="modal-window workout-completed-window"
+                 data-tour="completion"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="completion-title"
@@ -723,7 +726,7 @@
             <span class="completion-icon material-symbols-rounded" aria-hidden="true">check</span>
             <h2 id="completion-title">@Text["Today_WorkoutCompleted"]</h2>
             <p>@_completionMessage</p>
-            <button class="finish-button modal-finish-button" type="button" @onclick="CloseCompletion">@Text["Common_Done"]</button>
+            <button class="finish-button modal-finish-button" data-tour="completion-done" type="button" @onclick="CloseCompletion">@Text["Common_Done"]</button>
         </section>
     </div>
 }
@@ -739,6 +742,7 @@
                 {
                     var unavailable = exercise.SupersetGroupId is not null;
                     <button class="superset-option @(_supersetSelection.Contains(exercise.Id) ? "selected" : null)"
+                            data-tour="@($"superset-option-{exercise.Id}")"
                             type="button"
                             disabled="@unavailable"
                             aria-pressed="@_supersetSelection.Contains(exercise.Id)"
@@ -746,7 +750,7 @@
                 }
             </div>
             <div class="superset-actions">
-                <button class="finish-button" type="button" disabled="@(_isBusy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">@Text["Common_Create"]</button>
+                <button class="finish-button" data-tour="superset-confirm" type="button" disabled="@(_isBusy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">@Text["Common_Create"]</button>
                 <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseSupersetDialog">@Text["Common_Cancel"]</button>
             </div>
         </section>
@@ -789,6 +793,38 @@
                 </div>
             }
         </section>
+    </div>
+}
+
+@if (_tutorial is { } tutorial)
+{
+    <div class="tutorial-layer @(tutorial.Leaving ? "tutorial-layer--leaving" : null)"
+         role="dialog"
+         aria-modal="true"
+         aria-label="@Text["Tutorial_Today_Region"]"
+         @ref="_tutorialLayer">
+        <div class="tutorial-veil" data-tutorial-veil></div>
+        <div class="tutorial-finger" data-tutorial-finger aria-hidden="true">
+            <span class="tutorial-finger__hand material-symbols-rounded">pan_tool_alt</span>
+        </div>
+        <div class="tutorial-shield" aria-hidden="true"></div>
+        @* Подсказка шага — облачко над рукой: появляется при смене шага, держится
+           пару секунд и гаснет; итог остаётся до конца. Новый ключ заново
+           запускает её анимацию. *@
+        <p class="tutorial-bubble @(tutorial.CaptionFinal ? "tutorial-bubble--final" : null)" data-tutorial-bubble role="status" aria-live="polite" @key="tutorial.Step">@Text[tutorial.CaptionKey]</p>
+        <div class="tutorial-chrome" data-tutorial-chrome>
+            <div class="tutorial-panel">
+                <button class="tutorial-skip" type="button" disabled="@tutorial.Leaving" @onclick="StopTutorialAsync">@Text["Tutorial_Today_Skip"]</button>
+            </div>
+            <div class="tutorial-progress"
+                 role="progressbar"
+                 aria-label="@Text["Tutorial_Today_Progress"]"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 aria-valuenow="@TutorialProgressPercent.ToString("0", System.Globalization.CultureInfo.InvariantCulture)">
+                <span class="tutorial-progress__value" style="--tutorial-progress: @TutorialProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
+            </div>
+        </div>
     </div>
 }
 
@@ -903,7 +939,7 @@
     private string? _savedSessionJson;
 
     private (int PlanId, int? DayId)? ActiveSessionKey =>
-        _completedHistory is not null || _isLoading ? null
+        _tutorial is not null || _completedHistory is not null || _isLoading ? null
         : _isFreeWorkout && _freeDraftPlanId is { } freePlanId ? (freePlanId, null)
         : _workout is { } workout ? (workout.TrainingPlan.Id, workout.Day.Id)
         : null;
@@ -944,6 +980,11 @@
 
     private async Task ForgetSessionAsync()
     {
+        // Демонстрация «завершает» ненастоящую тренировку: настоящая, отложенная
+        // на время обучения, должна остаться сохранённой.
+        if (_tutorial is not null)
+            return;
+
         _savedSessionJson = null;
         await WorkoutSession.ClearAsync();
     }
@@ -1003,7 +1044,7 @@
         CancelSupersetHold();
         _supersetActionGroup = group;
         _supersetDeleteConfirmation = false;
-        BackNavigation.SetBackInterceptor(RequestCloseSupersetActions);
+        SetBackInterceptor(RequestCloseSupersetActions);
     }
 
     private void CloseSupersetActions(bool force = false)
@@ -1014,7 +1055,7 @@
         CancelSupersetHold();
         _supersetActionGroup = null;
         _supersetDeleteConfirmation = false;
-        BackNavigation.SetBackInterceptor(null);
+        SetBackInterceptor(null);
     }
 
     private void RequestCloseSupersetActions() =>
@@ -1038,7 +1079,7 @@
         if (_exercises.Any(x => x.Id == exerciseId))
         {
             _editActionExerciseId = exerciseId;
-            BackNavigation.SetBackInterceptor(RequestCloseEditWorkoutAction);
+            SetBackInterceptor(RequestCloseEditWorkoutAction);
         }
     }
 
@@ -1046,7 +1087,7 @@
     {
         CancelExerciseHold();
         _editActionExerciseId = null;
-        BackNavigation.SetBackInterceptor(null);
+        SetBackInterceptor(null);
     }
 
     private void RequestCloseEditWorkoutAction() =>
@@ -1073,7 +1114,7 @@
             await Task.Delay(FinishHoldFeedbackDelay, holdCts.Token);
             _isFinishAnimationActive = true;
             await InvokeAsync(StateHasChanged);
-            await Task.Delay(FinishHoldDuration - FinishHoldFeedbackDelay, holdCts.Token);
+            await Task.Delay(ActiveFinishHoldDuration - FinishHoldFeedbackDelay, holdCts.Token);
             if (!holdCts.IsCancellationRequested)
                 await CompleteAsync();
         }
@@ -1134,7 +1175,7 @@
             _isCreatingFreeExercise = false;
             CloseEditWorkoutAction();
             _showFreeExerciseEditor = true;
-            BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
+            SetBackInterceptor(RequestCloseFreeExerciseEditor);
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
         {
@@ -1175,7 +1216,7 @@
         _freeEditorErrors.Clear();
         _isCreatingFreeExercise = true;
         _showFreeExerciseEditor = true;
-        BackNavigation.SetBackInterceptor(RequestCloseFreeExerciseEditor);
+        SetBackInterceptor(RequestCloseFreeExerciseEditor);
     }
 
     private void CloseFreeExerciseEditor()
@@ -1186,7 +1227,7 @@
         _freeEditorDraft = null;
         _freeEditorErrors.Clear();
         _isCreatingFreeExercise = false;
-        BackNavigation.SetBackInterceptor(null);
+        SetBackInterceptor(null);
 
         if (discardEmptyWorkout)
         {
@@ -1351,7 +1392,7 @@
         _photoDataUri = _photoThumbnails.GetValueOrDefault(exercise.Id);
         _confirmPhotoDelete = false;
         _photoErrors.Clear();
-        BackNavigation.SetBackInterceptor(RequestClosePhoto);
+        SetBackInterceptor(RequestClosePhoto);
         if (exercise.Id <= 0 || !exercise.HasPhoto || _photoDataUri is not null)
             return;
 
@@ -1391,7 +1432,7 @@
         _photoDataUri = null;
         _photoErrors.Clear();
         _confirmPhotoDelete = false;
-        BackNavigation.SetBackInterceptor(null);
+        SetBackInterceptor(null);
     }
 
     private void RequestClosePhoto() => _ = InvokeAsync(ClosePhoto);
@@ -1559,7 +1600,7 @@
         if (_isFreeWorkout)
         {
             _showFreeTemplatePrompt = true;
-            BackNavigation.SetBackInterceptor(RequestCloseFreeTemplatePrompt);
+            SetBackInterceptor(RequestCloseFreeTemplatePrompt);
             return;
         }
 
@@ -1941,12 +1982,13 @@
         StartRestTimer(timer);
     }
 
-    private static void StartRestTimer(RestTimerState timer)
+    private void StartRestTimer(RestTimerState timer)
     {
         timer.IsQueued = false;
         timer.IsCompleted = false;
         timer.RemainingSeconds = timer.DurationSeconds;
-        timer.EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(timer.RemainingSeconds);
+        timer.TimeScale = RestTimeScale(timer.DurationSeconds);
+        timer.EndsAtUtc = DateTimeOffset.UtcNow.AddSeconds(timer.RemainingSeconds / timer.TimeScale);
         timer.IsRunning = true;
         timer.StartAnimationVersion++;
     }
@@ -1989,7 +2031,7 @@
     private void UpdateRestTimer(RestTimerState timer)
     {
         if (!timer.IsRunning || timer.EndsAtUtc is null) return;
-        timer.RemainingSeconds = Math.Max(0, (int)Math.Ceiling((timer.EndsAtUtc.Value - DateTimeOffset.UtcNow).TotalSeconds));
+        timer.RemainingSeconds = Math.Max(0, (int)Math.Ceiling((timer.EndsAtUtc.Value - DateTimeOffset.UtcNow).TotalSeconds * timer.TimeScale));
         if (timer.RemainingSeconds == 0)
         {
             timer.IsRunning = false;
@@ -2042,7 +2084,7 @@
 
         _showFreeTemplatePrompt = false;
         _templateErrors.Clear();
-        BackNavigation.SetBackInterceptor(null);
+        SetBackInterceptor(null);
     }
 
     private void RequestCloseFreeTemplatePrompt() =>
@@ -2054,7 +2096,7 @@
         _showTemplateNamePrompt = true;
         _templateName = string.Empty;
         _templateErrors.Clear();
-        BackNavigation.SetBackInterceptor(RequestCloseTemplateNamePrompt);
+        SetBackInterceptor(RequestCloseTemplateNamePrompt);
     }
 
     private void CloseTemplateNamePrompt()
@@ -2065,7 +2107,7 @@
         _showTemplateNamePrompt = false;
         _showFreeTemplatePrompt = true;
         _templateErrors.Clear();
-        BackNavigation.SetBackInterceptor(RequestCloseFreeTemplatePrompt);
+        SetBackInterceptor(RequestCloseFreeTemplatePrompt);
     }
 
     private void RequestCloseTemplateNamePrompt() =>
@@ -2116,7 +2158,7 @@
 
             _showFreeTemplatePrompt = false;
             _showTemplateNamePrompt = false;
-            BackNavigation.SetBackInterceptor(null);
+            SetBackInterceptor(null);
             _completedHistory = result.Value!.History;
             _completionMessage = OfflineIds.IsLocal(_completedHistory.Id)
                 ? Text["Today_SavedOffline"]
@@ -2243,6 +2285,7 @@
         if (firstRender)
             await _swapAnimation.PrepareAsync();
         await _swapAnimation.PlayPendingAsync();
+        await AttachTutorialLayerAsync();
         await SaveSessionIfChangedAsync();
     }
 
@@ -2347,10 +2390,13 @@
         CancelFinishHold();
         CancelSupersetHold();
         Lifecycle.Suspended -= SaveSessionOnSuspend;
+        _tutorial?.Cancellation.Cancel();
         BackNavigation.SetBackInterceptor(null);
         _disposeCts.Cancel();
         _disposeCts.Dispose();
         _ = _swapAnimation.DisposeAsync().AsTask();
+        if (_spotlight is not null)
+            _ = _spotlight.DisposeAsync().AsTask();
     }
 
     private enum RestTimerKind { BetweenSets, BetweenExercises }
@@ -2369,6 +2415,8 @@
         public bool IsCompleted { get; set; }
         public int StartAnimationVersion { get; set; }
         public DateTimeOffset? EndsAtUtc { get; set; }
+        /// <summary>Во сколько раз отсчёт быстрее настоящего: больше 1 только в обучении.</summary>
+        public double TimeScale { get; set; } = 1;
     }
 
     private sealed class ExerciseDraft

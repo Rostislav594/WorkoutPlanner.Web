@@ -1768,51 +1768,6 @@
   <data name="Help_Today_Title" xml:space="preserve">
     <value>Today's workout</value>
   </data>
-  <data name="Help_Today_Intro" xml:space="preserve">
-    <value>This is where the workout itself happens: you tick off sets, start rest timers and save the result.</value>
-  </data>
-  <data name="Help_Today_S1_Title" xml:space="preserve">
-    <value>Start the workout</value>
-  </data>
-  <data name="Help_Today_S1_Text" xml:space="preserve">
-    <value>The workout comes from the plan you scheduled in the calendar. If nothing is scheduled for today, you can build one right here.</value>
-  </data>
-  <data name="Help_Today_S1_Step1" xml:space="preserve">
-    <value>Open the Today tab. The name of the scheduled plan appears on the chip under the heading.</value>
-  </data>
-  <data name="Help_Today_S1_Step2" xml:space="preserve">
-    <value>If there is no plan, tap Free workout under the title.</value>
-  </data>
-  <data name="Help_Today_S1_Step3" xml:space="preserve">
-    <value>The exercise cards appear as a list, and that is where the workout begins.</value>
-  </data>
-  <data name="Help_Today_S2_Title" xml:space="preserve">
-    <value>Build a free workout</value>
-  </data>
-  <data name="Help_Today_S2_Text" xml:space="preserve">
-    <value>Exercises for a free workout are added as you go and survive switching between tabs.</value>
-  </data>
-  <data name="Help_Today_S2_Step1" xml:space="preserve">
-    <value>Tap Add an exercise below the list of cards.</value>
-  </data>
-  <data name="Help_Today_S2_Step2" xml:space="preserve">
-    <value>Pick an exercise from the library and set the number of sets.</value>
-  </data>
-  <data name="Help_Today_S2_Step3" xml:space="preserve">
-    <value>Set the weight and repetitions for every set, then tap Add an exercise.</value>
-  </data>
-  <data name="Help_Today_S3_Title" xml:space="preserve">
-    <value>Tick off a completed set</value>
-  </data>
-  <data name="Help_Today_S3_Text" xml:space="preserve">
-    <value>Until a set is ticked off it reaches neither your history nor your progress.</value>
-  </data>
-  <data name="Help_Today_S4_Title" xml:space="preserve">
-    <value>Start a rest timer</value>
-  </data>
-  <data name="Help_Today_S4_Text" xml:space="preserve">
-    <value>A rest chip sits after every set and every exercise. Its length comes from the template, and a change made here is saved to the template for that chip only.</value>
-  </data>
   <data name="Help_TodayWeb_Intro" xml:space="preserve">
     <value>This is where the workout you scheduled in the calendar takes place.</value>
   </data>
@@ -1873,26 +1828,8 @@
   <data name="Help_Calendar_Title" xml:space="preserve">
     <value>Calendar</value>
   </data>
-  <data name="Help_Calendar_Intro" xml:space="preserve">
-    <value>The calendar shows which days have workouts scheduled. This is how a workout reaches the Today page.</value>
-  </data>
   <data name="Help_Calendar_S1_Title" xml:space="preserve">
     <value>Schedule a workout</value>
-  </data>
-  <data name="Help_Calendar_S1_Text" xml:space="preserve">
-    <value>A workout is scheduled from an existing template. If you have none yet, create one in the Workouts section first.</value>
-  </data>
-  <data name="Help_Calendar_S2_Title" xml:space="preserve">
-    <value>Move a workout to another date</value>
-  </data>
-  <data name="Help_Calendar_S2_Text" xml:space="preserve">
-    <value>Moving a workout keeps its contents; only the date changes.</value>
-  </data>
-  <data name="Help_Calendar_S3_Title" xml:space="preserve">
-    <value>Remove a scheduled workout</value>
-  </data>
-  <data name="Help_Calendar_S3_Text" xml:space="preserve">
-    <value>Only the scheduling is removed; the template itself stays in the Workouts section.</value>
   </data>
   <data name="Help_CalendarWeb_S1_Text" xml:space="preserve">
     <value>Scheduling takes two steps: open the day, then pick a template.</value>
@@ -2968,84 +2905,6 @@
   <data name="Web_AccessDenied_Body" xml:space="preserve">
     <value>This section requires the administrator role.</value>
   </data>
-  <data name="Help_Today_S3_Step1" xml:space="preserve">
-    <value>Find the set row: its number, the kg field and the reps field.</value>
-  </data>
-  <data name="Help_Today_S3_Step2" xml:space="preserve">
-    <value>If what you actually lifted differs from the plan, correct it right in those fields.</value>
-  </data>
-  <data name="Help_Today_S3_Step3" xml:space="preserve">
-    <value>Tap the check mark on the right of the row to mark the set done.</value>
-  </data>
-  <data name="Help_Today_S3_Step4" xml:space="preserve">
-    <value>At the bottom of the card, under Rate the exercise difficulty, pick how hard it felt.</value>
-  </data>
-  <data name="Help_Today_S4_Step1" xml:space="preserve">
-    <value>Tap the Rest between sets chip under the set you have just finished.</value>
-  </data>
-  <data name="Help_Today_S4_Step2" xml:space="preserve">
-    <value>Change the number in the Rest time field if you need to.</value>
-  </data>
-  <data name="Help_Today_S4_Step3" xml:space="preserve">
-    <value>Tap Start, then Done. The countdown keeps running after the dialog closes.</value>
-  </data>
-  <data name="Help_Today_S5_Title" xml:space="preserve">
-    <value>Switch between a warm-up and a working set</value>
-  </data>
-  <data name="Help_Today_S5_Text" xml:space="preserve">
-    <value>Warm-up sets are not counted as working sets when the app measures your load.</value>
-  </data>
-  <data name="Help_Today_S5_Step1" xml:space="preserve">
-    <value>Tap the set number on the left of the row.</value>
-  </data>
-  <data name="Help_Today_S5_Step2" xml:space="preserve">
-    <value>The number changes colour as the set switches between warm-up and working.</value>
-  </data>
-  <data name="Help_Today_S6_Title" xml:space="preserve">
-    <value>Edit or remove an exercise</value>
-  </data>
-  <data name="Help_Today_S6_Text" xml:space="preserve">
-    <value>Card actions are hidden behind a long press so they stay out of your way mid-workout.</value>
-  </data>
-  <data name="Help_Today_S6_Step1" xml:space="preserve">
-    <value>Press and hold the header of the exercise card.</value>
-  </data>
-  <data name="Help_Today_S6_Step2" xml:space="preserve">
-    <value>In the dialog choose Edit the workout or Add a photo. In a free workout it also has Delete the card.</value>
-  </data>
-  <data name="Help_Today_S6_Step3" xml:space="preserve">
-    <value>In a workout from the calendar, Edit the workout opens its template, and your changes are saved there.</value>
-  </data>
-  <data name="Help_Today_S7_Title" xml:space="preserve">
-    <value>Finish the workout</value>
-  </data>
-  <data name="Help_Today_S7_Text" xml:space="preserve">
-    <value>Finishing moves the result into History. The button works on a long press so it cannot be hit by accident. Without internet the workout is saved on the phone and sent to the server once you are back online.</value>
-  </data>
-  <data name="Help_Today_S7_Step1" xml:space="preserve">
-    <value>Press and hold Finish the workout at the bottom of the page until the ring closes.</value>
-  </data>
-  <data name="Help_Today_S7_Step2" xml:space="preserve">
-    <value>After a free workout, answer the question about turning it into a template.</value>
-  </data>
-  <data name="Help_Today_S7_Step3" xml:space="preserve">
-    <value>The saved result then appears in the History tab.</value>
-  </data>
-  <data name="Help_Today_S8_Title" xml:space="preserve">
-    <value>Combine exercises into a superset</value>
-  </data>
-  <data name="Help_Today_S8_Text" xml:space="preserve">
-    <value>Superset exercises are done in rounds: a set of one, then a set of the other, with rest after each pair of sets.</value>
-  </data>
-  <data name="Help_Today_S8_Step1" xml:space="preserve">
-    <value>Tap Create a superset under the title; the button appears once the workout has at least two separate exercises.</value>
-  </data>
-  <data name="Help_Today_S8_Step2" xml:space="preserve">
-    <value>Pick two exercises and tap Create.</value>
-  </data>
-  <data name="Help_Today_S8_Step3" xml:space="preserve">
-    <value>The button in the superset header swaps the exercises, and a long press on the card opens a menu to split or delete the superset.</value>
-  </data>
   <data name="Help_TodayWeb_S1_Title" xml:space="preserve">
     <value>Before you start</value>
   </data>
@@ -3097,74 +2956,11 @@
   <data name="Help_WorkoutDetails_S1_Title" xml:space="preserve">
     <value>Add an exercise</value>
   </data>
-  <data name="Help_WorkoutDetails_S1_Text" xml:space="preserve">
-    <value>The exercise comes from the library, and its sets are defined as you add it.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S1_Step1" xml:space="preserve">
-    <value>Tap Add an exercise at the top of the page.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S1_Step2" xml:space="preserve">
-    <value>Pick the one you need in the Exercise from the library field.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S1_Step3" xml:space="preserve">
-    <value>Set the Number of sets and the set rows appear below.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S1_Step4" xml:space="preserve">
-    <value>Fill in Weight and Repetitions for every set, then tap Save.</value>
-  </data>
   <data name="Help_WorkoutDetails_S2_Title" xml:space="preserve">
     <value>Edit or remove an exercise</value>
   </data>
-  <data name="Help_WorkoutDetails_S2_Text" xml:space="preserve">
-    <value>Exercise actions open with a long press on its card.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S2_Step1" xml:space="preserve">
-    <value>Press and hold the exercise card.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S2_Step2" xml:space="preserve">
-    <value>In Manage the exercise choose Edit the parameters or Delete the exercise.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S3_Title" xml:space="preserve">
-    <value>Mark the warm-up sets</value>
-  </data>
-  <data name="Help_WorkoutDetails_S3_Text" xml:space="preserve">
-    <value>Warm-up sets are labelled separately and are not counted as working sets.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S3_Step1" xml:space="preserve">
-    <value>Tap the set number in the row.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S3_Step2" xml:space="preserve">
-    <value>The label next to it switches between warm-up and working.</value>
-  </data>
   <data name="Help_WorkoutDetails_S4_Title" xml:space="preserve">
     <value>Add an exercise photo</value>
-  </data>
-  <data name="Help_WorkoutDetails_S4_Text" xml:space="preserve">
-    <value>A photo helps you recall the technique or the machine settings before a set. You can upload or delete it only while connected to the server.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S4_Step1" xml:space="preserve">
-    <value>Tap the photo chip on the exercise card.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S4_Step2" xml:space="preserve">
-    <value>Choose a picture from your library or take a new one with the camera.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Title" xml:space="preserve">
-    <value>Build a superset</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Text" xml:space="preserve">
-    <value>A superset joins two exercises that are performed back to back with no rest in between.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Step1" xml:space="preserve">
-    <value>Tap Create a superset at the top of the page.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Step2" xml:space="preserve">
-    <value>Select two exercises from the list.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Step3" xml:space="preserve">
-    <value>Confirm, and the exercises merge into a single card.</value>
-  </data>
-  <data name="Help_WorkoutDetails_S5_Step4" xml:space="preserve">
-    <value>The button in the superset header swaps the exercises, and a long press on the card opens Manage the superset to split or delete it.</value>
   </data>
   <data name="Help_WorkoutDetailsWeb_S1_Text" xml:space="preserve">
     <value>An exercise can come from the library or be given a name of your own.</value>
@@ -3201,45 +2997,6 @@
   </data>
   <data name="Help_WorkoutDetailsWeb_S3_Step3" xml:space="preserve">
     <value>Click the photo to open it full screen.</value>
-  </data>
-  <data name="Help_Calendar_S1_Step1" xml:space="preserve">
-    <value>Use the arrows beside the month name to reach the month you need.</value>
-  </data>
-  <data name="Help_Calendar_S1_Step2" xml:space="preserve">
-    <value>Tap a day in the grid to open the Selected day dialog.</value>
-  </data>
-  <data name="Help_Calendar_S1_Step3" xml:space="preserve">
-    <value>Pick a template in the Assign a workout list.</value>
-  </data>
-  <data name="Help_Calendar_S1_Step4" xml:space="preserve">
-    <value>Tap Assign.</value>
-  </data>
-  <data name="Help_Calendar_S2_Step1" xml:space="preserve">
-    <value>Tap a day that already has a workout on it.</value>
-  </data>
-  <data name="Help_Calendar_S2_Step2" xml:space="preserve">
-    <value>Choose Move to another date.</value>
-  </data>
-  <data name="Help_Calendar_S2_Step3" xml:space="preserve">
-    <value>Pick the new date in the date picker that opens.</value>
-  </data>
-  <data name="Help_Calendar_S3_Step1" xml:space="preserve">
-    <value>Tap the day with the scheduled workout.</value>
-  </data>
-  <data name="Help_Calendar_S3_Step2" xml:space="preserve">
-    <value>Tap Delete in the actions dialog.</value>
-  </data>
-  <data name="Help_Calendar_S4_Title" xml:space="preserve">
-    <value>When scheduling is blocked</value>
-  </data>
-  <data name="Help_Calendar_S4_Text" xml:space="preserve">
-    <value>The calendar refuses to schedule in two situations, and neither is an error.</value>
-  </data>
-  <data name="Help_Calendar_S4_Step1" xml:space="preserve">
-    <value>On a past day you will see a note saying the day is in the past.</value>
-  </data>
-  <data name="Help_Calendar_S4_Step2" xml:space="preserve">
-    <value>On today while a free workout is running: finish or delete that workout first.</value>
   </data>
   <data name="Help_CalendarWeb_Intro" xml:space="preserve">
     <value>The calendar shows which days have workouts and opens a day dialog when you click a date.</value>
@@ -3289,38 +3046,17 @@
   <data name="Help_History_S3_Step2" xml:space="preserve">
     <value>Confirm with Delete for good.</value>
   </data>
-  <data name="Help_History_S4_Title" xml:space="preserve">
-    <value>Find an older workout in the archive</value>
-  </data>
-  <data name="Help_History_S4_Text" xml:space="preserve">
-    <value>History keeps the workouts from the last month. Older ones move to the archive on their own and are sorted into folders by year and month.</value>
-  </data>
-  <data name="Help_History_S4_Step1" xml:space="preserve">
-    <value>Tap the archive icon next to the ? in the top right corner.</value>
-  </data>
-  <data name="Help_History_S4_Step2" xml:space="preserve">
-    <value>Open the folder of the month you need; months are grouped by year.</value>
-  </data>
-  <data name="Help_History_S4_Step3" xml:space="preserve">
-    <value>Tap a workout: you can view or delete it just like in History.</value>
-  </data>
   <data name="Help_Progress_S1_Step1" xml:space="preserve">
     <value>Open Exercises to see the trend for a single exercise.</value>
   </data>
   <data name="Help_Progress_S1_Step2" xml:space="preserve">
     <value>Open Workouts to see the trend for a whole workout.</value>
   </data>
-  <data name="Help_Progress_S1_Step3" xml:space="preserve">
-    <value>The tiles cycle through short summaries: weight gains in exercises over 30 days and how workouts changed since last time.</value>
-  </data>
   <data name="Help_Progress_S2_Step1" xml:space="preserve">
     <value>Finish at least one workout on the Today page.</value>
   </data>
   <data name="Help_Progress_S2_Step2" xml:space="preserve">
     <value>Come back to Progress; the data shows up once a workout is finished.</value>
-  </data>
-  <data name="Help_Progress_S2_Step3" xml:space="preserve">
-    <value>The numbers on the tiles need at least two workouts; until then the tiles say the data will appear later.</value>
   </data>
   <data name="Help_ProgressExercises_Title" xml:space="preserve">
     <value>Exercise progress</value>
@@ -3330,18 +3066,6 @@
   </data>
   <data name="Help_ProgressExercises_S1_Title" xml:space="preserve">
     <value>Open an exercise chart</value>
-  </data>
-  <data name="Help_ProgressExercises_S1_Text" xml:space="preserve">
-    <value>The chart opens in landscape; the screen rotates on its own, so there is no need to turn the phone.</value>
-  </data>
-  <data name="Help_ProgressExercises_S1_Step1" xml:space="preserve">
-    <value>Find the exercise in the list; the template it belongs to is named underneath.</value>
-  </data>
-  <data name="Help_ProgressExercises_S1_Step2" xml:space="preserve">
-    <value>Tap the card to open the chart for the last 30 days.</value>
-  </data>
-  <data name="Help_ProgressExercises_S1_Step3" xml:space="preserve">
-    <value>Close the dialog to go back; the orientation returns with it.</value>
   </data>
   <data name="Help_ProgressExercises_S2_Title" xml:space="preserve">
     <value>Read the chart</value>
@@ -3360,12 +3084,6 @@
   </data>
   <data name="Help_ProgressExercises_S3_Text" xml:space="preserve">
     <value>Only the progress is reset; the finished-workout history is left untouched.</value>
-  </data>
-  <data name="Help_ProgressExercises_S3_Step1" xml:space="preserve">
-    <value>Tap the menu button on the exercise card.</value>
-  </data>
-  <data name="Help_ProgressExercises_S3_Step2" xml:space="preserve">
-    <value>Confirm the reset in the dialog that opens.</value>
   </data>
   <data name="Help_ProgressExercisesWeb_S1_Text" xml:space="preserve">
     <value>On the web the exercises are grouped by workout, so you open the workout first and the exercise second.</value>
@@ -3414,9 +3132,6 @@
   </data>
   <data name="Help_ProgressWorkouts_S2_Step2" xml:space="preserve">
     <value>Expand Show exact values to see the numbers by date.</value>
-  </data>
-  <data name="Help_ProgressWorkouts_S2_Step3" xml:space="preserve">
-    <value>Tap a point on the chart to open that workout in History or in the archive.</value>
   </data>
   <data name="Help_ProgressWorkouts_S3_Title" xml:space="preserve">
     <value>Clear a workout history</value>
@@ -3527,4 +3242,82 @@
   <data name="Today_RestHintBetweenExercises" xml:space="preserve"><value>Saved to the template for the rest after “{0}”. Other switches between exercises stay as they are.</value></data>
   <data name="Today_RestHintFree" xml:space="preserve"><value>Applies until the end of this workout and goes into the template if you save the workout as one.</value></data>
   <data name="Offline_Op_UpdateRestTimers" xml:space="preserve"><value>Rest timers</value></data>
+  <data name="Tutorial_Today_Open" xml:space="preserve">
+    <value>Show how to use the Today page</value>
+  </data>
+  <data name="Tutorial_Today_Region" xml:space="preserve">
+    <value>Today page walkthrough</value>
+  </data>
+  <data name="Tutorial_Today_Skip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="Tutorial_Today_Progress" xml:space="preserve">
+    <value>Walkthrough progress</value>
+  </data>
+  <data name="Tutorial_Today_Unavailable" xml:space="preserve">
+    <value>Not available during the walkthrough.</value>
+  </data>
+  <data name="Tutorial_Today_ExerciseBench" xml:space="preserve">
+    <value>Barbell bench press</value>
+  </data>
+  <data name="Tutorial_Today_ExerciseRow" xml:space="preserve">
+    <value>Bent-over dumbbell row</value>
+  </data>
+  <data name="Tutorial_Today_ExerciseDips" xml:space="preserve">
+    <value>Parallel bar dips</value>
+  </data>
+  <data name="Tutorial_Today_StepStart" xml:space="preserve">
+    <value>Starting a free workout</value>
+  </data>
+  <data name="Tutorial_Today_StepPick" xml:space="preserve">
+    <value>Picking an exercise</value>
+  </data>
+  <data name="Tutorial_Today_StepSets" xml:space="preserve">
+    <value>How many sets</value>
+  </data>
+  <data name="Tutorial_Today_StepWeightReps" xml:space="preserve">
+    <value>Weight and reps for each set</value>
+  </data>
+  <data name="Tutorial_Today_StepAdd" xml:space="preserve">
+    <value>Adding the exercise</value>
+  </data>
+  <data name="Tutorial_Today_StepRest" xml:space="preserve">
+    <value>Changing the rest time</value>
+  </data>
+  <data name="Tutorial_Today_StepMore" xml:space="preserve">
+    <value>Adding more exercises</value>
+  </data>
+  <data name="Tutorial_Today_StepSuperset" xml:space="preserve">
+    <value>Pairing two exercises into a superset</value>
+  </data>
+  <data name="Tutorial_Today_StepSupersetReady" xml:space="preserve">
+    <value>The superset is ready</value>
+  </data>
+  <data name="Tutorial_Today_StepDoSet" xml:space="preserve">
+    <value>Checking off a finished set</value>
+  </data>
+  <data name="Tutorial_Today_StepNextSet" xml:space="preserve">
+    <value>Next set</value>
+  </data>
+  <data name="Tutorial_Today_StepResting" xml:space="preserve">
+    <value>Rest timer, sped up</value>
+  </data>
+  <data name="Tutorial_Today_StepNextExercise" xml:space="preserve">
+    <value>Rest before the next exercise</value>
+  </data>
+  <data name="Tutorial_Today_StepSupersetRun" xml:space="preserve">
+    <value>Superset: one set of each exercise</value>
+  </data>
+  <data name="Tutorial_Today_StepRestPair" xml:space="preserve">
+    <value>Rest after the pair of sets</value>
+  </data>
+  <data name="Tutorial_Today_StepFinish" xml:space="preserve">
+    <value>Hold to finish</value>
+  </data>
+  <data name="Tutorial_Today_StepSave" xml:space="preserve">
+    <value>Saving to history</value>
+  </data>
+  <data name="Tutorial_Today_StepDone" xml:space="preserve">
+    <value>Done! This was a demo, your data is unchanged</value>
+  </data>
 </root>

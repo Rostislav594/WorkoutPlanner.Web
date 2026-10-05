@@ -1,27 +1,56 @@
 ﻿@inject IAppText Text
 
-<button class="context-help-button"
-        type="button"
-        aria-label="@Text.Format("Help_Open", Text[Topic.TitleKey])"
-        aria-haspopup="dialog"
-        aria-expanded="@_isOpen"
-        aria-controls="context-help-dialog"
-        @ref="_opener"
-        @onclick="Open">
-    <span class="context-help-button__symbol material-symbols-rounded" aria-hidden="true">help</span>
-</button>
-
-@if (_isOpen)
+@if (OnActivate.HasDelegate)
 {
-    <HelpDialog Topic="Topic" OnClose="CloseAsync" />
+    @* Вместо текстового руководства кнопка запускает интерактивное обучение страницы. *@
+    <button class="context-help-button"
+            type="button"
+            aria-label="@Label"
+            disabled="@Disabled"
+            @onclick="OnActivate">
+        <span class="context-help-button__symbol material-symbols-rounded" aria-hidden="true">help</span>
+    </button>
+}
+else
+{
+    <button class="context-help-button"
+            type="button"
+            aria-label="@Text.Format("Help_Open", Text[Topic!.TitleKey])"
+            aria-haspopup="dialog"
+            aria-expanded="@_isOpen"
+            aria-controls="context-help-dialog"
+            @ref="_opener"
+            @onclick="Open">
+        <span class="context-help-button__symbol material-symbols-rounded" aria-hidden="true">help</span>
+    </button>
+
+    @if (_isOpen)
+    {
+        <HelpDialog Topic="Topic!" OnClose="CloseAsync" />
+    }
 }
 
 @code {
-    [Parameter, EditorRequired] public HelpTopic Topic { get; set; } = null!;
+    /// <summary>Текстовое руководство; не нужно, если задан <see cref="OnActivate"/>.</summary>
+    [Parameter] public HelpTopic? Topic { get; set; }
+
+    /// <summary>Своё действие вместо окна руководства, например запуск обучения.</summary>
+    [Parameter] public EventCallback OnActivate { get; set; }
+
+    /// <summary>Доступное имя кнопки для <see cref="OnActivate"/>.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
 
     private ElementReference _opener;
     private bool _isOpen;
     private bool _restoreFocus;
+
+    protected override void OnParametersSet()
+    {
+        if (Topic is null && !OnActivate.HasDelegate)
+            throw new InvalidOperationException($"{nameof(HelpButton)} needs either {nameof(Topic)} or {nameof(OnActivate)}.");
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

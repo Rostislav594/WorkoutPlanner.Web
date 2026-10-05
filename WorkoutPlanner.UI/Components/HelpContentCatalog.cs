@@ -33,22 +33,8 @@ public static class HelpContentCatalog
 
     public static IReadOnlyList<WelcomeGuideSlide> WelcomeSlidesWeb { get; } = WelcomeSlides;
 
-    public static HelpTopic Today { get; } = new(
-        "Help_Today_Title",
-        "Help_Today_Intro",
-        [
-            new("Help_Today_S1_Title", "Help_Today_S1_Text", ["Help_Today_S1_Step1", "Help_Today_S1_Step2", "Help_Today_S1_Step3"]),
-            new("Help_Today_S2_Title", "Help_Today_S2_Text", ["Help_Today_S2_Step1", "Help_Today_S2_Step2", "Help_Today_S2_Step3"]),
-            new("Help_Today_S3_Title", "Help_Today_S3_Text", ["Help_Today_S3_Step1", "Help_Today_S3_Step2", "Help_Today_S3_Step3", "Help_Today_S3_Step4"]),
-            new("Help_Today_S4_Title", "Help_Today_S4_Text", ["Help_Today_S4_Step1", "Help_Today_S4_Step2", "Help_Today_S4_Step3"]),
-            new("Help_Today_S5_Title", "Help_Today_S5_Text", ["Help_Today_S5_Step1", "Help_Today_S5_Step2"]),
-            new("Help_Today_S6_Title", "Help_Today_S6_Text", ["Help_Today_S6_Step1", "Help_Today_S6_Step2", "Help_Today_S6_Step3"]),
-            new("Help_Today_S7_Title", "Help_Today_S7_Text", ["Help_Today_S7_Step1", "Help_Today_S7_Step2", "Help_Today_S7_Step3"]),
-            new("Help_Today_S8_Title", "Help_Today_S8_Text", ["Help_Today_S8_Step1", "Help_Today_S8_Step2", "Help_Today_S8_Step3"])
-        ]);
-
-    // У веба свои заголовки секций: свободных тренировок и таймеров отдыха там нет,
-    // поэтому мобильные секции сюда не подходят.
+    // Только для веба: в мобильном приложении «?» на «Сегодня» запускает
+    // интерактивную демонстрацию вместо текстового руководства.
     public static HelpTopic TodayWeb { get; } = new(
         "Help_Today_Title",
         "Help_TodayWeb_Intro",
@@ -68,21 +54,6 @@ public static class HelpContentCatalog
             new("Help_Workouts_S4_Title", "Help_Workouts_S4_Text", ["Help_Workouts_S4_Step1", "Help_Workouts_S4_Step2", "Help_Workouts_S4_Step3"])
         ]);
 
-    /// <summary>
-    /// Страница шаблона. Раньше обе страницы раздела делили одну тему «Workouts»,
-    /// из-за чего на странице упражнений открывалась помощь про список шаблонов.
-    /// </summary>
-    public static HelpTopic WorkoutDetails { get; } = new(
-        "Help_WorkoutDetails_Title",
-        "Help_WorkoutDetails_Intro",
-        [
-            new("Help_WorkoutDetails_S1_Title", "Help_WorkoutDetails_S1_Text", ["Help_WorkoutDetails_S1_Step1", "Help_WorkoutDetails_S1_Step2", "Help_WorkoutDetails_S1_Step3", "Help_WorkoutDetails_S1_Step4"]),
-            new("Help_WorkoutDetails_S2_Title", "Help_WorkoutDetails_S2_Text", ["Help_WorkoutDetails_S2_Step1", "Help_WorkoutDetails_S2_Step2"]),
-            new("Help_WorkoutDetails_S3_Title", "Help_WorkoutDetails_S3_Text", ["Help_WorkoutDetails_S3_Step1", "Help_WorkoutDetails_S3_Step2"]),
-            new("Help_WorkoutDetails_S4_Title", "Help_WorkoutDetails_S4_Text", ["Help_WorkoutDetails_S4_Step1", "Help_WorkoutDetails_S4_Step2"]),
-            new("Help_WorkoutDetails_S5_Title", "Help_WorkoutDetails_S5_Text", ["Help_WorkoutDetails_S5_Step1", "Help_WorkoutDetails_S5_Step2", "Help_WorkoutDetails_S5_Step3", "Help_WorkoutDetails_S5_Step4"])
-        ]);
-
     // В вебе карточка упражнения открывает меню, а не реагирует на удержание,
     // диалог добавления другой, а суперсетов на этой странице нет.
     public static HelpTopic WorkoutDetailsWeb { get; } = new(
@@ -92,16 +63,6 @@ public static class HelpContentCatalog
             new("Help_WorkoutDetails_S1_Title", "Help_WorkoutDetailsWeb_S1_Text", ["Help_WorkoutDetailsWeb_S1_Step1", "Help_WorkoutDetailsWeb_S1_Step2", "Help_WorkoutDetailsWeb_S1_Step3", "Help_WorkoutDetailsWeb_S1_Step4"]),
             new("Help_WorkoutDetails_S2_Title", "Help_WorkoutDetailsWeb_S2_Text", ["Help_WorkoutDetailsWeb_S2_Step1", "Help_WorkoutDetailsWeb_S2_Step2"]),
             new("Help_WorkoutDetails_S4_Title", "Help_WorkoutDetailsWeb_S3_Text", ["Help_WorkoutDetailsWeb_S3_Step1", "Help_WorkoutDetailsWeb_S3_Step2", "Help_WorkoutDetailsWeb_S3_Step3"])
-        ]);
-
-    public static HelpTopic Calendar { get; } = new(
-        "Help_Calendar_Title",
-        "Help_Calendar_Intro",
-        [
-            new("Help_Calendar_S1_Title", "Help_Calendar_S1_Text", ["Help_Calendar_S1_Step1", "Help_Calendar_S1_Step2", "Help_Calendar_S1_Step3", "Help_Calendar_S1_Step4"]),
-            new("Help_Calendar_S2_Title", "Help_Calendar_S2_Text", ["Help_Calendar_S2_Step1", "Help_Calendar_S2_Step2", "Help_Calendar_S2_Step3"]),
-            new("Help_Calendar_S3_Title", "Help_Calendar_S3_Text", ["Help_Calendar_S3_Step1", "Help_Calendar_S3_Step2"]),
-            new("Help_Calendar_S4_Title", "Help_Calendar_S4_Text", ["Help_Calendar_S4_Step1", "Help_Calendar_S4_Step2"])
         ]);
 
     // В вебе назначение идёт в два шага через отдельную кнопку в окне дня,
@@ -115,16 +76,6 @@ public static class HelpContentCatalog
             new("Help_CalendarWeb_S3_Title", "Help_CalendarWeb_S3_Text", ["Help_CalendarWeb_S3_Step1", "Help_CalendarWeb_S3_Step2"])
         ]);
 
-    public static HelpTopic History { get; } = new(
-        "Help_History_Title",
-        "Help_History_Intro",
-        [
-            new("Help_History_S1_Title", "Help_History_S1_Text", ["Help_History_S1_Step1", "Help_History_S1_Step2", "Help_History_S1_Step3"]),
-            new("Help_History_S2_Title", "Help_History_S2_Text", ["Help_History_S2_Step1", "Help_History_S2_Step2"]),
-            new("Help_History_S3_Title", "Help_History_S3_Text", ["Help_History_S3_Step1", "Help_History_S3_Step2"]),
-            new("Help_History_S4_Title", "Help_History_S4_Text", ["Help_History_S4_Step1", "Help_History_S4_Step2", "Help_History_S4_Step3"])
-        ]);
-
     // В вебе нет архива: вся история лежит одним списком.
     public static HelpTopic HistoryWeb { get; } = new(
         "Help_History_Title",
@@ -133,15 +84,6 @@ public static class HelpContentCatalog
             new("Help_History_S1_Title", "Help_History_S1_Text", ["Help_History_S1_Step1", "Help_History_S1_Step2", "Help_History_S1_Step3"]),
             new("Help_History_S2_Title", "Help_History_S2_Text", ["Help_History_S2_Step1", "Help_History_S2_Step2"]),
             new("Help_History_S3_Title", "Help_History_S3_Text", ["Help_History_S3_Step1", "Help_History_S3_Step2"])
-        ]);
-
-    /// <summary>Обзор раздела прогресса: выбор между двумя подразделами и сводки на плитках.</summary>
-    public static HelpTopic Progress { get; } = new(
-        "Help_Progress_Title",
-        "Help_Progress_Intro",
-        [
-            new("Help_Progress_S1_Title", "Help_Progress_S1_Text", ["Help_Progress_S1_Step1", "Help_Progress_S1_Step2", "Help_Progress_S1_Step3"]),
-            new("Help_Progress_S2_Title", "Help_Progress_S2_Text", ["Help_Progress_S2_Step1", "Help_Progress_S2_Step2", "Help_Progress_S2_Step3"])
         ]);
 
     // В вебе плитки без сводок, поэтому шагов про них нет.
@@ -153,17 +95,6 @@ public static class HelpContentCatalog
             new("Help_Progress_S2_Title", "Help_Progress_S2_Text", ["Help_Progress_S2_Step1", "Help_Progress_S2_Step2"])
         ]);
 
-    // Иллюстрация-пример графика переехала сюда с обзорной страницы: она
-    // поясняет именно чтение графика, а на обзоре пояснять было нечего.
-    public static HelpTopic ProgressExercises { get; } = new(
-        "Help_ProgressExercises_Title",
-        "Help_ProgressExercises_Intro",
-        [
-            new("Help_ProgressExercises_S1_Title", "Help_ProgressExercises_S1_Text", ["Help_ProgressExercises_S1_Step1", "Help_ProgressExercises_S1_Step2", "Help_ProgressExercises_S1_Step3"]),
-            new("Help_ProgressExercises_S2_Title", "Help_ProgressExercises_S2_Text", ["Help_ProgressExercises_S2_Step1", "Help_ProgressExercises_S2_Step2"], Illustration: HelpIllustration.ProgressExercise),
-            new("Help_ProgressExercises_S3_Title", "Help_ProgressExercises_S3_Text", ["Help_ProgressExercises_S3_Step1", "Help_ProgressExercises_S3_Step2"])
-        ]);
-
     // В вебе упражнения сгруппированы по тренировкам, поэтому путь на шаг длиннее,
     // а автоповорота экрана нет.
     public static HelpTopic ProgressExercisesWeb { get; } = new(
@@ -173,15 +104,6 @@ public static class HelpContentCatalog
             new("Help_ProgressExercises_S1_Title", "Help_ProgressExercisesWeb_S1_Text", ["Help_ProgressExercisesWeb_S1_Step1", "Help_ProgressExercisesWeb_S1_Step2", "Help_ProgressExercisesWeb_S1_Step3"]),
             new("Help_ProgressExercises_S2_Title", "Help_ProgressExercises_S2_Text", ["Help_ProgressExercises_S2_Step1", "Help_ProgressExercises_S2_Step2"], Illustration: HelpIllustration.ProgressExercise),
             new("Help_ProgressExercises_S3_Title", "Help_ProgressExercises_S3_Text", ["Help_ProgressExercisesWeb_S3_Step1", "Help_ProgressExercisesWeb_S3_Step2"])
-        ]);
-
-    public static HelpTopic ProgressWorkouts { get; } = new(
-        "Help_ProgressWorkouts_Title",
-        "Help_ProgressWorkouts_Intro",
-        [
-            new("Help_ProgressWorkouts_S1_Title", "Help_ProgressWorkouts_S1_Text", ["Help_ProgressWorkouts_S1_Step1", "Help_ProgressWorkouts_S1_Step2"]),
-            new("Help_ProgressWorkouts_S2_Title", "Help_ProgressWorkouts_S2_Text", ["Help_ProgressWorkouts_S2_Step1", "Help_ProgressWorkouts_S2_Step2", "Help_ProgressWorkouts_S2_Step3"], Illustration: HelpIllustration.ProgressWorkout),
-            new("Help_ProgressWorkouts_S3_Title", "Help_ProgressWorkouts_S3_Text", ["Help_ProgressWorkouts_S3_Step1", "Help_ProgressWorkouts_S3_Step2", "Help_ProgressWorkouts_S3_Step3"])
         ]);
 
     // В вебе точка графика не открывает запись истории.

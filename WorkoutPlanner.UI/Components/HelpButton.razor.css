@@ -16,6 +16,11 @@
 .context-help-button:hover,
 .context-help-button[aria-expanded="true"] { color: #fff; opacity: .82; }
 
+.context-help-button:disabled {
+    cursor: default;
+    opacity: .38;
+}
+
 .context-help-button:focus-visible {
     outline: 3px solid var(--color-accent);
     outline-offset: 2px;

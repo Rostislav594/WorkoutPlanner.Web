@@ -19,13 +19,8 @@
 }
 
 .page-title-row--actions {
-    grid-template-columns: minmax(0, 1fr) 48px 48px;
+    grid-template-columns: minmax(0, 1fr) 48px;
     gap: 4px;
-}
-
-/* Глобальный app.css ставит «?» во вторую колонку, а тут она третья. */
-.page-title-row--actions ::deep .context-help-button {
-    grid-column: 3;
 }
 
 .page-title-row--actions > .history-archive-link {
