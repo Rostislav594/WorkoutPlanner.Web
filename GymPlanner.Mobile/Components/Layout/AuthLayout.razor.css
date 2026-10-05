@@ -8,6 +8,7 @@
 
 .auth-shell {
     position: relative;
+    isolation: isolate;
     min-height: 100vh;
     min-height: 100dvh;
     display: grid;
@@ -18,130 +19,29 @@
     color: var(--color-text);
 }
 
-.auth-motion-art {
+.auth-shell::before {
     position: fixed;
-    z-index: 0;
-    top: 50%;
-    left: 50%;
-    width: 390px;
-    height: 844px;
-    overflow: visible;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(180deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .4) 45%, rgba(0, 0, 0, .28)),
+        url('/images/home-gym-background.png');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    content: "";
     pointer-events: none;
-    transform: translate(-50%, -50%);
-    background:
-        radial-gradient(circle at 76% 14%, rgba(255, 122, 26, .055), transparent 24%),
-        radial-gradient(circle at 25% 86%, rgba(63, 185, 80, .045), transparent 25%),
-        radial-gradient(ellipse at center, rgba(255, 255, 255, .018), transparent 60%);
-}
-
-.auth-route-map {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-}
-
-.auth-route-line {
-    fill: none;
-    vector-effect: non-scaling-stroke;
-}
-
-.auth-route-line--ghost {
-    stroke: rgba(255, 255, 255, .19);
-    stroke-width: .72;
-}
-
-.auth-route-line--primary {
-    stroke-width: 1.45;
-}
-
-.auth-route-cluster--top .auth-route-line--primary {
-    stroke: var(--color-accent);
-    filter: drop-shadow(0 0 4px rgba(255, 122, 26, .32));
-}
-
-.auth-route-cluster--bottom .auth-route-line--primary {
-    stroke: var(--color-success);
-    filter: drop-shadow(0 0 4px rgba(63, 185, 80, .32));
-}
-
-.auth-route-node {
-    offset-anchor: center;
-    offset-rotate: 0deg;
-    transform-box: fill-box;
-}
-
-.auth-route-node--animated {
-    will-change: offset-distance;
-    animation: auth-route-travel linear infinite;
-}
-
-.auth-route-node--top {
-    color: var(--color-accent);
-    filter: drop-shadow(0 0 6px rgba(255, 122, 26, .82));
-    offset-path: path("M -18 224 C 46 151 96 174 171 170 S 252 121 299 116 S 335 52 408 42");
-    animation-duration: 12.6s;
-    animation-delay: -4.2s;
-}
-
-.auth-route-node--bottom {
-    color: var(--color-success);
-    filter: drop-shadow(0 0 7px rgba(63, 185, 80, .86));
-    offset-path: path("M 408 604 C 316 713 304 746 211 744 C 118 742 78 691 -18 699");
-    animation-duration: 13.8s;
-    animation-delay: -8.4s;
-}
-
-.auth-route-node-halo {
-    fill: currentColor;
-    opacity: .16;
-}
-
-.auth-route-node-ring {
-    fill: rgba(8, 8, 9, .96);
-    stroke: currentColor;
-    stroke-width: 2.5;
-    vector-effect: non-scaling-stroke;
-}
-
-.auth-route-node-core {
-    fill: currentColor;
-}
-
-.auth-route-node--static {
-    display: none;
-}
-
-@keyframes auth-route-travel {
-    from { offset-distance: 0%; }
-    to { offset-distance: 100%; }
 }
 
 .auth-content {
     position: relative;
-    z-index: 1;
     width: min(100%, 28rem);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .auth-route-node--animated {
-        display: none;
-    }
-
-    .auth-route-node--static {
-        display: block;
-    }
+    min-width: 0;
 }
 
 @media (max-height: 36rem) {
     .auth-shell {
         place-items: start center;
         padding-block: calc(3rem + env(safe-area-inset-top)) calc(3rem + env(safe-area-inset-bottom));
-    }
-}
-
-@media (min-width: 48rem) {
-    .auth-motion-art {
-        transform: translate(-50%, -50%) scale(1.08);
     }
 }
