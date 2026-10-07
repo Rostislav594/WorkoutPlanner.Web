@@ -1,4 +1,4 @@
-// Обучение на странице «Сегодня»: окно в краевом размытии и рука.
+// Обучение: окно в краевом размытии и рука поверх любой страницы приложения.
 //
 // Разметку слоя рисует Blazor, сценарий ведёт C#. Здесь только то, чего Blazor
 // не умеет: каждый кадр узнать, где сейчас на экране настоящий элемент, и
@@ -13,7 +13,6 @@
 let layer = null;
 let veil = null;
 let finger = null;
-let chrome = null;
 let frame = 0;
 let lastTime = 0;
 
@@ -23,7 +22,7 @@ let fingerVisible = false;
 
 let hole = null;
 let fingerPoint = null;
-let applied = { hole: '', finger: '', fingerShown: null, top: null };
+let applied = { hole: '', finger: '', fingerShown: null };
 let pressAnimation = null;
 
 const padding = 8;
@@ -103,17 +102,9 @@ function tick(time) {
             veil.style.maskSize = `100% 100%, ${w}px ${h}px`;
             applied.hole = value;
         }
-
-        // Подпись уходит наверх, когда цель в нижней части экрана.
-        const top = hole.y + hole.h / 2 > height * 0.55;
-        if (top !== applied.top) {
-            chrome.classList.toggle('tutorial-chrome--top', top);
-            applied.top = top;
-        }
     }
 
     const pointed = fingerVisible ? find(fingerSelector) : null;
-    placeBubble(target, width, height);
     if (pointed) {
         const rect = pointed.getBoundingClientRect();
         const wantedPoint = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -137,85 +128,80 @@ function tick(time) {
     }
 }
 
-// Закрыта ли цель чем-то со страницы — например, окном, которое открыло её
-// же нажатие. Слой обучения не в счёт. Проверяется в том же кадре, в котором
-// окно появилось, иначе облачко успело бы мелькнуть поверх его полей.
-function isCovered(target) {
-    const rect = target.getBoundingClientRect();
-    const x = Math.min(Math.max(rect.left + rect.width / 2, 0), window.innerWidth - 1);
-    const y = Math.min(Math.max(rect.top + rect.height / 2, 0), window.innerHeight - 1);
-    for (const element of document.elementsFromPoint(x, y)) {
-        if (layer.contains(element))
-            continue;
-        return !(element === target || target.contains(element) || element.contains(target));
-    }
-    return false;
-}
-
-// Облачко подсказки — над целью, по горизонтали у руки, стрелкой к ней.
-// Если сверху не хватает места, облачко встаёт под руку. Пока цель закрыта
-// открывшимся окном или исчезла после нажатия, облачко прячется до
-// следующей цели: иначе оно легло бы на поля окна.
-function placeBubble(target, width, height) {
-    const bubble = layer.querySelector('[data-tutorial-bubble]');
-    if (!bubble)
-        return;
-
-    // Подсветку сняли — обучение закрывается: облачко гаснет там, где стояло,
-    // а не перескакивает к руке поверх окна.
-    if (!focusSelector && bubble.dataset.placed)
-        return;
-
-    const covered = focusSelector ? !target || isCovered(target) : false;
-    if (bubble.classList.contains('tutorial-bubble--covered') !== covered)
-        bubble.classList.toggle('tutorial-bubble--covered', covered);
-    if (covered)
-        return;
-
-    const anchorX = fingerPoint?.x ?? width / 2;
-    const rect = target?.getBoundingClientRect();
-    // Заголовок группы полей выступает над её рамкой — облачко встаёт выше него.
-    const legend = target?.querySelector(':scope > legend');
-    const top = rect ? Math.min(rect.top, legend?.getBoundingClientRect().top ?? rect.top) : null;
-    const bubbleWidth = bubble.offsetWidth;
-    const bubbleHeight = bubble.offsetHeight;
-    const margin = 12;
-    const x = Math.round(Math.min(Math.max(anchorX - bubbleWidth / 2, margin), width - bubbleWidth - margin));
-    let y = (top ?? fingerPoint?.y ?? height / 2) - bubbleHeight - 14;
-    const below = y < margin + 4;
-    if (below)
-        y = (fingerPoint?.y ?? height / 2) + 62;
-    y = Math.round(Math.min(y, height - bubbleHeight - margin));
-
-    const arrow = Math.round(Math.min(Math.max(anchorX - x, 16), bubbleWidth - 16));
-    const value = `${x},${y},${arrow},${below}`;
-    if (bubble.dataset.placed === value)
-        return;
-
-    bubble.dataset.placed = value;
-    bubble.style.translate = `${x}px ${y}px`;
-    bubble.style.setProperty('--tutorial-bubble-arrow', `${arrow}px`);
-    bubble.classList.toggle('tutorial-bubble--below', below);
-}
-
 export function attach(element) {
     layer = element;
     veil = element.querySelector('[data-tutorial-veil]');
     finger = element.querySelector('[data-tutorial-finger]');
-    chrome = element.querySelector('[data-tutorial-chrome]');
     hole = null;
     fingerPoint = null;
     lastTime = 0;
-    applied = { hole: '', finger: '', fingerShown: null, top: null };
+    applied = { hole: '', finger: '', fingerShown: null };
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(tick);
 }
 
+// Ближайший прокручиваемый предок элемента — страница или окно с прокруткой.
+function scrollerOf(element) {
+    for (let node = element.parentElement; node; node = node.parentElement) {
+        const overflow = getComputedStyle(node).overflowY;
+        if ((overflow === 'auto' || overflow === 'scroll') && node.scrollHeight > node.clientHeight + 1)
+            return node;
+    }
+    return document.scrollingElement;
+}
+
+// Своя плавная прокрутка вместо scrollIntoView: та слишком резкая, и за ней
+// не уследить. Медленный разгон и торможение, длительность растёт с
+// расстоянием. Обещание выполняется, когда страница остановилась.
+//
+// Цель пересчитывается в каждом кадре: пока страница едет, над элементом
+// может вырасти содержимое (например, подпись оценки), и без этого прокрутка
+// остановилась бы там, где элемент был в начале, — под нижним меню.
+function scrollToCenter(element) {
+    const box = scrollerOf(element);
+    const view = box === document.scrollingElement
+        ? { top: 0, height: window.innerHeight }
+        : box.getBoundingClientRect();
+    const target = () => {
+        const rect = element.getBoundingClientRect();
+        const max = box.scrollHeight - box.clientHeight;
+        return Math.min(Math.max(box.scrollTop + (rect.top + rect.height / 2) - (view.top + view.height / 2), 0), max);
+    };
+    const from = box.scrollTop;
+    const to = target();
+    if (Math.abs(to - from) < 2)
+        return Promise.resolve();
+
+    if (reducedMotion()) {
+        box.scrollTop = to;
+        return Promise.resolve();
+    }
+
+    // Синусоида, а не кубическая кривая: пик скорости в середине вдвое ниже,
+    // и на телефоне с ~25 кадрами в секунду страница не прыгает рывками.
+    const duration = Math.min(2600, 900 + Math.abs(to - from) * 1.8);
+    return new Promise(resolve => {
+        const start = performance.now();
+        const step = now => {
+            const k = Math.min(1, Math.max(0, (now - start) / duration));
+            const eased = (1 - Math.cos(Math.PI * k)) / 2;
+            const end = element.isConnected ? target() : to;
+            box.scrollTop = from + (end - from) * eased;
+            if (k < 1)
+                requestAnimationFrame(step);
+            else
+                resolve();
+        };
+        requestAnimationFrame(step);
+    });
+}
+
 // Выводит элемент из-под краевого размытия и, если он у края экрана, плавно
-// докручивает к нему; рука едет к fingerTarget, а без него прячется. Одним вызовом, чтобы шаг
-// сценария стоил одного обращения к WebView. Возвращает false, если элемента
-// нет: сценарий тогда идёт дальше без подсветки.
-export function focus(selector, fingerTarget) {
+// докручивает к нему; рука едет к fingerTarget, а без него прячется. Одним
+// вызовом, чтобы шаг сценария стоил одного обращения к WebView. Сценарий
+// ждёт конца прокрутки и только потом «нажимает». Возвращает false, если
+// элемента нет: сценарий тогда идёт дальше без подсветки.
+export async function focus(selector, fingerTarget) {
     focusSelector = selector;
     fingerSelector = fingerTarget ?? null;
     fingerVisible = !!fingerTarget;
@@ -226,8 +212,31 @@ export function focus(selector, fingerTarget) {
     const rect = element.getBoundingClientRect();
     const margin = 110;
     if (rect.top < margin || rect.bottom > window.innerHeight - margin)
-        element.scrollIntoView({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
+        await scrollToCenter(element);
     return true;
+}
+
+// Ждёт, пока элемент появится на экране, — например, пока после перехода
+// загрузится страница. Не дождавшись, всё равно отпускает сценарий.
+export function waitFor(selector, timeout) {
+    return new Promise(resolve => {
+        const deadline = performance.now() + timeout;
+        const check = () => {
+            if (find(selector) || performance.now() > deadline)
+                resolve(!!find(selector));
+            else
+                setTimeout(check, 100);
+        };
+        check();
+    });
+}
+
+// Обычный клик по настоящему элементу: срабатывает его собственный
+// обработчик, ссылка ведёт на свою страницу, как от пальца пользователя.
+export function click(selector) {
+    const element = find(selector);
+    element?.click();
+    return !!element;
 }
 
 export function hideFinger() {
@@ -279,7 +288,7 @@ export function detach() {
     pressAnimation = null;
     cancelAnimationFrame(frame);
     frame = 0;
-    layer = veil = finger = chrome = null;
+    layer = veil = finger = null;
     focusSelector = fingerSelector = null;
     fingerVisible = false;
     hole = fingerPoint = null;

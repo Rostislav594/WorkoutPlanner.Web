@@ -156,7 +156,7 @@
                     <span class="navigation-indicator__blob"></span>
                 </span>
             }
-            <NavLink href="today">
+            <NavLink href="today" data-tour="nav-today">
                 <span class="material-symbols-rounded" aria-hidden="true">home</span>
                 <span class="navigation-label">@Text["Nav_Today"]</span>
             </NavLink>
@@ -164,7 +164,7 @@
                 <span class="material-symbols-rounded" aria-hidden="true">fitness_center</span>
                 <span class="navigation-label">@Text["Nav_Workouts"]</span>
             </NavLink>
-            <NavLink href="/" Match="NavLinkMatch.All">
+            <NavLink href="/" Match="NavLinkMatch.All" data-tour="nav-home">
                 <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
                 <span class="navigation-label">@Text["Nav_Home"]</span>
             </NavLink>
@@ -178,6 +178,8 @@
             </NavLink>
         </nav>
     }
+    @* Обучение с «Сегодня» ходит по страницам: его слой живёт здесь, поверх всего. *@
+    <TutorialLayer />
 </div>
 
 @code {

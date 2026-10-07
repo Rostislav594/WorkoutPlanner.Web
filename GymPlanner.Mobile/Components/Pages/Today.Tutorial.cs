@@ -6,8 +6,9 @@ using WorkoutPlanner.Api.Contracts;
 namespace GymPlanner.Mobile.Components.Pages;
 
 /// <summary>
-/// Обучение страницы «Сегодня»: ускоренная демонстрация свободной тренировки
-/// настоящими элементами и действиями страницы.
+/// Обучение, которое открывает «?» на «Сегодня». Слой, выбор проходки и
+/// проходку по шаблону ведёт <see cref="TutorialHost"/>; здесь — свободная
+/// тренировка настоящими элементами и действиями страницы.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -20,47 +21,39 @@ namespace GymPlanner.Mobile.Components.Pages;
 /// <para>
 /// Перед стартом состояние страницы откладывается целиком — вместе с отмеченными
 /// подходами и идущими таймерами отдыха — и после обучения возвращается как было.
+/// Если проходка по шаблону увела на другие страницы, «Сегодня» создаётся
+/// заново и после обучения просто загружает настоящие данные.
 /// </para>
 /// </remarks>
 public partial class Today
 {
-    // Ускоряются только таймеры отдыха и анимация завершения: всё остальное идёт
-    // в спокойном темпе, чтобы успеть разглядеть и запомнить каждое действие.
+    // Таймеры отдыха и анимация завершения ускорены; набор значений и эпизод
+    // выполнения идут бойко, остальные нажатия — в спокойном темпе.
     // Таймер отдыха любой длины в демонстрации идёт примерно столько секунд.
-    private const double TutorialRestSeconds = 3;
+    private const double TutorialRestSeconds = 2.5;
     // Удержание «Завершить» в демонстрации вдвое короче настоящего.
     private static readonly TimeSpan TutorialFinishHoldDuration = TimeSpan.FromMilliseconds(1700);
-    // Шагов с подписью в сценарии: по ним заполняется полоска прогресса.
-    private const int TutorialStepCount = 21;
-
-    private TutorialRun? _tutorial;
-    private TutorialSpotlight? _spotlight;
-    private ElementReference _tutorialLayer;
-    private bool _tutorialLayerAttached;
+    // Настоящее состояние страницы, отложенное на время обучения.
+    private TutorialSnapshot? _tutorialSnapshot;
 
     private IWorkoutApiClient WorkoutClient =>
-        (IWorkoutApiClient?)_tutorial?.Backend ?? ServerWorkoutClient;
+        (IWorkoutApiClient?)Tutorial.Backend ?? ServerWorkoutClient;
 
     private IWorkoutLifecycleApiClient LifecycleClient =>
-        (IWorkoutLifecycleApiClient?)_tutorial?.Backend ?? ServerLifecycleClient;
+        (IWorkoutLifecycleApiClient?)Tutorial.Backend ?? ServerLifecycleClient;
 
     private TimeSpan ActiveFinishHoldDuration =>
-        _tutorial is null ? FinishHoldDuration : TutorialFinishHoldDuration;
+        Tutorial.IsActive ? TutorialFinishHoldDuration : FinishHoldDuration;
 
     private bool CanStartTutorial =>
-        _tutorial is null && !_isLoading && !_isBusy && !_isFinishHoldActive && _completedHistory is null;
-
-    private double TutorialProgressPercent =>
-        _tutorial is null ? 0 : Math.Min(100, _tutorial.Step * 100d / TutorialStepCount);
+        !Tutorial.IsActive && !_isLoading && !_isBusy && !_isFinishHoldActive && _completedHistory is null;
 
     /// <summary>
-    /// Пока идёт обучение, «Назад» на телефоне завершает его, какое бы окно
+    /// Пока идёт обучение, «Назад» на телефоне принадлежит ему, какое бы окно
     /// демонстрация ни открыла.
     /// </summary>
     private void SetBackInterceptor(Action? interceptor) =>
-        BackNavigation.SetBackInterceptor(_tutorial is null ? interceptor : RequestStopTutorial);
-
-    private void RequestStopTutorial() => _ = InvokeAsync(StopTutorialAsync);
+        Tutorial.SetBackInterceptor(interceptor);
 
     private async Task StartTutorialAsync()
     {
@@ -71,7 +64,11 @@ public partial class Today
         // закроет приложение посреди демонстрации, они не потеряются.
         await SaveSessionIfChangedAsync();
 
-        var run = new TutorialRun(new TutorialWorkoutBackend(Text), TakeSnapshot());
+        var snapshot = TakeSnapshot();
+        if (!Tutorial.Start(PlayFreeWorkoutAsync))
+            return;
+
+        _tutorialSnapshot = snapshot;
         CloseEditWorkoutAction();
         _selectedRestTimer = null;
         _errors.Clear();
@@ -83,118 +80,133 @@ public partial class Today
         _restTimers.Clear();
         _queuedRestTimers.Clear();
         _restBetweenExercisesSeconds = RestTimerDefaults.BetweenExercisesSeconds;
-
-        _tutorial = run;
-        _tutorialLayerAttached = false;
-        _spotlight ??= new TutorialSpotlight(JS);
-        SetBackInterceptor(null);
         StateHasChanged();
-
-        _ = RunTutorialAsync(run);
     }
 
-    private async Task RunTutorialAsync(TutorialRun run)
+    // Обучение закрывается: удержание «Завершить» прерывается сразу, пока
+    // слой ещё гаснет.
+    private void OnTutorialStopping() => _ = InvokeAsync(() =>
     {
-        var token = run.Cancellation.Token;
-        try
-        {
-            await PlayTutorialAsync(run, token);
-            await StopTutorialAsync();
-        }
-        catch (OperationCanceledException) when (token.IsCancellationRequested)
-        {
-            // Обучение остановили «Пропустить» или «Назад»: возврат уже сделан.
-        }
-    }
+        CancelFinishHold();
+        StateHasChanged();
+    });
 
-    private async Task PlayTutorialAsync(TutorialRun run, CancellationToken token)
+    // Подставные данные убраны: возвращается отложенное состояние, а если
+    // страницу создала проходка по шаблону — загружаются настоящие данные.
+    private void OnTutorialStopped() => _ = InvokeAsync(async () =>
     {
-        // Первая подсветка до загрузки модуля прожектора просто потерялась бы.
-        await run.Attached.Task.WaitAsync(token);
-        run.Resync();
-        await PauseAsync(700, token);
+        CloseTutorialDialogs();
+        if (_tutorialSnapshot is { } snapshot)
+        {
+            _tutorialSnapshot = null;
+            RestoreSnapshot(snapshot);
+        }
+        else
+        {
+            await LoadAsync();
+        }
 
-        // 1. Свободная тренировка.
-        Caption(run, "Tutorial_Today_StepStart");
-        await TapAsync(token, "[data-tour=\"free-start\"]", CreateFreeWorkoutAsync);
+        StateHasChanged();
+    });
 
-        // 2. Первое упражнение — подробно: выбор, подходы, вес и повторения.
-        await FillFirstExerciseAsync(run, token, run.Backend.Definitions[0], setsCount: 3, [(60, 10), (70, 8), (75, 6)]);
+    private async Task PlayFreeWorkoutAsync(CancellationToken token)
+    {
+        var backend = Tutorial.Backend!;
+        await CardAsync(token, "Tutorial_Today_Intro", number: null);
+
+        // 1. Первое упражнение — подробно: свободная тренировка, выбор,
+        // подходы, вес и повторения, «Добавить упражнение».
+        await CardAsync(token, "Tutorial_Today_Episode1", number: 1);
+        await TapAsync(token, "[data-tour=\"free-start\"]", CreateFreeWorkoutAsync, after: 1300);
+        await FillFirstExerciseAsync(token, backend.Definitions[0], setsCount: 3, [(60, 10), (70, 8), (75, 6)]);
         var benchId = _exercises[^1].Id;
 
-        // 3. Ещё два упражнения: окно уже показано, поэтому рука только
+        // 2. Ещё два упражнения: окно уже показано, поэтому рука только
         // нажимает «Добавить упражнение», и упражнение сразу на странице.
-        Caption(run, "Tutorial_Today_StepMore");
-        var rowId = await QuickAddExerciseAsync(token, run.Backend.Definitions[1], [(24, 12), (26, 10)]);
-        var dipsId = await QuickAddExerciseAsync(token, run.Backend.Definitions[2], [(0, 12), (0, 10)]);
+        await CardAsync(token, "Tutorial_Today_Episode2", number: 2);
+        var rowId = await QuickAddExerciseAsync(token, backend.Definitions[1], [(24, 12), (26, 10)]);
+        var dipsId = await QuickAddExerciseAsync(token, backend.Definitions[2], [(0, 12), (0, 10)]);
 
-        // 4. Суперсет из двух последних упражнений.
-        Caption(run, "Tutorial_Today_StepSuperset");
-        await TapAsync(token, "[data-tour=\"superset-create\"]", () => { OpenSupersetDialog(); return Task.CompletedTask; }, after: 800);
-        await TapAsync(token, $"[data-tour=\"superset-option-{rowId}\"]", () => { ToggleSupersetExercise(rowId); return Task.CompletedTask; }, after: 600);
-        await TapAsync(token, $"[data-tour=\"superset-option-{dipsId}\"]", () => { ToggleSupersetExercise(dipsId); return Task.CompletedTask; }, after: 700);
+        // 3. Суперсет из двух последних упражнений.
+        await CardAsync(token, "Tutorial_Today_Episode3", number: 3);
+        await TapAsync(token, "[data-tour=\"superset-create\"]", () => { OpenSupersetDialog(); return Task.CompletedTask; }, after: 1100);
+        await TapAsync(token, $"[data-tour=\"superset-option-{rowId}\"]", () => { ToggleSupersetExercise(rowId); return Task.CompletedTask; }, after: 800);
+        await TapAsync(token, $"[data-tour=\"superset-option-{dipsId}\"]", () => { ToggleSupersetExercise(dipsId); return Task.CompletedTask; }, after: 900);
         await TapAsync(token, "[data-tour=\"superset-confirm\"]", CreateSupersetAsync);
 
         var superset = ExerciseGroups.First(group => group.IsSuperset);
-        var supersetSelector = $"[data-superset-id=\"{superset.Exercises[0].SupersetGroupId}\"]";
-        Caption(run, "Tutorial_Today_StepSupersetReady");
-        await ShowAsync(token, supersetSelector, 2600, $"{supersetSelector} .superset-label");
+        var supersetSelector = SupersetSelector(superset);
+        await ShowAsync(token, supersetSelector, 3200, $"{supersetSelector} .superset-label");
 
-        // 5. Время отдыха между подходами первого упражнения.
-        Caption(run, "Tutorial_Today_StepRest");
-        await TapAsync(token, $"[data-tour-exercise=\"{benchId}\"] [data-tour=\"rest-1\"]",
-            () => { OpenRestTimer(benchId, 1, RestTimerKind.BetweenSets); return Task.CompletedTask; });
-        await TypeAsync(token, "[data-tour=\"rest-seconds\"]", "60", value => _restDraftSeconds = int.Parse(value));
-        await TapAsync(token, "[data-tour=\"rest-done\"]", CloseRestTimerAsync);
+        // 4. Выполнение: подробно только первое упражнение, к завершению
+        // страница просто проматывается.
+        await CardAsync(token, "Tutorial_Today_Episode4", number: 4);
+        await PerformWorkoutAsync(token, benchId);
 
-        // 6. Выполнение: подходы первого упражнения с отдыхом между ними.
+        // У свободной тренировки после удержания — вопрос, сделать ли из неё
+        // шаблон. Его только показываем: отвечать за пользователя не нужно.
+        await FocusAsync(token, "[data-tour=\"template-prompt\"]", null);
+        await PauseAsync(3200, token);
+
+        await CardAsync(token, "Tutorial_Today_Done", number: null, final: true);
+    }
+
+    private static string SupersetSelector(ExerciseGroup superset) =>
+        $"[data-superset-id=\"{superset.Exercises[0].SupersetGroupId}\"]";
+
+    /// <summary>
+    /// Выполнение тренировки в бойком темпе: время отдыха первого упражнения,
+    /// его подходы с ускоренными таймерами и оценка тяжести. Остальные
+    /// упражнения не проходятся по шагам — к прокрутке они уже выполнены и
+    /// оценены, страница плавно проматывается к «Завершить», дальше удержание
+    /// до стандартной анимации.
+    /// </summary>
+    private async Task PerformWorkoutAsync(CancellationToken token, int benchId)
+    {
+        var bench = $"[data-tour-exercise=\"{benchId}\"]";
+        await TapAsync(token, $"{bench} [data-tour=\"rest-1\"]",
+            () => { OpenRestTimer(benchId, 1, RestTimerKind.BetweenSets); return Task.CompletedTask; }, after: 700, aim: 700);
+        await TypeAsync(token, "[data-tour=\"rest-seconds\"]", "60", value => _restDraftSeconds = int.Parse(value), fast: true);
+        await TapAsync(token, "[data-tour=\"rest-done\"]", CloseRestTimerAsync, after: 700, aim: 700);
+
+        // Подходы первого упражнения с отдыхом между ними.
         var benchDraft = _exercises.First(x => x.Id == benchId);
         foreach (var set in benchDraft.Sets)
         {
-            Caption(run, set.SetNumber == 1 ? "Tutorial_Today_StepDoSet" : "Tutorial_Today_StepNextSet");
-            var row = $"[data-tour-exercise=\"{benchId}\"] [data-tour=\"set-{set.SetNumber}\"]";
+            var row = $"{bench} [data-tour=\"set-{set.SetNumber}\"]";
             await TapAsync(token, row, () => SetCompletedAsync(benchDraft, set, new ChangeEventArgs { Value = true }),
-                after: 700, finger: $"{row} .complete-control");
+                after: 500, finger: $"{row} .complete-control", aim: 650);
 
             if (HasFollowingSet(benchDraft, set))
             {
-                Caption(run, "Tutorial_Today_StepResting");
-                await WaitRestAsync(token, $"[data-tour-exercise=\"{benchId}\"] [data-tour=\"rest-{set.SetNumber}\"]",
+                await WaitRestAsync(token, $"{bench} [data-tour=\"rest-{set.SetNumber}\"]",
                     GetRestTimer(benchId, set.SetNumber, RestTimerKind.BetweenSets));
             }
         }
 
-        Caption(run, "Tutorial_Today_StepNextExercise");
-        await WaitRestAsync(token, $"[data-tour-exercise=\"{benchId}\"] [data-tour=\"rest-next\"]",
-            GetRestTimer(benchId, 0, RestTimerKind.BetweenExercises));
+        // Оценка тяжести упражнения: над квадратами появляется подпись.
+        var rating = $"{bench} .exercise-footer .effort-rating";
+        await TapAsync(token, rating, () => { benchDraft.Status = "Hard"; return Task.CompletedTask; },
+            after: 1200, finger: $"{rating} .effort-option--hard", aim: 700);
 
-        // 7. Суперсет: круг — по подходу каждого упражнения, отдых после пары.
-        superset = ExerciseGroups.First(group => group.IsSuperset);
-        Caption(run, "Tutorial_Today_StepSupersetRun");
-        foreach (var round in GetSupersetRoundNumbers(superset))
+        // Остальные упражнения к прокрутке уже выполнены и оценены, их
+        // отдых отмечен прошедшим.
+        foreach (var exercise in _exercises.Where(x => x.Id != benchId))
         {
-            foreach (var exercise in superset.Exercises)
+            foreach (var set in exercise.Sets)
             {
-                var set = exercise.Sets.First(x => x.SetNumber == round);
-                var row = $"{supersetSelector} [data-tour=\"sset-{exercise.Id}-{round}\"]";
-                await TapAsync(token, row, () => SetSupersetCompletedAsync(superset, set, new ChangeEventArgs { Value = true }),
-                    after: 700, finger: $"{row} .complete-control");
+                set.Completed = true;
+                GetRestTimer(exercise.Id, set.SetNumber, RestTimerKind.BetweenSets).IsCompleted = true;
             }
-
-            if (HasFollowingSupersetRound(superset, round))
-            {
-                Caption(run, "Tutorial_Today_StepRestPair");
-                await WaitRestAsync(token, $"{supersetSelector} [data-tour=\"rest-{round}\"]",
-                    GetRestTimer(superset.Exercises[0].Id, round, RestTimerKind.BetweenSets));
-                Caption(run, "Tutorial_Today_StepSupersetRun");
-            }
+            GetRestTimer(exercise.Id, 0, RestTimerKind.BetweenExercises).IsCompleted = true;
+            exercise.Status = "Medium";
         }
+        StateHasChanged();
 
-        // 8. Завершение: удержание кнопки, вопрос о шаблоне, итог.
-        Caption(run, "Tutorial_Today_StepFinish");
+        // Завершение удержанием кнопки: фокус на ней проматывает страницу.
         await FocusAsync(token, "[data-tour=\"finish\"]", "[data-tour=\"finish\"]");
-        await PauseAsync(1200, token);
-        await Spotlight.PressAsync(true);
+        await PauseAsync(1000, token);
+        await Tutorial.Spotlight.PressAsync(true);
         // Пока палец держит кнопку, в фокусе стандартная анимация завершения:
         // она рисуется поверх страницы и иначе осталась бы под вуалью.
         await FocusAsync(token, ".finish-hold-animation", "[data-tour=\"finish\"]");
@@ -204,49 +216,38 @@ public partial class Today
         }
         finally
         {
-            await Spotlight.PressAsync(false);
+            await Tutorial.Spotlight.PressAsync(false);
         }
         token.ThrowIfCancellationRequested();
-        run.Resync();
-
-        Caption(run, "Tutorial_Today_StepSave");
-        await TapAsync(token, "[data-tour=\"template-no\"]", CompleteFreeWithoutTemplateAsync);
-
-        Caption(run, "Tutorial_Today_StepDone", final: true);
-        await ShowAsync(token, "[data-tour=\"completion\"]", 3000, "[data-tour=\"completion-done\"]");
-        // В фокусе остаётся всё окно: облачко с итогом стоит над ним и не
-        // закрывает текст окна, а рука нажимает «Готово».
-        await TapAsync(token, "[data-tour=\"completion\"]", () => Task.CompletedTask, after: 400,
-            finger: "[data-tour=\"completion-done\"]");
+        Tutorial.Resync();
     }
+
+    private Task CardAsync(CancellationToken token, string key, int? number, bool final = false) =>
+        Tutorial.CardAsync(token, key, number, final);
 
     /// <summary>
     /// Первое упражнение — через окно нового упражнения, подробно: выбор из
     /// библиотеки, число подходов, вес и повторения набираются по цифре.
     /// </summary>
     private async Task FillFirstExerciseAsync(
-        TutorialRun run,
         CancellationToken token,
         ExerciseDefinitionApiResponse definition,
         int setsCount,
         IReadOnlyList<(double Weight, int Repetitions)> sets)
     {
-        Caption(run, "Tutorial_Today_StepPick");
         // Список упражнений — системное окно телефона, его не показать изнутри
         // страницы, поэтому поле только «нажимается» и получает выбор.
         await TapAsync(token, "[data-tour=\"editor-exercise\"]",
-            () => { SetFreeExerciseDefinition(definition.Id.ToString()); return Task.CompletedTask; }, after: 900);
+            () => { SetFreeExerciseDefinition(definition.Id.ToString()); return Task.CompletedTask; }, after: 1200);
 
-        Caption(run, "Tutorial_Today_StepSets");
         await TypeAsync(token, "[data-tour=\"editor-sets\"]", setsCount.ToString(),
             value => _freeEditorDraft?.ResizeSets(int.Parse(value)));
 
-        Caption(run, "Tutorial_Today_StepWeightReps");
         for (var index = 0; index < sets.Count; index++)
         {
             var draftSet = _freeEditorDraft!.Sets[index];
             var (weight, repetitions) = sets[index];
-            // В фокусе весь подход: облачко встаёт над ним и не закрывает «Подход N».
+            // В фокусе весь подход, рука нажимает на поля внутри него.
             var setArea = $"[data-tour=\"editor-set-{draftSet.SetNumber}\"]";
             // Первый подход — подробно, остальные быстрее.
             var fast = index > 0;
@@ -260,8 +261,7 @@ public partial class Today
                 fast, setArea);
         }
 
-        Caption(run, "Tutorial_Today_StepAdd");
-        await TapAsync(token, "[data-tour=\"editor-save\"]", SaveFreeExerciseEdit, after: 1300);
+        await TapAsync(token, "[data-tour=\"editor-save\"]", SaveFreeExerciseEdit, after: 1600);
     }
 
     /// <summary>
@@ -309,80 +309,35 @@ public partial class Today
         await SaveFreeExerciseEdit();
     }
 
-    private TutorialSpotlight Spotlight => _spotlight!;
-
-    /// <param name="final">Итог демонстрации: облачко не гаснет до её конца.</param>
-    private void Caption(TutorialRun run, string key, bool final = false)
-    {
-        run.CaptionKey = key;
-        run.CaptionFinal = final;
-        run.Step++;
-        StateHasChanged();
-    }
-
-    private async Task FocusAsync(CancellationToken token, string selector, string finger)
-    {
-        token.ThrowIfCancellationRequested();
-        await Spotlight.FocusAsync(selector, finger);
-    }
+    private Task FocusAsync(CancellationToken token, string selector, string? finger) =>
+        Tutorial.FocusAsync(token, selector, finger);
 
     /// <summary>Подсветить элемент, «нажать» на него и выполнить то, что делает нажатие.</summary>
-    private async Task TapAsync(
+    private Task TapAsync(
         CancellationToken token,
         string selector,
         Func<Task> action,
-        int after = 900,
+        int after = 1200,
         string? finger = null,
-        bool fast = false)
-    {
-        // Рука доезжает до цели и задерживается, чтобы было видно, куда нажмут.
-        await FocusAsync(token, selector, finger ?? selector);
-        await PauseAsync(fast ? 800 : 1200, token);
-        await Spotlight.TapAsync();
-        await PauseAsync(250, token);
+        bool fast = false,
+        int? aim = null) =>
+        Tutorial.TapAsync(token, selector, async () =>
+        {
+            await action();
+            StateHasChanged();
+        }, after, finger, fast, aim);
 
-        token.ThrowIfCancellationRequested();
-        await action();
-        StateHasChanged();
-        await PauseAsync(after, token);
-    }
-
-    /// <summary>
-    /// Набор значения по одному символу, как с клавиатуры. В фокусе всё поле
-    /// вместе с подписью (или <paramref name="area"/>), чтобы облачко встало
-    /// над ним и не закрыло подпись; рука нажимает на само поле ввода.
-    /// </summary>
-    private async Task TypeAsync(
+    private Task TypeAsync(
         CancellationToken token,
         string selector,
         string value,
         Action<string> apply,
         bool fast = false,
-        string? area = null)
-    {
-        await TapAsync(token, area ?? selector, () => Task.CompletedTask, after: fast ? 200 : 300, finger: $"{selector} input", fast: fast);
-        for (var length = 1; length <= value.Length; length++)
-        {
-            token.ThrowIfCancellationRequested();
-            apply(value[..length]);
-            StateHasChanged();
-            await PauseAsync(fast ? 220 : 320, token);
-        }
+        string? area = null) =>
+        Tutorial.TypeAsync(token, selector, value, apply, StateHasChanged, fast, area);
 
-        await PauseAsync(fast ? 400 : 700, token);
-    }
-
-    /// <summary>
-    /// Показ результата: на него не распространяется нагон отставания,
-    /// готовый суперсет и итог должны быть видны полностью. Рука не исчезает,
-    /// а показывает на <paramref name="finger"/>.
-    /// </summary>
-    private async Task ShowAsync(CancellationToken token, string selector, int duration, string finger)
-    {
-        await FocusAsync(token, selector, finger);
-        _tutorial?.Resync();
-        await PauseAsync(duration, token);
-    }
+    private Task ShowAsync(CancellationToken token, string selector, int duration, string finger) =>
+        Tutorial.ShowAsync(token, selector, duration, finger);
 
     /// <summary>Таймер отдыха идёт ускоренно; ждём, пока он дойдёт до нуля.</summary>
     private async Task WaitRestAsync(CancellationToken token, string selector, RestTimerState timer)
@@ -399,54 +354,15 @@ public partial class Today
         }
 
         // Таймер шёл своё настоящее время: отставание до него не нагоняется.
-        _tutorial?.Resync();
-        await PauseAsync(900, token);
+        Tutorial.Resync();
+        await PauseAsync(500, token);
     }
 
-    /// <summary>
-    /// Пауза по общей шкале сценария. Обращения к WebView на медленном
-    /// телефоне занимают заметное время; оно немного вычитается из следующих
-    /// пауз, чтобы демонстрация не затягивалась, но пауза не ужимается сильнее,
-    /// чем на четверть, — иначе происходящее не успеть разглядеть.
-    /// </summary>
-    private async Task PauseAsync(int milliseconds, CancellationToken token)
-    {
-        var wait = _tutorial?.NextPause(milliseconds) ?? milliseconds;
-        await Task.Delay(wait, token);
-    }
+    private Task PauseAsync(int milliseconds, CancellationToken token) =>
+        Tutorial.PauseAsync(milliseconds, token);
 
     private double RestTimeScale(int durationSeconds) =>
-        _tutorial is null ? 1 : Math.Max(1, durationSeconds / TutorialRestSeconds);
-
-    private async Task StopTutorialAsync()
-    {
-        if (_tutorial is not { } run || run.Leaving)
-            return;
-
-        run.Leaving = true;
-        run.Cancellation.Cancel();
-        CancelFinishHold();
-        StateHasChanged();
-
-        if (_spotlight is not null)
-        {
-            await _spotlight.ClearAsync();
-            await _spotlight.HideFingerAsync();
-        }
-
-        // Слой гаснет, и только потом под ним возвращается настоящая страница.
-        await Task.Delay(260);
-
-        CloseTutorialDialogs();
-        RestoreSnapshot(run.Snapshot);
-        _tutorial = null;
-        _tutorialLayerAttached = false;
-        BackNavigation.SetBackInterceptor(null);
-        if (_spotlight is not null)
-            await _spotlight.DetachAsync();
-        run.Cancellation.Dispose();
-        StateHasChanged();
-    }
+        Tutorial.IsActive ? Math.Max(1, durationSeconds / TutorialRestSeconds) : 1;
 
     private void CloseTutorialDialogs()
     {
@@ -466,23 +382,6 @@ public partial class Today
         _editActionExerciseId = null;
         _supersetActionGroup = null;
         _isBusy = false;
-    }
-
-    private async Task AttachTutorialLayerAsync()
-    {
-        if (_tutorial is null || _tutorialLayerAttached || _spotlight is null)
-            return;
-
-        _tutorialLayerAttached = true;
-        try
-        {
-            await _spotlight.AttachAsync(_tutorialLayer);
-        }
-        finally
-        {
-            // Без прожектора обучение всё равно идёт, просто без подсветки.
-            _tutorial?.Attached.TrySetResult();
-        }
     }
 
     private TutorialSnapshot TakeSnapshot() => new(
@@ -514,35 +413,6 @@ public partial class Today
         _errors.Clear();
         _errors.AddRange(snapshot.Errors);
         _swappedSupersetId = null;
-    }
-
-    private sealed class TutorialRun(TutorialWorkoutBackend backend, TutorialSnapshot snapshot)
-    {
-        public TutorialWorkoutBackend Backend { get; } = backend;
-        public TutorialSnapshot Snapshot { get; } = snapshot;
-        public CancellationTokenSource Cancellation { get; } = new();
-        public TaskCompletionSource Attached { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public string CaptionKey { get; set; } = "Tutorial_Today_StepStart";
-        public bool CaptionFinal { get; set; }
-        public int Step { get; set; }
-        public bool Leaving { get; set; }
-
-        private readonly System.Diagnostics.Stopwatch _clock = System.Diagnostics.Stopwatch.StartNew();
-        // Момент, к которому сценарий должен был дойти по своим паузам.
-        private long _schedule;
-
-        public int NextPause(int milliseconds)
-        {
-            _schedule += milliseconds;
-            var elapsed = _clock.ElapsedMilliseconds;
-            var wait = (int)Math.Clamp(_schedule - elapsed, milliseconds * 3 / 4, milliseconds);
-            // Большое отставание не копится: иначе все дальнейшие паузы шли бы по минимуму.
-            if (elapsed + wait - _schedule > 1500)
-                _schedule = elapsed + wait - 1500;
-            return wait;
-        }
-
-        public void Resync() => _schedule = _clock.ElapsedMilliseconds;
     }
 
     private sealed record TutorialSnapshot(

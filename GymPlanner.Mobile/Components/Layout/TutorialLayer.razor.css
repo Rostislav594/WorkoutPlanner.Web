@@ -1,0 +1,417 @@
+/* Слой обучения поверх всего приложения, включая окна страниц. Живёт в
+   макете, поэтому ролик переходит со страницы на страницу, не пропадая. Середина экрана остаётся чистой:
+   лёгкое размытие и затемнение только по краям (вуаль с радиальной маской).
+   Над элементом, с которым работает демонстрация, второй слой маски вычитает
+   эллипс с мягким краем (его место и размер задаёт todayTutorial.js), чтобы
+   край экрана не размыл элемент. Мягкий край — чтобы окно не читалось как
+   подсветка: без рамок и резких границ. Окно делается маской, а не
+   clip-path: вместе с clip-path маска у backdrop-filter в WebView не работает
+   и размывается весь экран. Щит забирает все касания: пока идёт демонстрация,
+   страницей управляет только она. */
+/* Появление и исчезновение анимируются на детях, а не на самом слое:
+   прозрачность у предка делает его «корнем подложки», и размытие вуали
+   перестаёт видеть страницу под слоем. */
+.tutorial-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.tutorial-veil,
+.tutorial-chrome {
+    animation: tutorial-layer-in 320ms ease-out both;
+}
+
+.tutorial-layer--leaving .tutorial-veil,
+.tutorial-layer--leaving .tutorial-chrome,
+.tutorial-layer--leaving .tutorial-finger {
+    animation: tutorial-layer-out 240ms ease-in both;
+}
+
+.tutorial-veil {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse closest-side at 50% 50%, transparent 62%, rgba(6, 6, 8, .38) 100%);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    mask-image:
+        radial-gradient(ellipse closest-side at 50% 50%, transparent 66%, #000 100%),
+        radial-gradient(closest-side, #000 84%, transparent);
+    mask-repeat: no-repeat;
+    mask-size: 100% 100%, 0 0;
+    mask-position: 0 0, 0 0;
+    /* Первый слой (края) минус второй (окно над целью). Второму слою нужен
+       add: с subtract он вычитался бы из пустоты и маска пропадала целиком. */
+    mask-composite: subtract, add;
+}
+
+/* Рука из Material Symbols — того же набора, что и все иконки приложения.
+   Точка (0, 0) слоя — кончик указательного пальца: туда «нажимают». */
+.tutorial-finger {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    transition: opacity 220ms ease;
+    will-change: translate;
+}
+
+.tutorial-finger--visible {
+    opacity: 1;
+}
+
+/* Рука слегка наклонена, поворот — вокруг кончика пальца, чтобы он
+   по-прежнему приходился точно в место нажатия. */
+.tutorial-finger__hand {
+    position: absolute;
+    left: -17px;
+    top: -4px;
+    rotate: -20deg;
+    color: var(--color-text);
+    font-size: 40px;
+    font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 48;
+    line-height: 1;
+    filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, .9)) drop-shadow(0 5px 10px rgba(0, 0, 0, .55));
+    transform-origin: 17px 4px;
+    transition: scale 160ms ease, translate 160ms ease;
+}
+
+.tutorial-finger--tap .tutorial-finger__hand {
+    animation: tutorial-finger-tap 420ms ease-out;
+}
+
+.tutorial-finger--press .tutorial-finger__hand {
+    scale: .88;
+    translate: 0 2px;
+}
+
+.tutorial-shield {
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+    touch-action: none;
+}
+
+/* «Пропустить» всегда на одном месте — в правом верхнем углу: внизу
+   надпись без подложки налезала бы на подписи нижнего меню. */
+.tutorial-chrome {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: grid;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 14px max(16px, env(safe-area-inset-left));
+    pointer-events: none;
+}
+
+.tutorial-panel {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Надпись перед эпизодом. Под ней всё размыто и чуть затемнено: шторка
+   появляется и уходит вместе с надписью. Новая надпись проигрывает
+   появление заново, уход — переход по прозрачности. */
+.tutorial-curtain {
+    position: absolute;
+    inset: 0;
+    background: rgba(6, 6, 8, .42);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    opacity: 0;
+    transition: opacity 450ms ease;
+}
+
+.tutorial-curtain--shown {
+    opacity: 1;
+    animation: tutorial-layer-in 450ms ease-out;
+}
+
+.tutorial-card {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px max(24px, env(safe-area-inset-right)) 24px max(24px, env(safe-area-inset-left));
+    pointer-events: none;
+    opacity: 0;
+    scale: .98;
+    transition: opacity 450ms ease, scale 450ms ease;
+}
+
+.tutorial-card--shown {
+    opacity: 1;
+    scale: 1;
+    animation: tutorial-card-in 450ms ease-out;
+}
+
+/* Вступление и «Готово!» — крупный заголовок по центру. */
+.tutorial-headline {
+    max-width: 20ch;
+    margin: 0;
+    color: var(--color-text);
+    font-size: clamp(1.9rem, 8.5vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.12;
+    text-align: center;
+    text-wrap: balance;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, .55);
+}
+
+/* Эпизод — стеклянная капсула: номер акцентным цветом, за тонкой чертой
+   название заглавными с разрядкой. */
+.tutorial-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 100%;
+    margin: 0;
+    padding: 14px 24px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-surface-strong);
+    box-shadow: var(--shadow-modal), inset 0 1px 0 rgba(255, 255, 255, .06);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    backdrop-filter: var(--glass-blur-strong);
+    color: var(--color-text);
+}
+
+.tutorial-capsule__number {
+    flex: 0 0 auto;
+    padding-right: 14px;
+    border-right: 1px solid var(--glass-border);
+    color: var(--color-accent);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.tutorial-capsule__title {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-wrap: balance;
+}
+
+/* Выбор проходки — две стеклянные капсулы одна под другой, в стиле капсул
+   эпизодов: иконка как на странице (молния у свободной, гантель у шаблона)
+   и название заглавными. Меню во весь экран ловит касания: пустое место
+   закрывает обучение вместо кнопки «Пропустить». */
+.tutorial-menu {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 14px;
+    padding: 24px max(24px, env(safe-area-inset-right)) 24px max(24px, env(safe-area-inset-left));
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    animation: tutorial-card-in 450ms ease-out;
+}
+
+/* Описание выбранного вида тренировки перед роликом: стеклянная карточка
+   с той же иконкой и названием, что у кнопки выбора, и обычной основной
+   кнопкой приложения «Начать». */
+.tutorial-about {
+    display: grid;
+    gap: 14px;
+    width: min(100%, 360px);
+    padding: 20px 20px 18px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    background: var(--glass-surface-strong);
+    box-shadow: var(--shadow-modal), inset 0 1px 0 rgba(255, 255, 255, .06);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    backdrop-filter: var(--glass-blur-strong);
+    color: var(--color-text);
+    cursor: default;
+}
+
+.tutorial-about__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    font-size: .95rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.tutorial-about__text {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-body);
+    line-height: 1.5;
+}
+
+.tutorial-about__note {
+    margin: -4px 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    line-height: 1.45;
+}
+
+.tutorial-about__start {
+    width: 100%;
+    margin-top: 4px;
+}
+
+/* На выборе ни «Пропустить», ни полосы прогресса: ролик ещё не начался. */
+.tutorial-layer--choosing .tutorial-chrome {
+    display: none;
+}
+
+.tutorial-choice {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(100%, 360px);
+    min-height: 60px;
+    padding: 12px 18px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-surface-strong);
+    box-shadow: var(--shadow-modal), inset 0 1px 0 rgba(255, 255, 255, .06);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    backdrop-filter: var(--glass-blur-strong);
+    color: var(--color-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    transition: border-color var(--transition-ui), background-color var(--transition-ui), scale 160ms ease;
+}
+
+.tutorial-choice:hover {
+    border-color: var(--color-border-strong);
+}
+
+.tutorial-choice:active {
+    scale: .97;
+    border-color: var(--color-accent);
+}
+
+.tutorial-choice:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 3px;
+}
+
+.tutorial-choice__icon {
+    flex: 0 0 auto;
+    color: var(--color-accent);
+    font-size: 26px;
+}
+
+.tutorial-choice__title {
+    font-size: .95rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* Уход гасит только то, что сейчас на экране: скрытая надпись и шторка
+   с этой анимацией на мгновение проявились бы. */
+.tutorial-layer--leaving .tutorial-curtain--shown,
+.tutorial-layer--leaving .tutorial-card--shown,
+.tutorial-layer--leaving .tutorial-menu {
+    animation: tutorial-layer-out 240ms ease-in both;
+}
+
+/* Просто надпись, без рамки и заливки. Тень под буквами держит её
+   читаемой поверх любой части страницы. */
+.tutorial-skip {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    flex: 0 0 auto;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--text-label);
+    font-weight: 700;
+    text-shadow: 0 0 2px rgba(0, 0, 0, .9), 0 1px 10px rgba(0, 0, 0, .8);
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity var(--transition-ui);
+}
+
+.tutorial-skip:hover:not(:disabled) {
+    opacity: .85;
+}
+
+.tutorial-skip:active:not(:disabled) {
+    opacity: .6;
+}
+
+.tutorial-skip:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+@keyframes tutorial-layer-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes tutorial-layer-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes tutorial-card-in {
+    from { opacity: 0; scale: .94; }
+    to { opacity: 1; scale: 1; }
+}
+
+@keyframes tutorial-finger-tap {
+    0% { scale: 1; translate: 0 0; }
+    40% { scale: .86; translate: 0 2px; }
+    100% { scale: 1; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tutorial-veil,
+    .tutorial-chrome,
+    .tutorial-layer--leaving .tutorial-veil,
+    .tutorial-layer--leaving .tutorial-chrome,
+    .tutorial-layer--leaving .tutorial-finger,
+    .tutorial-finger--tap .tutorial-finger__hand {
+        animation: none;
+    }
+
+    .tutorial-card,
+    .tutorial-card--shown {
+        scale: 1;
+        animation-name: tutorial-layer-in;
+    }
+
+    .tutorial-menu {
+        animation-name: tutorial-layer-in;
+    }
+
+    .tutorial-choice {
+        transition: none;
+    }
+
+    .tutorial-finger,
+    .tutorial-finger__hand {
+        transition: none;
+    }
+}

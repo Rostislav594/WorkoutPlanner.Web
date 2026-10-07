@@ -5,7 +5,7 @@ namespace GymPlanner.Mobile.Tutorial;
 
 /// <summary>
 /// Прожектор обучения: подсветка настоящего элемента страницы и «палец»,
-/// который показывает нажатия. Сам сценарий ведёт страница.
+/// который показывает нажатия. Сам сценарий ведут <see cref="TutorialHost"/> и страница.
 /// </summary>
 /// <remarks>
 /// Если модуль не загрузился, обучение всё равно проходит — просто без
@@ -30,9 +30,9 @@ public sealed class TutorialSpotlight(IJSRuntime js) : IAsyncDisposable
 
     /// <summary>
     /// Выводит элемент из-под краевого размытия, докручивает к нему страницу
-    /// и ведёт руку к <paramref name="finger"/>.
+    /// и ведёт руку к <paramref name="finger"/>; без него рука прячется.
     /// </summary>
-    public async Task<bool> FocusAsync(string selector, string finger)
+    public async Task<bool> FocusAsync(string selector, string? finger)
     {
         if (_module is null)
             return false;
@@ -47,6 +47,26 @@ public sealed class TutorialSpotlight(IJSRuntime js) : IAsyncDisposable
             return false;
         }
     }
+
+    /// <summary>Ждёт, пока элемент появится на экране, но не дольше <paramref name="timeoutMilliseconds"/>.</summary>
+    public async Task<bool> WaitForAsync(string selector, int timeoutMilliseconds)
+    {
+        if (_module is null)
+            return false;
+
+        try
+        {
+            return await _module.InvokeAsync<bool>("waitFor", selector, timeoutMilliseconds);
+        }
+        catch (JSException exception)
+        {
+            System.Diagnostics.Debug.WriteLine($"Tutorial waitFor failed: {exception.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>Обычный клик по настоящему элементу страницы.</summary>
+    public Task ClickAsync(string selector) => InvokeLoggedAsync("click", selector);
 
     public Task HideFingerAsync() => InvokeLoggedAsync("hideFinger");
 

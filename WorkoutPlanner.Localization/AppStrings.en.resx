@@ -3246,13 +3246,10 @@
     <value>Show how to use the Today page</value>
   </data>
   <data name="Tutorial_Today_Region" xml:space="preserve">
-    <value>Today page walkthrough</value>
+    <value>App walkthrough</value>
   </data>
   <data name="Tutorial_Today_Skip" xml:space="preserve">
     <value>Skip</value>
-  </data>
-  <data name="Tutorial_Today_Progress" xml:space="preserve">
-    <value>Walkthrough progress</value>
   </data>
   <data name="Tutorial_Today_Unavailable" xml:space="preserve">
     <value>Not available during the walkthrough.</value>
@@ -3266,58 +3263,79 @@
   <data name="Tutorial_Today_ExerciseDips" xml:space="preserve">
     <value>Parallel bar dips</value>
   </data>
-  <data name="Tutorial_Today_StepStart" xml:space="preserve">
+  <data name="Tutorial_Today_Intro" xml:space="preserve">
     <value>Starting a free workout</value>
   </data>
-  <data name="Tutorial_Today_StepPick" xml:space="preserve">
-    <value>Picking an exercise</value>
+  <data name="Tutorial_Today_Episode1" xml:space="preserve">
+    <value>Adding an exercise</value>
   </data>
-  <data name="Tutorial_Today_StepSets" xml:space="preserve">
-    <value>How many sets</value>
-  </data>
-  <data name="Tutorial_Today_StepWeightReps" xml:space="preserve">
-    <value>Weight and reps for each set</value>
-  </data>
-  <data name="Tutorial_Today_StepAdd" xml:space="preserve">
-    <value>Adding the exercise</value>
-  </data>
-  <data name="Tutorial_Today_StepRest" xml:space="preserve">
-    <value>Changing the rest time</value>
-  </data>
-  <data name="Tutorial_Today_StepMore" xml:space="preserve">
+  <data name="Tutorial_Today_Episode2" xml:space="preserve">
     <value>Adding more exercises</value>
   </data>
-  <data name="Tutorial_Today_StepSuperset" xml:space="preserve">
-    <value>Pairing two exercises into a superset</value>
+  <data name="Tutorial_Today_Episode3" xml:space="preserve">
+    <value>Creating a superset</value>
   </data>
-  <data name="Tutorial_Today_StepSupersetReady" xml:space="preserve">
-    <value>The superset is ready</value>
+  <data name="Tutorial_Today_Episode4" xml:space="preserve">
+    <value>Doing the workout</value>
   </data>
-  <data name="Tutorial_Today_StepDoSet" xml:space="preserve">
-    <value>Checking off a finished set</value>
+  <data name="Tutorial_Today_Done" xml:space="preserve">
+    <value>Done!</value>
   </data>
-  <data name="Tutorial_Today_StepNextSet" xml:space="preserve">
-    <value>Next set</value>
+  <data name="Tutorial_Today_ChooseLabel" xml:space="preserve">
+    <value>Choose a walkthrough</value>
   </data>
-  <data name="Tutorial_Today_StepResting" xml:space="preserve">
-    <value>Rest timer, sped up</value>
+  <data name="Tutorial_Today_ChooseTemplate" xml:space="preserve">
+    <value>Workout from a template</value>
   </data>
-  <data name="Tutorial_Today_StepNextExercise" xml:space="preserve">
-    <value>Rest before the next exercise</value>
+  <data name="Tutorial_Today_AboutFree" xml:space="preserve">
+    <value>Exercises you add as you go during the workout. Weights and reps aren’t kept for next time — the result stays only in “History”.</value>
   </data>
-  <data name="Tutorial_Today_StepSupersetRun" xml:space="preserve">
-    <value>Superset: one set of each exercise</value>
+  <data name="Tutorial_Today_AboutFreeNote" xml:space="preserve">
+    <value>P.S. When you finish a free workout, you can turn its exercises into a full template.</value>
   </data>
-  <data name="Tutorial_Today_StepRestPair" xml:space="preserve">
-    <value>Rest after the pair of sets</value>
+  <data name="Tutorial_Today_AboutTemplate" xml:space="preserve">
+    <value>Exercises planned in advance on the “Workouts” page. You can schedule the template again from the “Calendar”, and its weights and reps are kept.</value>
   </data>
-  <data name="Tutorial_Today_StepFinish" xml:space="preserve">
-    <value>Hold to finish</value>
+  <data name="Tutorial_Today_Begin" xml:space="preserve">
+    <value>Start</value>
   </data>
-  <data name="Tutorial_Today_StepSave" xml:space="preserve">
-    <value>Saving to history</value>
+  <data name="Tutorial_Today_TemplateIntro" xml:space="preserve">
+    <value>Scheduling a template workout</value>
   </data>
-  <data name="Tutorial_Today_StepDone" xml:space="preserve">
-    <value>Done! This was a demo, your data is unchanged</value>
+  <data name="Tutorial_Today_TemplateEpisode1" xml:space="preserve">
+    <value>Scheduling in the calendar</value>
+  </data>
+  <data name="Tutorial_Today_TemplateEpisode2" xml:space="preserve">
+    <value>Your workout is waiting on “Today”</value>
+  </data>
+  <data name="Tutorial_Today_TemplateName" xml:space="preserve">
+    <value>Chest and back</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode4" xml:space="preserve">
+    <value>Creating a superset</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode3" xml:space="preserve">
+    <value>Photo of the machine settings</value>
+  </data>
+  <data name="Tutorial_Workouts_ExerciseInclineBench" xml:space="preserve">
+    <value>Incline barbell bench press</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode2" xml:space="preserve">
+    <value>Adding exercises</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode1" xml:space="preserve">
+    <value>Creating a template</value>
+  </data>
+  <data name="Tutorial_Workouts_Intro" xml:space="preserve">
+    <value>Building a workout template</value>
+  </data>
+  <data name="Tutorial_Workouts_About" xml:space="preserve">
+    <value>A workout planned in advance: exercises, sets, weights and reps. Build it once and schedule it in the “Calendar” as often as you like.</value>
+  </data>
+  <data name="Tutorial_Workouts_AboutTitle" xml:space="preserve">
+    <value>Workout template</value>
+  </data>
+  <data name="Tutorial_Workouts_Open" xml:space="preserve">
+    <value>Show how to build a workout template</value>
   </data>
 </root>

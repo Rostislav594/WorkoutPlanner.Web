@@ -3,8 +3,9 @@
 @implements IDisposable
 @using System.Globalization
 @using WorkoutPlanner.Api.Contracts
-@inject IWorkoutApiClient WorkoutClient
-@inject IWorkoutLifecycleApiClient LifecycleClient
+@inject IWorkoutApiClient ServerWorkoutClient
+@inject IWorkoutLifecycleApiClient ServerLifecycleClient
+@inject TutorialHost Tutorial
 @inject ILocalWorkoutReminderService ReminderService
 @inject IAppText Text
 
@@ -67,6 +68,7 @@
                         : _plans.FirstOrDefault(x => x.Id == workoutDay.TrainingPlanId);
                     <button type="button"
                             class="calendar-day @(workoutDay is not null ? "has-workout" : null) @(date.Value.Date == DateTime.Today ? "today-day" : null) @(_selectedDate?.Date == date.Value.Date ? "selected-day" : null) @(workoutDay?.IsCompleted == true ? "completed-day" : null)"
+                            data-tour="@(date.Value.Date == DateTime.Today ? "calendar-today" : null)"
                             @onclick="() => OpenDayAsync(date.Value)"
                             aria-label="@GetDayLabel(date.Value, plan, workoutDay)">
                         <span class="day-number">@date.Value.Day</span>
@@ -168,6 +170,7 @@
                                         type="button"
                                         disabled="@(_isBusy || IsTodayBlockedByFreeWorkout)"
                                         aria-pressed="@(_selectedPlanId == plan.Id)"
+                                        data-tour="calendar-plan-@plan.Id"
                                         @onclick="() => _selectedPlanId = plan.Id">
                                     <span class="workout-picker-name">@plan.WorkoutName</span>
                                     @if (_selectedPlanId == plan.Id)
@@ -191,7 +194,7 @@
             <div class="dialog-actions">
                 @if (_selectedDate.Value.Date >= DateTime.Today)
                 {
-                    <button class="primary-button" type="button" disabled="@(_isBusy || _selectedPlanId == 0 || IsTodayBlockedByFreeWorkout)" @onclick="ScheduleAsync">
+                    <button class="primary-button" type="button" data-tour="calendar-assign" disabled="@(_isBusy || _selectedPlanId == 0 || IsTodayBlockedByFreeWorkout)" @onclick="ScheduleAsync">
                         @(_isBusy ? Text["Common_Saving"] : Text["Calendar_Assign"])
                     </button>
                 }
@@ -211,6 +214,14 @@
         .. Enumerable.Range(0, 7).Select(offset => UiCulture.TextInfo.ToTitleCase(
             UiCulture.DateTimeFormat.AbbreviatedDayNames[((int)DayOfWeek.Monday + offset) % 7]))
     ];
+    // Во время обучения календарь показывает демо-данные: назначение из
+    // ролика живёт только в памяти и не доходит ни до сервера, ни до напоминаний.
+    private IWorkoutApiClient WorkoutClient =>
+        (IWorkoutApiClient?)Tutorial.Backend ?? ServerWorkoutClient;
+
+    private IWorkoutLifecycleApiClient LifecycleClient =>
+        (IWorkoutLifecycleApiClient?)Tutorial.Backend ?? ServerLifecycleClient;
+
     private readonly List<TrainingPlanApiResponse> _plans = [];
     private readonly List<WorkoutDayApiResponse> _workoutDays = [];
     private readonly List<string> _errors = [];
@@ -327,7 +338,7 @@
         _selectedPlanId = FindDay(date)?.TrainingPlanId ?? 0;
         _moveDate = date.Date < DateTime.Today ? DateTime.Today : date.Date.AddDays(1);
         var day = FindDay(date);
-        _scheduledReminder = day is null
+        _scheduledReminder = day is null || Tutorial.IsActive
             ? null
             : ReminderService.GetScheduled(day.Id);
         if (_scheduledReminder is not null)

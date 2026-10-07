@@ -3277,13 +3277,10 @@
     <value>Показать, как пользоваться страницей «Сегодня»</value>
   </data>
   <data name="Tutorial_Today_Region" xml:space="preserve">
-    <value>Демонстрация страницы «Сегодня»</value>
+    <value>Демонстрация приложения</value>
   </data>
   <data name="Tutorial_Today_Skip" xml:space="preserve">
     <value>Пропустить</value>
-  </data>
-  <data name="Tutorial_Today_Progress" xml:space="preserve">
-    <value>Ход демонстрации</value>
   </data>
   <data name="Tutorial_Today_Unavailable" xml:space="preserve">
     <value>Недоступно во время демонстрации.</value>
@@ -3297,58 +3294,79 @@
   <data name="Tutorial_Today_ExerciseDips" xml:space="preserve">
     <value>Отжимания на брусьях</value>
   </data>
-  <data name="Tutorial_Today_StepStart" xml:space="preserve">
+  <data name="Tutorial_Today_Intro" xml:space="preserve">
     <value>Начинаем свободную тренировку</value>
   </data>
-  <data name="Tutorial_Today_StepPick" xml:space="preserve">
-    <value>Выбираем упражнение</value>
-  </data>
-  <data name="Tutorial_Today_StepSets" xml:space="preserve">
-    <value>Сколько подходов</value>
-  </data>
-  <data name="Tutorial_Today_StepWeightReps" xml:space="preserve">
-    <value>Вес и повторения каждого подхода</value>
-  </data>
-  <data name="Tutorial_Today_StepAdd" xml:space="preserve">
+  <data name="Tutorial_Today_Episode1" xml:space="preserve">
     <value>Добавляем упражнение</value>
   </data>
-  <data name="Tutorial_Today_StepRest" xml:space="preserve">
-    <value>Меняем время отдыха</value>
-  </data>
-  <data name="Tutorial_Today_StepMore" xml:space="preserve">
+  <data name="Tutorial_Today_Episode2" xml:space="preserve">
     <value>Добавляем ещё упражнения</value>
   </data>
-  <data name="Tutorial_Today_StepSuperset" xml:space="preserve">
-    <value>Объединяем два упражнения в суперсет</value>
+  <data name="Tutorial_Today_Episode3" xml:space="preserve">
+    <value>Создаём суперсет</value>
   </data>
-  <data name="Tutorial_Today_StepSupersetReady" xml:space="preserve">
-    <value>Суперсет готов</value>
+  <data name="Tutorial_Today_Episode4" xml:space="preserve">
+    <value>Выполняем тренировку</value>
   </data>
-  <data name="Tutorial_Today_StepDoSet" xml:space="preserve">
-    <value>Отмечаем выполненный подход</value>
+  <data name="Tutorial_Today_Done" xml:space="preserve">
+    <value>Готово!</value>
   </data>
-  <data name="Tutorial_Today_StepNextSet" xml:space="preserve">
-    <value>Следующий подход</value>
+  <data name="Tutorial_Today_ChooseLabel" xml:space="preserve">
+    <value>Выберите проходку</value>
   </data>
-  <data name="Tutorial_Today_StepResting" xml:space="preserve">
-    <value>Таймер отдыха — ускорено</value>
+  <data name="Tutorial_Today_ChooseTemplate" xml:space="preserve">
+    <value>Тренировка по шаблону</value>
   </data>
-  <data name="Tutorial_Today_StepNextExercise" xml:space="preserve">
-    <value>Отдых перед следующим упражнением</value>
+  <data name="Tutorial_Today_AboutFree" xml:space="preserve">
+    <value>Упражнения, которые вы добавляете прямо по ходу тренировки. Вес и повторы не сохраняются на следующий раз — результат остаётся только в «Истории».</value>
   </data>
-  <data name="Tutorial_Today_StepSupersetRun" xml:space="preserve">
-    <value>Суперсет: по подходу каждого упражнения</value>
+  <data name="Tutorial_Today_AboutFreeNote" xml:space="preserve">
+    <value>P.S. После завершения свободной тренировки из добавленных упражнений можно сразу сделать полноценный шаблон.</value>
   </data>
-  <data name="Tutorial_Today_StepRestPair" xml:space="preserve">
-    <value>Отдых после пары подходов</value>
+  <data name="Tutorial_Today_AboutTemplate" xml:space="preserve">
+    <value>Упражнения, составленные заранее на странице «Тренировки». Шаблон можно снова назначить через «Календарь», вес и повторы при этом сохраняются.</value>
   </data>
-  <data name="Tutorial_Today_StepFinish" xml:space="preserve">
-    <value>Удерживаем, чтобы завершить</value>
+  <data name="Tutorial_Today_Begin" xml:space="preserve">
+    <value>Начать</value>
   </data>
-  <data name="Tutorial_Today_StepSave" xml:space="preserve">
-    <value>Сохраняем в историю</value>
+  <data name="Tutorial_Today_TemplateIntro" xml:space="preserve">
+    <value>Назначаем тренировку по шаблону</value>
   </data>
-  <data name="Tutorial_Today_StepDone" xml:space="preserve">
-    <value>Готово! Это была демонстрация — ваши данные не изменились</value>
+  <data name="Tutorial_Today_TemplateEpisode1" xml:space="preserve">
+    <value>Назначаем в календаре</value>
+  </data>
+  <data name="Tutorial_Today_TemplateEpisode2" xml:space="preserve">
+    <value>Тренировка ждёт на «Сегодня»</value>
+  </data>
+  <data name="Tutorial_Today_TemplateName" xml:space="preserve">
+    <value>Грудь и спина</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode4" xml:space="preserve">
+    <value>Создаём суперсет</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode3" xml:space="preserve">
+    <value>Фото настроек тренажёра</value>
+  </data>
+  <data name="Tutorial_Workouts_ExerciseInclineBench" xml:space="preserve">
+    <value>Жим штанги на наклонной скамье</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode2" xml:space="preserve">
+    <value>Добавляем упражнения</value>
+  </data>
+  <data name="Tutorial_Workouts_Episode1" xml:space="preserve">
+    <value>Создаём шаблон</value>
+  </data>
+  <data name="Tutorial_Workouts_Intro" xml:space="preserve">
+    <value>Составляем шаблон тренировки</value>
+  </data>
+  <data name="Tutorial_Workouts_About" xml:space="preserve">
+    <value>Тренировка, составленная заранее: упражнения, подходы, вес и повторы. Один раз собрали — и назначайте её в «Календаре» сколько угодно раз.</value>
+  </data>
+  <data name="Tutorial_Workouts_AboutTitle" xml:space="preserve">
+    <value>Шаблон тренировки</value>
+  </data>
+  <data name="Tutorial_Workouts_Open" xml:space="preserve">
+    <value>Показать, как составить шаблон тренировки</value>
   </data>
 </root>

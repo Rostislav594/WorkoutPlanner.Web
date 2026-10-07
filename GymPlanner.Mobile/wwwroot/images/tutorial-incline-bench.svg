@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <!-- Демо-снимок для обучения «Тренировок»: на что фотографировать тренажёр —
+       угол спинки, отверстие стойки и ступень упора. -->
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#202023"/>
+      <stop offset="1" stop-color="#141416"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0.5" cy="0.42" r="0.6">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.55"/>
+    </radialGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a7a82"/>
+      <stop offset="1" stop-color="#4b4b51"/>
+    </linearGradient>
+    <linearGradient id="steelV" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a5a61"/>
+      <stop offset="0.5" stop-color="#83838b"/>
+      <stop offset="1" stop-color="#4b4b51"/>
+    </linearGradient>
+    <linearGradient id="pad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3c3c42"/>
+      <stop offset="1" stop-color="#232327"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Зал -->
+  <rect width="600" height="600" fill="url(#wall)"/>
+  <rect y="482" width="600" height="118" fill="#0d0d0e"/>
+  <rect y="480" width="600" height="3" fill="#2c2c30"/>
+  <rect width="600" height="600" fill="url(#light)"/>
+  <!-- Сцена крупнее, чтобы метки читались и на миниатюре в карточке -->
+  <g transform="translate(300 300) scale(1.15) translate(-270 -324)">
+  <ellipse cx="330" cy="486" rx="220" ry="12" fill="#000000" opacity="0.45"/>
+
+  <!-- Стойка со штангой -->
+  <rect x="66" y="474" width="96" height="8" rx="3" fill="url(#steel)"/>
+  <rect x="96" y="110" width="24" height="366" rx="3" fill="url(#steelV)"/>
+  <g fill="#26262a">
+    <circle cx="108" cy="150" r="4"/><circle cx="108" cy="176" r="4"/>
+    <circle cx="108" cy="202" r="4"/><circle cx="108" cy="228" r="4"/>
+    <circle cx="108" cy="254" r="4"/><circle cx="108" cy="280" r="4"/>
+    <circle cx="108" cy="306" r="4"/><circle cx="108" cy="332" r="4"/>
+    <circle cx="108" cy="358" r="4"/><circle cx="108" cy="384" r="4"/>
+    <circle cx="108" cy="410" r="4"/><circle cx="108" cy="436" r="4"/>
+  </g>
+  <path d="M120 214 H150 V194 H142 V206 H120 Z" fill="#3e3e44" stroke="#5c5c63" stroke-width="1.5"/>
+  <circle cx="131" cy="201" r="12" fill="#a3a3ab" stroke="#cfcfd6" stroke-width="2"/>
+  <circle cx="131" cy="201" r="4.5" fill="#55555b"/>
+
+  <!-- Скамья: рама, ножки, стойка сиденья -->
+  <rect x="160" y="474" width="46" height="8" rx="4" fill="#1d1d20"/>
+  <rect x="460" y="474" width="46" height="8" rx="4" fill="#1d1d20"/>
+  <rect x="176" y="446" width="14" height="30" fill="url(#steelV)"/>
+  <rect x="476" y="446" width="14" height="30" fill="url(#steelV)"/>
+  <rect x="434" y="390" width="12" height="46" fill="url(#steelV)"/>
+  <rect x="170" y="434" width="330" height="14" rx="4" fill="url(#steel)"/>
+  <g fill="#2a2a2e">
+    <circle cx="318" cy="441" r="4"/><circle cx="342" cy="441" r="4"/>
+    <circle cx="366" cy="441" r="4"/><circle cx="390" cy="441" r="4"/>
+    <circle cx="414" cy="441" r="4"/>
+  </g>
+
+  <!-- Угол спинки: горизонталь и дуга -->
+  <path d="M376 380 H200" stroke="#ff7a1a" stroke-width="3" stroke-dasharray="9 7" stroke-linecap="round" fill="none"/>
+  <path d="M256 380 A124 124 0 0 1 272.6 318" stroke="#ff7a1a" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+  <!-- Упор спинки -->
+  <path d="M316 362 L342 441" stroke="#6a6a71" stroke-width="10" stroke-linecap="round"/>
+
+  <!-- Сиденье и спинка -->
+  <rect x="384" y="366" width="118" height="26" rx="9" fill="url(#pad)" stroke="#4a4a50" stroke-width="1.5"/>
+  <g transform="rotate(30 380 380)">
+    <rect x="150" y="392" width="226" height="6" rx="2" fill="#55555b"/>
+    <rect x="116" y="366" width="262" height="26" rx="9" fill="url(#pad)" stroke="#4a4a50" stroke-width="1.5"/>
+  </g>
+  <circle cx="380" cy="384" r="7" fill="#8a8a92" stroke="#3a3a3f" stroke-width="2"/>
+
+  <!-- Метки настроек -->
+  <text x="214" y="352" fill="#ff7a1a" font-family="Roboto, 'Segoe UI', Arial, sans-serif" font-size="36" font-weight="800" text-anchor="middle">30°</text>
+
+  <circle cx="342" cy="441" r="10" fill="none" stroke="#ff7a1a" stroke-width="3"/>
+  <path d="M342 452 V502" stroke="#ff7a1a" stroke-width="2.5"/>
+  <circle cx="342" cy="520" r="18" fill="#ff7a1a"/>
+  <text x="342" y="527" fill="#ffffff" font-family="Roboto, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">2</text>
+
+  <circle cx="108" cy="228" r="9" fill="none" stroke="#ff7a1a" stroke-width="3"/>
+  <path d="M97 228 H70" stroke="#ff7a1a" stroke-width="2.5"/>
+  <circle cx="52" cy="228" r="18" fill="#ff7a1a"/>
+  <text x="52" y="235" fill="#ffffff" font-family="Roboto, 'Segoe UI', Arial, sans-serif" font-size="20" font-weight="800" text-anchor="middle">9</text>
+  </g>
+
+  <!-- Снимок: виньетка и рамка видоискателя -->
+  <rect width="600" height="600" fill="url(#vignette)"/>
+  <g stroke="#ffffff" stroke-opacity="0.6" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M24 60 V24 H60"/>
+    <path d="M540 24 H576 V60"/>
+    <path d="M576 540 V576 H540"/>
+    <path d="M60 576 H24 V540"/>
+  </g>
+</svg>

@@ -13,6 +13,7 @@
 @inject ActiveWorkoutSessionStore WorkoutSession
 @inject MobileLifecycleService Lifecycle
 @inject TimeProvider Clock
+@inject TutorialHost Tutorial
 
 <section class="today-page" aria-busy="@_isLoading">
     <header class="today-header">
@@ -35,7 +36,7 @@
             {
                 @* Для тренировки из календаря показываем название шаблона, а не «Свободная тренировка». *@
                 var planName = _isFreeWorkout ? null : _workout?.TrainingPlan.WorkoutName;
-                <div class="workout-progress-indicator" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+                <div class="workout-progress-indicator" data-tour="plan-name" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
                      aria-label="@(planName is null ? Text.Format("Today_FreeProgressAria", ProgressPercent.ToString("0")) : Text.Format("Today_PlanProgressAria", planName, ProgressPercent.ToString("0")))">
                     <div class="workout-progress-indicator__content">
                         <span class="material-symbols-rounded" aria-hidden="true">@(planName is null ? "bolt" : "fitness_center")</span>
@@ -293,12 +294,12 @@
                                             aria-pressed="@set.IsWarmup"
                                             @onclick="() => ToggleSetKind(set)">@set.SetNumber</button>
 
-                                    <label class="set-value-control">
+                                    <label class="set-value-control" data-tour="set-weight">
                                         <span>@Text["Common_Kg"]</span>
                                         <input class="set-input" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                                     </label>
 
-                                    <label class="set-value-control">
+                                    <label class="set-value-control" data-tour="set-reps">
                                         <span>@Text["Common_RepsShort"]</span>
                                         <input class="set-input" type="number" min="1" max="1000" @bind="set.Repetitions" />
                                     </label>
@@ -399,7 +400,7 @@
 
 @if (_isFinishAnimationActive)
 {
-    <div class="finish-hold-overlay @(_tutorial is null ? null : "finish-hold-overlay--fast")" aria-hidden="true">
+    <div class="finish-hold-overlay @(Tutorial.IsActive ? "finish-hold-overlay--fast" : null)" aria-hidden="true">
         <div class="finish-hold-animation">
             <svg class="finish-hold-symbol" viewBox="0 0 120 120" focusable="false">
                 <defs>
@@ -661,6 +662,7 @@
 {
     <div class="modal-overlay quick-action-overlay" @onclick="CloseFreeTemplatePrompt">
         <section class="modal-window free-template-prompt"
+                 data-tour="template-prompt"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="free-template-question"
@@ -796,38 +798,6 @@
     </div>
 }
 
-@if (_tutorial is { } tutorial)
-{
-    <div class="tutorial-layer @(tutorial.Leaving ? "tutorial-layer--leaving" : null)"
-         role="dialog"
-         aria-modal="true"
-         aria-label="@Text["Tutorial_Today_Region"]"
-         @ref="_tutorialLayer">
-        <div class="tutorial-veil" data-tutorial-veil></div>
-        <div class="tutorial-finger" data-tutorial-finger aria-hidden="true">
-            <span class="tutorial-finger__hand material-symbols-rounded">pan_tool_alt</span>
-        </div>
-        <div class="tutorial-shield" aria-hidden="true"></div>
-        @* Подсказка шага — облачко над рукой: появляется при смене шага, держится
-           пару секунд и гаснет; итог остаётся до конца. Новый ключ заново
-           запускает её анимацию. *@
-        <p class="tutorial-bubble @(tutorial.CaptionFinal ? "tutorial-bubble--final" : null)" data-tutorial-bubble role="status" aria-live="polite" @key="tutorial.Step">@Text[tutorial.CaptionKey]</p>
-        <div class="tutorial-chrome" data-tutorial-chrome>
-            <div class="tutorial-panel">
-                <button class="tutorial-skip" type="button" disabled="@tutorial.Leaving" @onclick="StopTutorialAsync">@Text["Tutorial_Today_Skip"]</button>
-            </div>
-            <div class="tutorial-progress"
-                 role="progressbar"
-                 aria-label="@Text["Tutorial_Today_Progress"]"
-                 aria-valuemin="0"
-                 aria-valuemax="100"
-                 aria-valuenow="@TutorialProgressPercent.ToString("0", System.Globalization.CultureInfo.InvariantCulture)">
-                <span class="tutorial-progress__value" style="--tutorial-progress: @TutorialProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"></span>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
     // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
     [CascadingParameter(Name = "IsOffline")]
@@ -930,6 +900,8 @@
     {
         _swapAnimation = new SupersetSwapAnimation(JS);
         Lifecycle.Suspended += SaveSessionOnSuspend;
+        Tutorial.Stopping += OnTutorialStopping;
+        Tutorial.Stopped += OnTutorialStopped;
         _ = RunRestTimerLoopAsync();
         await LoadAsync();
     }
@@ -939,7 +911,7 @@
     private string? _savedSessionJson;
 
     private (int PlanId, int? DayId)? ActiveSessionKey =>
-        _tutorial is not null || _completedHistory is not null || _isLoading ? null
+        Tutorial.IsActive || _completedHistory is not null || _isLoading ? null
         : _isFreeWorkout && _freeDraftPlanId is { } freePlanId ? (freePlanId, null)
         : _workout is { } workout ? (workout.TrainingPlan.Id, workout.Day.Id)
         : null;
@@ -963,6 +935,10 @@
     /// <summary>Возвращает подходы, отмеченные до перезапуска приложения.</summary>
     private async Task RestoreSessionAsync(int planId, int? dayId)
     {
+        // Демо-тренировка обучения не продолжает ничего сохранённого.
+        if (Tutorial.IsActive)
+            return;
+
         var snapshot = await WorkoutSession.LoadAsync(planId, dayId);
         if (snapshot is null)
             return;
@@ -982,7 +958,7 @@
     {
         // Демонстрация «завершает» ненастоящую тренировку: настоящая, отложенная
         // на время обучения, должна остаться сохранённой.
-        if (_tutorial is not null)
+        if (Tutorial.IsActive)
             return;
 
         _savedSessionJson = null;
@@ -2285,7 +2261,6 @@
         if (firstRender)
             await _swapAnimation.PrepareAsync();
         await _swapAnimation.PlayPendingAsync();
-        await AttachTutorialLayerAsync();
         await SaveSessionIfChangedAsync();
     }
 
@@ -2390,13 +2365,14 @@
         CancelFinishHold();
         CancelSupersetHold();
         Lifecycle.Suspended -= SaveSessionOnSuspend;
-        _tutorial?.Cancellation.Cancel();
-        BackNavigation.SetBackInterceptor(null);
+        Tutorial.Stopping -= OnTutorialStopping;
+        Tutorial.Stopped -= OnTutorialStopped;
+        // Проходка по шаблону уводит со страницы, а «Назад» остаётся за обучением.
+        if (!Tutorial.IsActive)
+            BackNavigation.SetBackInterceptor(null);
         _disposeCts.Cancel();
         _disposeCts.Dispose();
         _ = _swapAnimation.DisposeAsync().AsTask();
-        if (_spotlight is not null)
-            _ = _spotlight.DisposeAsync().AsTask();
     }
 
     private enum RestTimerKind { BetweenSets, BetweenExercises }

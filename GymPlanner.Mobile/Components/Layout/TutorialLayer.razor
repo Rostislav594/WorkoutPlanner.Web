@@ -1,0 +1,97 @@
+@implements IDisposable
+@inject TutorialHost Tutorial
+@inject IAppText Text
+
+@* Слой обучения в макете: переживает переходы между страницами. Чем он
+   показывает и куда ведёт руку, решает TutorialHost. *@
+@if (Tutorial.IsActive)
+{
+    <div class="tutorial-layer @(Tutorial.Choosing ? "tutorial-layer--choosing" : null) @(Tutorial.Leaving ? "tutorial-layer--leaving" : null)"
+         role="dialog"
+         aria-modal="true"
+         aria-label="@Text["Tutorial_Today_Region"]"
+         @ref="_layer">
+        <div class="tutorial-veil" data-tutorial-veil></div>
+        <div class="tutorial-finger" data-tutorial-finger aria-hidden="true">
+            <span class="tutorial-finger__hand material-symbols-rounded">pan_tool_alt</span>
+        </div>
+        <div class="tutorial-shield" aria-hidden="true"></div>
+        @* Надпись перед эпизодом — по центру на полностью размытом фоне.
+           Вступление и «Готово!» — крупным текстом, эпизоды — в стеклянной
+           капсуле с номером. Размытие и надпись появляются и уходят вместе.
+           Перед роликом на том же размытом фоне — выбор проходки. Кнопки
+           «Пропустить» там нет: касание пустого места закрывает обучение. *@
+        <div class="tutorial-curtain @(Tutorial.CardVisible || Tutorial.Choosing ? "tutorial-curtain--shown" : null)" aria-hidden="true"></div>
+        @if (Tutorial.Choosing && Tutorial.Described is { } described)
+        {
+            var about = AboutOf(described);
+            <div class="tutorial-menu" @onclick="Tutorial.StopAsync">
+                <section class="tutorial-about" aria-labelledby="tutorial-about-title" @onclick:stopPropagation="true">
+                    <h2 class="tutorial-about__title" id="tutorial-about-title">
+                        <span class="tutorial-choice__icon material-symbols-rounded" aria-hidden="true">@about.Icon</span>
+                        <span>@Text[about.TitleKey]</span>
+                    </h2>
+                    <p class="tutorial-about__text">@Text[about.TextKey]</p>
+                    @if (about.NoteKey is { } noteKey)
+                    {
+                        <p class="tutorial-about__note">@Text[noteKey]</p>
+                    }
+                    <button class="primary-button tutorial-about__start" type="button" @onclick="Tutorial.Begin">@Text["Tutorial_Today_Begin"]</button>
+                </section>
+            </div>
+        }
+        else if (Tutorial.Choosing)
+        {
+            <div class="tutorial-menu" role="group" aria-label="@Text["Tutorial_Today_ChooseLabel"]" @onclick="Tutorial.StopAsync">
+                <button class="tutorial-choice" type="button" @onclick="() => Tutorial.Choose(TutorialScenario.Free)" @onclick:stopPropagation="true">
+                    <span class="tutorial-choice__icon material-symbols-rounded" aria-hidden="true">bolt</span>
+                    <span class="tutorial-choice__title">@Text["Today_FreeWorkout"]</span>
+                </button>
+                <button class="tutorial-choice" type="button" @onclick="() => Tutorial.Choose(TutorialScenario.Template)" @onclick:stopPropagation="true">
+                    <span class="tutorial-choice__icon material-symbols-rounded" aria-hidden="true">fitness_center</span>
+                    <span class="tutorial-choice__title">@Text["Tutorial_Today_ChooseTemplate"]</span>
+                </button>
+            </div>
+        }
+        <div class="tutorial-card @(Tutorial.CardVisible ? "tutorial-card--shown" : null)" role="status" aria-live="polite">
+            @if (Tutorial.CardNumber is { } number)
+            {
+                <p class="tutorial-capsule">
+                    <span class="tutorial-capsule__number">@number</span>
+                    <span class="tutorial-capsule__title">@Text[Tutorial.CardKey]</span>
+                </p>
+            }
+            else
+            {
+                <p class="tutorial-headline">@Text[Tutorial.CardKey]</p>
+            }
+        </div>
+        <div class="tutorial-chrome">
+            <div class="tutorial-panel">
+                <button class="tutorial-skip" type="button" disabled="@Tutorial.Leaving" @onclick="Tutorial.StopAsync">@Text["Tutorial_Today_Skip"]</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private ElementReference _layer;
+
+    // Описание вида тренировки перед роликом: иконка и название — как у
+    // кнопки выбора или пункта меню, где живёт этот вид.
+    private static (string Icon, string TitleKey, string TextKey, string? NoteKey) AboutOf(TutorialScenario scenario) => scenario switch
+    {
+        TutorialScenario.Template => ("fitness_center", "Tutorial_Today_ChooseTemplate", "Tutorial_Today_AboutTemplate", null),
+        TutorialScenario.Workouts => ("edit_note", "Tutorial_Workouts_AboutTitle", "Tutorial_Workouts_About", null),
+        _ => ("bolt", "Today_FreeWorkout", "Tutorial_Today_AboutFree", "Tutorial_Today_AboutFreeNote")
+    };
+
+    protected override void OnInitialized() => Tutorial.Changed += OnTutorialChanged;
+
+    private void OnTutorialChanged() => _ = InvokeAsync(StateHasChanged);
+
+    protected override Task OnAfterRenderAsync(bool firstRender) =>
+        Tutorial.IsActive ? Tutorial.AttachAsync(_layer) : Task.CompletedTask;
+
+    public void Dispose() => Tutorial.Changed -= OnTutorialChanged;
+}

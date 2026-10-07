@@ -1,13 +1,15 @@
 @page "/workouts"
 @attribute [Authorize]
 @using WorkoutPlanner.Api.Contracts
-@inject IWorkoutApiClient WorkoutClient
+@implements IDisposable
+@inject IWorkoutApiClient ServerWorkoutClient
 @inject IAppText Text
+@inject TutorialHost Tutorial
 
 <section class="workouts-page" aria-busy="@_isLoading">
     <header class="workouts-header page-title-row">
         <h1>@Text["Workouts_Title"]</h1>
-        <HelpButton Topic="HelpContentCatalog.Workouts" />
+        <HelpButton Label="@Text["Tutorial_Workouts_Open"]" Disabled="@(!CanStartTutorial)" OnActivate="StartTutorial" />
     </header>
 
     @if (_errors.Count > 0)
@@ -33,6 +35,7 @@
                 <article class="workout-card @(_menuPlanId == plan.Id ? "menu-open" : null)">
                     <a class="workout-card-link"
                        href="@($"/workouts/{plan.Id}")"
+                       data-tour="template-card-@plan.Id"
                        aria-label="@Text.Format("Workouts_OpenTemplate", plan.WorkoutName)">
                         <span class="workout-name">@plan.WorkoutName</span>
                         <span class="workout-description">@Text.Plural("Exercises", plan.Exercises.Count)</span>
@@ -56,6 +59,7 @@
     <footer class="workouts-footer @(_plans.Count == 0 && !_isLoading ? "workouts-footer-empty" : null)">
         <button class="compact-create-button"
                 type="button"
+                data-tour="add-template"
                 aria-haspopup="dialog"
                 disabled="@_isBusy"
                 @onclick="OpenCreateDialog">
@@ -108,7 +112,7 @@
                         @onclick="ClosePlanDialog">×</button>
             </div>
 
-            <div class="modal-body">
+            <div class="modal-body" data-tour="@(_isCreateOpen ? "template-name" : null)">
                 <label for="plan-name">@Text["Common_Name"]</label>
                 @if (_isCreateOpen)
                 {
@@ -142,6 +146,7 @@
                 {
                     <button class="dialog-button primary-button"
                             type="button"
+                            data-tour="template-save"
                             disabled="@(_isBusy || string.IsNullOrWhiteSpace(_newName))"
                             @onclick="CreateAsync">
                         @(_isBusy ? Text["Common_Saving"] : Text["Common_Save"])

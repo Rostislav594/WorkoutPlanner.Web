@@ -1,7 +1,8 @@
 @page "/workouts/{Id:int}"
 @attribute [Authorize]
 @using WorkoutPlanner.Api.Contracts
-@inject IWorkoutApiClient WorkoutClient
+@inject IWorkoutApiClient ServerWorkoutClient
+@inject TutorialHost Tutorial
 @inject IExercisePhotoApiClient PhotoClient
 @inject IMobilePhotoPicker PhotoPicker
 @inject IAppText Text
@@ -48,13 +49,13 @@
     else
     {
         <div class="workout-toolbar">
-            <button class="compact-create-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
+            <button class="compact-create-button" type="button" data-tour="add-exercise" aria-haspopup="dialog" disabled="@_busy" @onclick="BeginCreate">
                 <span class="material-symbols-rounded" aria-hidden="true">add</span>
                 @Text["WorkoutDetails_AddExercise"]
             </button>
             @if (SupersetCandidates.Count >= 2)
             {
-                <button class="secondary-button create-superset-button" type="button" aria-haspopup="dialog" disabled="@_busy" @onclick="OpenSupersetDialog">
+                <button class="secondary-button create-superset-button" type="button" data-tour="superset-create" aria-haspopup="dialog" disabled="@_busy" @onclick="OpenSupersetDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
                     @Text["WorkoutDetails_CreateSuperset"]
                 </button>
@@ -185,6 +186,7 @@
                     @foreach (var exercise in group.Exercises)
                     {
                     <article class="exercise-card edit-hold-target"
+                             data-tour-exercise="@exercise.Id"
                              tabindex="0"
                              aria-label="@Text.Format("WorkoutDetails_ExerciseCardHint", exercise.Name)"
                              @onpointerdown="() => BeginExerciseHold(exercise)"
@@ -319,7 +321,7 @@
                     <div class="edit-error" role="alert">@string.Join(" ", _editorErrors)</div>
                 }
 
-                <div class="form-field">
+                <div class="form-field" data-tour="editor-exercise">
                     <label for="definition">@Text["WorkoutDetails_LibraryExercise"]</label>
                     <SystemChoiceField id="definition"
                                        class="form-control"
@@ -331,7 +333,7 @@
                                        AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
                 </div>
 
-                <div class="form-field">
+                <div class="form-field" data-tour="editor-sets">
                     <label for="sets-count">@Text["WorkoutDetails_SetsCount"]</label>
                     <input id="sets-count"
                            class="form-control"
@@ -345,13 +347,13 @@
                 <div class="set-editor-list">
                     @foreach (var set in _draft.Sets)
                     {
-                        <fieldset>
+                        <fieldset data-tour="editor-set-@set.SetNumber">
                             <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
-                            <label>
+                            <label data-tour="editor-weight-@set.SetNumber">
                                 <span>@Text["WorkoutDetails_WeightKg"]</span>
                                 <input class="form-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
                             </label>
-                            <label>
+                            <label data-tour="editor-reps-@set.SetNumber">
                                 <span>@Text["WorkoutDetails_Reps"]</span>
                                 <input class="form-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
                             </label>
@@ -361,7 +363,7 @@
             </div>
 
             <div class="modal-actions modal-footer">
-                <button class="primary-button" type="button" disabled="@_busy" @onclick="SaveAsync">
+                <button class="primary-button" type="button" data-tour="editor-save" disabled="@_busy" @onclick="SaveAsync">
                     @(_busy ? Text["Common_Saving"] : Text["Common_Save"])
                 </button>
             </div>
@@ -464,6 +466,7 @@
                         var unavailable = exercise.SupersetGroupId is not null;
                         <button class="superset-option @(_supersetSelection.Contains(exercise.Id) ? "selected" : null)"
                                 type="button"
+                                data-tour="superset-option-@exercise.Id"
                                 disabled="@unavailable"
                                 aria-pressed="@_supersetSelection.Contains(exercise.Id)"
                                 @onclick="() => ToggleSupersetExercise(exercise.Id)">@exercise.Name</button>
@@ -471,7 +474,7 @@
                 </div>
             </div>
             <div class="modal-actions modal-footer">
-                <button class="primary-button" type="button" disabled="@(_busy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">
+                <button class="primary-button" type="button" data-tour="superset-confirm" disabled="@(_busy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">
                     @(_busy ? Text["Common_Saving"] : Text["Common_Create"])
                 </button>
             </div>
@@ -786,6 +789,7 @@
         if (firstRender)
             await _swapAnimation.PrepareAsync();
         await _swapAnimation.PlayPendingAsync();
+        ContinueTutorial();
     }
 
     public ValueTask DisposeAsync() => _swapAnimation.DisposeAsync();
