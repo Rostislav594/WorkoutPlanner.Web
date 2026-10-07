@@ -1,5 +1,9 @@
 # Design QA — header audio equalizer
 
+Historical review: the header equalizer and microphone capture were removed
+on 2026-10-07. The primary-page wallpaper now contains a decorative floor
+speaker with a subtle membrane animation. The notes below describe the former UI.
+
 **Source visual truth**
 
 - Path: `C:\Users\User\AppData\Local\Temp\codex-clipboard-bb2e8027-60d0-4a24-b04e-6f8b0ca17373.png`

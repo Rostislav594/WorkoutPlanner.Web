@@ -13,7 +13,7 @@
     top: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: auto minmax(72px, 1fr) auto;
+    grid-template-columns: 1fr;
     align-items: center;
     gap: 8px;
     min-height: calc(58px + env(safe-area-inset-top));
@@ -24,208 +24,11 @@
     backdrop-filter: blur(16px);
 }
 
-/* Speaker drawn in the Material Symbols Rounded line style of the home
-   shortcuts. It is the equalizer control: tap to switch, hold for the mode
-   menu. --speaker-bass and --speaker-high (0..1) come from the equalizer and
-   move the whole speaker, the woofer and the tweeter. */
-.header-speaker {
-    --speaker-bass: 0;
-    --speaker-high: 0;
-    display: inline-grid;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    place-items: center;
-    margin-left: -8px;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--color-text);
-    cursor: pointer;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    transition: background-color .18s ease, opacity .18s ease;
-}
-
-@media (hover: hover) {
-    .header-speaker:hover {
-        background: var(--color-accent-soft);
-    }
-}
-
-.header-speaker:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 2px;
-}
-
-.header-speaker:disabled {
-    cursor: wait;
-    opacity: .55;
-}
-
-.header-speaker__icon {
-    width: 34px;
-    height: 34px;
-    overflow: visible;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    transform: scale(calc(1 + var(--speaker-bass) * .08));
-    transition: transform 70ms linear;
-}
-
-.header-speaker__cabinet {
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-    transform: scaleY(calc(1 + var(--speaker-bass) * .07));
-    transition: transform 70ms linear;
-}
-
-.header-speaker__woofer,
-.header-speaker__tweeter {
-    transform-box: fill-box;
-    transform-origin: center;
-    transition: transform 70ms linear;
-}
-
-.header-speaker__woofer {
-    transform: scale(calc(1 + var(--speaker-bass) * .3));
-}
-
-.header-speaker__tweeter {
-    transform: scale(calc(1 + var(--speaker-high) * .75));
-}
-
-.header-speaker__cone {
-    fill: currentColor;
-    stroke: none;
-    transform-box: fill-box;
-    transform-origin: center;
-    transform: scale(calc(1 + var(--speaker-bass) * 1.1));
-    transition: transform 70ms linear, fill .18s ease;
-}
-
-.header-speaker--active .header-speaker__cone {
-    fill: var(--color-accent);
-}
-
 .header-actions {
     display: flex;
     align-items: center;
     justify-self: end;
     gap: 4px;
-}
-
-.header-audio-visualizer {
-    width: min(100%, 230px);
-    height: 44px;
-    min-width: 0;
-    justify-self: center;
-    overflow: hidden;
-    pointer-events: none;
-}
-
-.audio-mode-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 40;
-}
-
-.audio-mode-menu {
-    position: fixed;
-    top: calc(66px + env(safe-area-inset-top));
-    left: max(16px, env(safe-area-inset-left));
-    z-index: 41;
-    display: grid;
-    gap: 4px;
-    width: min(300px, calc(100vw - 32px));
-    padding: 8px;
-    border: 1px solid var(--glass-border, var(--color-border));
-    border-radius: var(--radius-lg);
-    background: var(--glass-surface-strong, var(--color-surface-raised));
-    -webkit-backdrop-filter: var(--glass-blur-strong, none);
-    backdrop-filter: var(--glass-blur-strong, none);
-    box-shadow: var(--shadow-modal);
-    animation: audio-mode-menu-in .16s ease-out;
-}
-
-.audio-mode-menu__title {
-    margin: 4px 8px 6px;
-    color: var(--color-text-muted);
-    font-size: var(--text-label);
-    font-weight: 700;
-}
-
-.audio-mode-option {
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) 20px;
-    align-items: center;
-    gap: 12px;
-    min-height: var(--touch-target);
-    padding: 10px 12px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    background: transparent;
-    color: var(--color-text);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: var(--transition-ui);
-}
-
-.audio-mode-option:hover,
-.audio-mode-option:focus-visible {
-    background: var(--glass-inset-hover, var(--color-surface-hover));
-}
-
-.audio-mode-option:focus-visible {
-    outline: 2px solid var(--color-accent);
-    outline-offset: 1px;
-}
-
-.audio-mode-option:active:not(:disabled) {
-    background: var(--color-accent-soft);
-}
-
-.audio-mode-option:disabled {
-    cursor: default;
-    opacity: .45;
-}
-
-.audio-mode-option--current {
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
-}
-
-.audio-mode-option .material-symbols-rounded {
-    font-size: 22px;
-}
-
-.audio-mode-option__label {
-    font-size: var(--text-body);
-    font-weight: 700;
-}
-
-.audio-mode-option__check {
-    color: var(--color-accent);
-}
-
-@keyframes audio-mode-menu-in {
-    from {
-        opacity: 0;
-        transform: translateY(-4px);
-    }
-
-    to {
-        opacity: 1;
-        transform: none;
-    }
 }
 
 .profile-button {
@@ -372,9 +175,31 @@
 }
 
 .wallpaper-shell {
+    --page-slide-duration: .5s;
+    --page-slide-easing: cubic-bezier(.22, 1, .36, 1);
     position: relative;
     isolation: isolate;
+    overflow-x: clip;
     background-color: #000;
+}
+
+.page-transition--from-right {
+    animation: page-slide-from-right var(--page-slide-duration) var(--page-slide-easing);
+}
+
+.page-transition--from-left {
+    animation: page-slide-from-left var(--page-slide-duration) var(--page-slide-easing);
+}
+
+/* No fill-mode: fixed dialogs must use the viewport once the slide finishes. */
+@keyframes page-slide-from-right {
+    from { transform: translateX(100vw); }
+    to { transform: none; }
+}
+
+@keyframes page-slide-from-left {
+    from { transform: translateX(-100vw); }
+    to { transform: none; }
 }
 
 .wallpaper-shell::before {
@@ -393,7 +218,16 @@
     content: "";
     pointer-events: none;
     transform: translate3d(var(--wallpaper-shift), 0, 0);
-    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
+    transition: transform var(--page-slide-duration) var(--page-slide-easing);
+}
+
+.wallpaper-speaker-stage {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    transform: translate3d(var(--wallpaper-shift), 0, 0);
+    transition: transform var(--page-slide-duration) var(--page-slide-easing);
 }
 
 .wallpaper-shell .mobile-header {
@@ -433,19 +267,6 @@
     pointer-events: none;
 }
 
-.audio-equalizer-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .32s ease;
-}
-
-.audio-equalizer-canvas--active {
-    opacity: .94;
-}
-
 .ambient-dust__layer {
     position: absolute;
     inset: -18%;
@@ -454,32 +275,6 @@
     pointer-events: none;
     transform-origin: center;
     will-change: transform, opacity;
-}
-
-.audio-equalizer-message {
-    position: fixed;
-    top: calc(66px + env(safe-area-inset-top));
-    right: max(16px, env(safe-area-inset-right));
-    z-index: 24;
-    display: flex;
-    align-items: flex-start;
-    max-width: min(330px, calc(100vw - 32px));
-    gap: 8px;
-    padding: 10px 12px;
-    border: 1px solid rgba(255, 122, 26, .38);
-    border-radius: var(--radius-md);
-    background: rgba(20, 20, 22, .94);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, .32);
-    color: var(--color-text);
-    font-size: 13px;
-    line-height: 1.4;
-    backdrop-filter: blur(14px);
-}
-
-.audio-equalizer-message .material-symbols-rounded {
-    flex: 0 0 auto;
-    color: var(--color-accent);
-    font-size: 20px;
 }
 
 .ambient-dust__layer--far {
@@ -899,20 +694,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .header-speaker__icon,
-    .header-speaker__cabinet,
-    .header-speaker__woofer,
-    .header-speaker__tweeter,
-    .header-speaker__cone {
-        transform: none;
-        transition: none;
-    }
-
-    .audio-mode-menu {
-        animation: none;
-    }
-
-    .wallpaper-shell::before {
+    .wallpaper-shell::before,
+    .wallpaper-speaker-stage {
         transition: none;
     }
 
@@ -939,10 +722,6 @@
 
     .ambient-dust__layer--near {
         opacity: .24;
-    }
-
-    .audio-equalizer-canvas {
-        transition: none;
     }
 
     .mobile-navigation ::deep a.active .material-symbols-rounded {

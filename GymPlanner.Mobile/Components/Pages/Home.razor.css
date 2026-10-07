@@ -85,8 +85,9 @@
 @media (orientation: landscape) {
     .home-layout { padding-block: 12px 8px; }
     .desktop-shortcuts { right: 72px; }
-    .home-identity { height: min(50dvh, 220px); }
-    .home-logo { width: min(calc((100vw - 64px) * 1.36), 120dvh); }
+    /* Reserve floor space under the identity for the wallpaper speaker. */
+    .home-identity { height: min(26dvh, 132px); }
+    .home-logo { width: min(calc((100vw - 64px) * 1.36), 86dvh); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,18 +1,21 @@
 @inherits LayoutComponentBase
-@implements IAsyncDisposable
+@implements IDisposable
 @inject MobileAuthenticationService Authentication
 @inject IWelcomeGuideApiClient WelcomeGuide
 @inject NavigationManager Navigation
 @inject NotificationNavigationService NotificationNavigation
 @inject PushRegistrationCoordinator PushRegistration
-@inject IAudioSpectrumService AudioSpectrum
-@inject MobileLifecycleService Lifecycle
-@inject IJSRuntime JavaScript
 @inject OfflineStatusService OfflineStatus
 @inject IAppText Text
 
-<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null) @(IsVisualizerOn ? "audio-reactive" : null)"
+<div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
      style="--wallpaper-shift: @WallpaperShift;">
+    @if (IsPrimaryNavigationPage)
+    {
+        <div class="wallpaper-speaker-stage" aria-hidden="true">
+            <FloorSpeaker />
+        </div>
+    }
     <div class="ambient-dust" aria-hidden="true">
         <span class="ambient-dust__layer ambient-dust__layer--far"></span>
         <span class="ambient-dust__layer ambient-dust__layer--near"></span>
@@ -20,35 +23,6 @@
     @if (!HidesApplicationNavigation)
     {
         <header class="mobile-header">
-            <button class="header-speaker @(IsVisualizerOn ? "header-speaker--active" : null)"
-                    type="button"
-                    @ref="_speakerElement"
-                    disabled="@(_audioState == AudioSpectrumState.Starting)"
-                    aria-pressed="@(IsVisualizerOn ? "true" : "false")"
-                    aria-label="@AudioToggleLabel"
-                    aria-haspopup="menu"
-                    aria-expanded="@(_modeMenuOpen ? "true" : "false")"
-                    title="@($"{AudioToggleLabel}. {Text["AudioMode_Hint"]}")"
-                    @onclick="ToggleVisualizerAsync"
-                    @onpointerdown="StartModeLongPressAsync"
-                    @onpointerup="CancelModeLongPress"
-                    @onpointerleave="CancelModeLongPress"
-                    @onpointercancel="CancelModeLongPress"
-                    @oncontextmenu="OpenModeMenu"
-                    @oncontextmenu:preventDefault="true"
-                    @onkeydown="OnSpeakerKeyDown">
-                <svg class="header-speaker__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <rect class="header-speaker__cabinet" x="5" y="2.5" width="14" height="19" rx="2.6" />
-                    <circle class="header-speaker__tweeter" cx="12" cy="7" r="1.6" />
-                    <g class="header-speaker__woofer">
-                        <circle cx="12" cy="14.6" r="4.3" />
-                        <circle class="header-speaker__cone" cx="12" cy="14.6" r="1.35" />
-                    </g>
-                </svg>
-            </button>
-            <div class="header-audio-visualizer" aria-hidden="true">
-                <canvas class="audio-equalizer-canvas" @ref="_audioCanvas"></canvas>
-            </div>
             <AuthorizeView>
                 <Authorized>
                     <div class="header-actions">
@@ -72,52 +46,14 @@
                 </NotAuthorized>
             </AuthorizeView>
         </header>
-        @* Outside the header: its backdrop-filter would make the fixed backdrop
-           cover only the header instead of the whole screen. *@
-        @if (_modeMenuOpen)
-        {
-            <div class="audio-mode-backdrop" aria-hidden="true"
-                 @onpointerdown="() => _ignoreBackdropClick = false"
-                 @onclick="OnModeBackdropClickAsync"></div>
-            <div class="audio-mode-menu" role="menu" aria-label="@Text["AudioMode_Menu"]" @onkeydown="OnModeMenuKeyDownAsync">
-                <p class="audio-mode-menu__title" aria-hidden="true">@Text["AudioMode_Menu"]</p>
-                @for (var index = 0; index < AudioModeOptions.Length; index++)
-                {
-                    var optionIndex = index;
-                    var option = AudioModeOptions[optionIndex];
-                    var isCurrent = optionIndex == CurrentModeIndex;
-                    <button class="audio-mode-option @(isCurrent ? "audio-mode-option--current" : null)"
-                            type="button"
-                            role="menuitemradio"
-                            aria-checked="@(isCurrent ? "true" : "false")"
-                            disabled="@(option.Mode == AudioVisualizerMode.Ambient && !AudioSpectrum.IsAvailable)"
-                            @ref="_modeOptionElements[optionIndex]"
-                            @onclick="() => SelectAudioModeAsync(option.Mode)">
-                        <span class="material-symbols-rounded" aria-hidden="true">@option.Icon</span>
-                        <span class="audio-mode-option__label">@Text[option.LabelKey]</span>
-                        @if (isCurrent)
-                        {
-                            <span class="material-symbols-rounded audio-mode-option__check" aria-hidden="true">check</span>
-                        }
-                    </button>
-                }
-            </div>
-        }
     }
     <AuthorizeView>
         <Authorized>
             <OfflineStatusSheet />
         </Authorized>
     </AuthorizeView>
-    @if (!HidesApplicationNavigation && _audioMessageKey is not null)
-    {
-        <div class="audio-equalizer-message" role="status">
-            <span class="material-symbols-rounded" aria-hidden="true">info</span>
-            <span>@Text[_audioMessageKey]</span>
-        </div>
-    }
     <main class="mobile-content">
-        <div class="page-transition" @key="CurrentPageKey">
+        <div class="page-transition @_pageSlideClass" @key="CurrentPageKey">
             @* Верхний перехват для рендерера. Необработанное исключение страницы
                иначе сносит весь рендерер Blazor, и приложение просто замирает:
                не работают ни кнопки, ни навигация, ни закрытие открытого диалога.
@@ -189,35 +125,8 @@
     private int _previousNavigationIndex;
     private long _navigationMotionKey;
     private bool _animateNavigationIndicator;
-    private ElementReference _audioCanvas;
-    private IJSObjectReference? _audioEqualizerModule;
-    private AudioSpectrumState _audioState = AudioSpectrumState.Inactive;
-    private AudioSpectrumFrame? _latestSpectrumFrame;
-    private int _spectrumDispatchPending;
-    private string? _audioMessageKey;
-    private bool _audioCanvasReady;
-    private ElementReference _speakerElement;
-    private readonly ElementReference[] _modeOptionElements = new ElementReference[AudioModeOptions.Length];
-    private IJSObjectReference? _decorativeModule;
-    private AudioVisualizerMode _audioMode = AudioVisualizerModePreference.Load();
-    private bool _decorativeOn;
-    private bool _modeMenuOpen;
-    private bool _focusModeMenu;
-    private bool _suppressSpeakerClick;
-    private bool _ignoreBackdropClick;
-    private CancellationTokenSource? _modeLongPress;
-
-    private static readonly TimeSpan ModeLongPressDelay = TimeSpan.FromMilliseconds(480);
-
-    private static readonly (AudioVisualizerMode Mode, string Icon, string LabelKey)[] AudioModeOptions =
-    [
-        (AudioVisualizerMode.Ambient, "mic", "AudioMode_Ambient"),
-        (AudioVisualizerMode.Decorative, "auto_awesome", "AudioMode_Decorative")
-    ];
-
-    private bool IsVisualizerOn => _audioMode == AudioVisualizerMode.Ambient
-        ? _audioState == AudioSpectrumState.Active
-        : _decorativeOn;
+    private string _previousPageRoute = "";
+    private string? _pageSlideClass;
 
     // Recover пересоздаёт содержимое границы, то есть страница инициализируется
     // заново. Для сетевого сбоя этого достаточно; если причина устойчивая,
@@ -229,10 +138,6 @@
     private bool IsHomePage => string.IsNullOrEmpty(
         Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0].Trim('/'));
     private bool IsPrimaryNavigationPage => IsPrimaryRoute(CurrentRoute);
-    private string AudioToggleLabel => Text[
-        IsVisualizerOn
-            ? "AudioEqualizer_Stop"
-            : "AudioEqualizer_Start"];
     private string WallpaperShift => _activeNavigationIndex switch
     {
         0 => "8vw",
@@ -258,23 +163,31 @@
 
     protected override void OnInitialized()
     {
-        _audioState = AudioSpectrum.State;
-        // Platforms without microphone analysis still have the decorative mode.
-        if (!AudioSpectrum.IsAvailable)
-            _audioMode = AudioVisualizerMode.Decorative;
         _activeNavigationIndex = NavigationIndexFor(Navigation.Uri);
         _previousNavigationIndex = Math.Max(0, _activeNavigationIndex);
-        AudioSpectrum.SpectrumUpdated += OnSpectrumUpdated;
-        AudioSpectrum.StateChanged += OnAudioStateChanged;
-        Lifecycle.Suspended += OnApplicationSuspended;
+        _previousPageRoute = CurrentRoute;
         OfflineStatus.Changed += OnOfflineStatusChanged;
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
         Navigation.LocationChanged += OnLocationChanged;
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    protected override void OnParametersSet()
     {
-        var nextNavigationIndex = NavigationIndexFor(args.Location);
+        var nextRoute = CurrentRoute;
+        if (string.Equals(nextRoute, _previousPageRoute, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        // Set direction before rendering the new Body; LocationChanged can run
+        // after the router has already rendered it with the previous animation.
+        var nextNavigationIndex = NavigationIndexFor(Navigation.Uri);
+        _pageSlideClass = IsPrimaryRoute(_previousPageRoute) && IsPrimaryRoute(nextRoute) &&
+            nextNavigationIndex != _activeNavigationIndex
+                ? nextNavigationIndex > _activeNavigationIndex
+                    ? "page-transition--from-right"
+                    : "page-transition--from-left"
+                : null;
+        _previousPageRoute = nextRoute;
+
         if (nextNavigationIndex != _activeNavigationIndex)
         {
             _animateNavigationIndicator = _activeNavigationIndex >= 0 && nextNavigationIndex >= 0;
@@ -284,15 +197,12 @@
             _activeNavigationIndex = nextNavigationIndex;
             _navigationMotionKey++;
         }
+    }
 
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
         _ = InvokeAsync(async () =>
         {
-            if (HidesApplicationNavigation)
-            {
-                await DisposeAudioCanvasAsync();
-                await StopAudioVisualizationAsync(clearMessage: true);
-            }
-
             StateHasChanged();
             await CheckWelcomeGuideAsync();
         });
@@ -332,27 +242,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!HidesApplicationNavigation && !_audioCanvasReady)
-        {
-            _audioEqualizerModule ??= await JavaScript.InvokeAsync<IJSObjectReference>(
-                "import",
-                "./js/audioEqualizer.js");
-            await _audioEqualizerModule.InvokeVoidAsync("initialize", _audioCanvas);
-            await _audioEqualizerModule.InvokeVoidAsync("setSpeaker", _speakerElement);
-            _audioCanvasReady = true;
-
-            if (IsVisualizerOn)
-                await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, true);
-            if (_decorativeOn)
-                await StartDecorativeAsync();
-        }
-
-        if (_focusModeMenu)
-        {
-            _focusModeMenu = false;
-            await _modeOptionElements[CurrentModeIndex].FocusAsync();
-        }
-
         if (!firstRender)
             return;
 
@@ -393,285 +282,6 @@
     private void OpenNotificationRoute(string route) =>
         _ = InvokeAsync(() => Navigation.NavigateTo(route));
 
-    // A tap switches the equalizer on in the last chosen mode, or off.
-    private async Task ToggleVisualizerAsync()
-    {
-        // A long press opens the mode menu; the tap that ends it must not also
-        // switch the equalizer.
-        if (_suppressSpeakerClick)
-        {
-            _suppressSpeakerClick = false;
-            return;
-        }
-
-        if (IsVisualizerOn)
-            await TurnVisualizerOffAsync();
-        else
-            await TurnVisualizerOnAsync();
-    }
-
-    private async Task TurnVisualizerOnAsync()
-    {
-        _audioMessageKey = null;
-        if (_audioMode == AudioVisualizerMode.Decorative)
-        {
-            _decorativeOn = true;
-            if (_audioCanvasReady && _audioEqualizerModule is not null)
-            {
-                await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, true);
-                await StartDecorativeAsync();
-            }
-
-            StateHasChanged();
-            return;
-        }
-
-        if (_audioState == AudioSpectrumState.Starting)
-            return;
-
-        _audioState = AudioSpectrumState.Starting;
-        StateHasChanged();
-        var result = await AudioSpectrum.StartAsync();
-        await ApplyAudioStateAsync(result);
-    }
-
-    private async Task TurnVisualizerOffAsync()
-    {
-        if (_audioMode == AudioVisualizerMode.Ambient)
-        {
-            await StopAudioVisualizationAsync(clearMessage: true);
-            return;
-        }
-
-        _decorativeOn = false;
-        if (_decorativeModule is not null)
-            await _decorativeModule.InvokeVoidAsync("stop");
-        if (_audioCanvasReady && _audioEqualizerModule is not null)
-            await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, false);
-        StateHasChanged();
-    }
-
-    private async Task StartDecorativeAsync()
-    {
-        _decorativeModule ??= await JavaScript.InvokeAsync<IJSObjectReference>(
-            "import",
-            "./js/decorativeEqualizer.js");
-        await _decorativeModule.InvokeVoidAsync("start", _audioCanvas);
-    }
-
-    private void OnAudioStateChanged(AudioSpectrumState state) =>
-        _ = InvokeAsync(() => ApplyAudioStateAsync(state));
-
-    private async Task ApplyAudioStateAsync(AudioSpectrumState state)
-    {
-        _audioState = state;
-
-        // A late state change from the microphone must not touch the canvas
-        // once the decorative mode owns it.
-        if (_audioMode != AudioVisualizerMode.Ambient)
-        {
-            StateHasChanged();
-            return;
-        }
-
-        _audioMessageKey = state switch
-        {
-            AudioSpectrumState.PermissionDenied => "AudioEqualizer_PermissionDenied",
-            AudioSpectrumState.Unavailable => "AudioEqualizer_Unavailable",
-            AudioSpectrumState.Error => "AudioEqualizer_Error",
-            _ => null
-        };
-
-        if (_audioCanvasReady && _audioEqualizerModule is not null)
-        {
-            await _audioEqualizerModule.InvokeVoidAsync(
-                "setActive",
-                _audioCanvas,
-                state == AudioSpectrumState.Active);
-        }
-
-        StateHasChanged();
-    }
-
-    private void OnSpectrumUpdated(AudioSpectrumFrame frame)
-    {
-        _latestSpectrumFrame = frame;
-        if (Interlocked.CompareExchange(ref _spectrumDispatchPending, 1, 0) == 0)
-            _ = InvokeAsync(PushLatestSpectrumFrameAsync);
-    }
-
-    private async Task PushLatestSpectrumFrameAsync()
-    {
-        try
-        {
-            if (!_audioCanvasReady ||
-                _audioEqualizerModule is null ||
-                _audioState != AudioSpectrumState.Active)
-            {
-                return;
-            }
-
-            var frame = _latestSpectrumFrame;
-            if (frame is null)
-                return;
-
-            await _audioEqualizerModule.InvokeVoidAsync("update", _audioCanvas, frame.Bands);
-        }
-        catch (JSException)
-        {
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _spectrumDispatchPending, 0);
-        }
-    }
-
-    // The microphone is released in the background; the decorative mode needs
-    // nothing, since hidden pages get no animation frames.
-    private void OnApplicationSuspended() =>
-        _ = InvokeAsync(() => StopAudioVisualizationAsync(clearMessage: true));
-
-    // The menu marks the last chosen mode, whether or not the equalizer is on;
-    // tapping the speaker switches it off.
-    private int CurrentModeIndex =>
-        Math.Max(0, Array.FindIndex(AudioModeOptions, option => option.Mode == _audioMode));
-
-    private async Task StartModeLongPressAsync(PointerEventArgs args)
-    {
-        // A new gesture starts here, so an old suppression can no longer apply.
-        _suppressSpeakerClick = false;
-        CancelModeLongPress();
-        if (args.PointerType == "mouse" && args.Button != 0)
-            return;
-
-        var longPress = _modeLongPress = new CancellationTokenSource();
-        try
-        {
-            await Task.Delay(ModeLongPressDelay, longPress.Token);
-        }
-        catch (TaskCanceledException)
-        {
-            return;
-        }
-
-        OpenModeMenu();
-    }
-
-    private void CancelModeLongPress()
-    {
-        _modeLongPress?.Cancel();
-        _modeLongPress?.Dispose();
-        _modeLongPress = null;
-    }
-
-    private void OpenModeMenu()
-    {
-        CancelModeLongPress();
-        _suppressSpeakerClick = true;
-        if (_modeMenuOpen)
-            return;
-
-        _modeMenuOpen = true;
-        _focusModeMenu = true;
-        _ignoreBackdropClick = true;
-        StateHasChanged();
-    }
-
-    // On touch the click is aimed at whatever lies under the finger when it
-    // lifts. The menu opens during a long press, so that click lands on the
-    // backdrop; only a tap that also started on the backdrop closes the menu.
-    private async Task OnModeBackdropClickAsync()
-    {
-        if (_ignoreBackdropClick)
-        {
-            _ignoreBackdropClick = false;
-            return;
-        }
-
-        await CloseModeMenuAsync(returnFocus: false);
-    }
-
-    private async Task CloseModeMenuAsync(bool returnFocus)
-    {
-        _modeMenuOpen = false;
-        StateHasChanged();
-        if (returnFocus)
-            await _speakerElement.FocusAsync();
-    }
-
-    private void OnSpeakerKeyDown(KeyboardEventArgs args)
-    {
-        if (args.Key == "ArrowDown" || (args.ShiftKey && args.Key == "F10"))
-            OpenModeMenu();
-    }
-
-    private async Task OnModeMenuKeyDownAsync(KeyboardEventArgs args)
-    {
-        switch (args.Key)
-        {
-            case "Escape":
-                await CloseModeMenuAsync(returnFocus: true);
-                break;
-            case "ArrowDown":
-            case "ArrowUp":
-                var step = args.Key == "ArrowDown" ? 1 : -1;
-                var focused = (CurrentModeIndex + step + AudioModeOptions.Length) % AudioModeOptions.Length;
-                await _modeOptionElements[focused].FocusAsync();
-                break;
-        }
-    }
-
-    // Choosing a mode turns the equalizer on in it.
-    private async Task SelectAudioModeAsync(AudioVisualizerMode mode)
-    {
-        _suppressSpeakerClick = false;
-        await CloseModeMenuAsync(returnFocus: true);
-
-        if (IsVisualizerOn && mode != _audioMode)
-            await TurnVisualizerOffAsync();
-
-        _audioMode = mode;
-        AudioVisualizerModePreference.Save(_audioMode);
-        if (!IsVisualizerOn)
-            await TurnVisualizerOnAsync();
-        StateHasChanged();
-    }
-
-    private async Task StopAudioVisualizationAsync(bool clearMessage)
-    {
-        await AudioSpectrum.StopAsync();
-        _audioState = AudioSpectrumState.Inactive;
-        if (clearMessage)
-            _audioMessageKey = null;
-
-        if (_audioMode == AudioVisualizerMode.Ambient &&
-            _audioCanvasReady &&
-            _audioEqualizerModule is not null)
-        {
-            await _audioEqualizerModule.InvokeVoidAsync("setActive", _audioCanvas, false);
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task DisposeAudioCanvasAsync()
-    {
-        if (!_audioCanvasReady || _audioEqualizerModule is null)
-            return;
-
-        try
-        {
-            await _audioEqualizerModule.InvokeVoidAsync("dispose", _audioCanvas);
-        }
-        catch (JSException)
-        {
-        }
-        finally
-        {
-            _audioCanvasReady = false;
-        }
-    }
-
     private void OnOfflineStatusChanged() => _ = InvokeAsync(StateHasChanged);
 
     // Проблема важнее всего: пока она не просмотрена, значок говорит о ней.
@@ -682,38 +292,10 @@
     private string OfflineIndicatorLabel =>
         OfflineStatus.HasProblem ? Text["Offline_IndicatorProblem"] : Text["Offline_IndicatorLabel"];
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
-        AudioSpectrum.SpectrumUpdated -= OnSpectrumUpdated;
-        AudioSpectrum.StateChanged -= OnAudioStateChanged;
-        Lifecycle.Suspended -= OnApplicationSuspended;
         OfflineStatus.Changed -= OnOfflineStatusChanged;
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
         Navigation.LocationChanged -= OnLocationChanged;
-        CancelModeLongPress();
-
-        await AudioSpectrum.StopAsync();
-        if (_decorativeModule is not null)
-        {
-            try
-            {
-                await _decorativeModule.InvokeVoidAsync("stop");
-                await _decorativeModule.DisposeAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
-        }
-        if (_audioEqualizerModule is not null)
-        {
-            try
-            {
-                await DisposeAudioCanvasAsync();
-                await _audioEqualizerModule.DisposeAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
-        }
     }
 }
