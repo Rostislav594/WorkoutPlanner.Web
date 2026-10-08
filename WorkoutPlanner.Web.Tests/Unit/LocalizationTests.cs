@@ -157,6 +157,7 @@ public class ResourceCoverageTests
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Back"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Password"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Done"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "Tutorial_Today_Done"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Kg"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_RepsShort"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Common_Superset"),
