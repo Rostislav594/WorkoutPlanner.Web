@@ -21,7 +21,8 @@ public sealed class MobileAuthenticationService : IDisposable
     private readonly ILogger<MobileAuthenticationService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private MobileTokenSet? _tokens;
-    private bool _initialized;
+    // volatile: InitializeAsync читает флаг без _gate, а _tokens записываются до него.
+    private volatile bool _initialized;
 
     public MobileAuthenticationService(
         MobileApiOptions options,
@@ -56,6 +57,14 @@ public sealed class MobileAuthenticationService : IDisposable
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
+        // Состояние входа запрашивается и из AuthenticationChanged, который
+        // обновление токена вызывает, ещё держа _gate. Если ждать _gate здесь,
+        // проверка доступа повисает, и Blazor на это время снимает страницу
+        // целиком: раз в срок жизни токена экран «моргал», а начатое на нём
+        // сохранение отменялось.
+        if (_initialized)
+            return;
+
         await _gate.WaitAsync(cancellationToken);
         try
         {
