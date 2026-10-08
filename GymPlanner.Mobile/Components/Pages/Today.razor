@@ -15,6 +15,7 @@
 @inject MobileLifecycleService Lifecycle
 @inject TimeProvider Clock
 @inject TutorialHost Tutorial
+@inject ExercisePicker ExerciseLibraryPicker
 
 <section class="today-page" aria-busy="@_isLoading">
     <header class="today-header">
@@ -619,6 +620,7 @@
                                    Options="ExerciseDefinitionOptions"
                                    Value="@(_freeEditorDraft.ExerciseDefinitionId?.ToString() ?? string.Empty)"
                                    ValueChanged="SetFreeExerciseDefinition"
+                                   Picker="PickFreeExerciseAsync"
                                    Placeholder="@Text["Today_PickExercise"]"
                                    AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
             </label>
@@ -1330,6 +1332,15 @@
         var definition = _exerciseDefinitions.FirstOrDefault(x => x.Id == id);
         if (definition is not null)
             _freeEditorDraft.Name = definition.Name;
+    }
+
+    private async Task<string?> PickFreeExerciseAsync(string value)
+    {
+        var selected = await ExerciseLibraryPicker.PickAsync(
+            Text["Today_PickExercise"],
+            _exerciseDefinitions,
+            int.TryParse(value, out var definitionId) ? definitionId : null);
+        return selected?.ToString();
     }
 
     private void SetFreeExerciseDefinition(string value)

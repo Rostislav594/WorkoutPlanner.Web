@@ -18,6 +18,10 @@ public static class OfflineKeys
     public const string InboxMessages = "inbox-messages";
     public const string InboxUnreadCount = "inbox-unread";
 
+    // Названия упражнений приходят на языке интерфейса: после смены языка
+    // без связи библиотека не должна остаться на прежнем.
+    public static string ExerciseDefinitionsIn(string language) => $"{ExerciseDefinitions}-{language}";
+
     public static string WorkoutProgress(int trainingPlanId) => $"progress-workout-{trainingPlanId}";
 
     public static string WorkoutExercises(int trainingPlanId) => $"progress-exercises-{trainingPlanId}";

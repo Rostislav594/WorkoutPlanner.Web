@@ -167,6 +167,10 @@ public class ResourceCoverageTests
         // «кг» и «повт.» в украинском те же, что в русском.
         (nameof(AppStrings), AppLanguages.Ukrainian, "Today_NextTimeAddWeight"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Today_NextTimeAddRepetition"),
+        // Части тела в окне выбора упражнения: «Спина», «Руки», «Ноги» в украинском те же.
+        (nameof(AppStrings), AppLanguages.Ukrainian, "ExerciseBodyPart_Back"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "ExerciseBodyPart_Arms"),
+        (nameof(AppStrings), AppLanguages.Ukrainian, "ExerciseBodyPart_Legs"),
         // «с» — сокращение «секунди», в украинском такое же.
         (nameof(AppStrings), AppLanguages.Ukrainian, "Today_FinishHoldDuration"),
         (nameof(AppStrings), AppLanguages.Ukrainian, "Chart_ColumnDate"),

@@ -19,6 +19,7 @@ public static class MauiProgram
 			Infrastructure.MobileApiOptions.CreateDefault(builder.Configuration));
 		builder.Services.AddSingleton(TimeProvider.System);
 		builder.Services.AddSingleton<Navigation.MobileBackNavigationService>();
+		builder.Services.AddSingleton<ExerciseLibrary.ExercisePicker>();
 		// Обучение с «Сегодня»: его слой в макете, поэтому одно на всё окно.
 		builder.Services.AddScoped<Tutorial.TutorialHost>();
 		builder.Services.AddSingleton<Lifecycle.MobileLifecycleService>();

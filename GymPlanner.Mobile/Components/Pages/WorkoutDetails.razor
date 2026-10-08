@@ -7,6 +7,7 @@
 @inject IMobilePhotoPicker PhotoPicker
 @inject IAppText Text
 @inject IJSRuntime JS
+@inject ExercisePicker ExerciseLibraryPicker
 @implements IAsyncDisposable
 
 <section class="workout-details-page" aria-busy="@_loading">
@@ -329,6 +330,7 @@
                                        Options="DefinitionOptions"
                                        Value="@(_draft.DefinitionId?.ToString() ?? string.Empty)"
                                        ValueChanged="SetDefinition"
+                                       Picker="PickDefinitionAsync"
                                        Placeholder="@Text["WorkoutDetails_NotSelected"]"
                                        AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
                 </div>
@@ -938,6 +940,15 @@
         _definitions
             .Select(definition => new SystemChoiceOption(definition.Id.ToString(), definition.Name))
             .ToList();
+
+    private async Task<string?> PickDefinitionAsync(string value)
+    {
+        var selected = await ExerciseLibraryPicker.PickAsync(
+            Text["WorkoutDetails_LibraryExercise"],
+            _definitions,
+            int.TryParse(value, out var definitionId) ? definitionId : null);
+        return selected?.ToString();
+    }
 
     private void SetDefinition(string value)
     {

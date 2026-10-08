@@ -1,0 +1,247 @@
+@implements IDisposable
+@using GymPlanner.Mobile.ExerciseLibrary
+@inject ExercisePicker Picker
+@inject MobileBackNavigationService BackNavigation
+@inject IAppText Text
+
+@* Окно выбора упражнения. Живёт в макете, а не в модальном окне страницы:
+   иначе backdrop-filter модального окна привязал бы fixed-окно к нему. *@
+@if (Picker.Request is { } request)
+{
+    <div class="exercise-picker-overlay" @onclick="Cancel">
+        <section class="exercise-picker" role="dialog" aria-modal="true" aria-labelledby="exercise-picker-title"
+                 @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
+            <header class="exercise-picker__header">
+                <div class="exercise-picker__title-row">
+                    <h2 id="exercise-picker-title">@request.Title</h2>
+                    <button class="exercise-picker__close" type="button" aria-label="@Text["Common_Close"]" @onclick="Cancel">
+                        <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                    </button>
+                </div>
+
+                <div class="exercise-picker__search">
+                    <span class="material-symbols-rounded exercise-picker__search-icon" aria-hidden="true">search</span>
+                    <input class="form-control exercise-picker__search-input"
+                           type="search"
+                           inputmode="search"
+                           enterkeyhint="search"
+                           autocomplete="off"
+                           spellcheck="false"
+                           placeholder="@Text["ExercisePicker_SearchPlaceholder"]"
+                           aria-label="@Text["ExercisePicker_SearchPlaceholder"]"
+                           value="@_query"
+                           @oninput="OnQueryInput" />
+                    @if (_query.Length > 0)
+                    {
+                        <button class="exercise-picker__clear" type="button" aria-label="@Text["ExercisePicker_ClearSearch"]" @onclick="ClearQuery">
+                            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+                        </button>
+                    }
+                </div>
+
+                @if (_bodyParts.Count > 1)
+                {
+                    <div class="exercise-picker__chips" role="group" aria-label="@Text["ExercisePicker_BodyPartsLabel"]">
+                        <button class="exercise-picker__chip @(_bodyPart is null ? "exercise-picker__chip--active" : null)"
+                                type="button"
+                                aria-pressed="@(_bodyPart is null)"
+                                @onclick="() => SelectBodyPart(null)">
+                            @Text["ExercisePicker_All"]
+                        </button>
+                        @foreach (var bodyPart in _bodyParts)
+                        {
+                            <button class="exercise-picker__chip @(_bodyPart == bodyPart ? "exercise-picker__chip--active" : null)"
+                                    type="button"
+                                    aria-pressed="@(_bodyPart == bodyPart)"
+                                    @onclick="() => SelectBodyPart(bodyPart)">
+                                @BodyPartLabel(bodyPart)
+                            </button>
+                        }
+                    </div>
+                }
+            </header>
+
+            <div class="exercise-picker__list">
+                @if (_groups.Count == 0)
+                {
+                    <div class="exercise-picker__empty" role="status">
+                        <span class="material-symbols-rounded" aria-hidden="true">search_off</span>
+                        <strong>@Text["ExercisePicker_EmptyTitle"]</strong>
+                        <span>@Text[_bodyPart is null ? "ExercisePicker_EmptyHint" : "ExercisePicker_EmptyHintGroup"]</span>
+                        @if (_bodyPart is not null)
+                        {
+                            <button class="exercise-picker__text-button" type="button" @onclick="() => SelectBodyPart(null)">
+                                @Text["ExercisePicker_SearchEverywhere"]
+                            </button>
+                        }
+                    </div>
+                }
+
+                @foreach (var group in _groups)
+                {
+                    <section class="exercise-picker__group" aria-labelledby="exercise-picker-group-@group.BodyPart">
+                        @* Заголовок раздела нужен и при выбранном чипе: он показывает, сколько нашлось. *@
+                        <h3 id="exercise-picker-group-@group.BodyPart" class="exercise-picker__group-title">
+                            @BodyPartLabel(group.BodyPart) · @group.Items.Count
+                        </h3>
+                        <ul class="exercise-picker__items">
+                            @foreach (var item in group.Items)
+                            {
+                                var isSelected = item.Definition.Id == request.SelectedId;
+                                <li @key="item.Definition.Id">
+                                    @if (isSelected)
+                                    {
+                                        @* Ссылка только у выбранной строки: к ней окно прокручивается при открытии. *@
+                                        <button class="exercise-picker__item exercise-picker__item--selected"
+                                                @ref="_selectedItem"
+                                                type="button"
+                                                aria-current="true"
+                                                @onclick="() => Choose(item.Definition.Id)">
+                                            @ItemContent(item)
+                                            <span class="material-symbols-rounded exercise-picker__item-check" aria-hidden="true">check</span>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="exercise-picker__item"
+                                                type="button"
+                                                @onclick="() => Choose(item.Definition.Id)">
+                                            @ItemContent(item)
+                                        </button>
+                                    }
+                                </li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private ExercisePickerRequest? _request;
+    private string _query = string.Empty;
+    private string? _bodyPart;
+    private IReadOnlyList<string> _bodyParts = [];
+    private IReadOnlyList<ExerciseLibraryGroup> _groups = [];
+    private ElementReference _selectedItem;
+    private bool _revealSelected;
+
+    protected override void OnInitialized() =>
+        Picker.Changed += OnPickerChanged;
+
+    private void OnPickerChanged() =>
+        _ = InvokeAsync(() =>
+        {
+            if (!ReferenceEquals(Picker.Request, _request))
+            {
+                _request = Picker.Request;
+                _query = string.Empty;
+                _bodyPart = null;
+                _bodyParts = _request is null ? [] : ExerciseLibrarySearch.BodyPartsIn(_request.Definitions);
+                _revealSelected = _request?.SelectedId is not null;
+                Refresh();
+                BackNavigation.SetOverlayInterceptor(_request is null ? null : RequestCancel);
+            }
+
+            StateHasChanged();
+        });
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_revealSelected || _request is null)
+            return;
+
+        _revealSelected = false;
+        // Фокус прокручивает список к текущему упражнению без JS. Клавиатура не
+        // открывается: фокус получает кнопка, а не поле поиска.
+        if (_selectedItem.Context is not null)
+            await _selectedItem.FocusAsync(preventScroll: false);
+    }
+
+    private RenderFragment ItemContent(ExerciseLibraryItem item) => __builder =>
+    {
+        <span class="exercise-picker__item-text">
+            <span class="exercise-picker__item-name">
+                @foreach (var part in ExerciseLibrarySearch.Highlight(item.Definition.Name, item.Matches))
+                {
+                    if (part.IsMatch)
+                    {
+                        <mark>@part.Text</mark>
+                    }
+                    else
+                    {
+                        @part.Text
+                    }
+                }
+            </span>
+            @if (!string.IsNullOrWhiteSpace(item.Definition.MuscleName))
+            {
+                <span class="exercise-picker__item-muscle">@item.Definition.MuscleName</span>
+            }
+        </span>
+    };
+
+    private void OnQueryInput(ChangeEventArgs eventArgs)
+    {
+        _query = eventArgs.Value?.ToString() ?? string.Empty;
+        Refresh();
+    }
+
+    private void ClearQuery()
+    {
+        _query = string.Empty;
+        Refresh();
+    }
+
+    private void SelectBodyPart(string? bodyPart)
+    {
+        _bodyPart = bodyPart;
+        Refresh();
+    }
+
+    private void Refresh() =>
+        _groups = _request is null
+            ? []
+            : ExerciseLibrarySearch.Filter(_request.Definitions, _query, _bodyPart);
+
+    private void Choose(int definitionId) =>
+        Picker.Complete(definitionId);
+
+    private void Cancel() =>
+        Picker.Complete(null);
+
+    private void RequestCancel() =>
+        _ = InvokeAsync(Cancel);
+
+    private void OnKeyDown(KeyboardEventArgs eventArgs)
+    {
+        if (eventArgs.Key == "Escape")
+            Cancel();
+    }
+
+    private string BodyPartLabel(string bodyPart) => bodyPart switch
+    {
+        "chest" => Text["ExerciseBodyPart_Chest"],
+        "back" => Text["ExerciseBodyPart_Back"],
+        "shoulders" => Text["ExerciseBodyPart_Shoulders"],
+        "arms" => Text["ExerciseBodyPart_Arms"],
+        "legs" => Text["ExerciseBodyPart_Legs"],
+        "glutes" => Text["ExerciseBodyPart_Glutes"],
+        "core" => Text["ExerciseBodyPart_Core"],
+        _ => Text["ExerciseBodyPart_Other"]
+    };
+
+    public void Dispose()
+    {
+        Picker.Changed -= OnPickerChanged;
+        if (_request is not null)
+            BackNavigation.SetOverlayInterceptor(null);
+
+        // Макет пересоздаётся при выходе из аккаунта: поле, которое ждёт выбора,
+        // не должно ждать вечно.
+        if (Picker.Request is not null)
+            Picker.Complete(null);
+    }
+}

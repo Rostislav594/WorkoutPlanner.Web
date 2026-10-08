@@ -3366,4 +3366,52 @@
   <data name="Tutorial_Workouts_Open" xml:space="preserve">
     <value>Показать, как составить шаблон тренировки</value>
   </data>
+  <data name="ExercisePicker_SearchPlaceholder" xml:space="preserve">
+    <value>Поиск по названию</value>
+  </data>
+  <data name="ExercisePicker_ClearSearch" xml:space="preserve">
+    <value>Очистить поиск</value>
+  </data>
+  <data name="ExercisePicker_BodyPartsLabel" xml:space="preserve">
+    <value>Группы мышц</value>
+  </data>
+  <data name="ExercisePicker_All" xml:space="preserve">
+    <value>Все</value>
+  </data>
+  <data name="ExercisePicker_EmptyTitle" xml:space="preserve">
+    <value>Ничего не нашлось</value>
+  </data>
+  <data name="ExercisePicker_EmptyHint" xml:space="preserve">
+    <value>Проверьте написание или введите часть названия.</value>
+  </data>
+  <data name="ExercisePicker_EmptyHintGroup" xml:space="preserve">
+    <value>В этой группе такого упражнения нет.</value>
+  </data>
+  <data name="ExercisePicker_SearchEverywhere" xml:space="preserve">
+    <value>Искать во всех группах</value>
+  </data>
+  <data name="ExerciseBodyPart_Chest" xml:space="preserve">
+    <value>Грудь</value>
+  </data>
+  <data name="ExerciseBodyPart_Back" xml:space="preserve">
+    <value>Спина</value>
+  </data>
+  <data name="ExerciseBodyPart_Shoulders" xml:space="preserve">
+    <value>Плечи</value>
+  </data>
+  <data name="ExerciseBodyPart_Arms" xml:space="preserve">
+    <value>Руки</value>
+  </data>
+  <data name="ExerciseBodyPart_Legs" xml:space="preserve">
+    <value>Ноги</value>
+  </data>
+  <data name="ExerciseBodyPart_Glutes" xml:space="preserve">
+    <value>Ягодицы</value>
+  </data>
+  <data name="ExerciseBodyPart_Core" xml:space="preserve">
+    <value>Пресс</value>
+  </data>
+  <data name="ExerciseBodyPart_Other" xml:space="preserve">
+    <value>Другое</value>
+  </data>
 </root>

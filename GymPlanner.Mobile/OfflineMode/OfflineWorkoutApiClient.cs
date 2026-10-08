@@ -15,7 +15,7 @@ namespace GymPlanner.Mobile.OfflineMode;
 /// тренировки: без связи его упражнения правятся только на телефоне, потому что
 /// завершение всё равно отправит на сервер полный состав.
 /// </remarks>
-public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRuntime runtime, TimeProvider timeProvider) : IWorkoutApiClient
+public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRuntime runtime, TimeProvider timeProvider, IAppLanguageService language) : IWorkoutApiClient
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
@@ -211,10 +211,10 @@ public sealed class OfflineWorkoutApiClient(WorkoutApiClient inner, OfflineRunti
         runtime.ReadAsync(
             inner.GetExerciseDefinitionsAsync,
             async () => await runtime.Store.GetAsync<List<ExerciseDefinitionApiResponse>>(
-                OfflineKeys.ExerciseDefinitions,
+                OfflineKeys.ExerciseDefinitionsIn(language.Current),
                 cancellationToken) as IReadOnlyList<ExerciseDefinitionApiResponse>,
             definitions => runtime.Store.SetAsync(
-                OfflineKeys.ExerciseDefinitions,
+                OfflineKeys.ExerciseDefinitionsIn(language.Current),
                 definitions.ToList(),
                 cancellationToken),
             cancellationToken);

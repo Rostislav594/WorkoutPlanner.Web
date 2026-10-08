@@ -3335,4 +3335,52 @@
   <data name="Tutorial_Workouts_Open" xml:space="preserve">
     <value>Показати, як скласти шаблон тренування</value>
   </data>
+  <data name="ExercisePicker_SearchPlaceholder" xml:space="preserve">
+    <value>Пошук за назвою</value>
+  </data>
+  <data name="ExercisePicker_ClearSearch" xml:space="preserve">
+    <value>Очистити пошук</value>
+  </data>
+  <data name="ExercisePicker_BodyPartsLabel" xml:space="preserve">
+    <value>Групи м'язів</value>
+  </data>
+  <data name="ExercisePicker_All" xml:space="preserve">
+    <value>Усі</value>
+  </data>
+  <data name="ExercisePicker_EmptyTitle" xml:space="preserve">
+    <value>Нічого не знайшлося</value>
+  </data>
+  <data name="ExercisePicker_EmptyHint" xml:space="preserve">
+    <value>Перевірте написання або введіть частину назви.</value>
+  </data>
+  <data name="ExercisePicker_EmptyHintGroup" xml:space="preserve">
+    <value>У цій групі такої вправи немає.</value>
+  </data>
+  <data name="ExercisePicker_SearchEverywhere" xml:space="preserve">
+    <value>Шукати в усіх групах</value>
+  </data>
+  <data name="ExerciseBodyPart_Chest" xml:space="preserve">
+    <value>Груди</value>
+  </data>
+  <data name="ExerciseBodyPart_Back" xml:space="preserve">
+    <value>Спина</value>
+  </data>
+  <data name="ExerciseBodyPart_Shoulders" xml:space="preserve">
+    <value>Плечі</value>
+  </data>
+  <data name="ExerciseBodyPart_Arms" xml:space="preserve">
+    <value>Руки</value>
+  </data>
+  <data name="ExerciseBodyPart_Legs" xml:space="preserve">
+    <value>Ноги</value>
+  </data>
+  <data name="ExerciseBodyPart_Glutes" xml:space="preserve">
+    <value>Сідниці</value>
+  </data>
+  <data name="ExerciseBodyPart_Core" xml:space="preserve">
+    <value>Прес</value>
+  </data>
+  <data name="ExerciseBodyPart_Other" xml:space="preserve">
+    <value>Інше</value>
+  </data>
 </root>
