@@ -1479,6 +1479,230 @@
     margin-top: 20px;
 }
 
+.next-session {
+    margin-top: var(--space-5);
+    text-align: left;
+}
+
+.next-session h3 {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-card-title);
+    font-weight: 700;
+    line-height: var(--line-height-tight);
+}
+
+.next-session-list {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.next-session-row {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) 0;
+    border-bottom: var(--border-subtle);
+}
+
+.next-session-row:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+}
+
+.next-session-name {
+    min-width: 0;
+    font-size: var(--text-secondary);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.next-session-detail {
+    display: grid;
+    gap: var(--space-2);
+    animation: next-session-detail-in 180ms ease-out;
+}
+
+@keyframes next-session-detail-in {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.next-session-weight {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 600;
+}
+
+.next-session-weight > span:first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.next-session-weight-input {
+    width: 96px;
+    flex: none;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Рамку полей задаёт общий контракт в app.css через !important. */
+.next-session-weight-input[aria-invalid="true"] {
+    border-color: var(--color-danger) !important;
+}
+
+.workout-completed-window .next-session-field-error {
+    margin: 0;
+    color: var(--color-danger-soft);
+    font-size: var(--text-caption);
+    line-height: var(--line-height-tight);
+}
+
+.next-session-detail-label {
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 600;
+}
+
+.next-session-sets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+/* Отмеченный подход выглядит как выполненный в карточке: зелёный, с галочкой.
+   Высоту задаёт общий контракт кнопок, поэтому плитка, а не круг. */
+.next-session-set {
+    min-width: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--glass-border, var(--color-border));
+    border-radius: var(--radius-md);
+    background: var(--glass-inset, var(--color-surface));
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui), transform var(--transition-ui);
+}
+
+.next-session-set .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.next-session-set:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    color: var(--color-text);
+}
+
+.next-session-set:active:not(:disabled) {
+    transform: scale(.96);
+}
+
+.next-session-set:focus-visible {
+    outline: 2px solid var(--color-success);
+    outline-offset: 2px;
+}
+
+.next-session-set--included,
+.next-session-set--included:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-success) 55%, transparent);
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+}
+
+.next-session-set:disabled {
+    cursor: default;
+    opacity: .5;
+}
+
+.next-session-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+    padding: var(--space-1);
+    border: 1px solid var(--glass-border, var(--color-border));
+    border-radius: var(--radius-md);
+    background: var(--glass-inset, var(--color-surface));
+}
+
+.next-session-option {
+    min-width: 0;
+    min-height: var(--touch-target);
+    padding: 0 var(--space-1);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--color-text-muted);
+    font: inherit;
+    font-size: var(--text-label);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background var(--transition-ui), color var(--transition-ui), transform var(--transition-ui);
+}
+
+.next-session-option:hover:not(:disabled) {
+    background: var(--glass-inset-hover, var(--color-surface-raised));
+    color: var(--color-text);
+}
+
+.next-session-option:active:not(:disabled) {
+    transform: scale(.97);
+}
+
+.next-session-option:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.next-session-option--selected,
+.next-session-option--selected:hover:not(:disabled) {
+    background: var(--color-surface-raised);
+    color: var(--color-text);
+    box-shadow: inset 0 0 0 1px var(--glass-border, var(--color-border));
+}
+
+.next-session-option--selected.next-session-option--change,
+.next-session-option--selected.next-session-option--change:hover:not(:disabled) {
+    background: var(--color-orange);
+    color: var(--color-on-orange);
+    box-shadow: none;
+}
+
+.next-session-option:disabled {
+    cursor: default;
+    opacity: .5;
+}
+
+.next-session-error {
+    margin-top: var(--space-3);
+    text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .next-session-option,
+    .next-session-set {
+        transition: none;
+    }
+
+    .next-session-detail {
+        animation: none;
+    }
+}
+
 @media (max-width: 360px) {
     .finish-button--hold {
         gap: 7px;

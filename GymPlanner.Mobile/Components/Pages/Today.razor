@@ -3,6 +3,7 @@
 @implements IDisposable
 @inject IJSRuntime JS
 @using WorkoutPlanner.Api.Contracts
+@using WorkoutPlanner.Domain
 @inject IWorkoutApiClient ServerWorkoutClient
 @inject IWorkoutLifecycleApiClient ServerLifecycleClient
 @inject IExercisePhotoApiClient PhotoClient
@@ -728,7 +729,95 @@
             <span class="completion-icon material-symbols-rounded" aria-hidden="true">check</span>
             <h2 id="completion-title">@Text["Today_WorkoutCompleted"]</h2>
             <p>@_completionMessage</p>
-            <button class="finish-button modal-finish-button" data-tour="completion-done" type="button" @onclick="CloseCompletion">@Text["Common_Done"]</button>
+            @if (_nextSessionChoices.Count > 0)
+            {
+                <section class="next-session" aria-labelledby="next-session-title">
+                    <h3 id="next-session-title">@Text["Today_NextTimeQuestion"]</h3>
+                    <ul class="next-session-list">
+                        @foreach (var choice in _nextSessionChoices)
+                        {
+                            var isLocked = _isBusy || choice.IsSaved;
+                            var weightStepId = $"next-session-weight-{choice.Exercise.Id}";
+                            <li class="next-session-row" @key="choice.Exercise.Id">
+                                <span class="next-session-name">@DisplayNameOf(choice.Exercise)</span>
+                                @* «Так же» сбрасывает оба изменения, вес и повтор включаются независимо. *@
+                                <div class="next-session-options" role="group" aria-label="@Text.Format("Today_NextTimeOptionsLabel", DisplayNameOf(choice.Exercise))">
+                                    <button class="next-session-option @(choice.ChangesNothing ? "next-session-option--selected" : null)"
+                                            type="button"
+                                            aria-pressed="@(choice.ChangesNothing ? "true" : "false")"
+                                            disabled="@isLocked"
+                                            @onclick="choice.KeepAsIs">@Text["Today_NextTimeSame"]</button>
+                                    <button class="next-session-option next-session-option--change @(choice.AddsWeight ? "next-session-option--selected" : null)"
+                                            type="button"
+                                            aria-pressed="@(choice.AddsWeight ? "true" : "false")"
+                                            disabled="@isLocked"
+                                            @onclick="() => choice.AddsWeight = !choice.AddsWeight">@NextSessionWeightLabelOf(choice)</button>
+                                    <button class="next-session-option next-session-option--change @(choice.AddsRepetition ? "next-session-option--selected" : null)"
+                                            type="button"
+                                            aria-pressed="@(choice.AddsRepetition ? "true" : "false")"
+                                            disabled="@isLocked"
+                                            @onclick="() => choice.AddsRepetition = !choice.AddsRepetition">@Text["Today_NextTimeAddRepetition"]</button>
+                                </div>
+                                @if (choice.AddsWeight)
+                                {
+                                    <div class="next-session-detail">
+                                        <label class="next-session-weight" for="@weightStepId">
+                                            <span>@Text["Today_NextTimeWeightStepLabel"]</span>
+                                            <input id="@weightStepId"
+                                                   class="set-input next-session-weight-input"
+                                                   type="number"
+                                                   inputmode="decimal"
+                                                   min="@NextSessionTargets.MinWeightStep"
+                                                   max="@NextSessionTargets.MaxWeightStep"
+                                                   step="0.25"
+                                                   aria-invalid="@(choice.HasValidWeightStep ? "false" : "true")"
+                                                   aria-describedby="@(choice.HasValidWeightStep ? null : $"{weightStepId}-error")"
+                                                   disabled="@isLocked"
+                                                   @bind="choice.WeightStep" />
+                                            <span aria-hidden="true">@Text["Common_Kg"]</span>
+                                        </label>
+                                        @if (!choice.HasValidWeightStep)
+                                        {
+                                            <p id="@($"{weightStepId}-error")" class="next-session-field-error" role="alert">@Text["Today_NextTimeWeightStepInvalid"]</p>
+                                        }
+                                    </div>
+                                }
+                                @if (choice.AddsRepetition)
+                                {
+                                    <div class="next-session-detail">
+                                        <span class="next-session-detail-label" id="@($"next-session-sets-{choice.Exercise.Id}")">@Text["Today_NextTimeRepetitionSetsLabel"]</span>
+                                        <div class="next-session-sets" role="group" aria-labelledby="@($"next-session-sets-{choice.Exercise.Id}")">
+                                            @foreach (var set in choice.Exercise.Sets.Where(x => !x.IsWarmup))
+                                            {
+                                                var isIncluded = choice.RepetitionSets.Contains(set.SetNumber);
+                                                <button class="next-session-set @(isIncluded ? "next-session-set--included" : null)"
+                                                        type="button"
+                                                        aria-pressed="@(isIncluded ? "true" : "false")"
+                                                        aria-label="@Text.Format("Common_SetNumber", set.SetNumber)"
+                                                        disabled="@isLocked"
+                                                        @onclick="() => choice.ToggleRepetitionSet(set.SetNumber)">
+                                                    @if (isIncluded)
+                                                    {
+                                                        <span class="material-symbols-rounded" aria-hidden="true">check</span>
+                                                    }
+                                                    <span>@set.SetNumber</span>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+            @if (_nextSessionErrors.Count > 0)
+            {
+                <div class="editor-error next-session-error" role="alert">@string.Join(" ", _nextSessionErrors)</div>
+            }
+            <button class="finish-button modal-finish-button" data-tour="completion-done" type="button" disabled="@_isBusy" @onclick="CloseCompletion">
+                @(_isBusy ? Text["Common_Saving"] : Text["Common_Done"])
+            </button>
         </section>
     </div>
 }
@@ -817,6 +906,8 @@
     private readonly CancellationTokenSource _disposeCts = new();
     private TodayWorkoutApiResponse? _workout;
     private WorkoutHistoryApiResponse? _completedHistory;
+    private readonly List<NextSessionChoice> _nextSessionChoices = [];
+    private readonly List<string> _nextSessionErrors = [];
     private bool _isLoading = true;
     private bool _isBusy;
     private bool _isFreeWorkout;
@@ -1610,6 +1701,7 @@
             _completionMessage = OfflineIds.IsLocal(_completedHistory!.Id)
                 ? Text["Today_SavedOffline"]
                 : Text["Today_ResultsSaved"];
+            OfferNextSessionChoices();
             await ForgetSessionAsync();
         }
         catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
@@ -2354,10 +2446,98 @@
 
     private async Task CloseCompletion()
     {
+        if (_isBusy || !await SaveNextSessionTargetsAsync())
+            return;
+
+        // Пока сохранялось, человек мог уйти со страницы: перечитывать её незачем.
+        if (_disposeCts.IsCancellationRequested)
+            return;
+
         _completedHistory = null;
         _completionMessage = string.Empty;
+        _nextSessionChoices.Clear();
         await LoadAsync();
     }
+
+    // Сервер уже перенёс сегодняшние подходы в шаблон, так что цель — это они
+    // же плюс шаг. Обучение показывает окно итогов без этого блока.
+    private void OfferNextSessionChoices()
+    {
+        _nextSessionChoices.Clear();
+        _nextSessionErrors.Clear();
+        if (Tutorial.IsActive)
+            return;
+
+        _nextSessionChoices.AddRange(_exercises
+            .Where(x => x.IsConfigured && x.Sets.Any(set => !set.IsWarmup))
+            .Select(x => new NextSessionChoice(x.Clone())));
+    }
+
+    private async Task<bool> SaveNextSessionTargetsAsync()
+    {
+        _nextSessionErrors.Clear();
+        var pending = _nextSessionChoices
+            .Where(x => x.ChangesTemplate && !x.IsSaved)
+            .ToList();
+        if (pending.Count == 0)
+            return true;
+
+        // Неверная прибавка уже подсвечена у своего поля: окно остаётся открытым.
+        if (pending.Any(x => x.AddsWeight && !x.HasValidWeightStep))
+            return false;
+
+        _isBusy = true;
+        try
+        {
+            foreach (var choice in pending)
+            {
+                // Без связи правка ждёт в очереди следом за завершением тренировки.
+                // Уход со страницы не отменяет сохранение: иначе цели оставшихся
+                // упражнений молча потерялись бы.
+                var result = await WorkoutClient.UpdateExerciseAsync(
+                    choice.Exercise.Id,
+                    WithNextSessionTarget(choice).ToRequest(),
+                    CancellationToken.None);
+                if (!result.Succeeded)
+                {
+                    _nextSessionErrors.AddRange(result.Errors);
+                    return false;
+                }
+
+                // Повторное «Готово» после ошибки не добавит шаг второй раз.
+                choice.IsSaved = true;
+            }
+
+            return true;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static ExerciseDraft WithNextSessionTarget(NextSessionChoice choice)
+    {
+        var target = choice.Exercise.Clone();
+        foreach (var set in target.Sets)
+        {
+            // Повтор получают только отмеченные подходы.
+            var next = NextSessionTargets.Apply(
+                new SetPerformance(set.Weight, set.Repetitions),
+                set.IsWarmup,
+                choice.AddsWeight ? choice.WeightStep : null,
+                choice.AddsRepetition && choice.RepetitionSets.Contains(set.SetNumber));
+            set.Weight = next.Weight;
+            set.Repetitions = next.Repetitions;
+        }
+
+        return target;
+    }
+
+    // На кнопке веса — введённая прибавка, пока поле не очищено и не ошибочно.
+    private string NextSessionWeightLabelOf(NextSessionChoice choice) => Text.Format(
+        "Today_NextTimeAddWeight",
+        choice.HasValidWeightStep ? choice.WeightStep!.Value : NextSessionTargets.DefaultWeightStep);
 
     public void Dispose()
     {
@@ -2530,6 +2710,43 @@
     }
 
     private sealed record ExerciseGroup(bool IsSuperset, IReadOnlyList<ExerciseDraft> Exercises);
+
+    /// <summary>Выбор в окне итогов: что поменять в упражнении к следующему разу.</summary>
+    private sealed class NextSessionChoice(ExerciseDraft exercise)
+    {
+        /// <summary>Упражнение таким, каким его записало завершение тренировки.</summary>
+        public ExerciseDraft Exercise { get; } = exercise;
+        public bool AddsWeight { get; set; }
+        public bool AddsRepetition { get; set; }
+        /// <summary>Прибавка веса; null, пока поле очищено.</summary>
+        public double? WeightStep { get; set; } = NextSessionTargets.DefaultWeightStep;
+        /// <summary>Рабочие подходы, которым добавляется повтор; сначала все.</summary>
+        public HashSet<int> RepetitionSets { get; } = exercise.Sets
+            .Where(x => !x.IsWarmup)
+            .Select(x => x.SetNumber)
+            .ToHashSet();
+        public bool IsSaved { get; set; }
+
+        public bool HasValidWeightStep =>
+            WeightStep is { } weightStep && NextSessionTargets.IsValidWeightStep(weightStep);
+
+        /// <summary>Есть ли что записать в шаблон.</summary>
+        public bool ChangesTemplate => AddsWeight || AddsRepetition && RepetitionSets.Count > 0;
+
+        public bool ChangesNothing => !AddsWeight && !AddsRepetition;
+
+        public void KeepAsIs()
+        {
+            AddsWeight = false;
+            AddsRepetition = false;
+        }
+
+        public void ToggleRepetitionSet(int setNumber)
+        {
+            if (!RepetitionSets.Remove(setNumber))
+                RepetitionSets.Add(setNumber);
+        }
+    }
 
     private sealed class SetDraft
     {

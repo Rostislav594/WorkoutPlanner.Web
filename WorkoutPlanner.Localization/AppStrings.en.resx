@@ -1507,6 +1507,30 @@
   <data name="Today_TemplateNameHint" xml:space="preserve">
     <value>It will appear under “Workout templates”, and the results in the charts.</value>
   </data>
+  <data name="Today_NextTimeQuestion" xml:space="preserve">
+    <value>What should change next time?</value>
+  </data>
+  <data name="Today_NextTimeSame" xml:space="preserve">
+    <value>Same</value>
+  </data>
+  <data name="Today_NextTimeAddWeight" xml:space="preserve">
+    <value>+{0} kg</value>
+  </data>
+  <data name="Today_NextTimeAddRepetition" xml:space="preserve">
+    <value>+1 rep</value>
+  </data>
+  <data name="Today_NextTimeWeightStepLabel" xml:space="preserve">
+    <value>Weight increase</value>
+  </data>
+  <data name="Today_NextTimeWeightStepInvalid" xml:space="preserve">
+    <value>Enter an increase from 0.25 to 100 kg.</value>
+  </data>
+  <data name="Today_NextTimeRepetitionSetsLabel" xml:space="preserve">
+    <value>Sets that get +1 rep</value>
+  </data>
+  <data name="Today_NextTimeOptionsLabel" xml:space="preserve">
+    <value>Next time: {0}</value>
+  </data>
   <data name="Today_CreateTemplate" xml:space="preserve">
     <value>Create a template</value>
   </data>

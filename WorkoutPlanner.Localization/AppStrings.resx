@@ -1523,6 +1523,30 @@
   <data name="Today_TemplateNameHint" xml:space="preserve">
     <value>Он появится в разделе «Шаблоны тренировок», а результаты — в графиках.</value>
   </data>
+  <data name="Today_NextTimeQuestion" xml:space="preserve">
+    <value>Что поменять к следующему разу?</value>
+  </data>
+  <data name="Today_NextTimeSame" xml:space="preserve">
+    <value>Так же</value>
+  </data>
+  <data name="Today_NextTimeAddWeight" xml:space="preserve">
+    <value>+{0} кг</value>
+  </data>
+  <data name="Today_NextTimeAddRepetition" xml:space="preserve">
+    <value>+1 повт.</value>
+  </data>
+  <data name="Today_NextTimeWeightStepLabel" xml:space="preserve">
+    <value>Прибавка веса</value>
+  </data>
+  <data name="Today_NextTimeWeightStepInvalid" xml:space="preserve">
+    <value>Введите прибавку от 0,25 до 100 кг.</value>
+  </data>
+  <data name="Today_NextTimeRepetitionSetsLabel" xml:space="preserve">
+    <value>В каких подходах +1 повт.</value>
+  </data>
+  <data name="Today_NextTimeOptionsLabel" xml:space="preserve">
+    <value>Следующий раз: {0}</value>
+  </data>
   <data name="Today_CreateTemplate" xml:space="preserve">
     <value>Создать шаблон</value>
   </data>
