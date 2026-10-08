@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @implements IDisposable
+@using Microsoft.AspNetCore.Components.Sections
 @inject MobileAuthenticationService Authentication
 @inject IWelcomeGuideApiClient WelcomeGuide
 @inject NavigationManager Navigation
@@ -25,6 +26,9 @@
         <header class="mobile-header">
             <AuthorizeView>
                 <Authorized>
+                    <CascadingValue Value="OfflineStatus.IsOffline" Name="IsOffline">
+                        <InboxPopover />
+                    </CascadingValue>
                     <div class="header-actions">
                         @if (OfflineStatus.ShowsIndicator)
                         {
@@ -46,6 +50,8 @@
                 </NotAuthorized>
             </AuthorizeView>
         </header>
+        @* Keep fixed notification overlays outside the header's backdrop-filter. *@
+        <SectionOutlet SectionName="inbox-overlays" />
     }
     <AuthorizeView>
         <Authorized>

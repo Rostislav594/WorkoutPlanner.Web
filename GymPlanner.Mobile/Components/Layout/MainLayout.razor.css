@@ -13,7 +13,7 @@
     top: 0;
     z-index: 20;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: 8px;
     min-height: calc(58px + env(safe-area-inset-top));
@@ -121,6 +121,7 @@
 }
 
 .connection-mode {
+    grid-column: 1 / -1;
     color: var(--color-accent);
     font-size: 12px;
     font-weight: 700;

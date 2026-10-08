@@ -1,10 +1,11 @@
 @implements IDisposable
+@using Microsoft.AspNetCore.Components.Sections
 @inject IInboxApiClient InboxApi
 @inject InboxNotificationState InboxState
 @inject NavigationManager Navigation
 @inject IAppText Text
 
-<div class="inbox-popover">
+<div class="inbox-popover" @onkeydown="OnKeyDown">
     <button class="inbox-trigger"
             type="button"
             aria-label="@Text["Inbox_Open"]"
@@ -16,11 +17,13 @@
             <span class="inbox-trigger__badge" aria-label="@GetUnreadLabel()">@GetUnreadBadge()</span>
         }
     </button>
+</div>
 
+<SectionContent SectionName="inbox-overlays">
     @if (_isOpen)
     {
         <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
-        <section class="inbox-menu" aria-label="@Text["Inbox_Center"]"
+        <section class="inbox-menu" aria-label="@Text["Inbox_Center"]" @onkeydown="OnKeyDown"
                  @onclick:stopPropagation="true"
                  @onpointerdown="BeginClearHistoryHold"
                  @onpointerup="CancelClearHistoryHold"
@@ -77,7 +80,6 @@
             }
         </section>
     }
-</div>
 
 @if (_showClearHistoryConfirmation)
 {
@@ -104,6 +106,7 @@
         </section>
     </div>
 }
+</SectionContent>
 
 @code {
     // Без связи действия, которым нужен сервер, неактивны (флаг передаёт шапка).
@@ -121,6 +124,7 @@
     protected override async Task OnInitializedAsync()
     {
         InboxState.Changed += OnInboxChanged;
+        Navigation.LocationChanged += OnLocationChanged;
         await InboxState.RefreshAsync();
     }
 
@@ -242,7 +246,29 @@
         _isClearingHistory = false;
     }
 
-    private void Close() => _isOpen = false;
+    private void Close()
+    {
+        CancelClearHistoryHold();
+        _isOpen = false;
+        _showClearHistoryConfirmation = false;
+        _clearHistoryError = null;
+    }
+
+    private void OnKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+            Close();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(async () =>
+        {
+            Close();
+            StateHasChanged();
+            // Home used to recreate this component and refresh its badge.
+            if (Navigation.ToBaseRelativePath(args.Location).Split('?', '#')[0].Trim('/').Length == 0)
+                await InboxState.RefreshAsync();
+        });
     private void OnInboxChanged() => _ = InvokeAsync(StateHasChanged);
 
     private string GetUnreadBadge() => InboxState.UnreadCount > 99 ? "99+" : InboxState.UnreadCount.ToString();
@@ -254,5 +280,6 @@
     {
         CancelClearHistoryHold();
         InboxState.Changed -= OnInboxChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
     }
 }
