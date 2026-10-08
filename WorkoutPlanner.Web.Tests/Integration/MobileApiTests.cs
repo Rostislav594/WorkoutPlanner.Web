@@ -3604,6 +3604,81 @@ public sealed class MobileApiTests
         Assert.Single(historyAfterRepeat);
     }
 
+    [Fact]
+    public async Task FreeWorkoutCompletion_SameDraftTwice_KeepsSingleHistoryEntry()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var phone = CreateClient(factory);
+        await RegisterAndAuthenticateAsync(phone, "free-draft-repeat@example.test");
+
+        var definitions = await phone.GetFromJsonAsync<
+            List<ExerciseDefinitionApiResponse>>("/api/v1/exercise-definitions");
+        var definition = Assert.Single(definitions!.Take(1));
+        var exercise = new SaveExerciseRequest(
+            definition.Name,
+            1,
+            "Medium",
+            definition.Id,
+            [new SaveExerciseSetRequest(1, 8, 40, true)]);
+
+        using var draftResponse = await phone.PostAsync("/api/v1/workouts/free/draft", null);
+        Assert.Equal(HttpStatusCode.OK, draftResponse.StatusCode);
+        var draft = await draftResponse.Content.ReadFromJsonAsync<FreeWorkoutDraftResponse>();
+        Assert.NotNull(draft);
+
+        // Первое завершение черновика принимается и закрывает его.
+        using var first = await phone.PostAsJsonAsync(
+            "/api/v1/workouts/free/complete",
+            new CompleteFreeWorkoutRequest(
+                false,
+                null,
+                [exercise],
+                DraftTrainingPlanId: draft.TrainingPlanId));
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+
+        // Второе нажатие после сбоя или повтор из очереди — тот же черновик.
+        using var repeated = await phone.PostAsJsonAsync(
+            "/api/v1/workouts/free/complete",
+            new CompleteFreeWorkoutRequest(
+                false,
+                null,
+                [exercise],
+                DraftTrainingPlanId: draft.TrainingPlanId));
+        Assert.Equal(HttpStatusCode.Conflict, repeated.StatusCode);
+        Assert.Contains(
+            WorkoutPlanner.Localization.ApiErrorCodes.WorkoutAlreadyCompleted,
+            await repeated.Content.ReadAsStringAsync());
+
+        // Повтор с сохранением шаблоном тоже узнаёт закрытый черновик, а не спорит об имени.
+        using var repeatedAsTemplate = await phone.PostAsJsonAsync(
+            "/api/v1/workouts/free/complete",
+            new CompleteFreeWorkoutRequest(
+                true,
+                "Шаблон из повтора",
+                [exercise],
+                DraftTrainingPlanId: draft.TrainingPlanId));
+        Assert.Equal(HttpStatusCode.Conflict, repeatedAsTemplate.StatusCode);
+        Assert.Contains(
+            WorkoutPlanner.Localization.ApiErrorCodes.WorkoutAlreadyCompleted,
+            await repeatedAsTemplate.Content.ReadAsStringAsync());
+
+        var history = await phone.GetFromJsonAsync<List<WorkoutHistoryApiResponse>>(
+            "/api/v1/history");
+        Assert.NotNull(history);
+        Assert.Single(history);
+        var plans = await phone.GetFromJsonAsync<List<TrainingPlanApiResponse>>(
+            "/api/v1/training-plans");
+        Assert.NotNull(plans);
+        Assert.DoesNotContain(plans, x => x.WorkoutName == "Шаблон из повтора");
+
+        // Тренировка без серверного черновика (начата без связи, старая сборка)
+        // по-прежнему сохраняется.
+        using var withoutDraft = await phone.PostAsJsonAsync(
+            "/api/v1/workouts/free/complete",
+            new CompleteFreeWorkoutRequest(false, null, [exercise]));
+        Assert.Equal(HttpStatusCode.Created, withoutDraft.StatusCode);
+    }
+
     private static async Task RegisterAndAuthenticateAsync(
         HttpClient client,
         string email)

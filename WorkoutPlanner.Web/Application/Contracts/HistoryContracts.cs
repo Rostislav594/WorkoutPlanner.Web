@@ -75,6 +75,11 @@ public sealed class FreeWorkoutCompletion
     /// <summary>Отдых между упражнениями для шаблона, если тренировку сохраняют шаблоном.</summary>
     public int RestBetweenExercisesSeconds { get; set; } =
         global::WorkoutPlanner.Api.Contracts.RestTimerDefaults.BetweenExercisesSeconds;
+    /// <summary>
+    /// Завершаемый серверный черновик; <c>null</c> — черновика на сервере нет.
+    /// Если он уже закрыт, завершение отклоняется: кто первым дошёл, тот и прав.
+    /// </summary>
+    public int? DraftTrainingPlanId { get; set; }
 }
 
 /// <summary>Итоги запланированной тренировки, пришедшие с телефона.</summary>
@@ -99,7 +104,8 @@ public enum FreeWorkoutCompletionFailure
     TemplateNameRequired,
     TemplateNameConflict,
     ExerciseDefinitionMissing,
-    CompletedAtOutOfRange
+    CompletedAtOutOfRange,
+    AlreadyCompleted
 }
 
 public sealed record FreeWorkoutCompletionResult(

@@ -484,7 +484,8 @@ public static class WorkoutLifecycleApiEndpoints
                 CompletedAt = request.CompletedAt,
                 RestBetweenExercisesSeconds = ClampRest(
                     request.RestBetweenExercisesSeconds,
-                    RestTimerDefaults.BetweenExercisesSeconds)
+                    RestTimerDefaults.BetweenExercisesSeconds),
+                DraftTrainingPlanId = request.DraftTrainingPlanId
             },
             cancellationToken);
         if (!result.Succeeded || result.History is null)
@@ -495,6 +496,14 @@ public static class WorkoutLifecycleApiEndpoints
                     nameof(request.CompletedAt),
                     ApiErrorCodes.WorkoutCompletedAtInvalid,
                     "The completion time is too far from now.");
+            }
+
+            if (result.Failure == FreeWorkoutCompletionFailure.AlreadyCompleted)
+            {
+                return ApiProblems.Problem(
+                    ApiErrorCodes.WorkoutAlreadyCompleted,
+                    "The free workout has already been completed.",
+                    StatusCodes.Status409Conflict);
             }
 
             if (result.Failure == FreeWorkoutCompletionFailure.TemplateNameConflict)

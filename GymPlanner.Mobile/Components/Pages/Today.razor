@@ -2216,10 +2216,25 @@
                     templateName,
                     _exercises.Select(x => x.ToRequest()).ToArray(),
                     Clock.GetLocalNow().DateTime,
-                    _restBetweenExercisesSeconds),
+                    _restBetweenExercisesSeconds,
+                    // Черновик, начатый без связи, сервер не знает.
+                    _freeDraftPlanId is { } draftId && !OfflineIds.IsLocal(draftId) ? draftId : null),
                 _disposeCts.Token);
             if (!result.Succeeded)
             {
+                // Черновик уже закрыт — часами или прошлым нажатием: тренировка
+                // есть в истории, и показывать её идущей больше нельзя.
+                if (result.Errors.Contains(ApiErrorMessages.Get(ApiErrorCodes.WorkoutAlreadyCompleted)))
+                {
+                    _showFreeTemplatePrompt = false;
+                    _showTemplateNamePrompt = false;
+                    SetBackInterceptor(null);
+                    await ForgetSessionAsync();
+                    await LoadAsync();
+                    _errors.AddRange(result.Errors);
+                    return;
+                }
+
                 _templateErrors.AddRange(result.Errors);
                 return;
             }

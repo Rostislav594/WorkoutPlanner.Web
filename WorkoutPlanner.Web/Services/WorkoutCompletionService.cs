@@ -356,6 +356,24 @@ public sealed class WorkoutCompletionService(
             : ServerTexts.Current["Server_FreeWorkout_Name"];
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(
+            cancellationToken);
+        var drafts = await db.TrainingPlans
+            .Where(x => x.UserId == userId && x.IsFreeDraft)
+            .ToListAsync(cancellationToken);
+        // Черновик уже закрыт — этим же запросом из очереди, с часов или вторым
+        // нажатием после сбоя. Транзакция SQLite открывается сразу на запись,
+        // так что параллельный повтор увидит черновик только после коммита первого.
+        if (workout.DraftTrainingPlanId is { } draftId && drafts.All(x => x.Id != draftId))
+        {
+            return new(
+                false,
+                FreeWorkoutCompletionFailure.AlreadyCompleted,
+                null,
+                null,
+                null);
+        }
+
         if (workout.SaveAsTemplate && await db.TrainingPlans.AnyAsync(
                 x => x.UserId == userId && x.WorkoutName == workoutName,
                 cancellationToken))
@@ -406,8 +424,6 @@ public sealed class WorkoutCompletionService(
         Models.TrainingPlan? plan = null;
         List<DataExercise> templateExercises = [];
 
-        await using var transaction = await db.Database.BeginTransactionAsync(
-            cancellationToken);
         if (workout.SaveAsTemplate)
         {
             plan = new Models.TrainingPlan
@@ -440,9 +456,6 @@ public sealed class WorkoutCompletionService(
         // Тренировка закончилась — черновик больше не активен и должен исчезнуть,
         // иначе и телефон, и часы продолжали бы показывать её как идущую.
         // Удаление идёт внутри той же транзакции, что и запись в историю.
-        var drafts = await db.TrainingPlans
-            .Where(x => x.UserId == userId && x.IsFreeDraft)
-            .ToListAsync(cancellationToken);
         if (drafts.Count > 0)
             db.TrainingPlans.RemoveRange(drafts);
 

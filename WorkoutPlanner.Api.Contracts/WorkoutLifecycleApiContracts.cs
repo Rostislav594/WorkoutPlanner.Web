@@ -19,12 +19,19 @@ public sealed record WorkoutHistoryExerciseApiResponse(
 /// Отдых между упражнениями, выставленный во время тренировки: попадает в
 /// шаблон, если тренировку сохраняют шаблоном. <c>null</c> — по умолчанию.
 /// </param>
+/// <param name="DraftTrainingPlanId">
+/// Серверный черновик, который завершается. Сервер примет только первое
+/// завершение черновика: повтор из офлайн-очереди получит 409, а не вторую
+/// запись в истории. <c>null</c> — тренировка начата без связи и черновика на
+/// сервере нет, или запрос от старой сборки.
+/// </param>
 public sealed record CompleteFreeWorkoutRequest(
     bool SaveAsTemplate,
     string? TemplateName,
     IReadOnlyList<SaveExerciseRequest> Exercises,
     DateTime? CompletedAt = null,
-    int? RestBetweenExercisesSeconds = null);
+    int? RestBetweenExercisesSeconds = null,
+    int? DraftTrainingPlanId = null);
 
 /// <summary>
 /// Завершение запланированной тренировки одним запросом: итоги подходов и сама
