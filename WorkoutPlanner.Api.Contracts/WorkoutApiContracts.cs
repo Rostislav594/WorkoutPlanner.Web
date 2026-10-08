@@ -17,7 +17,17 @@ public sealed record SaveExerciseRequest(string Name, int SetsCount, string Stat
 public sealed record ReorderSupersetRequest(IReadOnlyList<int> ExerciseIds);
 /// <param name="RestAfterSeconds">Отдых после подхода; <c>null</c> — не менять сохранённый.</param>
 public sealed record SaveExerciseSetRequest(int SetNumber, int Repetitions, double Weight, bool Completed, bool IsWarmup = false, int? RestAfterSeconds = null);
-public sealed record ExerciseDefinitionApiResponse(int Id, string Name);
+/// <param name="Name">Название на языке из Accept-Language.</param>
+/// <param name="BodyPart">
+/// Часть тела для разделов окна выбора: chest, back, shoulders, arms, core, legs,
+/// glutes или other. <c>null</c> — сервер старой версии, раздела нет.
+/// </param>
+/// <param name="MuscleName">Основная мышца на языке из Accept-Language.</param>
+public sealed record ExerciseDefinitionApiResponse(
+    int Id,
+    string Name,
+    string? BodyPart = null,
+    string? MuscleName = null);
 
 /// <summary>
 /// Таймеры отдыха шаблона: отдых между упражнениями по умолчанию, отдых

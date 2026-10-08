@@ -7,7 +7,12 @@ public class ExerciseDefinition
 {
     public int Id { get; set; }
 
+    /// <summary>Русское название: оно же ключ упражнения в каталоге библиотеки.</summary>
     public string Name { get; set; } = string.Empty;
+
+    public string NameUk { get; set; } = string.Empty;
+
+    public string NameEn { get; set; } = string.Empty;
 
     public string SearchName { get; set; } = string.Empty;
 
@@ -25,6 +30,9 @@ public class ExerciseDefinition
         set;
     }
       = [];
+
+    public string NameFor(string language) =>
+        LibraryNames.For(language, Name, NameUk, NameEn);
 
     public string NormalizedName =>
     Normalize(Name);

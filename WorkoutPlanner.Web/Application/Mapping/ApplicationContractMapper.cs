@@ -1,3 +1,4 @@
+using System.Globalization;
 using Contracts = WorkoutPlanner.Web.Application.Contracts;
 using Entities = WorkoutPlanner.Web.Models;
 
@@ -62,10 +63,15 @@ internal static class ApplicationContractMapper
     public static Contracts.ExerciseDefinition ToContract(
         this Entities.ExerciseDefinition source)
     {
+        // Культуру выставляет UseRequestLocalization по Accept-Language: так же,
+        // как ServerTexts.Current выбирает язык серверных сообщений.
+        var language = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
         return new Contracts.ExerciseDefinition
         {
             Id = source.Id,
-            Name = source.Name
+            Name = source.NameFor(language),
+            MuscleName = source.PrimaryMuscle?.NameFor(language),
+            BodyPart = source.PrimaryMuscle?.BodyPart
         };
     }
 

@@ -510,9 +510,7 @@ using (var scope = app.Services.CreateScope())
 
     db.Database.Migrate();
 
-    DbSeeder.Seed(db);
     ExerciseLibrarySeeder.Seed(db);
-    ExerciseSecondaryMuscleSeeder.Seed(db);
 
     LibraryValidator.Validate(db);
 

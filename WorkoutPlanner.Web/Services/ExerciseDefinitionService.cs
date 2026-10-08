@@ -22,10 +22,14 @@ public sealed class ExerciseDefinitionService : IExerciseDefinitionService
         await using var db = await _dbFactory.CreateDbContextAsync(cancellationToken);
         var definitions = await db.ExerciseDefinitions
             .AsNoTracking()
-            .OrderBy(x => x.Name)
+            .Include(x => x.PrimaryMuscle)
             .ToListAsync(cancellationToken);
 
-        return definitions.Select(x => x.ToContract()).ToList();
+        // Порядок — по названию на языке запроса, а не по русскому из базы.
+        return definitions
+            .Select(x => x.ToContract())
+            .OrderBy(x => x.Name, StringComparer.CurrentCulture)
+            .ToList();
     }
 
     public async Task<bool> ExistsAsync(

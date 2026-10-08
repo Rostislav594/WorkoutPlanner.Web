@@ -389,7 +389,11 @@ public static class WorkoutApiEndpoints
     {
         var definitions = await exerciseDefinitions.GetAllAsync(cancellationToken);
         return Results.Ok(definitions
-            .Select(x => new ExerciseDefinitionApiResponse(x.Id, x.Name))
+            .Select(x => new ExerciseDefinitionApiResponse(
+                x.Id,
+                x.Name,
+                x.BodyPart?.ToString().ToLowerInvariant(),
+                x.MuscleName))
             .ToList());
     }
 

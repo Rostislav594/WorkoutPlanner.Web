@@ -66,7 +66,11 @@ public sealed class ExerciseTemplateSet
 public sealed class ExerciseDefinition
 {
     public int Id { get; set; }
+    /// <summary>Название на языке текущего запроса.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>Основная мышца на языке текущего запроса; <c>null</c>, если мышца не загружена.</summary>
+    public string? MuscleName { get; set; }
+    public Models.MuscleBodyPart? BodyPart { get; set; }
 }
 
 public enum RestTimersUpdateResult

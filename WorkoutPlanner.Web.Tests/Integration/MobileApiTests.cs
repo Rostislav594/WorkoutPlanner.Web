@@ -245,6 +245,34 @@ public sealed class MobileApiTests
         Assert.Single(historyItems!, x => x.WorkoutName == plan.WorkoutName);
     }
 
+    [Theory]
+    [InlineData("ru", "Жим лёжа", "Грудные мышцы")]
+    [InlineData("uk", "Жим лежачи", "Грудні м'язи")]
+    [InlineData("en", "Barbell bench press", "Chest")]
+    public async Task ExerciseDefinitions_FollowAcceptLanguage_AndCarryBodyPart(
+        string language,
+        string benchName,
+        string chestName)
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register", new MobileRegisterRequest($"library-{language}@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(client, (await LoginAsync(client, $"library-{language}@example.test", "password1", "Phone")).AccessToken);
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/exercise-definitions");
+        request.Headers.AcceptLanguage.ParseAdd(language);
+        using var response = await client.SendAsync(request);
+        var definitions = await response.Content.ReadFromJsonAsync<List<ExerciseDefinitionApiResponse>>();
+
+        Assert.True(definitions!.Count >= 190);
+        var bench = Assert.Single(definitions, x => x.Name == benchName);
+        Assert.Equal("chest", bench.BodyPart);
+        Assert.Equal(chestName, bench.MuscleName);
+        Assert.All(definitions, x => Assert.NotNull(x.BodyPart));
+        Assert.Equal(definitions.Select(x => x.Name).Order(StringComparer.Create(new System.Globalization.CultureInfo(language), false)), definitions.Select(x => x.Name));
+    }
+
     [Fact]
     public async Task IdempotencyKey_PreventsDuplicateFreeWorkout_AndKeepsPhoneTime()
     {
