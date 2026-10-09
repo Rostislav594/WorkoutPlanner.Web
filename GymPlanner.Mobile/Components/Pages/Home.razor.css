@@ -211,7 +211,7 @@
 /* Блокнот непрозрачный: тёмный лист в линейку, приколотый к экрану двумя
    канцелярскими кнопками с пластиковыми шляпками. */
 .notepad-widget {
-    padding-top: 36px;
+    padding-top: 10px;
     border: 1px solid var(--color-border);
     background:
         linear-gradient(to bottom, rgba(255, 255, 255, .035), transparent 40%),
@@ -273,7 +273,15 @@
 .notepad-pin--right svg {
     transform: rotate(24deg);
 }
+
+/* Заголовок стоит в одной строке с кнопками, между ними. */
+.notepad-widget .widget-head {
+    min-height: 22px;
+    padding-inline: 26px;
+}
+
 .notepad-widget .widget-title {
+    justify-content: center;
     color: var(--color-text-muted);
     font-size: var(--text-caption);
     letter-spacing: .06em;
@@ -290,10 +298,14 @@
     white-space: nowrap;
 }
 
-/* Линейка рисуется тем же шагом, что и строки текста. */
+/* Линейка рисуется тем же шагом, что и строки текста. Текст занимает всё
+   свободное место листа и растворяется к нижнему краю: целиком заметка
+   открывается в блокноте. */
 .notepad-note-text {
     --ruled-line: 1.4em;
-    display: -webkit-box;
+    display: block;
+    flex: 1 1 0;
+    min-height: var(--ruled-line);
     overflow: hidden;
     color: var(--color-text);
     font-size: var(--text-label);
@@ -304,8 +316,8 @@
         to bottom,
         transparent 0 calc(var(--ruled-line) - 1px),
         rgba(255, 255, 255, .07) calc(var(--ruled-line) - 1px) var(--ruled-line));
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 5;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--ruled-line)), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--ruled-line)), transparent);
 }
 
 .notepad-note-text.is-empty {
@@ -351,7 +363,7 @@
     .home-layout { padding-inline: 8px; }
     .home-widgets { gap: var(--space-2); }
     .calendar-widget, .notepad-widget { padding: var(--space-3); }
-    .notepad-widget { padding-top: 36px; }
+    .notepad-widget { padding-top: 10px; }
     .calendar-widget-day { font-size: 2.2rem; }
 }
 
