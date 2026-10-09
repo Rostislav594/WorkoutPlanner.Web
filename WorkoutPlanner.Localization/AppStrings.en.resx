@@ -190,6 +190,33 @@
   <data name="Home_Notebook" xml:space="preserve">
     <value>Notebook</value>
   </data>
+  <data name="HomeCalendar_Today" xml:space="preserve">
+    <value>Workout scheduled for today</value>
+  </data>
+  <data name="HomeCalendar_TodayDone" xml:space="preserve">
+    <value>Today&apos;s workout is done</value>
+  </data>
+  <data name="HomeCalendar_Next" xml:space="preserve">
+    <value>Next workout: {0}</value>
+  </data>
+  <data name="HomeCalendar_Empty" xml:space="preserve">
+    <value>No workouts scheduled yet</value>
+  </data>
+  <data name="HomeCalendar_Unavailable" xml:space="preserve">
+    <value>Couldn&apos;t load workouts</value>
+  </data>
+  <data name="HomeCalendar_UnknownWorkout" xml:space="preserve">
+    <value>Workout</value>
+  </data>
+  <data name="HomeNotebook_Empty" xml:space="preserve">
+    <value>This note is empty</value>
+  </data>
+  <data name="Notebook_ShowOnHome" xml:space="preserve">
+    <value>Show on the home screen</value>
+  </data>
+  <data name="Notebook_OnHome" xml:space="preserve">
+    <value>Shown on the home screen</value>
+  </data>
   <data name="Progress_Title" xml:space="preserve">
     <value>Progress</value>
   </data>

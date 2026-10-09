@@ -1,17 +1,109 @@
 @page "/"
 @attribute [Authorize]
+@implements IDisposable
+@using System.Globalization
+@using GymPlanner.Mobile.Notes
+@inject IWorkoutApiClient ServerWorkoutClient
+@inject IWorkoutLifecycleApiClient ServerLifecycleClient
+@inject TutorialHost Tutorial
 @inject IAppText Text
 
 <section class="home-container" aria-label="@Text["Nav_Home"]">
     <div class="home-layout">
-        <nav class="desktop-shortcuts" aria-label="@Text["Home_Tools"]">
-            <a class="shortcut-tile" href="calendar" data-tour="home-calendar">
-                <span class="material-symbols-rounded shortcut-icon" aria-hidden="true">calendar_month</span>
-                <span class="shortcut-title">@Text["Home_Calendar"]</span>
+        <nav class="home-widgets" aria-label="@Text["Home_Tools"]">
+            <a class="calendar-widget" href="calendar" data-tour="home-calendar" aria-busy="@(_isLoading ? "true" : "false")">
+                <span class="widget-head">
+                    <span class="widget-title">@Text["Home_Calendar"]</span>
+                    <span class="material-symbols-rounded widget-chevron" aria-hidden="true">chevron_right</span>
+                </span>
+                <span class="calendar-widget-date">
+                    <span class="calendar-widget-day">@DateTime.Today.Day</span>
+                    <span class="calendar-widget-month">
+                        <span>@TitleCase(DateTime.Today.ToString("MMMM", UiCulture))</span>
+                        <span>@TitleCase(DateTime.Today.ToString("dddd", UiCulture))</span>
+                    </span>
+                </span>
+                <span class="calendar-widget-status">
+                    @if (_isLoading)
+                    {
+                        <span class="widget-skeleton"></span>
+                        <span class="widget-skeleton widget-skeleton--short"></span>
+                    }
+                    else if (_loadFailed)
+                    {
+                        <span class="calendar-widget-note">@Text["HomeCalendar_Unavailable"]</span>
+                    }
+                    else if (_todayWorkout is { } today)
+                    {
+                        <span class="calendar-widget-label @(today.IsCompleted ? "is-done" : null)">
+                            @if (today.IsCompleted)
+                            {
+                                <span class="material-symbols-rounded" aria-hidden="true">check_circle</span>
+                            }
+                            @(today.IsCompleted ? Text["HomeCalendar_TodayDone"] : Text["HomeCalendar_Today"])
+                        </span>
+                        <span class="calendar-widget-workout">@PlanName(today)</span>
+                    }
+                    else if (_nextWorkout is { } next)
+                    {
+                        <span class="calendar-widget-label">@Text.Format("HomeCalendar_Next", next.Date.ToString("d MMMM", UiCulture))</span>
+                        <span class="calendar-widget-workout">@PlanName(next)</span>
+                    }
+                    else
+                    {
+                        <span class="calendar-widget-note">@Text["HomeCalendar_Empty"]</span>
+                    }
+                </span>
             </a>
-            <a class="shortcut-tile" href="notebook">
-                <span class="material-symbols-rounded shortcut-icon" aria-hidden="true">note_stack</span>
-                <span class="shortcut-title">@Text["Home_Notebook"]</span>
+
+            <a class="notepad-widget" href="notebook">
+                <svg class="notepad-pin-defs" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="notepad-pin-body" x1="0" x2="1" y1="0" y2="0">
+                            <stop offset="0" stop-color="#174d22" />
+                            <stop offset=".3" style="stop-color: var(--color-success-hover)" />
+                            <stop offset=".5" style="stop-color: var(--color-success)" />
+                            <stop offset=".85" stop-color="#2a8a3b" />
+                            <stop offset="1" stop-color="#123f1b" />
+                        </linearGradient>
+                        <radialGradient id="notepad-pin-face" cx=".4" cy=".35" r=".75">
+                            <stop offset="0" stop-color="#d9f7e0" />
+                            <stop offset=".55" style="stop-color: var(--color-success-hover)" />
+                            <stop offset="1" stop-color="#2a8a3b" />
+                        </radialGradient>
+                        <linearGradient id="notepad-pin-needle" x1="0" x2="1" y1="0" y2="0">
+                            <stop offset="0" stop-color="#55555a" />
+                            <stop offset=".45" stop-color="#f0f0f3" />
+                            <stop offset="1" stop-color="#6e6e74" />
+                        </linearGradient>
+                    </defs>
+                    <symbol id="notepad-pin-shape" viewBox="0 0 24 25.5">
+                        <rect x="11.2" y="19" width="1.6" height="6.5" rx=".8" fill="url(#notepad-pin-needle)" />
+                        <path d="M4 17.5v1.6a8 2.6 0 0 0 16 0v-1.6z" fill="url(#notepad-pin-body)" />
+                        <ellipse cx="12" cy="17.5" rx="8" ry="2.6" fill="url(#notepad-pin-face)" />
+                        <path d="M8.2 7.5C8.2 11.5 9.4 13 9.4 17.5h5.2c0-4.5 1.2-6 1.2-10z" fill="url(#notepad-pin-body)" />
+                        <path d="M5 5v3a7 3 0 0 0 14 0V5z" fill="url(#notepad-pin-body)" />
+                        <ellipse cx="12" cy="5" rx="7" ry="3" fill="url(#notepad-pin-face)" />
+                    </symbol>
+                </svg>
+                <span class="notepad-pin notepad-pin--left" aria-hidden="true">
+                    <svg viewBox="0 0 24 25.5" focusable="false"><use href="#notepad-pin-shape" /></svg>
+                </span>
+                <span class="notepad-pin notepad-pin--right" aria-hidden="true">
+                    <svg viewBox="0 0 24 25.5" focusable="false"><use href="#notepad-pin-shape" /></svg>
+                </span>
+                <span class="widget-head">
+                    <span class="widget-title">@Text["Home_Notebook"]</span>
+                </span>
+                @if (_homeNote is { } note)
+                {
+                    <span class="notepad-note-name">@note.Name</span>
+                    <span class="notepad-note-text @(string.IsNullOrWhiteSpace(note.Content) ? "is-empty" : null)">@(string.IsNullOrWhiteSpace(note.Content) ? Text["HomeNotebook_Empty"] : note.Content.Trim())</span>
+                }
+                else
+                {
+                    <span class="notepad-note-text is-empty">@Text["HomeNotebook_Empty"]</span>
+                }
             </a>
         </nav>
         <div class="home-identity">
@@ -21,3 +113,77 @@
         </div>
     </div>
 </section>
+
+@code {
+    // Сервер принимает период не длиннее года.
+    private const int UpcomingDays = 365;
+    private readonly CancellationTokenSource _disposeCts = new();
+    private readonly Dictionary<int, string> _planNames = [];
+    private WorkoutDayApiResponse? _todayWorkout;
+    private WorkoutDayApiResponse? _nextWorkout;
+    private NotebookNote? _homeNote;
+    private bool _isLoading = true;
+    private bool _loadFailed;
+
+    // Во время обучения виджет, как и сам календарь, показывает демо-данные.
+    private IWorkoutApiClient WorkoutClient =>
+        (IWorkoutApiClient?)Tutorial.Backend ?? ServerWorkoutClient;
+
+    private IWorkoutLifecycleApiClient LifecycleClient =>
+        (IWorkoutLifecycleApiClient?)Tutorial.Backend ?? ServerLifecycleClient;
+
+    private CultureInfo UiCulture => CultureInfo.GetCultureInfo(Text.Language);
+
+    private string TitleCase(string value) => UiCulture.TextInfo.ToTitleCase(value);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _homeNote = NotebookStorage.FindHomeNote(NotebookStorage.Load());
+
+        var today = DateTime.Today;
+        try
+        {
+            var calendarTask = LifecycleClient.GetCalendarAsync(
+                today,
+                today.AddDays(UpcomingDays),
+                _disposeCts.Token);
+            var plansTask = WorkoutClient.GetPlansAsync(_disposeCts.Token);
+            await Task.WhenAll(calendarTask, plansTask);
+
+            var calendar = await calendarTask;
+            var plans = await plansTask;
+            if (!calendar.Succeeded || !plans.Succeeded)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            foreach (var plan in plans.Value!)
+                _planNames[plan.Id] = plan.WorkoutName;
+
+            _todayWorkout = calendar.Value!.FirstOrDefault(x => x.Date.Date == today);
+            _nextWorkout = calendar.Value!
+                .Where(x => x.Date.Date > today && !x.IsCompleted)
+                .OrderBy(x => x.Date)
+                .FirstOrDefault();
+        }
+        catch (OperationCanceledException) when (_disposeCts.IsCancellationRequested)
+        {
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string PlanName(WorkoutDayApiResponse day) =>
+        _planNames.TryGetValue(day.TrainingPlanId, out var name)
+            ? name
+            : Text["HomeCalendar_UnknownWorkout"];
+
+    public void Dispose()
+    {
+        _disposeCts.Cancel();
+        _disposeCts.Dispose();
+    }
+}

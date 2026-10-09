@@ -1,7 +1,7 @@
 @page "/notebook"
 @attribute [Authorize]
 @implements IDisposable
-@using System.Text.Json
+@using GymPlanner.Mobile.Notes
 @inject IAppText Text
 
 <section class="notebook-page" aria-labelledby="notebook-title">
@@ -29,7 +29,13 @@
                     @onpointerleave="CancelRenameHold"
                     @oncontextmenu="() => OpenRenameTab(tab.Id)"
                     @oncontextmenu:preventDefault="true"
-                    @onclick="() => SelectTab(tab.Id)">@tab.Name</button>
+                    @onclick="() => SelectTab(tab.Id)">
+                @if (tab.Id == _homeNoteId)
+                {
+                    <span class="material-symbols-rounded tab-home-mark" aria-hidden="true">push_pin</span>
+                }
+                @tab.Name
+            </button>
         }
         <button class="add-tab-button" type="button" @onclick="OpenNewTab" aria-label="@Text["Notebook_AddTab"]">
             <span class="material-symbols-rounded" aria-hidden="true">add</span>
@@ -91,6 +97,14 @@
             {
                 <p class="notebook-error" role="alert">@_renameError</p>
             }
+            @{ var isOnHome = _renameTabId == _homeNoteId; }
+            <button class="home-note-button @(isOnHome ? "is-on-home" : null)"
+                    type="button"
+                    aria-pressed="@(isOnHome ? "true" : "false")"
+                    @onclick="() => ShowOnHome(_renameTabId.Value)">
+                <span class="material-symbols-rounded" aria-hidden="true">@(isOnHome ? "check_circle" : "push_pin")</span>
+                @(isOnHome ? Text["Notebook_OnHome"] : Text["Notebook_ShowOnHome"])
+            </button>
             <div class="notebook-actions">
                 <button class="primary-button" type="button" @onclick="RenameTab">@Text["Common_Save"]</button>
             </div>
@@ -99,10 +113,10 @@
 }
 
 @code {
-    private const string StorageKey = "gymplanner.notebook.v1";
-    private readonly List<NoteTab> _tabs = [];
+    private readonly List<NotebookNote> _tabs = [];
     private readonly CancellationTokenSource _disposeCts = new();
     private Guid _activeId;
+    private Guid? _homeNoteId;
     private bool _showNewTab;
     private Guid? _renameTabId;
     private string _newTabName = string.Empty;
@@ -111,25 +125,25 @@
     private string? _renameError;
     private CancellationTokenSource? _renameHoldCts;
 
-    private NoteTab? ActiveTab => _tabs.FirstOrDefault(x => x.Id == _activeId);
+    private NotebookNote? ActiveTab => _tabs.FirstOrDefault(x => x.Id == _activeId);
 
     protected override void OnInitialized()
     {
-        try
-        {
-            var json = Preferences.Default.Get(StorageKey, string.Empty);
-            if (!string.IsNullOrWhiteSpace(json))
-                _tabs.AddRange(JsonSerializer.Deserialize<List<NoteTab>>(json) ?? []);
-        }
-        catch (JsonException)
-        {
-            Preferences.Default.Remove(StorageKey);
-        }
-
+        _tabs.AddRange(NotebookStorage.Load());
         if (_tabs.Count == 0)
-            _tabs.Add(new NoteTab(Guid.NewGuid(), Text["Notebook_DefaultTabName"], string.Empty));
+            _tabs.Add(new NotebookNote(Guid.NewGuid(), Text["Notebook_DefaultTabName"], string.Empty));
         _activeId = _tabs[0].Id;
+        RefreshHomeNote();
     }
+
+    // Заметку для главной выбирают в настройках вкладки (долгое нажатие на название).
+    private void ShowOnHome(Guid id)
+    {
+        NotebookStorage.SetHomeNote(id);
+        Save();
+    }
+
+    private void RefreshHomeNote() => _homeNoteId = NotebookStorage.FindHomeNote(_tabs)?.Id;
 
     private void SelectTab(Guid id) { Save(); _activeId = id; }
     private void OpenNewTab() { _newTabName = string.Empty; _error = null; _showNewTab = true; }
@@ -183,7 +197,7 @@
         var index = _tabs.FindIndex(x => x.Id == id);
         if (index < 0) { CloseRenameTab(); return; }
         var tab = _tabs[index];
-        _tabs[index] = new NoteTab(tab.Id, name, tab.Content);
+        _tabs[index] = new NotebookNote(tab.Id, name, tab.Content);
         Save();
         CloseRenameTab();
     }
@@ -193,7 +207,7 @@
         var name = _newTabName.Trim();
         if (string.IsNullOrWhiteSpace(name)) { _error = Text["Notebook_NameRequired"]; return; }
         if (_tabs.Any(x => string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase))) { _error = Text["Notebook_NameTaken"]; return; }
-        var tab = new NoteTab(Guid.NewGuid(), name, string.Empty);
+        var tab = new NotebookNote(Guid.NewGuid(), name, string.Empty);
         _tabs.Add(tab); _activeId = tab.Id; Save(); CloseNewTab();
     }
 
@@ -203,17 +217,18 @@
         _tabs.Remove(ActiveTab); _activeId = _tabs[0].Id; Save();
     }
 
-    private void Save() => Preferences.Default.Set(StorageKey, JsonSerializer.Serialize(_tabs));
+    // Удалённая заметка с главной уступает место первой вкладке, поэтому
+    // отметку пересчитываем при каждом сохранении.
+    private void Save()
+    {
+        NotebookStorage.Save(_tabs);
+        RefreshHomeNote();
+    }
 
     public void Dispose()
     {
         CancelRenameHold();
         _disposeCts.Cancel();
         _disposeCts.Dispose();
-    }
-
-    private sealed record NoteTab(Guid Id, string Name, string Content)
-    {
-        public string Content { get; set; } = Content;
     }
 }

@@ -190,6 +190,33 @@
   <data name="Home_Notebook" xml:space="preserve">
     <value>Нотатник</value>
   </data>
+  <data name="HomeCalendar_Today" xml:space="preserve">
+    <value>На сьогодні призначено тренування</value>
+  </data>
+  <data name="HomeCalendar_TodayDone" xml:space="preserve">
+    <value>Сьогоднішнє тренування виконано</value>
+  </data>
+  <data name="HomeCalendar_Next" xml:space="preserve">
+    <value>Найближче тренування — {0}</value>
+  </data>
+  <data name="HomeCalendar_Empty" xml:space="preserve">
+    <value>Тренування поки не призначені</value>
+  </data>
+  <data name="HomeCalendar_Unavailable" xml:space="preserve">
+    <value>Не вдалося завантажити тренування</value>
+  </data>
+  <data name="HomeCalendar_UnknownWorkout" xml:space="preserve">
+    <value>Тренування</value>
+  </data>
+  <data name="HomeNotebook_Empty" xml:space="preserve">
+    <value>Нотатка поки порожня</value>
+  </data>
+  <data name="Notebook_ShowOnHome" xml:space="preserve">
+    <value>Показувати на головній</value>
+  </data>
+  <data name="Notebook_OnHome" xml:space="preserve">
+    <value>Показується на головній</value>
+  </data>
   <data name="Progress_Title" xml:space="preserve">
     <value>Прогрес</value>
   </data>

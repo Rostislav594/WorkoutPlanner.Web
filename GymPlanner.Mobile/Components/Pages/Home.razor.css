@@ -10,48 +10,314 @@
     width: 100%;
     min-height: inherit;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 72px 12px 24px;
-}
-
-.desktop-shortcuts {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
-    gap: 10px;
-}
-
-.shortcut-tile {
-    width: 76px;
-    min-height: 72px;
-    display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    gap: var(--space-4);
+    padding: 4px 12px 24px;
+}
+
+/* Два виджета вверху: календарь шире, блокнот уже — как лист рядом с экраном. */
+.home-widgets {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 560px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--space-3);
+}
+
+.calendar-widget,
+.notepad-widget {
+    box-sizing: border-box;
+    position: relative;
+    min-width: 0;
+    min-height: 172px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-radius: var(--radius-xl);
     color: var(--color-text);
     text-decoration: none;
-    transition: background-color .18s ease, border-color .18s ease;
+    transition: border-color var(--transition-ui), transform var(--transition-ui);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.shortcut-tile:hover,
-.shortcut-tile:focus-visible,
-.shortcut-tile:active {
-    border-color: var(--color-accent);
-    background: var(--color-accent-soft);
+.calendar-widget:active,
+.notepad-widget:active {
+    transform: scale(.985);
+    border-color: var(--color-orange-border);
 }
 
-.shortcut-icon { font-size: 32px; }
-.shortcut-title { font-size: 12px; font-weight: 700; }
+.calendar-widget:focus-visible,
+.notepad-widget:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+}
+
+@media (hover: hover) {
+    .calendar-widget:hover,
+    .notepad-widget:hover {
+        border-color: color-mix(in srgb, var(--color-accent) 45%, transparent);
+    }
+}
+
+/* Календарь — матовое стекло, как плитки «Прогресса»: сквозь него видно зал. */
+.calendar-widget {
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    background:
+        radial-gradient(120% 90% at 0% 0%, rgba(255, 122, 26, .16), transparent 60%),
+        var(--glass-surface);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-card);
+}
+
+.widget-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+}
+
+.widget-title {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--space-2);
+    min-width: 0;
+    font-size: var(--text-card-title);
+    font-weight: 800;
+    letter-spacing: .01em;
+}
+
+.calendar-widget .widget-title::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    box-shadow: 0 0 10px var(--color-accent);
+}
+
+.widget-chevron {
+    margin-right: -4px;
+    color: var(--color-text-muted);
+    font-size: 1.4rem;
+}
+
+.calendar-widget-date {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.calendar-widget-day {
+    color: var(--color-accent);
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.calendar-widget-month {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--color-text-muted);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.calendar-widget-month > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.calendar-widget-month > span:first-child {
+    color: var(--color-text);
+    font-size: var(--text-label);
+}
+
+/* Высота сцены не зависит от состояния, чтобы виджет не прыгал после загрузки. */
+.calendar-widget-status {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 4px;
+    min-height: 62px;
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--glass-border);
+}
+
+.calendar-widget-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-muted);
+    font-size: var(--text-caption);
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.calendar-widget-label.is-done {
+    color: var(--color-success-text);
+}
+
+.calendar-widget-label .material-symbols-rounded {
+    font-size: 16px;
+}
+
+.calendar-widget-workout {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--text-body);
+    font-weight: 800;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.calendar-widget-note {
+    color: var(--color-text-muted);
+    font-size: var(--text-label);
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.widget-skeleton {
+    display: block;
+    height: 14px;
+    border-radius: 999px;
+    background: linear-gradient(100deg, rgba(255, 255, 255, .04) 30%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .04) 70%);
+    background-size: 220% 100%;
+    animation: widget-skeleton 1.3s linear infinite;
+}
+
+.widget-skeleton--short {
+    width: 60%;
+    height: 18px;
+}
+
+/* Блокнот непрозрачный: тёмный лист в линейку, приколотый к экрану двумя
+   канцелярскими кнопками с пластиковыми шляпками. */
+.notepad-widget {
+    padding-top: 36px;
+    border: 1px solid var(--color-border);
+    background:
+        linear-gradient(to bottom, rgba(255, 255, 255, .035), transparent 40%),
+        var(--color-surface);
+    box-shadow: var(--shadow-card);
+}
+
+/* Кнопки видны сбоку: шляпка, талия, бортик и кончик иглы, ушедшей в бумагу.
+   Обе наклонены наружу, тень падает на лист вправо-вниз. */
+.notepad-pin-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.notepad-pin {
+    position: absolute;
+    top: 3px;
+    width: 24px;
+    height: 25.5px;
+    filter: drop-shadow(3px 4px 2px rgba(0, 0, 0, .55));
+    pointer-events: none;
+}
+
+.notepad-pin svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 50% 100%;
+}
+
+/* Прокол в бумаге там, где игла входит в лист. */
+.notepad-pin::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    width: 5px;
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, .65);
+    transform: translateX(-50%);
+}
+
+.notepad-pin--left {
+    left: 6px;
+}
+
+.notepad-pin--left svg {
+    transform: rotate(-24deg);
+}
+
+.notepad-pin--right {
+    right: 6px;
+}
+
+.notepad-pin--right svg {
+    transform: rotate(24deg);
+}
+.notepad-widget .widget-title {
+    color: var(--color-text-muted);
+    font-size: var(--text-caption);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.notepad-note-name {
+    overflow: hidden;
+    color: var(--color-accent);
+    font-size: var(--text-label);
+    font-weight: 800;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Линейка рисуется тем же шагом, что и строки текста. */
+.notepad-note-text {
+    --ruled-line: 1.4em;
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--color-text);
+    font-size: var(--text-label);
+    line-height: var(--ruled-line);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0 calc(var(--ruled-line) - 1px),
+        rgba(255, 255, 255, .07) calc(var(--ruled-line) - 1px) var(--ruled-line));
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 5;
+}
+
+.notepad-note-text.is-empty {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
 
 .home-identity {
     position: relative;
     width: 100%;
-    height: min(42dvh, 360px);
+    flex: 0 0 auto;
+    height: min(28dvh, 230px);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -76,21 +342,28 @@
     to { opacity: 1; }
 }
 
+@keyframes widget-skeleton {
+    from { background-position: 110% 0; }
+    to { background-position: -110% 0; }
+}
+
 @media (max-width: 360px) {
-    .desktop-shortcuts { right: 0; gap: 2px; }
-    .shortcut-tile { width: 68px; }
-    .home-layout { padding-inline: 4px; }
+    .home-layout { padding-inline: 8px; }
+    .home-widgets { gap: var(--space-2); }
+    .calendar-widget, .notepad-widget { padding: var(--space-3); }
+    .notepad-widget { padding-top: 36px; }
+    .calendar-widget-day { font-size: 2.2rem; }
 }
 
 @media (orientation: landscape) {
-    .home-layout { padding-block: 12px 8px; }
-    .desktop-shortcuts { right: 72px; }
+    .home-layout { flex-direction: row; align-items: stretch; padding-block: 4px 8px; }
+    .home-widgets { flex: 0 0 auto; width: min(52vw, 480px); align-self: flex-start; }
     /* Reserve floor space under the identity for the wallpaper speaker. */
-    .home-identity { height: min(26dvh, 132px); }
-    .home-logo { width: min(calc((100vw - 64px) * 1.36), 86dvh); }
+    .home-identity { flex: 1 1 auto; height: min(26dvh, 132px); align-self: center; }
+    .home-logo { width: min(calc((48vw - 32px) * 1.36), 86dvh); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .home-logo { animation: none; }
-    .shortcut-tile { transition: none; }
+    .home-logo, .widget-skeleton { animation: none; }
+    .calendar-widget, .notepad-widget { transition: none; }
 }

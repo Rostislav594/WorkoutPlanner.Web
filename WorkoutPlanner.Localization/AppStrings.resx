@@ -198,6 +198,33 @@
   <data name="Home_Notebook" xml:space="preserve">
     <value>Блокнот</value>
   </data>
+  <data name="HomeCalendar_Today" xml:space="preserve">
+    <value>На сегодня назначена тренировка</value>
+  </data>
+  <data name="HomeCalendar_TodayDone" xml:space="preserve">
+    <value>Сегодняшняя тренировка выполнена</value>
+  </data>
+  <data name="HomeCalendar_Next" xml:space="preserve">
+    <value>Ближайшая тренировка — {0}</value>
+  </data>
+  <data name="HomeCalendar_Empty" xml:space="preserve">
+    <value>Тренировки пока не назначены</value>
+  </data>
+  <data name="HomeCalendar_Unavailable" xml:space="preserve">
+    <value>Не удалось загрузить тренировки</value>
+  </data>
+  <data name="HomeCalendar_UnknownWorkout" xml:space="preserve">
+    <value>Тренировка</value>
+  </data>
+  <data name="HomeNotebook_Empty" xml:space="preserve">
+    <value>Заметка пока пустая</value>
+  </data>
+  <data name="Notebook_ShowOnHome" xml:space="preserve">
+    <value>Показывать на главной</value>
+  </data>
+  <data name="Notebook_OnHome" xml:space="preserve">
+    <value>Показывается на главной</value>
+  </data>
   <data name="Progress_Title" xml:space="preserve">
     <value>Прогресс</value>
   </data>
