@@ -15,6 +15,7 @@ using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Support;
 
@@ -3807,6 +3808,180 @@ public sealed class MobileApiTests
             BaseAddress = new Uri("https://localhost"),
             AllowAutoRedirect = false
         });
+
+    [Fact]
+    public async Task AdminBlock_EndsPhoneSessionsAndStopsSignIn_UntilUnblocked()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var adminId = await RegisterAdminAsync(factory, client, "block-admin@example.test");
+        using (var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+                   new MobileRegisterRequest("blocked@example.test", "password1")))
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var tokens = await LoginAsync(client, "blocked@example.test", "password1", "Phone");
+        var userId = await FindUserIdAsync(factory, "blocked@example.test");
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.PushDeviceRegistrations.Add(new PushDeviceRegistration
+            {
+                Id = Guid.NewGuid(), UserId = userId, InstallationId = "phone-1", Platform = "android",
+                PushToken = "token-1", CreatedAtUtc = DateTime.UtcNow, UpdatedAtUtc = DateTime.UtcNow,
+                LastSeenAtUtc = DateTime.UtcNow, IsActive = true
+            });
+            await db.SaveChangesAsync();
+        }
+        SetBearer(client, tokens.AccessToken);
+        using (var before = await client.GetAsync("/api/v1/inbox/unread-count"))
+            Assert.Equal(HttpStatusCode.OK, before.StatusCode);
+
+        await AsAdminAsync(factory, adminId, users => users.BlockAsync(userId));
+
+        // Как и у отозванной сессии: токен ещё читается, но доступа по нему нет.
+        using (var after = await client.GetAsync("/api/v1/inbox/unread-count"))
+            Assert.False(after.IsSuccessStatusCode);
+        client.DefaultRequestHeaders.Authorization = null;
+        using (var refresh = await client.PostAsJsonAsync("/api/v1/auth/refresh", new MobileRefreshRequest(tokens.RefreshToken)))
+            Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+        using (var login = await client.PostAsJsonAsync("/api/v1/auth/login",
+                   new MobileLoginRequest("blocked@example.test", "password1", "Phone")))
+            Assert.Equal(HttpStatusCode.Unauthorized, login.StatusCode);
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            Assert.False(await db.PushDeviceRegistrations.AnyAsync(x => x.UserId == userId && x.IsActive));
+            Assert.Equal(
+                [AdminAuditActions.UserBlocked],
+                await db.AdminAuditLogs.Where(x => x.TargetId == userId).Select(x => x.Action).ToListAsync());
+            var detail = await scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>().FindByIdAsync(userId);
+            Assert.True(detail!.LockoutEnd > DateTimeOffset.UtcNow.AddYears(1000));
+        }
+
+        await AsAdminAsync(factory, adminId, users => users.UnblockAsync(userId));
+        await LoginAsync(client, "blocked@example.test", "password1", "Phone");
+    }
+
+    [Fact]
+    public async Task AdminSignOutEverywhere_EndsSessionsButKeepsSignInOpen()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var adminId = await RegisterAdminAsync(factory, client, "signout-admin@example.test");
+        using (var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+                   new MobileRegisterRequest("signout@example.test", "password1")))
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var first = await LoginAsync(client, "signout@example.test", "password1", "Phone");
+        var second = await LoginAsync(client, "signout@example.test", "password1", "Tablet");
+        var userId = await FindUserIdAsync(factory, "signout@example.test");
+
+        await AsAdminAsync(factory, adminId, users => users.SignOutEverywhereAsync(userId));
+
+        foreach (var tokens in new[] { first, second })
+        {
+            SetBearer(client, tokens.AccessToken);
+            using var response = await client.GetAsync("/api/v1/inbox/unread-count");
+            Assert.False(response.IsSuccessStatusCode);
+        }
+        client.DefaultRequestHeaders.Authorization = null;
+        using (var refresh = await client.PostAsJsonAsync("/api/v1/auth/refresh", new MobileRefreshRequest(second.RefreshToken)))
+            Assert.Equal(HttpStatusCode.Unauthorized, refresh.StatusCode);
+        await LoginAsync(client, "signout@example.test", "password1", "Phone");
+    }
+
+    [Fact]
+    public async Task AdminCannotBlockAnotherAdmin()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var adminId = await RegisterAdminAsync(factory, client, "first-admin@example.test");
+        var otherAdminId = await RegisterAdminAsync(factory, client, "second-admin@example.test");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            AsAdminAsync(factory, adminId, users => users.BlockAsync(otherAdminId)));
+        await LoginAsync(client, "second-admin@example.test", "password1", "Phone");
+    }
+
+    [Fact]
+    public async Task AdminMessage_ArrivesInUserInboxAsSystemMessage()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        var adminId = await RegisterAdminAsync(factory, client, "message-admin@example.test");
+        using (var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+                   new MobileRegisterRequest("message@example.test", "password1")))
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        var userId = await FindUserIdAsync(factory, "message@example.test");
+
+        await using (var scope = await AdminScopeAsync(factory, adminId))
+        {
+            var users = scope.ServiceProvider.GetRequiredService<IAdminUserService>();
+            Assert.NotNull(await users.SendMessageAsync(userId, new AdminUserMessage(" Привет ", " Личное сообщение ", SendPush: false)));
+            Assert.Null(await users.SendMessageAsync("missing-user", new AdminUserMessage("Т", "Т", SendPush: false)));
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                users.SendMessageAsync(userId, new AdminUserMessage(" ", "Текст", SendPush: false)));
+        }
+
+        var tokens = await LoginAsync(client, "message@example.test", "password1", "Phone");
+        SetBearer(client, tokens.AccessToken);
+        var inbox = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        var message = Assert.Single(inbox!.Messages);
+        Assert.Equal("System", message.Type);
+        Assert.Equal("Привет", message.Title);
+        Assert.Equal("Личное сообщение", message.Body);
+        Assert.Equal(1, inbox.UnreadCount);
+    }
+
+    private static async Task<string> RegisterAdminAsync(
+        GymPlannerApiFactory factory,
+        HttpClient client,
+        string email)
+    {
+        using (var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+                   new MobileRegisterRequest(email, "password1")))
+            Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        if (!await roles.RoleExistsAsync(ApplicationRoles.Admin))
+            Assert.True((await roles.CreateAsync(new IdentityRole(ApplicationRoles.Admin))).Succeeded);
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+        var admin = await users.FindByEmailAsync(email);
+        Assert.NotNull(admin);
+        Assert.True((await users.AddToRoleAsync(admin, ApplicationRoles.Admin)).Succeeded);
+        return admin.Id;
+    }
+
+    private static async Task<string> FindUserIdAsync(GymPlannerApiFactory factory, string email)
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var user = await scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>().FindByEmailAsync(email);
+        Assert.NotNull(user);
+        return user.Id;
+    }
+
+    /// <summary>Область, в которой админка видит вошедшего администратора, как в Blazor.</summary>
+    private static async Task<AsyncServiceScope> AdminScopeAsync(GymPlannerApiFactory factory, string adminId)
+    {
+        var scope = factory.Services.CreateAsyncScope();
+        var principal = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+            [new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, adminId)],
+            "Test"));
+        var authentication = scope.ServiceProvider
+            .GetRequiredService<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider>();
+        ((Microsoft.AspNetCore.Components.Authorization.IHostEnvironmentAuthenticationStateProvider)authentication)
+            .SetAuthenticationState(Task.FromResult(
+                new Microsoft.AspNetCore.Components.Authorization.AuthenticationState(principal)));
+        await Task.CompletedTask;
+        return scope;
+    }
+
+    private static async Task AsAdminAsync(
+        GymPlannerApiFactory factory,
+        string adminId,
+        Func<IAdminUserService, Task<bool>> action)
+    {
+        await using var scope = await AdminScopeAsync(factory, adminId);
+        Assert.True(await action(scope.ServiceProvider.GetRequiredService<IAdminUserService>()));
+    }
 
     private static async Task<MobileTokenResponse> LoginAsync(
         HttpClient client,

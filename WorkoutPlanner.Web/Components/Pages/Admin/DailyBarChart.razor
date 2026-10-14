@@ -1,0 +1,57 @@
+@using System.Globalization
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAppText Text
+
+@* Столбики по дням без библиотеки графиков: высота столбика — доля от самого большого дня. *@
+<article class="daily-chart daily-chart--@Tone">
+    <header class="daily-chart__heading">
+        <h3>@Title</h3>
+        @if (ShowToday)
+        {
+            <strong><small>@Text["Admin_Chart_Today"]</small> @Today</strong>
+        }
+        else
+        {
+            <strong>@Total</strong>
+        }
+    </header>
+    <div class="daily-chart__stage">
+        <div class="daily-chart__bars" role="img" aria-label="@(ShowToday ? Text.Format("Admin_Chart_AriaToday", Title, Today, Max) : Text.Format("Admin_Chart_Aria", Title, Total))">
+            @foreach (var day in Days)
+            {
+                <span class="daily-chart__bar @(day.Count == 0 ? "daily-chart__bar--empty" : null)"
+                      style="--value: @Ratio(day.Count)"
+                      title="@($"{day.Date:dd.MM} — {day.Count}")"></span>
+            }
+        </div>
+    </div>
+    @if (Days.Count > 0)
+    {
+        <div class="daily-chart__axis" aria-hidden="true">
+            <span>@Days[0].Date.ToString("dd.MM")</span>
+            <span>@Days[^1].Date.ToString("dd.MM")</span>
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public IReadOnlyList<AdminDailyCount> Days { get; set; } = [];
+
+    /// <summary>Цвет столбиков: users — оранжевый, activity — зелёный.</summary>
+    [Parameter] public string Tone { get; set; } = "users";
+
+    /// <summary>
+    /// В углу — число за сегодня вместо суммы. Для активности сумма бессмысленна:
+    /// один человек, заходивший каждый день, дал бы 30.
+    /// </summary>
+    [Parameter] public bool ShowToday { get; set; }
+
+    private int Total => Days.Sum(day => day.Count);
+    private int Today => Days.Count == 0 ? 0 : Days[^1].Count;
+    private int Max => Days.Count == 0 ? 0 : Days.Max(day => day.Count);
+
+    // Значение уходит в CSS, поэтому только с точкой, а не с русской запятой.
+    private string Ratio(int count) =>
+        (Max == 0 ? 0d : (double)count / Max).ToString("0.###", CultureInfo.InvariantCulture);
+}

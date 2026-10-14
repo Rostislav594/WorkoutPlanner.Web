@@ -52,7 +52,7 @@ public sealed class AdminAttentionService(
         return new AdminAttentionSnapshot(newUsers, unseenTickets);
     }
 
-    public async Task MarkViewedAsync(
+    public async Task<DateTime?> MarkViewedAsync(
         AdminSection section,
         CancellationToken cancellationToken = default)
     {
@@ -63,6 +63,7 @@ public sealed class AdminAttentionService(
         var view = await db.AdminSectionViews.FirstOrDefaultAsync(
             x => x.AdminUserId == adminUserId && x.Section == section,
             cancellationToken);
+        var previous = view?.LastViewedAtUtc;
         if (view is null)
         {
             db.AdminSectionViews.Add(new AdminSectionView
@@ -79,6 +80,7 @@ public sealed class AdminAttentionService(
 
         await db.SaveChangesAsync(cancellationToken);
         Changed?.Invoke();
+        return previous;
     }
 
     private async Task<string> GetAdminUserIdAsync()

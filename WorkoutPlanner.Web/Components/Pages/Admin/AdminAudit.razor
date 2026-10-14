@@ -1,0 +1,98 @@
+@page "/admin/audit"
+@rendermode InteractiveServer
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@inject IAdminAuditService Audit
+@inject IAppText Text
+@inject ILogger<AdminAudit> Logger
+
+<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_Audit_Title"])</PageTitle>
+
+<div class="admin-page">
+    <AdminPageHeader Title="@Text["Admin_Audit_Title"]" />
+
+    @if (_isLoading)
+    {
+        <section class="admin-state" role="status"><h2>@Text["Admin_Audit_Loading"]</h2></section>
+    }
+    else if (_error is not null)
+    {
+        <section class="admin-state" role="alert"><h2>@Text["Admin_Audit_Unavailable"]</h2><button class="admin-button admin-button--secondary" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button></section>
+    }
+    else if (_result is null || _result.Items.Count == 0)
+    {
+        <section class="admin-state"><span class="material-symbols-rounded" aria-hidden="true">history</span><h2>@Text["Admin_Audit_Empty"]</h2></section>
+    }
+    else
+    {
+        <div class="admin-table-wrap audit-table">
+            <table class="admin-table">
+                <thead><tr><th>@Text["Admin_Audit_When"]</th><th>@Text["Admin_Audit_Who"]</th><th>@Text["Admin_Audit_Action"]</th><th>@Text["Admin_Audit_Target"]</th></tr></thead>
+                <tbody>
+                    @foreach (var item in _result.Items)
+                    {
+                        <tr>
+                            <td class="audit-table__time"><time datetime="@item.CreatedAtUtc.ToString("O")">@item.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time></td>
+                            <td>@(string.IsNullOrEmpty(item.AdminEmail) ? Text["Admin_NoData"] : item.AdminEmail)</td>
+                            <td><span class="audit-action">@ActionLabel(item.Action)</span></td>
+                            <td>
+                                @if (item.TargetUrl is not null)
+                                {
+                                    <a href="@item.TargetUrl"><span class="admin-table__primary">@item.TargetLabel</span><span class="admin-table__secondary">@TargetTypeLabel(item.TargetType)</span></a>
+                                }
+                                else
+                                {
+                                    <span class="admin-table__primary audit-table__gone">@Text.Format("Admin_Audit_TargetGone", item.TargetId)</span><span class="admin-table__secondary">@TargetTypeLabel(item.TargetType)</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="admin-pagination">
+            <span>@Text.Format("Admin_TotalPage", _result.TotalCount, _result.Page, TotalPages)</span>
+            <div class="admin-pagination__buttons">
+                <button class="admin-button admin-button--secondary" type="button" disabled="@(_page <= 1)" @onclick="PreviousAsync">@Text["Common_Back"]</button>
+                <button class="admin-button admin-button--secondary" type="button" disabled="@(_page >= TotalPages)" @onclick="NextAsync">@Text["Admin_Next"]</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private const int PageSize = 50;
+    private AdminPagedResult<AdminAuditItem>? _result;
+    private string? _error;
+    private int _page = 1;
+    private bool _isLoading = true;
+    private int TotalPages => _result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task PreviousAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
+    private async Task NextAsync() { if (_page < TotalPages) { _page++; await LoadAsync(); } }
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true; _error = null;
+        try { _result = await Audit.GetPageAsync(_page, PageSize); }
+        catch (Exception exception) { Logger.LogWarning(exception, "Admin audit log could not be loaded."); _error = Text["Admin_Audit_Unavailable"]; }
+        finally { _isLoading = false; }
+    }
+
+    // Незнакомое действие (например, из будущей версии) показываем как есть.
+    private string ActionLabel(string action)
+    {
+        var label = Text[$"Admin_AuditAction_{action}"];
+        return label == $"Admin_AuditAction_{action}" ? action : label;
+    }
+
+    private string TargetTypeLabel(string type) => type switch
+    {
+        "SupportTicket" => Text["Admin_Audit_TargetTicket"],
+        "InboxPublication" => Text["Admin_Audit_TargetPublication"],
+        "User" => Text["Admin_Audit_TargetUser"],
+        _ => type
+    };
+}

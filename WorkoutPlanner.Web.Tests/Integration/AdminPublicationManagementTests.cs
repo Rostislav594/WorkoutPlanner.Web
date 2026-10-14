@@ -135,6 +135,70 @@ public sealed class AdminPublicationManagementTests
         Assert.Null(sent["Без push"]);
     }
 
+    [Fact]
+    public async Task TestPush_GoesOnlyToTheAdminsDevices_AndAudienceCountsEligibleDevices()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await CreateAdminAsync(app);
+        var reader = await app.CreateUserAsync("test-push-reader");
+        var latecomer = await app.CreateUserAsync("test-push-latecomer");
+        var now = DateTime.UtcNow;
+        long publishedId, scheduledId;
+        await using (var seed = app.CreateScope())
+        {
+            var db = seed.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.UserActivities.Add(new UserActivity { UserId = reader.Id, RegisteredAtUtc = now.AddDays(-10) });
+            db.UserActivities.Add(new UserActivity { UserId = latecomer.Id, RegisteredAtUtc = now.AddMinutes(-1) });
+            db.PushDeviceRegistrations.Add(Device(reader.Id));
+            db.PushDeviceRegistrations.Add(Device(latecomer.Id));
+            var published = Publication("Вышла", now.AddMinutes(-5), sendPush: false);
+            var scheduled = Publication("Завтра", now.AddDays(1), sendPush: false);
+            db.InboxPublications.AddRange(published, scheduled);
+            await db.SaveChangesAsync();
+            publishedId = published.Id;
+            scheduledId = scheduled.Id;
+        }
+
+        var pushes = app.Services.GetRequiredService<TestApplication.RecordingRemotePushProvider>();
+        await using (var scope = app.CreateScope())
+        {
+            var publications = scope.ServiceProvider.GetRequiredService<IAdminPublicationService>();
+            // Публикацию часовой давности видит только читатель; новая видна обоим.
+            Assert.Equal(1, await publications.CountPushDevicesAsync(now.AddMinutes(-5)));
+            Assert.Equal(2, await publications.CountPushDevicesAsync(now.AddMinutes(1)));
+
+            // У админа нет устройств — никому ничего не уходит.
+            Assert.Equal(0, await publications.SendTestPushAsync(publishedId));
+            Assert.Null(await publications.SendTestPushAsync(scheduledId));
+            Assert.Null(await publications.SendTestPushAsync(999_999));
+            Assert.Empty(pushes.Messages);
+        }
+
+        await using (var seed = app.CreateScope())
+        {
+            var db = seed.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.PushDeviceRegistrations.Add(Device(admin.Id));
+            await db.SaveChangesAsync();
+        }
+
+        await using (var scope = app.CreateScope())
+        {
+            var publications = scope.ServiceProvider.GetRequiredService<IAdminPublicationService>();
+            Assert.Equal(1, await publications.SendTestPushAsync(publishedId));
+        }
+
+        var push = Assert.Single(pushes.Messages);
+        Assert.Equal(admin.Id, push.UserId);
+        Assert.Equal("Вышла", push.Title);
+        Assert.Equal("publication", push.Data[PushNotificationPayloadKeys.Type]);
+        Assert.Equal(publishedId.ToString(), push.Data[PushNotificationPayloadKeys.InboxMessageId]);
+
+        // Тест не считается рассылкой: массовый push по-прежнему не отмечен.
+        await using var assertScope = app.CreateScope();
+        var assertDb = assertScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        Assert.Null((await assertDb.InboxPublications.AsNoTracking().SingleAsync(x => x.Id == publishedId)).PushSentAtUtc);
+    }
+
     private static InboxPublication Publication(string title, DateTime publishedAtUtc, bool sendPush) => new()
     {
         Type = InboxMessageType.News,

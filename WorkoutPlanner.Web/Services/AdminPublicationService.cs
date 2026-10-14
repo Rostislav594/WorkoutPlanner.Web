@@ -7,6 +7,7 @@ using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Localization;
+using WorkoutPlanner.Web.Services.Push;
 
 namespace WorkoutPlanner.Web.Services;
 
@@ -15,6 +16,7 @@ public sealed class AdminPublicationService(
     CurrentUserService currentUser,
     UserManager<IdentityUser> userManager,
     IInboxPublicationImageStorage imageStorage,
+    IRemotePushProvider pushProvider,
     TimeProvider timeProvider) : IAdminPublicationService
 {
     public async Task<AdminPublicationItem> CreateAsync(AdminPublicationDraft draft, CancellationToken cancellationToken = default)
@@ -148,6 +150,31 @@ public sealed class AdminPublicationService(
             await imageStorage.DeleteAsync(entity.ImagePath, cancellationToken);
 
         return true;
+    }
+
+    public async Task<int> CountPushDevicesAsync(DateTime publishedAtUtc, CancellationToken cancellationToken = default)
+    {
+        await GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var publishedAt = DateTime.SpecifyKind(publishedAtUtc, DateTimeKind.Utc);
+        return await PublicationPushDispatcher.RecipientDevices(db, publishedAt).CountAsync(cancellationToken);
+    }
+
+    public async Task<int?> SendTestPushAsync(long id, CancellationToken cancellationToken = default)
+    {
+        var adminUserId = await GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var publication = await db.InboxPublications.AsNoTracking()
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        // Пока публикация не вышла, телефон не откроет её по нажатию.
+        if (publication is null || publication.PublishedAtUtc > timeProvider.GetUtcNow().UtcDateTime)
+            return null;
+
+        var devices = await db.PushDeviceRegistrations
+            .CountAsync(x => x.UserId == adminUserId && x.IsActive, cancellationToken);
+        if (devices > 0)
+            await pushProvider.SendAsync(PublicationPushDispatcher.CreateMessage(adminUserId, publication), cancellationToken);
+        return devices;
     }
 
     /// <summary>

@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Activity;
+using WorkoutPlanner.Web.Services.Auth;
 
 namespace WorkoutPlanner.Web.Services.Admin;
 
@@ -12,8 +15,11 @@ public sealed class AdminUserService(
     IDbContextFactory<WorkoutDbContext> dbFactory,
     AdminAccessVerifier access,
     IOptions<UserActivityOptions> activityOptions,
-    TimeProvider timeProvider) : IAdminUserService
+    TimeProvider timeProvider,
+    IPushNotificationService pushNotifications,
+    ILogger<AdminUserService> logger) : IAdminUserService
 {
+    private const int RecentTicketCount = 10;
     private readonly UserActivityOptions _activityOptions = activityOptions.Value;
 
     public async Task<AdminPagedResult<AdminUserListItem>> GetPageAsync(
@@ -49,7 +55,8 @@ public sealed class AdminUserService(
             .Take(pageSize)
             .Select(user => new IdentityRow(
                 user.Id,
-                user.Email ?? user.UserName ?? string.Empty))
+                user.Email ?? user.UserName ?? string.Empty,
+                user.LockoutEnd))
             .ToListAsync(cancellationToken);
         if (identityRows.Count == 0)
             return new AdminPagedResult<AdminUserListItem>([], page, pageSize, total);
@@ -88,7 +95,8 @@ public sealed class AdminUserService(
                 activity?.Platform,
                 activity?.AppVersion,
                 workoutCounts.GetValueOrDefault(identity.UserId),
-                ticketCounts.GetValueOrDefault(identity.UserId));
+                ticketCounts.GetValueOrDefault(identity.UserId),
+                IsBlocked(identity.LockoutEnd));
         }).ToArray();
 
         return new AdminPagedResult<AdminUserListItem>(items, page, pageSize, total);
@@ -131,6 +139,13 @@ public sealed class AdminUserService(
                  x.RevokedAtUtc == null &&
                  x.ExpiresAtUtc > now,
             cancellationToken);
+        var isAdmin = await IsAdminAsync(db, userId, cancellationToken);
+        var tickets = await db.SupportTickets.AsNoTracking()
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.UpdatedAtUtc)
+            .Take(RecentTicketCount)
+            .Select(x => new { x.Id, x.TicketNumber, x.Message, x.UpdatedAtUtc, x.Status })
+            .ToListAsync(cancellationToken);
 
         return new AdminUserDetail(
             identity.UserId,
@@ -146,8 +161,173 @@ public sealed class AdminUserService(
             workoutCount,
             ticketCount,
             sessionCount,
-            identity.LockoutEnd);
+            identity.LockoutEnd,
+            IsBlocked(identity.LockoutEnd),
+            isAdmin,
+            tickets.Select(x => new AdminUserTicketItem(
+                x.Id,
+                x.TicketNumber ?? x.Id.ToString(),
+                CreatePreview(x.Message, 120),
+                x.UpdatedAtUtc,
+                x.Status)).ToArray());
     }
+
+    public async Task<bool> BlockAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var adminUserId = await access.GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        if (user is null)
+            return false;
+        if (await IsAdminAsync(db, userId, cancellationToken))
+            throw new InvalidOperationException("Administrators cannot be blocked.");
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        user.LockoutEnabled = true;
+        user.LockoutEnd = DateTimeOffset.MaxValue;
+        await EndAllSessionsAsync(db, user, cancellationToken);
+        AddAudit(db, adminUserId, AdminAuditActions.UserBlocked, userId);
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> UnblockAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var adminUserId = await access.GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        if (user is null)
+            return false;
+
+        user.LockoutEnd = null;
+        user.AccessFailedCount = 0;
+        user.ConcurrencyStamp = Guid.NewGuid().ToString();
+        AddAudit(db, adminUserId, AdminAuditActions.UserUnblocked, userId);
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> SignOutEverywhereAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var adminUserId = await access.GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        if (user is null)
+            return false;
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await EndAllSessionsAsync(db, user, cancellationToken);
+        AddAudit(db, adminUserId, AdminAuditActions.UserSignedOutEverywhere, userId);
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<long?> SendMessageAsync(
+        string userId,
+        AdminUserMessage message,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        var title = message.Title.Trim();
+        var body = message.Body.Trim();
+        if (title.Length is 0 or > 160)
+            throw new InvalidDataException("Message title must contain between 1 and 160 characters.");
+        if (body.Length is 0 or > 8000)
+            throw new InvalidDataException("Message must contain between 1 and 8000 characters.");
+
+        var adminUserId = await access.GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        if (!await db.Users.AnyAsync(x => x.Id == userId, cancellationToken))
+            return null;
+
+        var inboxMessage = new InboxMessage
+        {
+            UserId = userId,
+            Type = InboxMessageType.System,
+            Title = title,
+            Preview = CreatePreview(body, 180),
+            Body = body,
+            CreatedAtUtc = timeProvider.GetUtcNow().UtcDateTime
+        };
+        db.InboxMessages.Add(inboxMessage);
+        AddAudit(db, adminUserId, AdminAuditActions.UserMessageSent, userId);
+        await db.SaveChangesAsync(cancellationToken);
+
+        if (message.SendPush)
+        {
+            try
+            {
+                await pushNotifications.NotifyInboxMessageAsync(
+                    userId,
+                    PushNotificationType.InboxMessage,
+                    inboxMessage.Id,
+                    cancellationToken);
+            }
+            catch (Exception exception)
+            {
+                // Сообщение уже во «Входящих»; без push пользователь увидит его, когда откроет приложение.
+                logger.LogWarning(
+                    exception,
+                    "Could not send push for admin message {InboxMessageId}.",
+                    inboxMessage.Id);
+            }
+        }
+
+        return inboxMessage.Id;
+    }
+
+    /// <summary>
+    /// Новая метка безопасности обнуляет уже выданные токены телефона и часов,
+    /// а отозванные сессии и устройства не дают их обновить.
+    /// </summary>
+    private async Task EndAllSessionsAsync(
+        WorkoutDbContext db,
+        IdentityUser user,
+        CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        user.SecurityStamp = Guid.NewGuid().ToString("N").ToUpperInvariant();
+        user.ConcurrencyStamp = Guid.NewGuid().ToString();
+        await db.MobileSessions
+            .Where(x => x.UserId == user.Id && x.RevokedAtUtc == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAtUtc, now), cancellationToken);
+        await db.WatchDevices
+            .Where(x => x.UserId == user.Id && x.RevokedAtUtc == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.RevokedAtUtc, now), cancellationToken);
+        await db.PushDeviceRegistrations
+            .Where(x => x.UserId == user.Id && x.IsActive)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.IsActive, false).SetProperty(x => x.UpdatedAtUtc, now),
+                cancellationToken);
+    }
+
+    private void AddAudit(WorkoutDbContext db, string adminUserId, string action, string userId) =>
+        db.AdminAuditLogs.Add(new AdminAuditLog
+        {
+            AdminUserId = adminUserId,
+            Action = action,
+            TargetType = AdminAuditTargets.User,
+            TargetId = userId,
+            CreatedAtUtc = timeProvider.GetUtcNow().UtcDateTime
+        });
+
+    private static Task<bool> IsAdminAsync(
+        WorkoutDbContext db,
+        string userId,
+        CancellationToken cancellationToken) =>
+        db.UserRoles.AnyAsync(
+            link => link.UserId == userId &&
+                    db.Roles.Any(role => role.Id == link.RoleId && role.Name == ApplicationRoles.Admin),
+            cancellationToken);
+
+    // Блокировка из админки бессрочная; временная — после неверных паролей — сюда не входит.
+    private static bool IsBlocked(DateTimeOffset? lockoutEnd) =>
+        lockoutEnd is { } end && end.Year >= 9999;
+
+    private static string CreatePreview(string text, int length) =>
+        text.Length <= length ? text : $"{text[..(length - 1)]}…";
 
     private AdminUserActivityStatus GetActivityStatus(DateTime? lastSeenAtUtc, DateTime now)
     {
@@ -171,7 +351,7 @@ public sealed class AdminUserService(
         return string.IsNullOrWhiteSpace(name) ? fallback : name;
     }
 
-    private sealed record IdentityRow(string UserId, string Email);
+    private sealed record IdentityRow(string UserId, string Email, DateTimeOffset? LockoutEnd);
     private sealed record IdentityDetailRow(
         string UserId,
         string Email,

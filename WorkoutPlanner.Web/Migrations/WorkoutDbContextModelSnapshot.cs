@@ -1018,6 +1018,22 @@ namespace WorkoutPlanner.Web.Migrations
                     b.ToTable("UserActivities");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.UserActivityDay", b =>
+                {
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Day", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserActivityDays");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.UserProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -1598,6 +1614,15 @@ namespace WorkoutPlanner.Web.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithOne()
                         .HasForeignKey("WorkoutPlanner.Web.Models.UserActivity", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.UserActivityDay", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

@@ -17,6 +17,23 @@ public interface IAdminUserService
     Task<AdminUserDetail?> GetAsync(
         string userId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Блокирует вход и сразу выкидывает пользователя со всех устройств.
+    /// Администратора заблокировать нельзя. Возвращает false, если пользователя нет.
+    /// </summary>
+    Task<bool> BlockAsync(string userId, CancellationToken cancellationToken = default);
+
+    Task<bool> UnblockAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>Завершает все сессии телефона и часов и отключает их push.</summary>
+    Task<bool> SignOutEverywhereAsync(string userId, CancellationToken cancellationToken = default);
+
+    /// <summary>Кладёт личное сообщение во «Входящие». Возвращает его номер или null.</summary>
+    Task<long?> SendMessageAsync(
+        string userId,
+        AdminUserMessage message,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IAdminSupportService
@@ -55,5 +72,18 @@ public interface IAdminAttentionService
 
     Task<AdminAttentionSnapshot> GetAsync(CancellationToken cancellationToken = default);
 
-    Task MarkViewedAsync(AdminSection section, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Отмечает раздел просмотренным. Возвращает время прошлого захода, чтобы
+    /// страница могла пометить то, что появилось с тех пор.
+    /// </summary>
+    Task<DateTime?> MarkViewedAsync(AdminSection section, CancellationToken cancellationToken = default);
+}
+
+/// <summary>Журнал действий админки: что, кто и когда сделал.</summary>
+public interface IAdminAuditService
+{
+    Task<AdminPagedResult<AdminAuditItem>> GetPageAsync(
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
 }

@@ -12,15 +12,13 @@ public enum AdminUserActivityStatus
 
 public sealed record AdminDashboardSnapshot(
     long TotalUsers,
-    long NewUsers24Hours,
-    long NewUsers7Days,
-    long NewUsers30Days,
-    long ActiveUsers24Hours,
-    long ActiveUsers7Days,
-    long ActiveUsers30Days,
-    long InactiveUsersOver30Days,
     long OpenSupportTickets,
-    long NewSupportTickets);
+    long NewSupportTickets,
+    IReadOnlyList<AdminDailyCount> Registrations,
+    IReadOnlyList<AdminDailyCount> ActiveUsers);
+
+/// <summary>Значение за один день (по местному времени сервера).</summary>
+public sealed record AdminDailyCount(DateOnly Date, int Count);
 
 public sealed record AdminPagedResult<T>(
     IReadOnlyList<T> Items,
@@ -40,7 +38,8 @@ public sealed record AdminUserListItem(
     string? Platform,
     string? AppVersion,
     long WorkoutCount,
-    long SupportTicketCount);
+    long SupportTicketCount,
+    bool IsBlocked = false);
 
 public sealed record AdminUserDetail(
     string UserId,
@@ -56,7 +55,21 @@ public sealed record AdminUserDetail(
     long WorkoutCount,
     long SupportTicketCount,
     long ActiveMobileSessionCount,
-    DateTimeOffset? LockoutEnd);
+    DateTimeOffset? LockoutEnd,
+    bool IsBlocked,
+    bool IsAdmin,
+    IReadOnlyList<AdminUserTicketItem> RecentTickets);
+
+/// <summary>Обращение пользователя в его карточке.</summary>
+public sealed record AdminUserTicketItem(
+    long Id,
+    string TicketNumber,
+    string Preview,
+    DateTime UpdatedAtUtc,
+    SupportTicketStatus Status);
+
+/// <summary>Личное сообщение пользователю во «Входящие».</summary>
+public sealed record AdminUserMessage(string Title, string Body, bool SendPush = true);
 
 public sealed record AdminSupportListQuery(
     string? Search,
@@ -74,7 +87,8 @@ public sealed record AdminSupportListItem(
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
     SupportTicketStatus Status,
-    bool HasScreenshot);
+    bool HasScreenshot,
+    DateTime? LastUserMessageAtUtc = null);
 
 public sealed record AdminSupportMessageItem(
     long Id,
@@ -105,3 +119,14 @@ public sealed record AdminSupportReply(string Message, SupportTicketStatus? Stat
 public sealed record AdminAttentionSnapshot(
     int NewUsers,
     int UnseenSupportTickets);
+
+/// <summary>Запись журнала действий админки с понятной подписью объекта.</summary>
+public sealed record AdminAuditItem(
+    long Id,
+    DateTime CreatedAtUtc,
+    string AdminEmail,
+    string Action,
+    string TargetType,
+    string TargetId,
+    string? TargetLabel,
+    string? TargetUrl);

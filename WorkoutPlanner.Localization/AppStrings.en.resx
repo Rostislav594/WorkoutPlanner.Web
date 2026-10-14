@@ -2098,27 +2098,6 @@
   <data name="Admin_Metric_TotalUsers" xml:space="preserve">
     <value>Total users</value>
   </data>
-  <data name="Admin_Metric_New24" xml:space="preserve">
-    <value>New in 24 hours</value>
-  </data>
-  <data name="Admin_Metric_New7" xml:space="preserve">
-    <value>New in 7 days</value>
-  </data>
-  <data name="Admin_Metric_New30" xml:space="preserve">
-    <value>New in 30 days</value>
-  </data>
-  <data name="Admin_Metric_Active24" xml:space="preserve">
-    <value>Active in 24 hours</value>
-  </data>
-  <data name="Admin_Metric_Active7" xml:space="preserve">
-    <value>Active in 7 days</value>
-  </data>
-  <data name="Admin_Metric_Active30" xml:space="preserve">
-    <value>Active in 30 days</value>
-  </data>
-  <data name="Admin_Metric_Inactive30" xml:space="preserve">
-    <value>Inactive for over 30 days</value>
-  </data>
   <data name="Admin_Dashboard_SupportTitle" xml:space="preserve">
     <value>Support</value>
   </data>
@@ -2257,9 +2236,6 @@
   <data name="Admin_Ticket_ReplyPlaceholder" xml:space="preserve">
     <value>The reply lands in the user's existing inbox</value>
   </data>
-  <data name="Admin_Ticket_StatusAfterSend" xml:space="preserve">
-    <value>Status after sending</value>
-  </data>
   <data name="Admin_Ticket_Sending" xml:space="preserve">
     <value>Sending…</value>
   </data>
@@ -2283,9 +2259,6 @@
   </data>
   <data name="Admin_Ticket_ScreenshotAlt" xml:space="preserve">
     <value>The user's screenshot for ticket {0}</value>
-  </data>
-  <data name="Admin_Ticket_ChangeStatus" xml:space="preserve">
-    <value>Change the status</value>
   </data>
   <data name="Admin_Ticket_SaveStatus" xml:space="preserve">
     <value>Save the status</value>
@@ -2319,9 +2292,6 @@
   </data>
   <data name="Admin_Field_AppVersion" xml:space="preserve">
     <value>GPlanner version</value>
-  </data>
-  <data name="Admin_UserCard_Diagnostics" xml:space="preserve">
-    <value>Diagnostics</value>
   </data>
   <data name="Admin_Field_CompletedWorkouts" xml:space="preserve">
     <value>Finished workouts</value>
@@ -3202,5 +3172,221 @@
   </data>
   <data name="Admin_Publications_RemoveImage" xml:space="preserve">
     <value>Remove image</value>
+  </data>
+  <data name="Admin_User_Blocked" xml:space="preserve">
+    <value>Blocked</value>
+  </data>
+  <data name="Admin_User_BlockedForever" xml:space="preserve">
+    <value>Indefinitely</value>
+  </data>
+  <data name="Admin_User_Block" xml:space="preserve">
+    <value>Block</value>
+  </data>
+  <data name="Admin_User_Unblock" xml:space="preserve">
+    <value>Unblock</value>
+  </data>
+  <data name="Admin_User_BlockConfirm" xml:space="preserve">
+    <value>Block sign-in and end all sessions?</value>
+  </data>
+  <data name="Admin_User_BlockYes" xml:space="preserve">
+    <value>Yes, block</value>
+  </data>
+  <data name="Admin_User_SignOutAll" xml:space="preserve">
+    <value>Sign out everywhere</value>
+  </data>
+  <data name="Admin_User_SignOutConfirm" xml:space="preserve">
+    <value>End all phone and watch sessions?</value>
+  </data>
+  <data name="Admin_User_SignOutYes" xml:space="preserve">
+    <value>Yes, end them</value>
+  </data>
+  <data name="Admin_User_AdminCannotBlock" xml:space="preserve">
+    <value>Administrators cannot be blocked.</value>
+  </data>
+  <data name="Admin_User_BlockedDone" xml:space="preserve">
+    <value>The user is blocked and all sessions have ended.</value>
+  </data>
+  <data name="Admin_User_UnblockedDone" xml:space="preserve">
+    <value>The user is unblocked.</value>
+  </data>
+  <data name="Admin_User_SignedOutDone" xml:space="preserve">
+    <value>All sessions have ended. The user needs to sign in again.</value>
+  </data>
+  <data name="Admin_User_ActionFailed" xml:space="preserve">
+    <value>The action failed. Please try again.</value>
+  </data>
+  <data name="Admin_User_Access" xml:space="preserve">
+    <value>Access</value>
+  </data>
+  <data name="Admin_User_Message_Title" xml:space="preserve">
+    <value>Personal message</value>
+  </data>
+  <data name="Admin_User_Message_TitleLabel" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="Admin_User_Message_BodyLabel" xml:space="preserve">
+    <value>Text</value>
+  </data>
+  <data name="Admin_User_Message_Push" xml:space="preserve">
+    <value>Send a push notification</value>
+  </data>
+  <data name="Admin_User_Message_Send" xml:space="preserve">
+    <value>Send to Inbox</value>
+  </data>
+  <data name="Admin_User_Message_Sending" xml:space="preserve">
+    <value>Sending…</value>
+  </data>
+  <data name="Admin_User_Message_Sent" xml:space="preserve">
+    <value>Message sent.</value>
+  </data>
+  <data name="Admin_User_Message_Failed" xml:space="preserve">
+    <value>Could not send the message. Please try again.</value>
+  </data>
+  <data name="Admin_User_Tickets" xml:space="preserve">
+    <value>Support requests</value>
+  </data>
+  <data name="Admin_User_TicketsEmpty" xml:space="preserve">
+    <value>No support requests.</value>
+  </data>
+  <data name="Admin_Support_NewBadge" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Admin_Ticket_OpenUser" xml:space="preserve">
+    <value>Open user card</value>
+  </data>
+  <data name="Admin_Ticket_Templates" xml:space="preserve">
+    <value>Reply templates</value>
+  </data>
+  <data name="Admin_Ticket_Template_Received" xml:space="preserve">
+    <value>Received</value>
+  </data>
+  <data name="Admin_Ticket_Template_Received_Text" xml:space="preserve">
+    <value>Hello! Thank you for reaching out — we have received your request and are looking into it. We will write back as soon as we have an update.</value>
+  </data>
+  <data name="Admin_Ticket_Template_Details" xml:space="preserve">
+    <value>Ask for details</value>
+  </data>
+  <data name="Admin_Ticket_Template_Details_Text" xml:space="preserve">
+    <value>Hello! To look into this, could you tell us what you were doing before the error and whether it happens again after restarting the app?</value>
+  </data>
+  <data name="Admin_Ticket_Template_Fixed" xml:space="preserve">
+    <value>Fixed</value>
+  </data>
+  <data name="Admin_Ticket_Template_Fixed_Text" xml:space="preserve">
+    <value>Hello! We have fixed this issue. Please update the app to the latest version. If the problem persists, let us know.</value>
+  </data>
+  <data name="Admin_Ticket_Template_Idea" xml:space="preserve">
+    <value>Thanks for the idea</value>
+  </data>
+  <data name="Admin_Ticket_Template_Idea_Text" xml:space="preserve">
+    <value>Hello! Thank you for the idea — we have added it to our list of improvements and will definitely consider it.</value>
+  </data>
+  <data name="Admin_Nav_Audit" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Admin_Audit_Title" xml:space="preserve">
+    <value>Activity log</value>
+  </data>
+  <data name="Admin_Audit_Loading" xml:space="preserve">
+    <value>Loading the log…</value>
+  </data>
+  <data name="Admin_Audit_Unavailable" xml:space="preserve">
+    <value>The log is temporarily unavailable.</value>
+  </data>
+  <data name="Admin_Audit_Empty" xml:space="preserve">
+    <value>No actions yet.</value>
+  </data>
+  <data name="Admin_Audit_When" xml:space="preserve">
+    <value>When</value>
+  </data>
+  <data name="Admin_Audit_Who" xml:space="preserve">
+    <value>Who</value>
+  </data>
+  <data name="Admin_Audit_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="Admin_Audit_Target" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="Admin_Audit_TargetGone" xml:space="preserve">
+    <value>#{0} · deleted</value>
+  </data>
+  <data name="Admin_Audit_TargetTicket" xml:space="preserve">
+    <value>Support request</value>
+  </data>
+  <data name="Admin_Audit_TargetPublication" xml:space="preserve">
+    <value>Publication</value>
+  </data>
+  <data name="Admin_Audit_TargetUser" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="Admin_AuditAction_SupportReplySent" xml:space="preserve">
+    <value>Support reply sent</value>
+  </data>
+  <data name="Admin_AuditAction_SupportTicketStatusChanged" xml:space="preserve">
+    <value>Request status changed</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationCreated" xml:space="preserve">
+    <value>Publication created</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationUpdated" xml:space="preserve">
+    <value>Publication edited</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationDeleted" xml:space="preserve">
+    <value>Publication deleted</value>
+  </data>
+  <data name="Admin_AuditAction_UserBlocked" xml:space="preserve">
+    <value>User blocked</value>
+  </data>
+  <data name="Admin_AuditAction_UserUnblocked" xml:space="preserve">
+    <value>User unblocked</value>
+  </data>
+  <data name="Admin_AuditAction_UserSignedOutEverywhere" xml:space="preserve">
+    <value>Signed out everywhere</value>
+  </data>
+  <data name="Admin_AuditAction_UserMessageSent" xml:space="preserve">
+    <value>Personal message sent</value>
+  </data>
+  <data name="Admin_Dashboard_TrendsTitle" xml:space="preserve">
+    <value>Last 30 days</value>
+  </data>
+  <data name="Admin_Chart_Registrations" xml:space="preserve">
+    <value>Sign-ups</value>
+  </data>
+  <data name="Admin_Chart_Aria" xml:space="preserve">
+    <value>{0}: {1} in total over 30 days</value>
+  </data>
+  <data name="Admin_Publications_PushAudience" xml:space="preserve">
+    <value>Devices that will get the push: {0}</value>
+  </data>
+  <data name="Admin_Publications_TestPush" xml:space="preserve">
+    <value>Test push to me</value>
+  </data>
+  <data name="Admin_Publications_TestPushSent" xml:space="preserve">
+    <value>Test push sent to your devices: {0}.</value>
+  </data>
+  <data name="Admin_Publications_TestPushNoDevices" xml:space="preserve">
+    <value>Your account has no devices with push. Sign in to the app with this account and allow notifications.</value>
+  </data>
+  <data name="Admin_Publications_TestPushNotPublished" xml:space="preserve">
+    <value>A test push is available once the publication is out.</value>
+  </data>
+  <data name="Admin_Publications_TestPushFailed" xml:space="preserve">
+    <value>Could not send the test push. Please try again.</value>
+  </data>
+  <data name="Admin_Publications_PushPreview" xml:space="preserve">
+    <value>How the push will look</value>
+  </data>
+  <data name="Admin_Publications_PushPreviewNow" xml:space="preserve">
+    <value>now</value>
+  </data>
+  <data name="Admin_Chart_ActiveUsers" xml:space="preserve">
+    <value>Active users</value>
+  </data>
+  <data name="Admin_Chart_Today" xml:space="preserve">
+    <value>today</value>
+  </data>
+  <data name="Admin_Chart_AriaToday" xml:space="preserve">
+    <value>{0}: {1} today, up to {2} a day over 30 days</value>
   </data>
 </root>

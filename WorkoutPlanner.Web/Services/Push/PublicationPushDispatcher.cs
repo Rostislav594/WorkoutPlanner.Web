@@ -63,7 +63,10 @@ public sealed class PublicationPushDispatcher(
             publication.PushSentAtUtc = now;
             await db.SaveChangesAsync(cancellationToken);
 
-            var recipients = await RecipientsAsync(db, publication.PublishedAtUtc, cancellationToken);
+            var recipients = await RecipientDevices(db, publication.PublishedAtUtc)
+                .Select(device => device.UserId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
             foreach (var userId in recipients)
                 await SendAsync(provider, userId, publication, cancellationToken);
 
@@ -75,28 +78,21 @@ public sealed class PublicationPushDispatcher(
     }
 
     /// <summary>
-    /// Кому слать: у кого есть активное устройство и кому публикация видна
-    /// во «Входящих» — зарегистрированным не позже неё и старым аккаунтам без даты.
+    /// Куда слать: активные устройства тех, кому публикация видна во «Входящих» —
+    /// зарегистрированным не позже неё и старым аккаунтам без даты.
     /// </summary>
-    private static Task<List<string>> RecipientsAsync(
+    internal static IQueryable<PushDeviceRegistration> RecipientDevices(
         WorkoutDbContext db,
-        DateTime publishedAtUtc,
-        CancellationToken cancellationToken) =>
+        DateTime publishedAtUtc) =>
         db.PushDeviceRegistrations
             .Where(device => device.IsActive)
-            .Select(device => device.UserId)
-            .Distinct()
-            .Where(userId => !db.UserActivities.Any(activity =>
-                activity.UserId == userId &&
+            .Where(device => !db.UserActivities.Any(activity =>
+                activity.UserId == device.UserId &&
                 activity.RegisteredAtUtc != null &&
-                activity.RegisteredAtUtc > publishedAtUtc))
-            .ToListAsync(cancellationToken);
+                activity.RegisteredAtUtc > publishedAtUtc));
 
-    private async Task SendAsync(
-        IRemotePushProvider provider,
-        string userId,
-        InboxPublication publication,
-        CancellationToken cancellationToken)
+    /// <summary>Push о публикации: её заголовок и начало текста.</summary>
+    internal static PushDeliveryMessage CreateMessage(string userId, InboxPublication publication)
     {
         var preview = publication.Preview ?? publication.Body;
         var body = preview.Length <= PushBodyLength ? preview : $"{preview[..(PushBodyLength - 1)]}…";
@@ -108,18 +104,24 @@ public sealed class PublicationPushDispatcher(
             [PushNotificationPayloadKeys.InboxMessageId] =
                 publication.Id.ToString(CultureInfo.InvariantCulture)
         };
+        return new PushDeliveryMessage(
+            userId,
+            PushNotificationType.Publication,
+            publication.Id,
+            publication.Title,
+            body,
+            data);
+    }
 
+    private async Task SendAsync(
+        IRemotePushProvider provider,
+        string userId,
+        InboxPublication publication,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            await provider.SendAsync(
-                new PushDeliveryMessage(
-                    userId,
-                    PushNotificationType.Publication,
-                    publication.Id,
-                    publication.Title,
-                    body,
-                    data),
-                cancellationToken);
+            await provider.SendAsync(CreateMessage(userId, publication), cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException ||
                                           !cancellationToken.IsCancellationRequested)

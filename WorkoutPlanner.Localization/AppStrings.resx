@@ -2118,27 +2118,6 @@
   <data name="Admin_Metric_TotalUsers" xml:space="preserve">
     <value>Всего пользователей</value>
   </data>
-  <data name="Admin_Metric_New24" xml:space="preserve">
-    <value>Новые за 24 часа</value>
-  </data>
-  <data name="Admin_Metric_New7" xml:space="preserve">
-    <value>Новые за 7 дней</value>
-  </data>
-  <data name="Admin_Metric_New30" xml:space="preserve">
-    <value>Новые за 30 дней</value>
-  </data>
-  <data name="Admin_Metric_Active24" xml:space="preserve">
-    <value>Активные за 24 часа</value>
-  </data>
-  <data name="Admin_Metric_Active7" xml:space="preserve">
-    <value>Активные за 7 дней</value>
-  </data>
-  <data name="Admin_Metric_Active30" xml:space="preserve">
-    <value>Активные за 30 дней</value>
-  </data>
-  <data name="Admin_Metric_Inactive30" xml:space="preserve">
-    <value>Неактивны более 30 дней</value>
-  </data>
   <data name="Admin_Dashboard_SupportTitle" xml:space="preserve">
     <value>Поддержка</value>
   </data>
@@ -2278,9 +2257,6 @@
   <data name="Admin_Ticket_ReplyPlaceholder" xml:space="preserve">
     <value>Ответ появится в уведомлениях пользователя</value>
   </data>
-  <data name="Admin_Ticket_StatusAfterSend" xml:space="preserve">
-    <value>Статус после отправки</value>
-  </data>
   <data name="Admin_Ticket_Sending" xml:space="preserve">
     <value>Отправляем…</value>
   </data>
@@ -2306,9 +2282,6 @@
   </data>
   <data name="Admin_Ticket_ScreenshotAlt" xml:space="preserve">
     <value>Скриншот пользователя к обращению {0}</value>
-  </data>
-  <data name="Admin_Ticket_ChangeStatus" xml:space="preserve">
-    <value>Изменить статус</value>
   </data>
   <data name="Admin_Ticket_SaveStatus" xml:space="preserve">
     <value>Сохранить статус</value>
@@ -2342,9 +2315,6 @@
   </data>
   <data name="Admin_Field_AppVersion" xml:space="preserve">
     <value>Версия GPlanner</value>
-  </data>
-  <data name="Admin_UserCard_Diagnostics" xml:space="preserve">
-    <value>Диагностика</value>
   </data>
   <data name="Admin_Field_CompletedWorkouts" xml:space="preserve">
     <value>Завершённые тренировки</value>
@@ -3233,5 +3203,221 @@
   </data>
   <data name="Admin_Publications_RemoveImage" xml:space="preserve">
     <value>Убрать изображение</value>
+  </data>
+  <data name="Admin_User_Blocked" xml:space="preserve">
+    <value>Заблокирован</value>
+  </data>
+  <data name="Admin_User_BlockedForever" xml:space="preserve">
+    <value>Бессрочно</value>
+  </data>
+  <data name="Admin_User_Block" xml:space="preserve">
+    <value>Заблокировать</value>
+  </data>
+  <data name="Admin_User_Unblock" xml:space="preserve">
+    <value>Разблокировать</value>
+  </data>
+  <data name="Admin_User_BlockConfirm" xml:space="preserve">
+    <value>Заблокировать вход и завершить все сессии?</value>
+  </data>
+  <data name="Admin_User_BlockYes" xml:space="preserve">
+    <value>Да, заблокировать</value>
+  </data>
+  <data name="Admin_User_SignOutAll" xml:space="preserve">
+    <value>Выйти на всех устройствах</value>
+  </data>
+  <data name="Admin_User_SignOutConfirm" xml:space="preserve">
+    <value>Завершить все сессии телефона и часов?</value>
+  </data>
+  <data name="Admin_User_SignOutYes" xml:space="preserve">
+    <value>Да, завершить</value>
+  </data>
+  <data name="Admin_User_AdminCannotBlock" xml:space="preserve">
+    <value>Администратора заблокировать нельзя.</value>
+  </data>
+  <data name="Admin_User_BlockedDone" xml:space="preserve">
+    <value>Пользователь заблокирован, все его сессии завершены.</value>
+  </data>
+  <data name="Admin_User_UnblockedDone" xml:space="preserve">
+    <value>Пользователь разблокирован.</value>
+  </data>
+  <data name="Admin_User_SignedOutDone" xml:space="preserve">
+    <value>Все сессии завершены. Чтобы продолжить, пользователю нужно войти заново.</value>
+  </data>
+  <data name="Admin_User_ActionFailed" xml:space="preserve">
+    <value>Не удалось выполнить действие. Повторите попытку.</value>
+  </data>
+  <data name="Admin_User_Access" xml:space="preserve">
+    <value>Доступ</value>
+  </data>
+  <data name="Admin_User_Message_Title" xml:space="preserve">
+    <value>Личное сообщение</value>
+  </data>
+  <data name="Admin_User_Message_TitleLabel" xml:space="preserve">
+    <value>Заголовок</value>
+  </data>
+  <data name="Admin_User_Message_BodyLabel" xml:space="preserve">
+    <value>Текст</value>
+  </data>
+  <data name="Admin_User_Message_Push" xml:space="preserve">
+    <value>Отправить push-уведомление</value>
+  </data>
+  <data name="Admin_User_Message_Send" xml:space="preserve">
+    <value>Отправить во «Входящие»</value>
+  </data>
+  <data name="Admin_User_Message_Sending" xml:space="preserve">
+    <value>Отправляем…</value>
+  </data>
+  <data name="Admin_User_Message_Sent" xml:space="preserve">
+    <value>Сообщение отправлено.</value>
+  </data>
+  <data name="Admin_User_Message_Failed" xml:space="preserve">
+    <value>Не удалось отправить сообщение. Повторите попытку.</value>
+  </data>
+  <data name="Admin_User_Tickets" xml:space="preserve">
+    <value>Обращения</value>
+  </data>
+  <data name="Admin_User_TicketsEmpty" xml:space="preserve">
+    <value>Обращений нет.</value>
+  </data>
+  <data name="Admin_Support_NewBadge" xml:space="preserve">
+    <value>Новое</value>
+  </data>
+  <data name="Admin_Ticket_OpenUser" xml:space="preserve">
+    <value>Открыть карточку пользователя</value>
+  </data>
+  <data name="Admin_Ticket_Templates" xml:space="preserve">
+    <value>Шаблоны ответа</value>
+  </data>
+  <data name="Admin_Ticket_Template_Received" xml:space="preserve">
+    <value>Получили</value>
+  </data>
+  <data name="Admin_Ticket_Template_Received_Text" xml:space="preserve">
+    <value>Здравствуйте! Спасибо за обращение — мы его получили и уже разбираемся. Напишем, как только будет результат.</value>
+  </data>
+  <data name="Admin_Ticket_Template_Details" xml:space="preserve">
+    <value>Уточнить детали</value>
+  </data>
+  <data name="Admin_Ticket_Template_Details_Text" xml:space="preserve">
+    <value>Здравствуйте! Чтобы разобраться, уточните, пожалуйста: что вы делали перед ошибкой и повторяется ли она после перезапуска приложения?</value>
+  </data>
+  <data name="Admin_Ticket_Template_Fixed" xml:space="preserve">
+    <value>Исправлено</value>
+  </data>
+  <data name="Admin_Ticket_Template_Fixed_Text" xml:space="preserve">
+    <value>Здравствуйте! Мы исправили эту ошибку. Обновите, пожалуйста, приложение до последней версии. Если проблема останется, напишите нам.</value>
+  </data>
+  <data name="Admin_Ticket_Template_Idea" xml:space="preserve">
+    <value>Спасибо за идею</value>
+  </data>
+  <data name="Admin_Ticket_Template_Idea_Text" xml:space="preserve">
+    <value>Здравствуйте! Спасибо за идею — мы добавили её в список улучшений и обязательно рассмотрим.</value>
+  </data>
+  <data name="Admin_Nav_Audit" xml:space="preserve">
+    <value>Журнал</value>
+  </data>
+  <data name="Admin_Audit_Title" xml:space="preserve">
+    <value>Журнал действий</value>
+  </data>
+  <data name="Admin_Audit_Loading" xml:space="preserve">
+    <value>Загружаем журнал…</value>
+  </data>
+  <data name="Admin_Audit_Unavailable" xml:space="preserve">
+    <value>Журнал временно недоступен.</value>
+  </data>
+  <data name="Admin_Audit_Empty" xml:space="preserve">
+    <value>Действий пока нет.</value>
+  </data>
+  <data name="Admin_Audit_When" xml:space="preserve">
+    <value>Когда</value>
+  </data>
+  <data name="Admin_Audit_Who" xml:space="preserve">
+    <value>Кто</value>
+  </data>
+  <data name="Admin_Audit_Action" xml:space="preserve">
+    <value>Действие</value>
+  </data>
+  <data name="Admin_Audit_Target" xml:space="preserve">
+    <value>Объект</value>
+  </data>
+  <data name="Admin_Audit_TargetGone" xml:space="preserve">
+    <value>№ {0} · удалено</value>
+  </data>
+  <data name="Admin_Audit_TargetTicket" xml:space="preserve">
+    <value>Обращение</value>
+  </data>
+  <data name="Admin_Audit_TargetPublication" xml:space="preserve">
+    <value>Публикация</value>
+  </data>
+  <data name="Admin_Audit_TargetUser" xml:space="preserve">
+    <value>Пользователь</value>
+  </data>
+  <data name="Admin_AuditAction_SupportReplySent" xml:space="preserve">
+    <value>Ответ в поддержке</value>
+  </data>
+  <data name="Admin_AuditAction_SupportTicketStatusChanged" xml:space="preserve">
+    <value>Смена статуса обращения</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationCreated" xml:space="preserve">
+    <value>Публикация создана</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationUpdated" xml:space="preserve">
+    <value>Публикация изменена</value>
+  </data>
+  <data name="Admin_AuditAction_PublicationDeleted" xml:space="preserve">
+    <value>Публикация удалена</value>
+  </data>
+  <data name="Admin_AuditAction_UserBlocked" xml:space="preserve">
+    <value>Блокировка пользователя</value>
+  </data>
+  <data name="Admin_AuditAction_UserUnblocked" xml:space="preserve">
+    <value>Разблокировка пользователя</value>
+  </data>
+  <data name="Admin_AuditAction_UserSignedOutEverywhere" xml:space="preserve">
+    <value>Выход на всех устройствах</value>
+  </data>
+  <data name="Admin_AuditAction_UserMessageSent" xml:space="preserve">
+    <value>Личное сообщение</value>
+  </data>
+  <data name="Admin_Dashboard_TrendsTitle" xml:space="preserve">
+    <value>Динамика за 30 дней</value>
+  </data>
+  <data name="Admin_Chart_Registrations" xml:space="preserve">
+    <value>Регистрации</value>
+  </data>
+  <data name="Admin_Chart_Aria" xml:space="preserve">
+    <value>{0}: всего {1} за 30 дней</value>
+  </data>
+  <data name="Admin_Publications_PushAudience" xml:space="preserve">
+    <value>Push получат устройств: {0}</value>
+  </data>
+  <data name="Admin_Publications_TestPush" xml:space="preserve">
+    <value>Тест push мне</value>
+  </data>
+  <data name="Admin_Publications_TestPushSent" xml:space="preserve">
+    <value>Тестовый push отправлен на ваши устройства: {0}.</value>
+  </data>
+  <data name="Admin_Publications_TestPushNoDevices" xml:space="preserve">
+    <value>На вашем аккаунте нет устройств с push. Войдите в приложение под этим аккаунтом и разрешите уведомления.</value>
+  </data>
+  <data name="Admin_Publications_TestPushNotPublished" xml:space="preserve">
+    <value>Тестовый push доступен после выхода публикации.</value>
+  </data>
+  <data name="Admin_Publications_TestPushFailed" xml:space="preserve">
+    <value>Не удалось отправить тестовый push. Повторите попытку.</value>
+  </data>
+  <data name="Admin_Publications_PushPreview" xml:space="preserve">
+    <value>Так будет выглядеть push</value>
+  </data>
+  <data name="Admin_Publications_PushPreviewNow" xml:space="preserve">
+    <value>сейчас</value>
+  </data>
+  <data name="Admin_Chart_ActiveUsers" xml:space="preserve">
+    <value>Активные пользователи</value>
+  </data>
+  <data name="Admin_Chart_Today" xml:space="preserve">
+    <value>сегодня</value>
+  </data>
+  <data name="Admin_Chart_AriaToday" xml:space="preserve">
+    <value>{0}: сегодня {1}, за 30 дней до {2} в день</value>
   </data>
 </root>

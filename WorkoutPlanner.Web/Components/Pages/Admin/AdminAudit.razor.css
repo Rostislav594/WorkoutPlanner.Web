@@ -1,0 +1,16 @@
+.audit-table {
+    margin-top: 1.75rem;
+}
+
+.audit-table__time {
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.audit-action {
+    font-weight: 750;
+}
+
+.audit-table__gone {
+    color: var(--color-text-muted);
+}

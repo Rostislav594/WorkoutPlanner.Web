@@ -82,6 +82,8 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<UserActivity> UserActivities => Set<UserActivity>();
 
+    public DbSet<UserActivityDay> UserActivityDays => Set<UserActivityDay>();
+
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
 
     public DbSet<AdminSectionView> AdminSectionViews => Set<AdminSectionView>();
@@ -337,6 +339,13 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
         modelBuilder.Entity<UserActivity>()
             .HasIndex(x => x.LastSeenAtUtc);
+
+        // День первым в ключе: график берёт последние 30 дней по всем пользователям.
+        modelBuilder.Entity<UserActivityDay>()
+            .HasKey(x => new { x.Day, x.UserId });
+        modelBuilder.Entity<UserActivityDay>()
+            .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<AdminAuditLog>()
             .HasIndex(x => x.CreatedAtUtc);

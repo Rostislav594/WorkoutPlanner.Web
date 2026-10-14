@@ -4,6 +4,7 @@
 @using WorkoutPlanner.Web.Application.Contracts
 @inject IAdminUserService Users
 @inject IAppText Text
+@inject ILogger<AdminUserDetail> Logger
 
 <PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_UserCard_Title"])</PageTitle>
 
@@ -15,8 +16,12 @@
     else if (_user is null) { <section class="admin-state" role="alert"><h2>@Text["Admin_UserCard_NotFound"]</h2><p>@_error</p></section> }
     else
     {
+        @if (_feedback is not null)
+        {
+            <div class="admin-alert @(_feedbackIsError ? "admin-alert--error" : "admin-alert--success")" role="@(_feedbackIsError ? "alert" : "status")">@_feedback</div>
+        }
         <section class="admin-detail-grid">
-            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@_user.DisplayName</h2><p>@_user.Email</p></div><span class="admin-status @StatusClass(_user.ActivityStatus)">@AdminUsers.StatusLabel(Text, _user.ActivityStatus)</span></div>
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@_user.DisplayName</h2><p>@_user.Email</p></div>@if (_user.IsBlocked) { <span class="admin-status admin-status--danger">@Text["Admin_User_Blocked"]</span> } else { <span class="admin-status @StatusClass(_user.ActivityStatus)">@AdminUsers.StatusLabel(Text, _user.ActivityStatus)</span> }</div>
                 <dl class="admin-definition-list">
                     <div><dt>@Text["Admin_Field_UserId"]</dt><dd>@_user.UserId</dd></div>
                     <div><dt>@Text["Admin_Column_Registered"]</dt><dd>@FormatDate(_user.RegisteredAtUtc)</dd></div>
@@ -27,22 +32,156 @@
                     <div><dt>@Text["Admin_Field_Device"]</dt><dd>@(_user.DeviceModel ?? Text["Admin_NoData"])</dd></div>
                 </dl>
             </article>
-            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_UserCard_Diagnostics"]</h2></div></div>
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_User_Access"]</h2></div></div>
                 <dl class="admin-definition-list">
                     <div><dt>@Text["Admin_Field_CompletedWorkouts"]</dt><dd>@_user.WorkoutCount</dd></div>
                     <div><dt>@Text["Admin_Field_SupportTickets"]</dt><dd>@_user.SupportTicketCount</dd></div>
                     <div><dt>@Text["Admin_Field_MobileSessions"]</dt><dd>@_user.ActiveMobileSessionCount</dd></div>
-                    <div><dt>@Text["Admin_Field_LockoutUntil"]</dt><dd>@(_user.LockoutEnd?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? Text["Common_No"])</dd></div>
+                    <div><dt>@Text["Admin_Field_LockoutUntil"]</dt><dd>@LockoutText</dd></div>
                 </dl>
+                <div class="user-actions">
+                    @if (_confirm == PendingAction.SignOut)
+                    {
+                        <p class="user-actions__question">@Text["Admin_User_SignOutConfirm"]</p>
+                        <button class="admin-button admin-button--danger admin-button--small" type="button" disabled="@_isBusy" @onclick="SignOutEverywhereAsync">@Text["Admin_User_SignOutYes"]</button>
+                        <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isBusy" @onclick="CancelConfirm">@Text["Common_Cancel"]</button>
+                    }
+                    else if (_confirm == PendingAction.Block)
+                    {
+                        <p class="user-actions__question">@Text["Admin_User_BlockConfirm"]</p>
+                        <button class="admin-button admin-button--danger admin-button--small" type="button" disabled="@_isBusy" @onclick="BlockAsync">@Text["Admin_User_BlockYes"]</button>
+                        <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isBusy" @onclick="CancelConfirm">@Text["Common_Cancel"]</button>
+                    }
+                    else
+                    {
+                        <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isBusy" @onclick="() => _confirm = PendingAction.SignOut"><span class="material-symbols-rounded" aria-hidden="true">logout</span>@Text["Admin_User_SignOutAll"]</button>
+                        @if (_user.IsBlocked)
+                        {
+                            <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isBusy" @onclick="UnblockAsync"><span class="material-symbols-rounded" aria-hidden="true">lock_open</span>@Text["Admin_User_Unblock"]</button>
+                        }
+                        else if (!_user.IsAdmin)
+                        {
+                            <button class="admin-button admin-button--danger admin-button--small" type="button" disabled="@_isBusy" @onclick="() => _confirm = PendingAction.Block"><span class="material-symbols-rounded" aria-hidden="true">block</span>@Text["Admin_User_Block"]</button>
+                        }
+                        else
+                        {
+                            <p class="user-actions__hint">@Text["Admin_User_AdminCannotBlock"]</p>
+                        }
+                    }
+                </div>
+            </article>
+
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_User_Tickets"]</h2></div></div>
+                @if (_user.RecentTickets.Count == 0)
+                {
+                    <p class="user-empty">@Text["Admin_User_TicketsEmpty"]</p>
+                }
+                else
+                {
+                    <ul class="user-tickets">
+                        @foreach (var ticket in _user.RecentTickets)
+                        {
+                            <li><a href="@($"/admin/support/{ticket.Id}")"><span class="user-tickets__text"><strong>@ticket.TicketNumber</strong><span>@ticket.Preview</span></span><span class="user-tickets__meta"><span class="admin-status @AdminSupport.StatusClass(ticket.Status)">@AdminSupport.StatusLabel(Text, ticket.Status)</span><time datetime="@ticket.UpdatedAtUtc.ToString("O")">@FormatDate(ticket.UpdatedAtUtc)</time></span></a></li>
+                        }
+                    </ul>
+                }
+            </article>
+
+            <article class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_User_Message_Title"]</h2></div></div>
+                <div class="user-message">
+                    <div class="admin-field">
+                        <label for="user-message-title">@Text["Admin_User_Message_TitleLabel"]</label>
+                        <input id="user-message-title" class="admin-input" maxlength="160" @bind="_messageTitle" @bind:event="oninput" />
+                    </div>
+                    <div class="admin-field">
+                        <label for="user-message-body">@Text["Admin_User_Message_BodyLabel"]</label>
+                        <textarea id="user-message-body" class="admin-input" maxlength="8000" @bind="_messageBody" @bind:event="oninput"></textarea>
+                    </div>
+                    <div class="user-message__actions">
+                        <label class="admin-check"><input type="checkbox" @bind="_messagePush" /><span>@Text["Admin_User_Message_Push"]</span></label>
+                        <button class="admin-button admin-button--primary" type="button" disabled="@(_isBusy || !CanSendMessage)" @onclick="SendMessageAsync">@(_isBusy ? Text["Admin_User_Message_Sending"] : Text["Admin_User_Message_Send"])</button>
+                    </div>
+                </div>
             </article>
         </section>
     }
 </div>
 
 @code {
+    private enum PendingAction { None, SignOut, Block }
+
     [Parameter] public string UserId { get; set; } = string.Empty;
     private WorkoutPlanner.Web.Application.Contracts.AdminUserDetail? _user; private bool _isLoading = true; private string _error = string.Empty;
-    protected override async Task OnParametersSetAsync() { _isLoading = true; try { _user = await Users.GetAsync(UserId); } catch { _error = Text["Admin_UserCard_Unavailable"]; } finally { _isLoading = false; } }
+    private PendingAction _confirm;
+    private bool _isBusy;
+    private string? _feedback;
+    private bool _feedbackIsError;
+    private string _messageTitle = string.Empty;
+    private string _messageBody = string.Empty;
+    private bool _messagePush = true;
+
+    private bool CanSendMessage => !string.IsNullOrWhiteSpace(_messageTitle) && !string.IsNullOrWhiteSpace(_messageBody);
+
+    private string LockoutText => _user switch
+    {
+        { IsBlocked: true } => Text["Admin_User_BlockedForever"],
+        { LockoutEnd: { } end } when end > DateTimeOffset.UtcNow => end.ToLocalTime().ToString("dd.MM.yyyy, HH:mm"),
+        _ => Text["Common_No"]
+    };
+
+    protected override async Task OnParametersSetAsync() { _isLoading = true; await LoadAsync(); _isLoading = false; }
+
+    private async Task LoadAsync()
+    {
+        try { _user = await Users.GetAsync(UserId); }
+        catch (Exception exception) { Logger.LogWarning(exception, "Admin user card could not be loaded."); _error = Text["Admin_UserCard_Unavailable"]; }
+    }
+
+    private void CancelConfirm() => _confirm = PendingAction.None;
+
+    private Task SignOutEverywhereAsync() => RunAsync(() => Users.SignOutEverywhereAsync(UserId), "Admin_User_SignedOutDone");
+
+    private Task BlockAsync() => RunAsync(() => Users.BlockAsync(UserId), "Admin_User_BlockedDone");
+
+    private Task UnblockAsync() => RunAsync(() => Users.UnblockAsync(UserId), "Admin_User_UnblockedDone");
+
+    private async Task RunAsync(Func<Task<bool>> action, string successKey)
+    {
+        if (_isBusy) return;
+        _isBusy = true; _feedback = null;
+        try
+        {
+            if (!await action()) throw new InvalidOperationException("User not found.");
+            _feedback = Text[successKey]; _feedbackIsError = false;
+            await LoadAsync();
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(exception, "Admin user action failed.");
+            _feedback = Text["Admin_User_ActionFailed"]; _feedbackIsError = true;
+        }
+        finally { _isBusy = false; _confirm = PendingAction.None; }
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (_isBusy || !CanSendMessage) return;
+        _isBusy = true; _feedback = null;
+        try
+        {
+            if (await Users.SendMessageAsync(UserId, new AdminUserMessage(_messageTitle, _messageBody, _messagePush)) is null)
+                throw new InvalidOperationException("User not found.");
+            _messageTitle = string.Empty; _messageBody = string.Empty;
+            _feedback = Text["Admin_User_Message_Sent"]; _feedbackIsError = false;
+        }
+        catch (Exception exception)
+        {
+            Logger.LogWarning(exception, "Admin message could not be sent.");
+            _feedback = Text["Admin_User_Message_Failed"]; _feedbackIsError = true;
+        }
+        finally { _isBusy = false; }
+    }
+
     private string FormatDate(DateTime? value) =>
         value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? Text["Admin_NoData"];
     private static string StatusClass(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "admin-status--success", AdminUserActivityStatus.Dormant => "admin-status--warning", AdminUserActivityStatus.Inactive => "admin-status--danger", _ => string.Empty };

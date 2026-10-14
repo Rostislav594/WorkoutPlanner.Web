@@ -152,6 +152,7 @@ public sealed class AdminOperationsTests
         var admin = await app.CreateUserAsync("attention-admin");
         var oldUser = await app.CreateUserAsync("attention-old-user");
         var newUser = await app.CreateUserAsync("attention-new-user");
+        await GrantAdminRoleAsync(app, admin);
         app.AuthenticationStateProvider.SetUser(admin.Id, ApplicationRoles.Admin);
 
         // Первое обращение задаёт точку отсчёта: прошлое не считается новым.
@@ -197,9 +198,102 @@ public sealed class AdminOperationsTests
             Assert.Equal(1, changed);
             Assert.Equal(new AdminAttentionSnapshot(0, 2), await attention.GetAsync());
 
-            await attention.MarkViewedAsync(AdminSection.Support);
+            // Список поддержки знает, когда пользователь писал последним, а отметка
+            // просмотра отдаёт прошлый заход — по ним страница ставит метку «Новое».
+            var support = scope.ServiceProvider.GetRequiredService<IAdminSupportService>();
+            var rows = (await support.GetPageAsync(new AdminSupportListQuery(null, null))).Items
+                .ToDictionary(x => x.TicketNumber);
+            Assert.InRange(rows["GP-ATT-000001"].LastUserMessageAtUtc!.Value, now.AddMinutes(-4).AddSeconds(-1), now.AddMinutes(-4).AddSeconds(1));
+            Assert.Null(rows["GP-ATT-000002"].LastUserMessageAtUtc);
+
+            var previous = await attention.MarkViewedAsync(AdminSection.Support);
+            Assert.InRange(previous!.Value, now.AddMinutes(-10).AddSeconds(-1), now.AddMinutes(-10).AddSeconds(1));
             Assert.Equal(new AdminAttentionSnapshot(0, 0), await attention.GetAsync());
         }
+    }
+
+    [Fact]
+    public async Task AuditLog_ShowsNewestFirstWithTargetLinks_AndMarksDeletedTargets()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await app.CreateUserAsync("audit-admin");
+        var user = await app.CreateUserAsync("audit-user");
+        await GrantAdminRoleAsync(app, admin);
+        var ticketId = await SeedTicketAsync(app, user.Id, "GP-AUDIT-000001");
+        await using (var seedScope = app.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.AdminAuditLogs.Add(new AdminAuditLog
+            {
+                AdminUserId = admin.Id,
+                Action = AdminAuditActions.PublicationDeleted,
+                TargetType = nameof(InboxPublication),
+                TargetId = "999",
+                CreatedAtUtc = DateTime.UtcNow.AddMinutes(-1)
+            });
+            await db.SaveChangesAsync();
+        }
+
+        app.AuthenticationStateProvider.SetUser(admin.Id);
+        await using var scope = app.CreateScope();
+        Assert.True(await scope.ServiceProvider.GetRequiredService<IAdminSupportService>()
+            .ReplyAsync(ticketId, new AdminSupportReply("Ответ")));
+        var page = await scope.ServiceProvider.GetRequiredService<IAdminAuditService>().GetPageAsync(1, 50);
+
+        Assert.Equal(2, page.TotalCount);
+        var reply = page.Items[0];
+        Assert.Equal(AdminAuditActions.SupportReplySent, reply.Action);
+        Assert.Equal("GP-AUDIT-000001", reply.TargetLabel);
+        Assert.Equal($"/admin/support/{ticketId}", reply.TargetUrl);
+        Assert.Equal("audit-admin@example.test", reply.AdminEmail);
+        var deleted = page.Items[1];
+        Assert.Equal(AdminAuditActions.PublicationDeleted, deleted.Action);
+        Assert.Null(deleted.TargetUrl);
+        Assert.Equal("999", deleted.TargetId);
+    }
+
+    [Fact]
+    public async Task Dashboard_CountsRegistrationsAndActiveUsersOfTheLast30DaysByLocalDay()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await app.CreateUserAsync("dash-admin");
+        await GrantAdminRoleAsync(app, admin);
+        var users = new List<string>();
+        for (var index = 0; index < 3; index++)
+            users.Add((await app.CreateUserAsync($"dash-user-{index}")).Id);
+
+        var nowUtc = DateTime.UtcNow;
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        await using (var seedScope = app.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.UserActivities.AddRange(
+                new UserActivity { UserId = users[0], RegisteredAtUtc = nowUtc.AddMinutes(-1) },
+                new UserActivity { UserId = users[1], RegisteredAtUtc = nowUtc.AddDays(-2) },
+                // Больше 30 дней назад — на графике его нет.
+                new UserActivity { UserId = users[2], RegisteredAtUtc = nowUtc.AddDays(-40) });
+            db.UserActivityDays.AddRange(
+                new UserActivityDay { UserId = users[0], Day = today },
+                new UserActivityDay { UserId = users[1], Day = today },
+                new UserActivityDay { UserId = users[1], Day = today.AddDays(-3) },
+                new UserActivityDay { UserId = users[2], Day = today.AddDays(-45) });
+            await db.SaveChangesAsync();
+        }
+
+        app.AuthenticationStateProvider.SetUser(admin.Id);
+        await using var scope = app.CreateScope();
+        var snapshot = await scope.ServiceProvider.GetRequiredService<IAdminDashboardService>().GetAsync();
+
+        Assert.Equal(30, snapshot.Registrations.Count);
+        Assert.Equal(today, snapshot.Registrations[^1].Date);
+        Assert.Equal(1, snapshot.Registrations[^1].Count);
+        Assert.Equal(1, snapshot.Registrations.Single(x => x.Date == DateOnly.FromDateTime(nowUtc.AddDays(-2).ToLocalTime())).Count);
+        Assert.Equal(2, snapshot.Registrations.Sum(x => x.Count));
+
+        Assert.Equal(30, snapshot.ActiveUsers.Count);
+        Assert.Equal(2, snapshot.ActiveUsers[^1].Count);
+        Assert.Equal(1, snapshot.ActiveUsers.Single(x => x.Date == today.AddDays(-3)).Count);
+        Assert.Equal(3, snapshot.ActiveUsers.Sum(x => x.Count));
     }
 
     [Fact]

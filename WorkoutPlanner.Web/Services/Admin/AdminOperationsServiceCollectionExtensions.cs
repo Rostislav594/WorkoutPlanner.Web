@@ -13,6 +13,7 @@ public static class AdminOperationsServiceCollectionExtensions
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddScoped<IAdminSupportService, AdminSupportService>();
         services.AddScoped<IAdminAttentionService, AdminAttentionService>();
+        services.AddScoped<IAdminAuditService, AdminAuditService>();
         return services;
     }
 }

@@ -27,14 +27,25 @@
                 </div>
                 <div class="support-reply">
                     <label for="support-reply">@Text["Admin_Ticket_ReplyLabel"]</label>
+                    <div class="support-templates" role="group" aria-label="@Text["Admin_Ticket_Templates"]">
+                        @foreach (var template in Templates)
+                        {
+                            <button class="support-template" type="button" disabled="@_isSaving" @onclick="() => InsertTemplate(template)">@Text[template]</button>
+                        }
+                    </div>
                     <textarea id="support-reply" class="admin-input" maxlength="8000" @bind="_reply" @bind:event="oninput" placeholder="@Text["Admin_Ticket_ReplyPlaceholder"]"></textarea>
-                    <div class="support-reply__actions"><div class="admin-field admin-field--compact"><label for="reply-status">@Text["Admin_Ticket_StatusAfterSend"]</label><select id="reply-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(Text, status)</option> }</select></div><button class="admin-button admin-button--primary" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_reply))" @onclick="ReplyAsync">@(_isSaving ? Text["Admin_Ticket_Sending"] : Text["Admin_Ticket_SendToInbox"])</button></div>
+                    <div class="support-reply__actions">
+                        <div class="admin-field admin-field--compact"><label for="reply-status">@Text["Admin_Column_Status"]</label><select id="reply-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(Text, status)</option> }</select></div>
+                        <div class="support-reply__buttons">
+                            <button class="admin-button admin-button--secondary" type="button" disabled="@(_isSaving || _selectedStatus == _ticket.Status)" @onclick="ChangeStatusAsync">@Text["Admin_Ticket_SaveStatus"]</button>
+                            <button class="admin-button admin-button--primary" type="button" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_reply))" @onclick="ReplyAsync">@(_isSaving ? Text["Admin_Ticket_Sending"] : Text["Admin_Ticket_SendToInbox"])</button>
+                        </div>
+                    </div>
                 </div>
             </section>
             <aside class="support-context">
-                <section class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_Ticket_UserPanel"]</h2><p>@_ticket.Email</p></div></div><dl class="support-facts"><div><dt>@Text["Admin_Field_Name"]</dt><dd>@_ticket.DisplayName</dd></div><div><dt>@Text["Admin_Field_UserId"]</dt><dd>@_ticket.UserId</dd></div><div><dt>@Text["Admin_Column_Created"]</dt><dd>@_ticket.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</dd></div><div><dt>@Text["Admin_Field_AppVersion"]</dt><dd>@(_ticket.AppVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Platform"]</dt><dd>@(_ticket.Platform ?? "—")</dd></div><div><dt>@Text["Admin_Field_Os"]</dt><dd>@(_ticket.OsVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Device"]</dt><dd>@(_ticket.DeviceModel ?? "—")</dd></div></dl></section>
+                <section class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_Ticket_UserPanel"]</h2><p>@_ticket.Email</p></div></div><dl class="support-facts"><div><dt>@Text["Admin_Field_Name"]</dt><dd><a class="support-user-link" href="@($"/admin/users/{Uri.EscapeDataString(_ticket.UserId)}")" title="@Text["Admin_Ticket_OpenUser"]">@_ticket.DisplayName<span class="material-symbols-rounded" aria-hidden="true">arrow_outward</span></a></dd></div><div><dt>@Text["Admin_Field_UserId"]</dt><dd>@_ticket.UserId</dd></div><div><dt>@Text["Admin_Column_Created"]</dt><dd>@_ticket.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</dd></div><div><dt>@Text["Admin_Field_AppVersion"]</dt><dd>@(_ticket.AppVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Platform"]</dt><dd>@(_ticket.Platform ?? "—")</dd></div><div><dt>@Text["Admin_Field_Os"]</dt><dd>@(_ticket.OsVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Device"]</dt><dd>@(_ticket.DeviceModel ?? "—")</dd></div></dl></section>
                 @if (_ticket.HasScreenshot) { <section class="admin-panel support-screenshot"><h2>@Text["Admin_Column_Screenshot"]</h2><img src="@($"/admin/support/tickets/{_ticket.Id}/screenshot")" alt="@Text.Format("Admin_Ticket_ScreenshotAlt", _ticket.TicketNumber)" /></section> }
-                <section class="admin-panel"><label for="ticket-status">@Text["Admin_Ticket_ChangeStatus"]</label><select id="ticket-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(Text, status)</option> }</select><button class="admin-button admin-button--secondary support-status-button" disabled="@_isSaving" @onclick="ChangeStatusAsync">@Text["Admin_Ticket_SaveStatus"]</button></section>
             </aside>
         </div>
     }
@@ -43,6 +54,21 @@
 @code {
     [Parameter] public long TicketId { get; set; }
     private AdminSupportTicketDetail? _ticket; private string _reply = string.Empty; private SupportTicketStatus _selectedStatus = SupportTicketStatus.WaitingForUser; private bool _isLoading = true; private bool _isSaving; private string? _error; private string? _feedback; private bool _feedbackIsError;
+    private static readonly string[] Templates =
+    [
+        "Admin_Ticket_Template_Received",
+        "Admin_Ticket_Template_Details",
+        "Admin_Ticket_Template_Fixed",
+        "Admin_Ticket_Template_Idea"
+    ];
+
+    // Шаблон вставляется в ответ, а не заменяет уже написанное.
+    private void InsertTemplate(string template)
+    {
+        var text = Text[template + "_Text"];
+        _reply = string.IsNullOrWhiteSpace(_reply) ? text : $"{_reply.TrimEnd()}\n\n{text}";
+    }
+
     protected override async Task OnParametersSetAsync() => await LoadAsync();
     private async Task LoadAsync() { _isLoading = true; try { _ticket = await Support.GetAsync(TicketId); if (_ticket is not null) _selectedStatus = _ticket.Status; } catch { _error = Text["Admin_Ticket_Unavailable"]; } finally { _isLoading = false; } }
     private async Task ReplyAsync() { if (_isSaving || string.IsNullOrWhiteSpace(_reply)) return; _isSaving = true; _feedback = null; try { if (!await Support.ReplyAsync(TicketId, new(_reply, _selectedStatus))) throw new InvalidOperationException(); _reply = string.Empty; _feedback = Text["Admin_Ticket_ReplySaved"]; _feedbackIsError = false; await LoadAsync(); } catch { _feedback = Text["Admin_Ticket_ReplyFailed"]; _feedbackIsError = true; } finally { _isSaving = false; } }

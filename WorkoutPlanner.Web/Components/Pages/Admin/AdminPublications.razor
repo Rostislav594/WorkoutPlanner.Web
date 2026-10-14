@@ -43,7 +43,7 @@
                     </div>
                     <div class="admin-field">
                         <label for="publication-date">@Text["Admin_Publications_Date"]</label>
-                        <input id="publication-date" class="admin-input" type="datetime-local" @bind="_publishedLocal" />
+                        <input id="publication-date" class="admin-input" type="datetime-local" @bind="_publishedLocal" @bind:after="RefreshPushAudienceAsync" />
                     </div>
                 </div>
                 <div class="admin-field">
@@ -80,6 +80,10 @@
                         <span>@Text["Admin_Publications_Push"]</span>
                     </label>
                     <small>@(PushAlreadySent ? Text["Admin_Publications_PushAlreadySent"] : Text["Admin_Publications_PushHint"])</small>
+                    @if (_form.SendPush && !PushAlreadySent && _pushAudience is { } audience)
+                    {
+                        <small class="admin-push-audience">@Text.Format("Admin_Publications_PushAudience", audience)</small>
+                    }
                 </div>
                 <div class="admin-actions">
                     @if (IsEditing)
@@ -93,6 +97,20 @@
         </section>
 
         <aside class="admin-sidebar">
+            @if (_showPreview && _form.SendPush)
+            {
+                <section class="admin-push-preview" aria-label="@Text["Admin_Publications_PushPreview"]">
+                    <span class="admin-push-preview__label">@Text["Admin_Publications_PushPreview"]</span>
+                    <div class="admin-push-preview__card">
+                        <span class="admin-push-preview__icon material-symbols-rounded" aria-hidden="true">fitness_center</span>
+                        <div>
+                            <div class="admin-push-preview__app">GPlanner <span>· @Text["Admin_Publications_PushPreviewNow"]</span></div>
+                            <strong>@(string.IsNullOrWhiteSpace(_form.Title) ? Text["Admin_Publications_PreviewTitle"] : _form.Title.Trim())</strong>
+                            <p>@PushPreviewBody</p>
+                        </div>
+                    </div>
+                </section>
+            }
             @if (_showPreview)
             {
                 <section class="admin-panel admin-preview" aria-labelledby="preview-title">
@@ -147,6 +165,10 @@
                                     else
                                     {
                                         <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => StartEdit(item)">@Text["Admin_Publications_Edit"]</button>
+                                        @if (isPublished)
+                                        {
+                                            <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => SendTestPushAsync(item)"><span class="material-symbols-rounded" aria-hidden="true">notifications</span>@Text["Admin_Publications_TestPush"]</button>
+                                        }
                                         <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => _confirmDeleteId = item.Id">@Text["Common_Delete"]</button>
                                     }
                                 </div>
@@ -169,12 +191,24 @@
     private bool _removeImage;
     private long? _confirmDeleteId;
     private bool _showPreview = true;
+    private int? _pushAudience;
+    private const int PushBodyLength = 160;
     private bool _isSaving;
     private string? _error;
     private string? _success;
 
     private bool IsEditing => _editing is not null;
     private bool PushAlreadySent => _editing?.PushSentAtUtc is not null;
+
+    // Как в рассылке: начало текста, обрезанное до длины push.
+    private string PushPreviewBody
+    {
+        get
+        {
+            var body = string.IsNullOrWhiteSpace(_form.Body) ? Text["Admin_Publications_PreviewBody"] : _form.Body.Trim();
+            return body.Length <= PushBodyLength ? body : $"{body[..(PushBodyLength - 1)]}…";
+        }
+    }
 
     private string SubmitLabel => (IsEditing, _isSaving) switch
     {
@@ -190,7 +224,36 @@
         _previewImageDataUrl ??
         (_editing is { ImagePath: { } path } item && !_removeImage && item.PublishedAtUtc <= DateTime.UtcNow ? path : null);
 
-    protected override async Task OnInitializedAsync() => await ReloadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        await RefreshPushAudienceAsync();
+    }
+
+    // Охват — подсказка, а не условие публикации: при сбое просто не показываем число.
+    private async Task RefreshPushAudienceAsync()
+    {
+        try { _pushAudience = await Publications.CountPushDevicesAsync(_publishedLocal.ToUniversalTime()); }
+        catch (Exception exception) when (exception is not UnauthorizedAccessException) { _pushAudience = null; }
+    }
+
+    private async Task SendTestPushAsync(AdminPublicationItem item)
+    {
+        if (_isSaving) return;
+        _isSaving = true; _error = null; _success = null;
+        try
+        {
+            var devices = await Publications.SendTestPushAsync(item.Id);
+            if (devices is null) _error = Text["Admin_Publications_TestPushNotPublished"];
+            else if (devices == 0) _error = Text["Admin_Publications_TestPushNoDevices"];
+            else _success = Text.Format("Admin_Publications_TestPushSent", devices);
+        }
+        catch (Exception exception) when (exception is not UnauthorizedAccessException)
+        {
+            _error = Text["Admin_Publications_TestPushFailed"];
+        }
+        finally { _isSaving = false; }
+    }
 
     private async Task SelectImageAsync(InputFileChangeEventArgs args)
     {
@@ -207,7 +270,7 @@
 
     private async Task ReloadAsync() { _recent.Clear(); _recent.AddRange(await Publications.GetRecentAsync()); }
 
-    private void StartEdit(AdminPublicationItem item)
+    private async Task StartEdit(AdminPublicationItem item)
     {
         _editing = item;
         _confirmDeleteId = null;
@@ -221,13 +284,15 @@
         _removeImage = false;
         _error = null;
         _success = null;
+        await RefreshPushAudienceAsync();
     }
 
-    private void CancelEdit()
+    private async Task CancelEdit()
     {
         ResetForm();
         _error = null;
         _success = null;
+        await RefreshPushAudienceAsync();
     }
 
     private void ResetForm()
@@ -265,6 +330,7 @@
             }
             ResetForm();
             await ReloadAsync();
+            await RefreshPushAudienceAsync();
         }
         catch (Exception exception) when (exception is InvalidDataException or IOException) { _error = exception.Message; }
         finally { _isSaving = false; }

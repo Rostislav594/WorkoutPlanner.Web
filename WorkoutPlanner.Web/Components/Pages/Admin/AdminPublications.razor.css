@@ -3,7 +3,7 @@
 .admin-publications__heading > a { color: var(--color-text-muted); text-decoration: none; }
 .admin-publications__heading h1 { margin: 1.75rem 0 0; font-size: clamp(2rem, 5vw, 3rem); }
 .admin-publications__heading > span { display: block; margin-top: .625rem; color: var(--color-text-muted); }
-.admin-publications__layout { display: grid; grid-template-columns: minmax(37.5rem, 1.65fr) minmax(22.5rem, .85fr); align-items: start; gap: 1.75rem; margin-top: 1.875rem; }
+.admin-publications__layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(20rem, .85fr); align-items: start; gap: 1.75rem; margin-top: 1.875rem; }
 .admin-panel { padding: clamp(1.25rem, 3vw, 1.875rem); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); background: var(--glass-surface); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--shadow-card); }
 .admin-panel h2 { margin: 0 0 1.375rem; font-size: 1.5rem; }
 .admin-panel__heading { display: flex; align-items: start; justify-content: space-between; gap: 1.25rem; margin-bottom: 1.625rem; }
@@ -42,7 +42,7 @@
 .admin-publication-list span, .admin-publication-list time, .admin-publication-list small, .admin-empty { color: var(--color-text-muted); }
 .admin-publication-list span { margin-top: .25rem; font-size: .9375rem; }
 ::deep .validation-message { display: block; margin-top: .375rem; color: #ff8f8f; }
-@media (max-width: 1100px) { .admin-publications__layout { grid-template-columns: 1fr; } .admin-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1300px) { .admin-publications__layout { grid-template-columns: 1fr; } .admin-sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 720px) { .admin-publications { padding: 24px 16px 48px; } .admin-field-grid, .admin-sidebar { grid-template-columns: 1fr; gap: 0; } .admin-sidebar { gap: 20px; } .admin-actions { align-items: stretch; flex-direction: column-reverse; } .admin-publication-list article { grid-template-columns: 1fr; gap: 5px; } .admin-publication-list article > small { grid-column: auto; } }
 
 /* Галочки: push и «убрать изображение». */
@@ -52,6 +52,18 @@
 .admin-check input:disabled + span { color: var(--color-text-muted); }
 .admin-check input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .admin-field > .admin-check + small { display: block; }
+
+.admin-field small.admin-push-audience { display: block; margin-top: .25rem; color: var(--color-success-text); font-weight: 700; }
+
+/* Push как на экране телефона: тёмная карточка уведомления над предпросмотром публикации. */
+.admin-push-preview { display: grid; gap: .5rem; }
+.admin-push-preview__label { color: var(--color-text-muted); font-size: .875rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.admin-push-preview__card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .75rem; padding: .875rem 1rem; border: 1px solid var(--glass-border-strong); border-radius: 1.25rem; background: rgba(32, 32, 36, .82); box-shadow: var(--shadow-card); }
+.admin-push-preview__icon { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .625rem; background: var(--color-accent); color: #fff; font-size: 1.25rem; }
+.admin-push-preview__app { color: var(--color-text-muted); font-size: .8125rem; font-weight: 700; }
+.admin-push-preview__app span { font-weight: 500; }
+.admin-push-preview strong { display: block; margin-top: .125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-push-preview p { display: -webkit-box; margin: .125rem 0 0; overflow: hidden; color: var(--color-text-muted); font-size: .9375rem; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 
 /* Кнопки у публикаций в списке. */
 .admin-button--small { min-height: 2.5rem; padding: 0 .875rem; font-size: .9375rem; }

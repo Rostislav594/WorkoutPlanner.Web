@@ -37,16 +37,9 @@
                 <div><h2 id="users-metrics-title">@Text["Admin_Dashboard_UsersTitle"]</h2></div>
                 <a href="/admin/users">@Text["Admin_Dashboard_OpenUsers"] <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a>
             </div>
-            <div class="metric-grid metric-grid--users">
+            <div class="metric-grid">
                 <MetricCard Label="@Text["Admin_Metric_TotalUsers"]" Value="@_snapshot.TotalUsers" Icon="group" Featured="true"
                             Attention="@(NewUsers > 0 ? "users" : null)" Note="@(NewUsers > 0 ? Text.Format("Admin_Attention_NewUsers", NewUsers) : null)" />
-                <MetricCard Label="@Text["Admin_Metric_New24"]" Value="@_snapshot.NewUsers24Hours" />
-                <MetricCard Label="@Text["Admin_Metric_New7"]" Value="@_snapshot.NewUsers7Days" />
-                <MetricCard Label="@Text["Admin_Metric_New30"]" Value="@_snapshot.NewUsers30Days" />
-                <MetricCard Label="@Text["Admin_Metric_Active24"]" Value="@_snapshot.ActiveUsers24Hours" Tone="success" />
-                <MetricCard Label="@Text["Admin_Metric_Active7"]" Value="@_snapshot.ActiveUsers7Days" Tone="success" />
-                <MetricCard Label="@Text["Admin_Metric_Active30"]" Value="@_snapshot.ActiveUsers30Days" Tone="success" />
-                <MetricCard Label="@Text["Admin_Metric_Inactive30"]" Value="@_snapshot.InactiveUsersOver30Days" Tone="muted" />
             </div>
         </section>
 
@@ -56,6 +49,14 @@
                 <MetricCard Label="@Text["Admin_Metric_OpenTickets"]" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning"
                             Attention="@(UnseenTickets > 0 ? "support" : null)" Note="@(UnseenTickets > 0 ? Text.Format("Admin_Attention_UnseenTickets", UnseenTickets) : null)" />
                 <MetricCard Label="@Text["Admin_Metric_NewTickets"]" Value="@_snapshot.NewSupportTickets" Tone="warning" />
+            </div>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="trends-title">
+            <div class="dashboard-section__heading"><div><h2 id="trends-title">@Text["Admin_Dashboard_TrendsTitle"]</h2></div></div>
+            <div class="dashboard-charts">
+                <DailyBarChart Title="@Text["Admin_Chart_Registrations"]" Days="_snapshot.Registrations" />
+                <DailyBarChart Title="@Text["Admin_Chart_ActiveUsers"]" Days="_snapshot.ActiveUsers" Tone="activity" ShowToday="true" />
             </div>
         </section>
     }

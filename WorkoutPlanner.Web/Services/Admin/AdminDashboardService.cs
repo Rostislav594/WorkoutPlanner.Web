@@ -11,44 +11,15 @@ public sealed class AdminDashboardService(
     AdminAccessVerifier access,
     TimeProvider timeProvider) : IAdminDashboardService
 {
+    private const int ChartDays = 30;
+
     public async Task<AdminDashboardSnapshot> GetAsync(
         CancellationToken cancellationToken = default)
     {
         await access.GetRequiredAdminUserIdAsync();
-        var now = timeProvider.GetUtcNow().UtcDateTime;
-        var hours24 = now.AddHours(-24);
-        var days7 = now.AddDays(-7);
-        var days30 = now.AddDays(-30);
-
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var activities = db.Set<UserActivity>().AsNoTracking();
 
         var totalUsers = await db.Users.LongCountAsync(cancellationToken);
-        var new24 = await activities.LongCountAsync(
-            x => x.RegisteredAtUtc != null && x.RegisteredAtUtc >= hours24,
-            cancellationToken);
-        var new7 = await activities.LongCountAsync(
-            x => x.RegisteredAtUtc != null && x.RegisteredAtUtc >= days7,
-            cancellationToken);
-        var new30 = await activities.LongCountAsync(
-            x => x.RegisteredAtUtc != null && x.RegisteredAtUtc >= days30,
-            cancellationToken);
-        var active24 = await activities.LongCountAsync(
-            x => x.LastSeenAtUtc != null && x.LastSeenAtUtc >= hours24,
-            cancellationToken);
-        var active7 = await activities.LongCountAsync(
-            x => x.LastSeenAtUtc != null && x.LastSeenAtUtc >= days7,
-            cancellationToken);
-        var active30 = await activities.LongCountAsync(
-            x => x.LastSeenAtUtc != null && x.LastSeenAtUtc >= days30,
-            cancellationToken);
-        var inactive30 = await activities.LongCountAsync(
-            x => x.LastSeenAtUtc < days30 ||
-                 (x.LastSeenAtUtc == null &&
-                  x.RegisteredAtUtc != null &&
-                  x.RegisteredAtUtc < days30),
-            cancellationToken);
-
         var openTickets = await db.SupportTickets.LongCountAsync(
             x => x.Status != SupportTicketStatus.Resolved &&
                  x.Status != SupportTicketStatus.Closed,
@@ -57,16 +28,49 @@ public sealed class AdminDashboardService(
             x => x.Status == SupportTicketStatus.New,
             cancellationToken);
 
+        // Дни считаем по местному времени: «сегодня» должно совпадать с тем, что видит админ.
+        var today = DateOnly.FromDateTime(timeProvider.GetLocalNow().DateTime);
+        var firstDay = today.AddDays(-(ChartDays - 1));
+        var localZone = timeProvider.LocalTimeZone;
+
+        var firstDayStartUtc = TimeZoneInfo.ConvertTimeToUtc(firstDay.ToDateTime(TimeOnly.MinValue), localZone);
+        var registeredAt = await db.UserActivities.AsNoTracking()
+            .Where(x => x.RegisteredAtUtc != null && x.RegisteredAtUtc >= firstDayStartUtc)
+            .Select(x => x.RegisteredAtUtc!.Value)
+            .ToListAsync(cancellationToken);
+        var registrations = CountByDay(
+            registeredAt.Select(utc => DateOnly.FromDateTime(
+                TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), localZone))),
+            firstDay);
+
+        // Каждая строка — один пользователь в один день, поэтому счёт строк и есть число активных.
+        var activeDays = await db.UserActivityDays.AsNoTracking()
+            .Where(x => x.Day >= firstDay)
+            .GroupBy(x => x.Day)
+            .Select(group => new { Day = group.Key, Users = group.Count() })
+            .ToDictionaryAsync(x => x.Day, x => x.Users, cancellationToken);
+        var activeUsers = Enumerable.Range(0, ChartDays)
+            .Select(offset => firstDay.AddDays(offset))
+            .Select(day => new AdminDailyCount(day, activeDays.GetValueOrDefault(day)))
+            .ToArray();
+
         return new AdminDashboardSnapshot(
             totalUsers,
-            new24,
-            new7,
-            new30,
-            active24,
-            active7,
-            active30,
-            inactive30,
             openTickets,
-            newTickets);
+            newTickets,
+            registrations,
+            activeUsers);
+    }
+
+    private static AdminDailyCount[] CountByDay(IEnumerable<DateOnly> days, DateOnly firstDay)
+    {
+        var counts = days
+            .Where(day => day >= firstDay)
+            .GroupBy(day => day)
+            .ToDictionary(group => group.Key, group => group.Count());
+        return Enumerable.Range(0, ChartDays)
+            .Select(offset => firstDay.AddDays(offset))
+            .Select(day => new AdminDailyCount(day, counts.GetValueOrDefault(day)))
+            .ToArray();
     }
 }

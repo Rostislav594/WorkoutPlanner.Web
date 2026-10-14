@@ -26,7 +26,7 @@
         <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>@Text["Admin_Column_Ticket"]</th><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Created"]</th><th>@Text["Admin_Column_Updated"]</th><th>@Text["Admin_Column_Status"]</th><th>@Text["Admin_Column_Screenshot"]</th></tr></thead><tbody>
             @foreach (var ticket in _result.Items)
             {
-                <tr><td><a href="@($"/admin/support/{ticket.Id}")"><span class="admin-table__primary">@ticket.TicketNumber</span><span class="admin-table__secondary">@ticket.Preview</span></a></td><td><span class="admin-table__primary">@ticket.DisplayName</span><span class="admin-table__secondary">@ticket.Email</span></td><td>@FormatDate(ticket.CreatedAtUtc)</td><td>@FormatDate(ticket.UpdatedAtUtc)</td><td><span class="admin-status @StatusClass(ticket.Status)">@StatusLabel(Text, ticket.Status)</span></td><td>@(ticket.HasScreenshot ? Text["Admin_Yes"] : "—")</td></tr>
+                <tr class="@(IsNew(ticket) ? "support-row--new" : null)"><td><a href="@($"/admin/support/{ticket.Id}")"><span class="admin-table__primary">@ticket.TicketNumber@if (IsNew(ticket)) { <span class="support-new-badge">@Text["Admin_Support_NewBadge"]</span> }</span><span class="admin-table__secondary">@ticket.Preview</span></a></td><td><a href="@($"/admin/users/{Uri.EscapeDataString(ticket.UserId)}")" title="@Text["Admin_Ticket_OpenUser"]"><span class="admin-table__primary">@ticket.DisplayName</span><span class="admin-table__secondary">@ticket.Email</span></a></td><td>@FormatDate(ticket.CreatedAtUtc)</td><td>@FormatDate(ticket.UpdatedAtUtc)</td><td><span class="admin-status @StatusClass(ticket.Status)">@StatusLabel(Text, ticket.Status)</span></td><td>@(ticket.HasScreenshot ? Text["Admin_Yes"] : "—")</td></tr>
             }
         </tbody></table></div>
         <div class="admin-pagination"><span>@Text.Format("Admin_TotalPage", _result.TotalCount, _result.Page, TotalPages)</span><div class="admin-pagination__buttons"><button class="admin-button admin-button--secondary" disabled="@(_page <= 1)" @onclick="PreviousAsync">@Text["Common_Back"]</button><button class="admin-button admin-button--secondary" disabled="@(_page >= TotalPages)" @onclick="NextAsync">@Text["Admin_Next"]</button></div></div>
@@ -36,6 +36,15 @@
 @code {
     private const int PageSize = 25; private AdminPagedResult<AdminSupportListItem>? _result; private string _search = string.Empty; private string _status = string.Empty; private string? _error; private int _page = 1; private bool _isLoading = true;
     private int TotalPages => _result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
+
+    // Прошлый заход в раздел: всё, что появилось после него, помечается «Новое»
+    // до конца этого визита.
+    private DateTime? _previousView;
+
+    private bool IsNew(AdminSupportListItem ticket) =>
+        _previousView is { } since &&
+        (ticket.CreatedAtUtc > since || ticket.LastUserMessageAtUtc > since);
+
     protected override async Task OnInitializedAsync()
     {
         await LoadAsync();
@@ -45,7 +54,7 @@
     // Раздел открыт — его подсветка в меню и на главной гаснет.
     private async Task MarkSectionViewedAsync()
     {
-        try { await Attention.MarkViewedAsync(WorkoutPlanner.Web.Models.AdminSection.Support); }
+        try { _previousView = await Attention.MarkViewedAsync(WorkoutPlanner.Web.Models.AdminSection.Support); }
         catch (Exception exception) { Logger.LogWarning(exception, "Admin section view could not be saved."); }
     }
     private async Task SearchAsync() { _page = 1; await LoadAsync(); }

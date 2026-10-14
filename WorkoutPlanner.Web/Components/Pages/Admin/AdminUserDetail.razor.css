@@ -3,5 +3,23 @@
 .admin-definition-list div { display: grid; grid-template-columns: minmax(9.375rem, .7fr) minmax(0, 1.3fr); gap: 1.125rem; padding: .8125rem 0; border-top: 1px solid var(--glass-border); }
 .admin-definition-list dt { color: var(--color-text-muted); font-weight: 700; }
 .admin-definition-list dd { min-width: 0; margin: 0; overflow-wrap: anywhere; text-align: right; }
+
+/* Действия с доступом: под списком, переносятся на узком экране. */
+.user-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .625rem; margin-top: 1.25rem; padding-top: 1.125rem; border-top: 1px solid var(--glass-border); }
+.user-actions__question { flex-basis: 100%; margin: 0 0 .125rem; font-weight: 700; }
+.user-actions__hint { margin: 0; color: var(--color-text-muted); }
+
+.user-empty { margin: 0; color: var(--color-text-muted); }
+.user-tickets { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+.user-tickets a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem .875rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: var(--glass-inset); color: var(--color-text); text-decoration: none; transition: background-color var(--transition-ui), border-color var(--transition-ui); }
+.user-tickets a:hover, .user-tickets a:focus-visible { border-color: var(--color-border-strong); background: var(--glass-inset-hover); }
+.user-tickets a:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.user-tickets__text { display: grid; gap: .1875rem; min-width: 0; }
+.user-tickets__text span { overflow: hidden; color: var(--color-text-muted); font-size: .9375rem; text-overflow: ellipsis; white-space: nowrap; }
+.user-tickets__meta { display: grid; justify-items: end; gap: .25rem; flex-shrink: 0; color: var(--color-text-muted); font-size: .875rem; }
+
+.user-message { display: grid; gap: 1rem; }
+.user-message__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+
 @media (max-width: 1000px) { .admin-detail-grid { grid-template-columns: 1fr; } }
-@media (max-width: 520px) { .admin-definition-list div { grid-template-columns: 1fr; gap: 4px; } .admin-definition-list dd { text-align: left; } }
+@media (max-width: 520px) { .user-tickets a { align-items: flex-start; flex-direction: column; gap: .5rem; } .user-tickets__meta { justify-items: start; } .user-message__actions .admin-button { width: 100%; } .admin-definition-list div { grid-template-columns: 1fr; gap: 4px; } .admin-definition-list dd { text-align: left; } }

@@ -46,7 +46,7 @@
                             <td><a href="@($"/admin/users/{Uri.EscapeDataString(user.UserId)}")"><span class="admin-table__primary">@user.DisplayName</span><span class="admin-table__secondary">@user.Email · @user.UserId</span></a></td>
                             <td>@FormatDate(user.RegisteredAtUtc)</td>
                             <td>@FormatDate(user.LastSeenAtUtc)</td>
-                            <td><span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(Text, user.ActivityStatus)</span></td>
+                            <td>@if (user.IsBlocked) { <span class="admin-status admin-status--danger">@Text["Admin_User_Blocked"]</span> } else { <span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(Text, user.ActivityStatus)</span> }</td>
                             <td><span class="admin-table__primary">@(user.Platform ?? "—")</span><span class="admin-table__secondary">@(user.AppVersion is null ? Text["Admin_VersionUnknown"] : $"GPlanner {user.AppVersion}")</span></td>
                             <td>@user.WorkoutCount</td>
                             <td>@user.SupportTicketCount</td>

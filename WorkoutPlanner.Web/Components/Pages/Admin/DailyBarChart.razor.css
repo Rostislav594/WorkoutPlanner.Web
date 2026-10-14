@@ -1,0 +1,100 @@
+/* График без коробки: плоскость со столбиками чуть наклонена вглубь пространства,
+   под ней — отражение, как на глянцевом полу. */
+.daily-chart {
+    --chart-color: var(--color-accent);
+    --chart-glow: rgba(255, 122, 26, .35);
+    display: grid;
+    gap: .875rem;
+    padding: .5rem .25rem 0;
+    animation: chart-float 12s ease-in-out infinite alternate;
+}
+
+.daily-chart--activity {
+    --chart-color: var(--color-success);
+    --chart-glow: rgba(63, 185, 80, .35);
+    animation-duration: 14s;
+    animation-delay: -6s;
+}
+
+.daily-chart__heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.daily-chart__heading h3 {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    font-weight: 750;
+}
+
+.daily-chart__heading strong {
+    font-size: 2rem;
+    line-height: 1;
+    text-shadow: 0 0 1.25rem var(--chart-glow);
+}
+
+.daily-chart__heading strong small {
+    color: var(--color-text-muted);
+    font-size: .875rem;
+    font-weight: 700;
+    text-shadow: none;
+}
+
+.daily-chart__stage {
+    perspective: 40rem;
+    perspective-origin: 50% 0;
+}
+
+.daily-chart__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 8.5rem;
+    padding-bottom: 1px;
+    transform: rotateX(14deg);
+    transform-origin: 50% 100%;
+    /* Линия «пола» тает к краям, чтобы не превращаться в рамку. */
+    background: linear-gradient(to right, transparent, var(--glass-border-strong) 12%, var(--glass-border-strong) 88%, transparent) bottom / 100% 1px no-repeat;
+    -webkit-box-reflect: below 2px linear-gradient(transparent 55%, rgba(255, 255, 255, .22));
+}
+
+.daily-chart__bar {
+    flex: 1 1 0;
+    min-width: 0;
+    height: max(3px, calc(var(--value) * 100%));
+    border-radius: 3px 3px 1px 1px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--chart-color) 45%, transparent), var(--chart-color));
+    box-shadow: 0 0 .75rem var(--chart-glow);
+    transition: filter var(--transition-ui);
+}
+
+.daily-chart__bar:hover {
+    filter: brightness(1.3);
+}
+
+.daily-chart__bar--empty {
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    box-shadow: none;
+}
+
+.daily-chart__axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    color: var(--color-text-muted);
+    font-size: .8125rem;
+}
+
+@keyframes chart-float {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, -.3125rem, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .daily-chart { animation: none; }
+}
