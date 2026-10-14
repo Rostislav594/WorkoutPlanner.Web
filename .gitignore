@@ -368,6 +368,7 @@ FodyWeavers.xsd
 *.db-wal
 WorkoutPlanner.Web/App_Data/DataProtectionKeys/
 WorkoutPlanner.Web/App_Data/WorkoutImages/
+WorkoutPlanner.Web/App_Data/PublicationImages/
 WorkoutPlanner.Web/wwwroot/WorkoutImages/
 **/google-services.json
 **/firebase-service-account*.json
