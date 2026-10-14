@@ -3116,9 +3116,6 @@
   <data name="Admin_Attention_NewUsers" xml:space="preserve">
     <value>New: {0}</value>
   </data>
-  <data name="Admin_Attention_UnseenTickets" xml:space="preserve">
-    <value>Unseen: {0}</value>
-  </data>
   <data name="Web_Login_LockedOut" xml:space="preserve">
     <value>Too many failed sign-in attempts. Try again in a few minutes.</value>
   </data>
@@ -3155,11 +3152,8 @@
   <data name="Admin_Publications_ReadStats" xml:space="preserve">
     <value>read by {0} of {1}</value>
   </data>
-  <data name="Admin_Publications_Push" xml:space="preserve">
-    <value>Send a push notification</value>
-  </data>
   <data name="Admin_Publications_PushHint" xml:space="preserve">
-    <value>Goes to everyone who will see the publication. For a future date — at publication time.</value>
+    <value>Everyone who can see the publication gets a push; if the date is in the future, when it goes out.</value>
   </data>
   <data name="Admin_Publications_PushAlreadySent" xml:space="preserve">
     <value>The push has already been sent and will not be sent again.</value>
@@ -3226,9 +3220,6 @@
   </data>
   <data name="Admin_User_Message_BodyLabel" xml:space="preserve">
     <value>Text</value>
-  </data>
-  <data name="Admin_User_Message_Push" xml:space="preserve">
-    <value>Send a push notification</value>
   </data>
   <data name="Admin_User_Message_Send" xml:space="preserve">
     <value>Send to Inbox</value>
@@ -3359,21 +3350,6 @@
   <data name="Admin_Publications_PushAudience" xml:space="preserve">
     <value>Devices that will get the push: {0}</value>
   </data>
-  <data name="Admin_Publications_TestPush" xml:space="preserve">
-    <value>Test push to me</value>
-  </data>
-  <data name="Admin_Publications_TestPushSent" xml:space="preserve">
-    <value>Test push sent to your devices: {0}.</value>
-  </data>
-  <data name="Admin_Publications_TestPushNoDevices" xml:space="preserve">
-    <value>Your account has no devices with push. Sign in to the app with this account and allow notifications.</value>
-  </data>
-  <data name="Admin_Publications_TestPushNotPublished" xml:space="preserve">
-    <value>A test push is available once the publication is out.</value>
-  </data>
-  <data name="Admin_Publications_TestPushFailed" xml:space="preserve">
-    <value>Could not send the test push. Please try again.</value>
-  </data>
   <data name="Admin_Publications_PushPreview" xml:space="preserve">
     <value>How the push will look</value>
   </data>
@@ -3388,5 +3364,14 @@
   </data>
   <data name="Admin_Chart_AriaToday" xml:space="preserve">
     <value>{0}: {1} today, up to {2} a day over 30 days</value>
+  </data>
+  <data name="Admin_Attention_AwaitingHint" xml:space="preserve">
+    <value>Awaiting reply:</value>
+  </data>
+  <data name="Admin_Audit_Sections" xml:space="preserve">
+    <value>Log sections</value>
+  </data>
+  <data name="Admin_Audit_TabAll" xml:space="preserve">
+    <value>All</value>
   </data>
 </root>

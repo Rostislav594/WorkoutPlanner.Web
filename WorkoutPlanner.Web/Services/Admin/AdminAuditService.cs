@@ -14,6 +14,7 @@ public sealed class AdminAuditService(
     public async Task<AdminPagedResult<AdminAuditItem>> GetPageAsync(
         int page,
         int pageSize,
+        string? targetType = null,
         CancellationToken cancellationToken = default)
     {
         await access.GetRequiredAdminUserIdAsync();
@@ -21,8 +22,11 @@ public sealed class AdminAuditService(
         pageSize = Math.Clamp(pageSize, 1, 100);
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var total = await db.AdminAuditLogs.LongCountAsync(cancellationToken);
-        var rows = await db.AdminAuditLogs.AsNoTracking()
+        var logs = db.AdminAuditLogs.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(targetType))
+            logs = logs.Where(x => x.TargetType == targetType);
+        var total = await logs.LongCountAsync(cancellationToken);
+        var rows = await logs
             .OrderByDescending(x => x.CreatedAtUtc)
             .ThenByDescending(x => x.Id)
             .Skip((page - 1) * pageSize)
@@ -80,6 +84,16 @@ public sealed class AdminAuditService(
                 url);
         }).ToArray();
         return new AdminPagedResult<AdminAuditItem>(items, page, pageSize, total);
+    }
+
+    public async Task<IReadOnlyDictionary<string, long>> CountByTargetTypeAsync(CancellationToken cancellationToken = default)
+    {
+        await access.GetRequiredAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        return await db.AdminAuditLogs.AsNoTracking()
+            .GroupBy(x => x.TargetType)
+            .Select(group => new { group.Key, Count = group.LongCount() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count, cancellationToken);
     }
 
     private static long[] NumericIds(IEnumerable<string> ids) =>

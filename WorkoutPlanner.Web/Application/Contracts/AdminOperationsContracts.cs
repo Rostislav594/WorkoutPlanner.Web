@@ -68,8 +68,11 @@ public sealed record AdminUserTicketItem(
     DateTime UpdatedAtUtc,
     SupportTicketStatus Status);
 
-/// <summary>Личное сообщение пользователю во «Входящие».</summary>
-public sealed record AdminUserMessage(string Title, string Body, bool SendPush = true);
+/// <summary>
+/// Личное сообщение пользователю: приходит во «Входящие» и push-уведомлением.
+/// Отключить push может только сам пользователь в настройках приложения.
+/// </summary>
+public sealed record AdminUserMessage(string Title, string Body);
 
 public sealed record AdminSupportListQuery(
     string? Search,
@@ -88,7 +91,7 @@ public sealed record AdminSupportListItem(
     DateTime UpdatedAtUtc,
     SupportTicketStatus Status,
     bool HasScreenshot,
-    DateTime? LastUserMessageAtUtc = null);
+    bool IsNew = false);
 
 public sealed record AdminSupportMessageItem(
     long Id,
@@ -118,7 +121,7 @@ public sealed record AdminSupportReply(string Message, SupportTicketStatus? Stat
 /// <summary>Сколько нового админ ещё не видел в разделах админки.</summary>
 public sealed record AdminAttentionSnapshot(
     int NewUsers,
-    int UnseenSupportTickets);
+    int SupportTicketsAwaitingReply);
 
 /// <summary>Запись журнала действий админки с понятной подписью объекта.</summary>
 public sealed record AdminAuditItem(

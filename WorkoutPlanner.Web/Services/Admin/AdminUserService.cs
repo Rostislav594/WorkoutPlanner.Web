@@ -255,24 +255,21 @@ public sealed class AdminUserService(
         AddAudit(db, adminUserId, AdminAuditActions.UserMessageSent, userId);
         await db.SaveChangesAsync(cancellationToken);
 
-        if (message.SendPush)
+        try
         {
-            try
-            {
-                await pushNotifications.NotifyInboxMessageAsync(
-                    userId,
-                    PushNotificationType.InboxMessage,
-                    inboxMessage.Id,
-                    cancellationToken);
-            }
-            catch (Exception exception)
-            {
-                // Сообщение уже во «Входящих»; без push пользователь увидит его, когда откроет приложение.
-                logger.LogWarning(
-                    exception,
-                    "Could not send push for admin message {InboxMessageId}.",
-                    inboxMessage.Id);
-            }
+            await pushNotifications.NotifyInboxMessageAsync(
+                userId,
+                PushNotificationType.InboxMessage,
+                inboxMessage.Id,
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            // Сообщение уже во «Входящих»; без push пользователь увидит его, когда откроет приложение.
+            logger.LogWarning(
+                exception,
+                "Could not send push for admin message {InboxMessageId}.",
+                inboxMessage.Id);
         }
 
         return inboxMessage.Id;

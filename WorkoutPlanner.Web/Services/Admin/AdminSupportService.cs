@@ -69,9 +69,10 @@ public sealed class AdminSupportService(
                 ticket.UpdatedAtUtc,
                 ticket.Status,
                 ticket.ScreenshotPath != null,
-                ticket.Messages
-                    .Where(message => message.SenderType == SupportMessageSenderType.User)
-                    .Max(message => (DateTime?)message.CreatedAtUtc)))
+                ticket.AdminViewedAtUtc == null ||
+                ticket.Messages.Any(message =>
+                    message.SenderType == SupportMessageSenderType.User &&
+                    message.CreatedAtUtc > ticket.AdminViewedAtUtc)))
             .ToListAsync(cancellationToken);
 
         var items = rows.Select(row => new AdminSupportListItem(
@@ -85,7 +86,7 @@ public sealed class AdminSupportService(
             row.UpdatedAtUtc,
             row.Status,
             row.HasScreenshot,
-            row.LastUserMessageAtUtc)).ToArray();
+            row.IsNew)).ToArray();
         return new AdminPagedResult<AdminSupportListItem>(items, page, pageSize, total);
     }
 
@@ -218,6 +219,7 @@ public sealed class AdminSupportService(
         });
         ticket.Status = reply.Status ?? SupportTicketStatus.WaitingForUser;
         ticket.UpdatedAtUtc = now;
+        ticket.AdminViewedAtUtc = now;
         db.Set<AdminAuditLog>().Add(new AdminAuditLog
         {
             AdminUserId = adminUserId,
@@ -276,5 +278,5 @@ public sealed class AdminSupportService(
         DateTime UpdatedAtUtc,
         SupportTicketStatus Status,
         bool HasScreenshot,
-        DateTime? LastUserMessageAtUtc);
+        bool IsNew);
 }

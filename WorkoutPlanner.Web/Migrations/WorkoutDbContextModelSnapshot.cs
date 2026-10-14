@@ -842,6 +842,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("AdminViewedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("AppVersion")
                         .HasMaxLength(40)
                         .HasColumnType("TEXT");

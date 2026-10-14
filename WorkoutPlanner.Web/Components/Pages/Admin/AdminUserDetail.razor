@@ -98,7 +98,6 @@
                         <textarea id="user-message-body" class="admin-input" maxlength="8000" @bind="_messageBody" @bind:event="oninput"></textarea>
                     </div>
                     <div class="user-message__actions">
-                        <label class="admin-check"><input type="checkbox" @bind="_messagePush" /><span>@Text["Admin_User_Message_Push"]</span></label>
                         <button class="admin-button admin-button--primary" type="button" disabled="@(_isBusy || !CanSendMessage)" @onclick="SendMessageAsync">@(_isBusy ? Text["Admin_User_Message_Sending"] : Text["Admin_User_Message_Send"])</button>
                     </div>
                 </div>
@@ -118,7 +117,6 @@
     private bool _feedbackIsError;
     private string _messageTitle = string.Empty;
     private string _messageBody = string.Empty;
-    private bool _messagePush = true;
 
     private bool CanSendMessage => !string.IsNullOrWhiteSpace(_messageTitle) && !string.IsNullOrWhiteSpace(_messageBody);
 
@@ -169,7 +167,7 @@
         _isBusy = true; _feedback = null;
         try
         {
-            if (await Users.SendMessageAsync(UserId, new AdminUserMessage(_messageTitle, _messageBody, _messagePush)) is null)
+            if (await Users.SendMessageAsync(UserId, new AdminUserMessage(_messageTitle, _messageBody)) is null)
                 throw new InvalidOperationException("User not found.");
             _messageTitle = string.Empty; _messageBody = string.Empty;
             _feedback = Text["Admin_User_Message_Sent"]; _feedbackIsError = false;

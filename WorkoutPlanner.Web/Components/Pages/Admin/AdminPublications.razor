@@ -74,17 +74,24 @@
                         </label>
                     }
                 </div>
-                <div class="admin-field">
-                    <label class="admin-check">
-                        <input type="checkbox" @bind="_form.SendPush" disabled="@PushAlreadySent" />
-                        <span>@Text["Admin_Publications_Push"]</span>
-                    </label>
-                    <small>@(PushAlreadySent ? Text["Admin_Publications_PushAlreadySent"] : Text["Admin_Publications_PushHint"])</small>
-                    @if (_form.SendPush && !PushAlreadySent && _pushAudience is { } audience)
-                    {
-                        <small class="admin-push-audience">@Text.Format("Admin_Publications_PushAudience", audience)</small>
-                    }
-                </div>
+                @* Push уходит всегда; здесь только видно, кому и когда. *@
+                @if (WillSendPush)
+                {
+                    <p class="admin-push-info">
+                        <span class="material-symbols-rounded" aria-hidden="true">notifications_active</span>
+                        <span>
+                            @Text["Admin_Publications_PushHint"]
+                            @if (_pushAudience is { } audience)
+                            {
+                                <strong>@Text.Format("Admin_Publications_PushAudience", audience)</strong>
+                            }
+                        </span>
+                    </p>
+                }
+                else if (PushAlreadySent)
+                {
+                    <p class="admin-push-info admin-push-info--muted">@Text["Admin_Publications_PushAlreadySent"]</p>
+                }
                 <div class="admin-actions">
                     @if (IsEditing)
                     {
@@ -97,7 +104,7 @@
         </section>
 
         <aside class="admin-sidebar">
-            @if (_showPreview && _form.SendPush)
+            @if (_showPreview && WillSendPush)
             {
                 <section class="admin-push-preview" aria-label="@Text["Admin_Publications_PushPreview"]">
                     <span class="admin-push-preview__label">@Text["Admin_Publications_PushPreview"]</span>
@@ -165,10 +172,6 @@
                                     else
                                     {
                                         <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => StartEdit(item)">@Text["Admin_Publications_Edit"]</button>
-                                        @if (isPublished)
-                                        {
-                                            <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => SendTestPushAsync(item)"><span class="material-symbols-rounded" aria-hidden="true">notifications</span>@Text["Admin_Publications_TestPush"]</button>
-                                        }
                                         <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => _confirmDeleteId = item.Id">@Text["Common_Delete"]</button>
                                     }
                                 </div>
@@ -199,6 +202,10 @@
 
     private bool IsEditing => _editing is not null;
     private bool PushAlreadySent => _editing?.PushSentAtUtc is not null;
+
+    // Новая публикация шлёт push всегда; при правке — если она ещё не вышла и push не ушёл.
+    private bool WillSendPush => _editing is null ||
+        (_editing.PushSentAtUtc is null && _publishedLocal.ToUniversalTime() > DateTime.UtcNow);
 
     // Как в рассылке: начало текста, обрезанное до длины push.
     private string PushPreviewBody
@@ -237,24 +244,6 @@
         catch (Exception exception) when (exception is not UnauthorizedAccessException) { _pushAudience = null; }
     }
 
-    private async Task SendTestPushAsync(AdminPublicationItem item)
-    {
-        if (_isSaving) return;
-        _isSaving = true; _error = null; _success = null;
-        try
-        {
-            var devices = await Publications.SendTestPushAsync(item.Id);
-            if (devices is null) _error = Text["Admin_Publications_TestPushNotPublished"];
-            else if (devices == 0) _error = Text["Admin_Publications_TestPushNoDevices"];
-            else _success = Text.Format("Admin_Publications_TestPushSent", devices);
-        }
-        catch (Exception exception) when (exception is not UnauthorizedAccessException)
-        {
-            _error = Text["Admin_Publications_TestPushFailed"];
-        }
-        finally { _isSaving = false; }
-    }
-
     private async Task SelectImageAsync(InputFileChangeEventArgs args)
     {
         _image = args.File;
@@ -277,7 +266,6 @@
         _form.Type = item.Type;
         _form.Title = item.Title;
         _form.Body = item.Body;
-        _form.SendPush = item.SendPushNotification;
         _publishedLocal = item.PublishedAtUtc.ToLocalTime();
         _image = null;
         _previewImageDataUrl = null;
@@ -301,7 +289,6 @@
         _form.Type = InboxMessageType.News;
         _form.Title = string.Empty;
         _form.Body = string.Empty;
-        _form.SendPush = false;
         _publishedLocal = DateTime.Now;
         _image = null;
         _previewImageDataUrl = null;
@@ -316,7 +303,7 @@
         {
             PhotoUpload? upload = null;
             if (_image is not null) upload = new PhotoUpload(_image.OpenReadStream(5 * 1024 * 1024), _image.ContentType, _image.Size);
-            var draft = new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload, _form.SendPush);
+            var draft = new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload);
             if (_editing is { } editing)
             {
                 var updated = await Publications.UpdateAsync(editing.Id, draft, _removeImage);
@@ -366,6 +353,5 @@
         // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
         [Required(ErrorMessage = "Admin_Publications_TitleRequired"), StringLength(160, ErrorMessage = "Admin_Publications_TitleTooLong")] public string Title { get; set; } = string.Empty;
         [Required(ErrorMessage = "Admin_Publications_BodyRequired"), StringLength(8000, ErrorMessage = "Admin_Publications_BodyTooLong")] public string Body { get; set; } = string.Empty;
-        public bool SendPush { get; set; }
     }
 }

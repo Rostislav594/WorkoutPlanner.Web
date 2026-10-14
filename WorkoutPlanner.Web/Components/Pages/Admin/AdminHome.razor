@@ -46,9 +46,9 @@
         <section class="dashboard-section" aria-labelledby="support-metrics-title">
             <div class="dashboard-section__heading"><div><h2 id="support-metrics-title">@Text["Admin_Dashboard_SupportTitle"]</h2></div></div>
             <div class="metric-grid">
-                <MetricCard Label="@Text["Admin_Metric_OpenTickets"]" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning"
-                            Attention="@(UnseenTickets > 0 ? "support" : null)" Note="@(UnseenTickets > 0 ? Text.Format("Admin_Attention_UnseenTickets", UnseenTickets) : null)" />
-                <MetricCard Label="@Text["Admin_Metric_NewTickets"]" Value="@_snapshot.NewSupportTickets" Tone="warning" />
+                <MetricCard Label="@Text["Admin_Metric_OpenTickets"]" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning" />
+                <MetricCard Label="@Text["Admin_Metric_NewTickets"]" Value="@_snapshot.NewSupportTickets" Tone="warning"
+                            Attention="@(_snapshot.NewSupportTickets > 0 ? "support" : null)" />
             </div>
         </section>
 
@@ -71,7 +71,6 @@
     private string _error = string.Empty;
 
     private int NewUsers => _attention?.NewUsers ?? 0;
-    private int UnseenTickets => _attention?.UnseenSupportTickets ?? 0;
 
     protected override async Task OnInitializedAsync()
     {

@@ -39,17 +39,26 @@ public sealed class AdminAttentionService(
             x => x.RegisteredAtUtc != null && x.RegisteredAtUtc > usersSince,
             cancellationToken);
 
-        // Обращение непросмотрено, если оно создано или пользователь ответил в нём
-        // после последнего захода в раздел поддержки.
-        var supportSince = viewedAt[AdminSection.Support];
-        var unseenTickets = await db.SupportTickets.CountAsync(
-            x => x.CreatedAtUtc > supportSince ||
-                 x.Messages.Any(message =>
-                     message.SenderType == SupportMessageSenderType.User &&
-                     message.CreatedAtUtc > supportSince),
+        // Поддержка подсвечивается, пока есть обращения без ответа, —
+        // одного захода в раздел для этого мало.
+        var awaitingReply = await db.SupportTickets.CountAsync(
+            SupportTicketQueries.AwaitsReply,
             cancellationToken);
 
-        return new AdminAttentionSnapshot(newUsers, unseenTickets);
+        return new AdminAttentionSnapshot(newUsers, awaitingReply);
+    }
+
+    public async Task MarkTicketViewedAsync(
+        long ticketId,
+        CancellationToken cancellationToken = default)
+    {
+        await GetAdminUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        if (await db.SupportTickets
+                .Where(x => x.Id == ticketId)
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.AdminViewedAtUtc, now), cancellationToken) > 0)
+            Changed?.Invoke();
     }
 
     public async Task<DateTime?> MarkViewedAsync(

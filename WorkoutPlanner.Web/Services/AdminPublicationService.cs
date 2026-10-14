@@ -16,7 +16,6 @@ public sealed class AdminPublicationService(
     CurrentUserService currentUser,
     UserManager<IdentityUser> userManager,
     IInboxPublicationImageStorage imageStorage,
-    IRemotePushProvider pushProvider,
     TimeProvider timeProvider) : IAdminPublicationService
 {
     public async Task<AdminPublicationItem> CreateAsync(AdminPublicationDraft draft, CancellationToken cancellationToken = default)
@@ -40,7 +39,9 @@ public sealed class AdminPublicationService(
                 PublishedAtUtc = DateTime.SpecifyKind(draft.PublishedAtUtc, DateTimeKind.Utc),
                 CreatedAtUtc = timeProvider.GetUtcNow().UtcDateTime,
                 CreatedByUserId = adminUserId,
-                SendPushNotification = draft.SendPushNotification
+                // Push уходит всегда; отключить его может только сам пользователь
+                // в настройках приложения — тогда его телефон снят с рассылки.
+                SendPushNotification = true
             };
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             db.InboxPublications.Add(entity);
@@ -112,10 +113,10 @@ public sealed class AdminPublicationService(
                 entity.ImagePath = newImagePath;
             else if (removeImage)
                 entity.ImagePath = null;
-            // Разосланный push не отзывается и не повторяется: флаг меняется,
-            // только пока рассылки ещё не было.
-            if (entity.PushSentAtUtc is null)
-                entity.SendPushNotification = draft.SendPushNotification;
+            // Разосланный push не повторяется. Публикация, которая ещё не вышла,
+            // получит push при выходе; уже вышедшая без push задним числом его не шлёт.
+            if (entity.PushSentAtUtc is null && entity.PublishedAtUtc > timeProvider.GetUtcNow().UtcDateTime)
+                entity.SendPushNotification = true;
 
             AddAudit(db, adminUserId, AdminAuditActions.PublicationUpdated, entity.Id);
             await db.SaveChangesAsync(cancellationToken);
@@ -158,23 +159,6 @@ public sealed class AdminPublicationService(
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
         var publishedAt = DateTime.SpecifyKind(publishedAtUtc, DateTimeKind.Utc);
         return await PublicationPushDispatcher.RecipientDevices(db, publishedAt).CountAsync(cancellationToken);
-    }
-
-    public async Task<int?> SendTestPushAsync(long id, CancellationToken cancellationToken = default)
-    {
-        var adminUserId = await GetRequiredAdminUserIdAsync();
-        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var publication = await db.InboxPublications.AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
-        // Пока публикация не вышла, телефон не откроет её по нажатию.
-        if (publication is null || publication.PublishedAtUtc > timeProvider.GetUtcNow().UtcDateTime)
-            return null;
-
-        var devices = await db.PushDeviceRegistrations
-            .CountAsync(x => x.UserId == adminUserId && x.IsActive, cancellationToken);
-        if (devices > 0)
-            await pushProvider.SendAsync(PublicationPushDispatcher.CreateMessage(adminUserId, publication), cancellationToken);
-        return devices;
     }
 
     /// <summary>

@@ -37,6 +37,12 @@ public sealed class SupportTicket
 
     public DateTime UpdatedAtUtc { get; set; }
 
+    /// <summary>
+    /// Когда админ последний раз открывал обращение. Пока его нет или пользователь
+    /// написал позже, обращение считается новым.
+    /// </summary>
+    public DateTime? AdminViewedAtUtc { get; set; }
+
     public long? TelegramMessageId { get; set; }
 
     public ICollection<InboxMessage> InboxMessages { get; } = [];

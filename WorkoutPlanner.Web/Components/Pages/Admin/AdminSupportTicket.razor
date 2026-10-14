@@ -4,6 +4,8 @@
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Models
 @inject IAdminSupportService Support
+@inject IAdminAttentionService Attention
+@inject ILogger<AdminSupportTicket> Logger
 @inject IAppText Text
 
 <PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_SupportTicket_PageTitle"])</PageTitle>
@@ -69,7 +71,18 @@
         _reply = string.IsNullOrWhiteSpace(_reply) ? text : $"{_reply.TrimEnd()}\n\n{text}";
     }
 
-    protected override async Task OnParametersSetAsync() => await LoadAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAsync();
+        if (_ticket is not null) await MarkViewedAsync();
+    }
+
+    // Обращение открыто — на главной оно больше не считается новым.
+    private async Task MarkViewedAsync()
+    {
+        try { await Attention.MarkTicketViewedAsync(TicketId); }
+        catch (Exception exception) { Logger.LogWarning(exception, "Support ticket view could not be saved."); }
+    }
     private async Task LoadAsync() { _isLoading = true; try { _ticket = await Support.GetAsync(TicketId); if (_ticket is not null) _selectedStatus = _ticket.Status; } catch { _error = Text["Admin_Ticket_Unavailable"]; } finally { _isLoading = false; } }
     private async Task ReplyAsync() { if (_isSaving || string.IsNullOrWhiteSpace(_reply)) return; _isSaving = true; _feedback = null; try { if (!await Support.ReplyAsync(TicketId, new(_reply, _selectedStatus))) throw new InvalidOperationException(); _reply = string.Empty; _feedback = Text["Admin_Ticket_ReplySaved"]; _feedbackIsError = false; await LoadAsync(); } catch { _feedback = Text["Admin_Ticket_ReplyFailed"]; _feedbackIsError = true; } finally { _isSaving = false; } }
     private async Task ChangeStatusAsync() { if (_isSaving) return; _isSaving = true; _feedback = null; try { if (!await Support.ChangeStatusAsync(TicketId, _selectedStatus)) throw new InvalidOperationException(); _feedback = Text["Admin_Ticket_StatusUpdated"]; _feedbackIsError = false; await LoadAsync(); } catch { _feedback = Text["Admin_Ticket_StatusFailed"]; _feedbackIsError = true; } finally { _isSaving = false; } }

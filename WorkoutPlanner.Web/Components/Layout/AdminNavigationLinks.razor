@@ -25,10 +25,10 @@
 <NavLink href="/admin/support">
     <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
     <span class="admin-navigation__label">@Text["Admin_Nav_Support"]</span>
-    @if (_snapshot?.UnseenSupportTickets > 0)
+    @if (_snapshot?.SupportTicketsAwaitingReply > 0)
     {
         <span class="admin-navigation__badge">
-            <span class="admin-navigation__badge-hint">@Text["Admin_Attention_NewHint"]</span>@_snapshot.UnseenSupportTickets
+            <span class="admin-navigation__badge-hint">@Text["Admin_Attention_AwaitingHint"]</span>@_snapshot.SupportTicketsAwaitingReply
         </span>
     }
 </NavLink>

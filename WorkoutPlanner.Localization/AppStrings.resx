@@ -3147,9 +3147,6 @@
   <data name="Admin_Attention_NewUsers" xml:space="preserve">
     <value>Новых: {0}</value>
   </data>
-  <data name="Admin_Attention_UnseenTickets" xml:space="preserve">
-    <value>Непросмотренных: {0}</value>
-  </data>
   <data name="Web_Login_LockedOut" xml:space="preserve">
     <value>Слишком много неудачных попыток входа. Повторите через несколько минут.</value>
   </data>
@@ -3186,11 +3183,8 @@
   <data name="Admin_Publications_ReadStats" xml:space="preserve">
     <value>прочитали {0} из {1}</value>
   </data>
-  <data name="Admin_Publications_Push" xml:space="preserve">
-    <value>Отправить push-уведомление</value>
-  </data>
   <data name="Admin_Publications_PushHint" xml:space="preserve">
-    <value>Придёт всем, кто увидит публикацию. Если дата в будущем — в момент публикации.</value>
+    <value>Push-уведомление придёт всем, кто увидит публикацию, а если дата в будущем — в момент выхода.</value>
   </data>
   <data name="Admin_Publications_PushAlreadySent" xml:space="preserve">
     <value>Push уже отправлен — повторно он не уйдёт.</value>
@@ -3257,9 +3251,6 @@
   </data>
   <data name="Admin_User_Message_BodyLabel" xml:space="preserve">
     <value>Текст</value>
-  </data>
-  <data name="Admin_User_Message_Push" xml:space="preserve">
-    <value>Отправить push-уведомление</value>
   </data>
   <data name="Admin_User_Message_Send" xml:space="preserve">
     <value>Отправить во «Входящие»</value>
@@ -3390,21 +3381,6 @@
   <data name="Admin_Publications_PushAudience" xml:space="preserve">
     <value>Push получат устройств: {0}</value>
   </data>
-  <data name="Admin_Publications_TestPush" xml:space="preserve">
-    <value>Тест push мне</value>
-  </data>
-  <data name="Admin_Publications_TestPushSent" xml:space="preserve">
-    <value>Тестовый push отправлен на ваши устройства: {0}.</value>
-  </data>
-  <data name="Admin_Publications_TestPushNoDevices" xml:space="preserve">
-    <value>На вашем аккаунте нет устройств с push. Войдите в приложение под этим аккаунтом и разрешите уведомления.</value>
-  </data>
-  <data name="Admin_Publications_TestPushNotPublished" xml:space="preserve">
-    <value>Тестовый push доступен после выхода публикации.</value>
-  </data>
-  <data name="Admin_Publications_TestPushFailed" xml:space="preserve">
-    <value>Не удалось отправить тестовый push. Повторите попытку.</value>
-  </data>
   <data name="Admin_Publications_PushPreview" xml:space="preserve">
     <value>Так будет выглядеть push</value>
   </data>
@@ -3419,5 +3395,14 @@
   </data>
   <data name="Admin_Chart_AriaToday" xml:space="preserve">
     <value>{0}: сегодня {1}, за 30 дней до {2} в день</value>
+  </data>
+  <data name="Admin_Attention_AwaitingHint" xml:space="preserve">
+    <value>Ждут ответа:</value>
+  </data>
+  <data name="Admin_Audit_Sections" xml:space="preserve">
+    <value>Разделы журнала</value>
+  </data>
+  <data name="Admin_Audit_TabAll" xml:space="preserve">
+    <value>Все</value>
   </data>
 </root>

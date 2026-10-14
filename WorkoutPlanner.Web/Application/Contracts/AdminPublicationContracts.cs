@@ -7,8 +7,7 @@ public sealed record AdminPublicationDraft(
     string Title,
     string Body,
     DateTime PublishedAtUtc,
-    PhotoUpload? Image = null,
-    bool SendPushNotification = false);
+    PhotoUpload? Image = null);
 
 /// <param name="ReadCount">Сколько пользователей открыли публикацию.</param>
 /// <param name="AudienceCount">

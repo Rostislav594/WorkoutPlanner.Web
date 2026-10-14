@@ -146,7 +146,7 @@ public sealed class AdminOperationsTests
     }
 
     [Fact]
-    public async Task Attention_CountsOnlyWhatAppearedAfterTheSectionWasViewed()
+    public async Task Attention_CountsUsersRegisteredAfterTheSectionWasViewed()
     {
         await using var app = await TestApplication.CreateAsync();
         var admin = await app.CreateUserAsync("attention-admin");
@@ -168,48 +168,92 @@ public sealed class AdminOperationsTests
             var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
             foreach (var view in await db.AdminSectionViews.ToListAsync())
                 view.LastViewedAtUtc = now.AddMinutes(-10);
-
             db.UserActivities.Add(new UserActivity { UserId = oldUser.Id, RegisteredAtUtc = now.AddMinutes(-30) });
             db.UserActivities.Add(new UserActivity { UserId = newUser.Id, RegisteredAtUtc = now.AddMinutes(-5) });
-
-            var oldTicket = NewTicket(oldUser.Id, "GP-ATT-000001", now.AddMinutes(-30));
-            db.SupportTickets.Add(oldTicket);
-            // Ответ пользователя после просмотра делает старое обращение непросмотренным.
-            db.SupportMessages.Add(new SupportMessage { SupportTicket = oldTicket, SenderType = SupportMessageSenderType.User, Message = "Ещё вопрос", CreatedAtUtc = now.AddMinutes(-4) });
-
-            var answeredTicket = NewTicket(oldUser.Id, "GP-ATT-000002", now.AddMinutes(-30));
-            db.SupportTickets.Add(answeredTicket);
-            // Ответ поддержки — не повод подсвечивать.
-            db.SupportMessages.Add(new SupportMessage { SupportTicket = answeredTicket, SenderType = SupportMessageSenderType.Support, Message = "Ответ", CreatedAtUtc = now.AddMinutes(-4) });
-
-            db.SupportTickets.Add(NewTicket(newUser.Id, "GP-ATT-000003", now.AddMinutes(-3)));
             await db.SaveChangesAsync();
         }
 
         await using (var scope = app.CreateScope())
         {
             var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
-            Assert.Equal(new AdminAttentionSnapshot(1, 2), await attention.GetAsync());
+            Assert.Equal(new AdminAttentionSnapshot(1, 0), await attention.GetAsync());
 
             var changed = 0;
             attention.Changed += () => changed++;
-            await attention.MarkViewedAsync(AdminSection.Users);
+            var previous = await attention.MarkViewedAsync(AdminSection.Users);
 
             Assert.Equal(1, changed);
-            Assert.Equal(new AdminAttentionSnapshot(0, 2), await attention.GetAsync());
-
-            // Список поддержки знает, когда пользователь писал последним, а отметка
-            // просмотра отдаёт прошлый заход — по ним страница ставит метку «Новое».
-            var support = scope.ServiceProvider.GetRequiredService<IAdminSupportService>();
-            var rows = (await support.GetPageAsync(new AdminSupportListQuery(null, null))).Items
-                .ToDictionary(x => x.TicketNumber);
-            Assert.InRange(rows["GP-ATT-000001"].LastUserMessageAtUtc!.Value, now.AddMinutes(-4).AddSeconds(-1), now.AddMinutes(-4).AddSeconds(1));
-            Assert.Null(rows["GP-ATT-000002"].LastUserMessageAtUtc);
-
-            var previous = await attention.MarkViewedAsync(AdminSection.Support);
             Assert.InRange(previous!.Value, now.AddMinutes(-10).AddSeconds(-1), now.AddMinutes(-10).AddSeconds(1));
             Assert.Equal(new AdminAttentionSnapshot(0, 0), await attention.GetAsync());
         }
+    }
+
+    [Fact]
+    public async Task SupportTickets_StayNewUntilOpened_AndHighlightedUntilAnswered()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await app.CreateUserAsync("support-flow-admin");
+        var user = await app.CreateUserAsync("support-flow-user");
+        await GrantAdminRoleAsync(app, admin);
+        app.AuthenticationStateProvider.SetUser(admin.Id, ApplicationRoles.Admin);
+
+        var now = DateTime.UtcNow;
+        long unopened, reopened;
+        await using (var seedScope = app.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            // Ещё не открывали — новое и ждёт ответа.
+            var fresh = NewTicket(user.Id, "GP-FLOW-000001", now.AddMinutes(-5));
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = fresh, SenderType = SupportMessageSenderType.User, Message = "Вопрос", CreatedAtUtc = now.AddMinutes(-5) });
+            // Открыли и ответили — ни то ни другое.
+            var answered = NewTicket(user.Id, "GP-FLOW-000002", now.AddMinutes(-30));
+            answered.AdminViewedAtUtc = now.AddMinutes(-20);
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = answered, SenderType = SupportMessageSenderType.User, Message = "Вопрос", CreatedAtUtc = now.AddMinutes(-30) });
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = answered, SenderType = SupportMessageSenderType.Support, Message = "Ответ", CreatedAtUtc = now.AddMinutes(-20) });
+            // Пользователь дописал после просмотра — снова новое и ждёт ответа.
+            var followUp = NewTicket(user.Id, "GP-FLOW-000003", now.AddMinutes(-30));
+            followUp.AdminViewedAtUtc = now.AddMinutes(-20);
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = followUp, SenderType = SupportMessageSenderType.User, Message = "Вопрос", CreatedAtUtc = now.AddMinutes(-30) });
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = followUp, SenderType = SupportMessageSenderType.Support, Message = "Ответ", CreatedAtUtc = now.AddMinutes(-20) });
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = followUp, SenderType = SupportMessageSenderType.User, Message = "Ещё вопрос", CreatedAtUtc = now.AddMinutes(-2) });
+            // Закрыто без ответа — уже разобрано, ответа не ждёт.
+            var closed = NewTicket(user.Id, "GP-FLOW-000004", now.AddMinutes(-30));
+            closed.Status = SupportTicketStatus.Closed;
+            closed.AdminViewedAtUtc = now.AddMinutes(-20);
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = closed, SenderType = SupportMessageSenderType.User, Message = "Спам", CreatedAtUtc = now.AddMinutes(-30) });
+            await db.SaveChangesAsync();
+            unopened = fresh.Id;
+            reopened = followUp.Id;
+        }
+
+        await using var scope = app.CreateScope();
+        var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
+        var dashboard = scope.ServiceProvider.GetRequiredService<IAdminDashboardService>();
+        var support = scope.ServiceProvider.GetRequiredService<IAdminSupportService>();
+
+        Assert.Equal(2, (await attention.GetAsync()).SupportTicketsAwaitingReply);
+        Assert.Equal(2, (await dashboard.GetAsync()).NewSupportTickets);
+        var rows = (await support.GetPageAsync(new AdminSupportListQuery(null, null))).Items.ToDictionary(x => x.TicketNumber, x => x.IsNew);
+        Assert.True(rows["GP-FLOW-000001"]);
+        Assert.False(rows["GP-FLOW-000002"]);
+        Assert.True(rows["GP-FLOW-000003"]);
+        Assert.False(rows["GP-FLOW-000004"]);
+
+        // Открыли обращение: новых стало меньше, но подсветка горит, пока нет ответа.
+        var changed = 0;
+        attention.Changed += () => changed++;
+        await attention.MarkTicketViewedAsync(unopened);
+        Assert.Equal(1, changed);
+        Assert.Equal(1, (await dashboard.GetAsync()).NewSupportTickets);
+        Assert.Equal(2, (await attention.GetAsync()).SupportTicketsAwaitingReply);
+
+        // Ответ гасит подсветку обращения и заодно отмечает его просмотренным.
+        Assert.True(await support.ReplyAsync(reopened, new AdminSupportReply("Ответ")));
+        Assert.Equal(0, (await dashboard.GetAsync()).NewSupportTickets);
+        Assert.Equal(1, (await attention.GetAsync()).SupportTicketsAwaitingReply);
+
+        Assert.True(await support.ReplyAsync(unopened, new AdminSupportReply("Ответ")));
+        Assert.Equal(0, (await attention.GetAsync()).SupportTicketsAwaitingReply);
     }
 
     [Fact]
@@ -250,6 +294,15 @@ public sealed class AdminOperationsTests
         Assert.Equal(AdminAuditActions.PublicationDeleted, deleted.Action);
         Assert.Null(deleted.TargetUrl);
         Assert.Equal("999", deleted.TargetId);
+
+        // Раздел журнала показывает только свои записи.
+        var audit = scope.ServiceProvider.GetRequiredService<IAdminAuditService>();
+        var supportOnly = await audit.GetPageAsync(1, 50, nameof(SupportTicket));
+        Assert.Equal(AdminAuditActions.SupportReplySent, Assert.Single(supportOnly.Items).Action);
+        Assert.Equal(1, supportOnly.TotalCount);
+        var counts = await audit.CountByTargetTypeAsync();
+        Assert.Equal(1, counts[nameof(SupportTicket)]);
+        Assert.Equal(1, counts[nameof(InboxPublication)]);
     }
 
     [Fact]

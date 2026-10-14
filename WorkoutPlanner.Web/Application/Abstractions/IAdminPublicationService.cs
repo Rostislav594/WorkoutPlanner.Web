@@ -19,12 +19,6 @@ public interface IAdminPublicationService
 
     /// <summary>Сколько устройств получат push о публикации с такой датой.</summary>
     Task<int> CountPushDevicesAsync(DateTime publishedAtUtc, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Шлёт push о вышедшей публикации только на устройства самого админа.
-    /// </summary>
-    /// <returns>Число устройств; <c>null</c>, если публикации нет или она ещё не вышла.</returns>
-    Task<int?> SendTestPushAsync(long id, CancellationToken cancellationToken = default);
 }
 
 public interface IInboxPublicationImageStorage

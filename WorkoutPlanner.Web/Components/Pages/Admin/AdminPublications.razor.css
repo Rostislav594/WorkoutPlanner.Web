@@ -53,7 +53,11 @@
 .admin-check input:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .admin-field > .admin-check + small { display: block; }
 
-.admin-field small.admin-push-audience { display: block; margin-top: .25rem; color: var(--color-success-text); font-weight: 700; }
+/* Что будет с push: уходит всегда, здесь — только когда и скольким. */
+.admin-push-info { display: flex; align-items: flex-start; gap: .625rem; margin: 0 0 1.5rem; color: var(--color-text-muted); line-height: 1.5; }
+.admin-push-info .material-symbols-rounded { color: var(--color-success); font-size: 1.375rem; }
+.admin-push-info strong { display: block; color: var(--color-success-text); }
+.admin-push-info--muted { display: block; }
 
 /* Push как на экране телефона: тёмная карточка уведомления над предпросмотром публикации. */
 .admin-push-preview { display: grid; gap: .5rem; }

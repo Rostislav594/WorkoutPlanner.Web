@@ -77,13 +77,21 @@ public interface IAdminAttentionService
     /// страница могла пометить то, что появилось с тех пор.
     /// </summary>
     Task<DateTime?> MarkViewedAsync(AdminSection section, CancellationToken cancellationToken = default);
+
+    /// <summary>Админ открыл обращение: оно перестаёт быть новым.</summary>
+    Task MarkTicketViewedAsync(long ticketId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>Журнал действий админки: что, кто и когда сделал.</summary>
 public interface IAdminAuditService
 {
+    /// <param name="targetType">Раздел журнала (тип объекта); <c>null</c> — все записи.</param>
     Task<AdminPagedResult<AdminAuditItem>> GetPageAsync(
         int page,
         int pageSize,
+        string? targetType = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>Сколько записей в каждом разделе журнала (по типу объекта).</summary>
+    Task<IReadOnlyDictionary<string, long>> CountByTargetTypeAsync(CancellationToken cancellationToken = default);
 }

@@ -25,7 +25,7 @@ public sealed class AdminDashboardService(
                  x.Status != SupportTicketStatus.Closed,
             cancellationToken);
         var newTickets = await db.SupportTickets.LongCountAsync(
-            x => x.Status == SupportTicketStatus.New,
+            SupportTicketQueries.IsNewForAdmin,
             cancellationToken);
 
         // Дни считаем по местному времени: «сегодня» должно совпадать с тем, что видит админ.

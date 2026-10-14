@@ -3915,10 +3915,10 @@ public sealed class MobileApiTests
         await using (var scope = await AdminScopeAsync(factory, adminId))
         {
             var users = scope.ServiceProvider.GetRequiredService<IAdminUserService>();
-            Assert.NotNull(await users.SendMessageAsync(userId, new AdminUserMessage(" Привет ", " Личное сообщение ", SendPush: false)));
-            Assert.Null(await users.SendMessageAsync("missing-user", new AdminUserMessage("Т", "Т", SendPush: false)));
+            Assert.NotNull(await users.SendMessageAsync(userId, new AdminUserMessage(" Привет ", " Личное сообщение ")));
+            Assert.Null(await users.SendMessageAsync("missing-user", new AdminUserMessage("Т", "Т")));
             await Assert.ThrowsAsync<InvalidDataException>(() =>
-                users.SendMessageAsync(userId, new AdminUserMessage(" ", "Текст", SendPush: false)));
+                users.SendMessageAsync(userId, new AdminUserMessage(" ", "Текст")));
         }
 
         var tokens = await LoginAsync(client, "message@example.test", "password1", "Phone");
