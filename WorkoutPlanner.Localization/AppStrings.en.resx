@@ -2005,23 +2005,8 @@
   <data name="Picker_Selected" xml:space="preserve">
     <value>✓ {0}</value>
   </data>
-  <data name="Web_MainMenu" xml:space="preserve">
-    <value>Main menu</value>
-  </data>
   <data name="Web_NotFound" xml:space="preserve">
-    <value>I don't know yet what goes here 😎</value>
-  </data>
-  <data name="Web_WelcomeSaveFailed" xml:space="preserve">
-    <value>Could not save the end of the tour. Try again.</value>
-  </data>
-  <data name="Web_Today_NoWorkout" xml:space="preserve">
-    <value>No workout is scheduled for today.</value>
-  </data>
-  <data name="Web_Today_NoWorkoutAlt" xml:space="preserve">
-    <value>No workout</value>
-  </data>
-  <data name="Web_Today_Completed" xml:space="preserve">
-    <value>{0} of {1} done</value>
+    <value>Page not found</value>
   </data>
   <data name="Web_Rate_Easy" xml:space="preserve">
     <value>😊 Easy</value>
@@ -2053,284 +2038,8 @@
   <data name="Web_Today_RateCancel" xml:space="preserve">
     <value>❌ Cancel</value>
   </data>
-  <data name="Web_Today_NotRatedTitle" xml:space="preserve">
-    <value>⚠️ Some exercises are not rated</value>
-  </data>
-  <data name="Web_Today_NotRatedBody" xml:space="preserve">
-    <value>Please rate every exercise before finishing the workout.</value>
-  </data>
-  <data name="Web_Ok" xml:space="preserve">
-    <value>Got it</value>
-  </data>
-  <data name="Web_Today_Finished" xml:space="preserve">
-    <value>Workout finished!</value>
-  </data>
-  <data name="Web_Today_ExercisesLabel" xml:space="preserve">
-    <value>✅ Exercises:</value>
-  </data>
-  <data name="Web_Today_ProgressSaved" xml:space="preserve">
-    <value>📈 Progress saved</value>
-  </data>
-  <data name="Web_Today_HistoryUpdated" xml:space="preserve">
-    <value>📚 History updated</value>
-  </data>
-  <data name="Web_Today_GreatJob" xml:space="preserve">
-    <value>Great work 💪</value>
-  </data>
-  <data name="Web_Today_SetUpdatedFromWatch" xml:space="preserve">
-    <value>Set {0} of “{1}” was updated from the watch.</value>
-  </data>
-  <data name="Web_Today_FinishedFromWatch" xml:space="preserve">
-    <value>The workout was finished from the watch.</value>
-  </data>
-  <data name="Web_Today_RateAllFirst" xml:space="preserve">
-    <value>Rate every exercise before finishing the workout</value>
-  </data>
-  <data name="Web_Today_FinishFailed" xml:space="preserve">
-    <value>Could not finish the workout. Refresh the page and try again.</value>
-  </data>
-  <data name="Web_Today_SaveSetFailed" xml:space="preserve">
-    <value>Could not save the set. Refresh the page and try again.</value>
-  </data>
-  <data name="Web_Calendar_WorkoutLabel" xml:space="preserve">
-    <value>Workout:</value>
-  </data>
-  <data name="Web_Calendar_NotAssigned" xml:space="preserve">
-    <value>No workout assigned</value>
-  </data>
-  <data name="Web_Calendar_PickWorkout" xml:space="preserve">
-    <value>Pick a workout</value>
-  </data>
-  <data name="Web_Calendar_AssignConfirm" xml:space="preserve">
-    <value>✅ Assign</value>
-  </data>
-  <data name="Web_Workouts_Empty" xml:space="preserve">
-    <value>No templates yet</value>
-  </data>
-  <data name="Web_Workouts_Add" xml:space="preserve">
-    <value>+ Add a template</value>
-  </data>
-  <data name="Web_Workouts_AddExercisesHint" xml:space="preserve">
-    <value>Add exercises inside the template</value>
-  </data>
-  <data name="Web_Details_SetupExercise" xml:space="preserve">
-    <value>Set up the {0} exercise</value>
-  </data>
-  <data name="Web_Details_OpenPhotoFull" xml:space="preserve">
-    <value>Open the full-size photo of {0}</value>
-  </data>
-  <data name="Web_Details_PhotoFullAlt" xml:space="preserve">
-    <value>Full-size photo of {0}</value>
-  </data>
-  <data name="Web_Details_CloseFullPhoto" xml:space="preserve">
-    <value>Close the full-size photo</value>
-  </data>
-  <data name="Web_Details_ReplacePhoto" xml:space="preserve">
-    <value>Replace the photo</value>
-  </data>
-  <data name="Web_Details_Uploading" xml:space="preserve">
-    <value>Uploading…</value>
-  </data>
-  <data name="Web_Details_SetWeightLabel" xml:space="preserve">
-    <value>Set {0} · weight, kg</value>
-  </data>
-  <data name="Web_Details_NotSelectedOption" xml:space="preserve">
-    <value>-- Not selected --</value>
-  </data>
-  <data name="Web_Details_Adding" xml:space="preserve">
-    <value>Adding…</value>
-  </data>
-  <data name="Web_Details_Add" xml:space="preserve">
-    <value>Add</value>
-  </data>
-  <data name="Web_Details_LoadFailed" xml:space="preserve">
-    <value>Could not load the workout. Refresh the page and try again.</value>
-  </data>
-  <data name="Web_Details_NameRequired" xml:space="preserve">
-    <value>Enter the exercise name.</value>
-  </data>
-  <data name="Web_Details_CheckWeights" xml:space="preserve">
-    <value>Check the weight in every set.</value>
-  </data>
-  <data name="Web_Details_AddFailed" xml:space="preserve">
-    <value>Could not add the exercise. Try again.</value>
-  </data>
-  <data name="Web_Details_DeleteFailed" xml:space="preserve">
-    <value>Could not delete the exercise. Try again.</value>
-  </data>
-  <data name="Web_Details_SetsRange" xml:space="preserve">
-    <value>The number of sets must be between 1 and 10.</value>
-  </data>
-  <data name="Web_Details_CheckWeightsAndReps" xml:space="preserve">
-    <value>Check the weight and reps in every set.</value>
-  </data>
-  <data name="Web_Details_SaveFailed" xml:space="preserve">
-    <value>Could not save the changes. Try again.</value>
-  </data>
-  <data name="Web_Details_PhotoDeleteFailed" xml:space="preserve">
-    <value>Could not delete the photo. Try again.</value>
-  </data>
-  <data name="Web_Details_PhotoInvalid" xml:space="preserve">
-    <value>Pick a valid JPG, PNG or WebP image up to 5 MB.</value>
-  </data>
-  <data name="Web_Details_PhotoSaveFailed" xml:space="preserve">
-    <value>Could not save the photo. Check the file size and try again.</value>
-  </data>
-  <data name="Web_Details_PhotoUpdateFailed" xml:space="preserve">
-    <value>Could not update the photo. The old image is kept.</value>
-  </data>
-  <data name="Web_History_EmptyAlt" xml:space="preserve">
-    <value>The history is empty</value>
-  </data>
-  <data name="Web_Progress_ChartSubtitle" xml:space="preserve">
-    <value>Last 30 days · change relative to the first workout</value>
-  </data>
-  <data name="Web_Progress_SinglePoint" xml:space="preserve">
-    <value>There is only one point so far. The curve appears after the second saved workout.</value>
-  </data>
-  <data name="Web_Progress_NoData" xml:space="preserve">
-    <value>No records in the last 30 days</value>
-  </data>
-  <data name="Web_Progress_ClearHistory" xml:space="preserve">
-    <value>🗑 Clear the history</value>
-  </data>
-  <data name="Web_Progress_ExerciseCleared" xml:space="preserve">
-    <value>The exercise history has been deleted.</value>
-  </data>
-  <data name="Web_Progress_WorkoutCleared" xml:space="preserve">
-    <value>The history has been deleted.</value>
-  </data>
-  <data name="Web_Profile_SecurityTitle" xml:space="preserve">
-    <value>Security settings</value>
-  </data>
-  <data name="Web_Profile_TrainingTitle" xml:space="preserve">
-    <value>Workout settings</value>
-  </data>
-  <data name="Web_Profile_TourHint" xml:space="preserve">
-    <value>A short tour of what the app can do.</value>
-  </data>
-  <data name="Web_Profile_RepeatTour" xml:space="preserve">
-    <value>Replay the tour</value>
-  </data>
-  <data name="Web_Profile_RefreshList" xml:space="preserve">
-    <value>Refresh the list</value>
-  </data>
-  <data name="Web_Profile_ConnectNewWatch" xml:space="preserve">
-    <value>Connect a new watch</value>
-  </data>
-  <data name="Web_Profile_CodeReady" xml:space="preserve">
-    <value>The code is ready</value>
-  </data>
-  <data name="Web_Profile_EnterCodeOnWatch" xml:space="preserve">
-    <value>Enter this code on the watch.</value>
-  </data>
-  <data name="Web_Profile_CodeValidUntil" xml:space="preserve">
-    <value>The code is valid until</value>
-  </data>
-  <data name="Web_Profile_CodeHint" xml:space="preserve">
-    <value>The code has six digits and a limited lifetime. A new code cancels the previous one.</value>
-  </data>
-  <data name="Web_Profile_ActiveCount" xml:space="preserve">
-    <value>{0} active</value>
-  </data>
-  <data name="Web_Profile_DisconnectAll" xml:space="preserve">
-    <value>Disconnect all</value>
-  </data>
-  <data name="Web_Profile_LoadingWatches" xml:space="preserve">
-    <value>Loading the connected watches…</value>
-  </data>
-  <data name="Web_Profile_NoWatches" xml:space="preserve">
-    <value>No connected watches</value>
-  </data>
-  <data name="Web_Profile_NoWatchesHint" xml:space="preserve">
-    <value>Create a code and enter it in the app on the watch.</value>
-  </data>
-  <data name="Web_Profile_DeviceName" xml:space="preserve">
-    <value>Device name</value>
-  </data>
-  <data name="Web_Profile_StatusConnected" xml:space="preserve">
-    <value>Connected</value>
-  </data>
-  <data name="Web_Profile_StatusDisconnected" xml:space="preserve">
-    <value>Disconnected</value>
-  </data>
   <data name="Web_Profile_Model" xml:space="preserve">
     <value>Model</value>
-  </data>
-  <data name="Web_Profile_ModelUnknown" xml:space="preserve">
-    <value>Not specified</value>
-  </data>
-  <data name="Web_Profile_ModelUnknownLong" xml:space="preserve">
-    <value>Model not specified</value>
-  </data>
-  <data name="Web_Profile_LastSeen" xml:space="preserve">
-    <value>Last activity</value>
-  </data>
-  <data name="Web_Profile_NeverSeen" xml:space="preserve">
-    <value>Not yet</value>
-  </data>
-  <data name="Web_Profile_Rename" xml:space="preserve">
-    <value>Rename</value>
-  </data>
-  <data name="Web_Profile_RevokedDevices" xml:space="preserve">
-    <value>Disconnected devices ({0})</value>
-  </data>
-  <data name="Web_Profile_Sections" xml:space="preserve">
-    <value>Profile sections</value>
-  </data>
-  <data name="Web_Profile_WatchesTab" xml:space="preserve">
-    <value>Watches</value>
-  </data>
-  <data name="Web_Profile_DeleteTitle" xml:space="preserve">
-    <value>⚠️ Deleting the account</value>
-  </data>
-  <data name="Web_Profile_DeleteWarning" xml:space="preserve">
-    <value>This deletes the profile, workout history, progress and all user data.</value>
-  </data>
-  <data name="Web_Profile_DisconnectAllTitle" xml:space="preserve">
-    <value>Disconnect every watch?</value>
-  </data>
-  <data name="Web_Profile_DisconnectAllBody" xml:space="preserve">
-    <value>Every connected watch will lose access to the account. Reconnecting needs a new code.</value>
-  </data>
-  <data name="Web_Profile_DisconnectOneBody" xml:space="preserve">
-    <value>The device “{0}” will lose access to the account. Reconnecting needs a new code.</value>
-  </data>
-  <data name="Web_Profile_NotFound" xml:space="preserve">
-    <value>The profile was not found.</value>
-  </data>
-  <data name="Web_Profile_Saved" xml:space="preserve">
-    <value>The profile data is saved.</value>
-  </data>
-  <data name="Web_Profile_PasswordChanged" xml:space="preserve">
-    <value>The password has been changed.</value>
-  </data>
-  <data name="Web_Profile_CodeFailed" xml:space="preserve">
-    <value>Could not create a pairing code. Try again.</value>
-  </data>
-  <data name="Web_Profile_WatchesLoadFailed" xml:space="preserve">
-    <value>Could not load the watch list. Try again.</value>
-  </data>
-  <data name="Web_Profile_NameLength" xml:space="preserve">
-    <value>Enter a name between 1 and 120 characters.</value>
-  </data>
-  <data name="Web_Profile_WatchAlreadyGone" xml:space="preserve">
-    <value>The watch is already disconnected or no longer available.</value>
-  </data>
-  <data name="Web_Profile_WatchRenamed" xml:space="preserve">
-    <value>The watch name is saved.</value>
-  </data>
-  <data name="Web_Profile_RenameFailed" xml:space="preserve">
-    <value>Could not rename the watch. Try again.</value>
-  </data>
-  <data name="Web_Profile_WatchWasDisconnected" xml:space="preserve">
-    <value>The watch was already disconnected.</value>
-  </data>
-  <data name="Web_Profile_DisconnectFailed" xml:space="preserve">
-    <value>Could not disconnect the watch. Try again.</value>
-  </data>
-  <data name="Web_Profile_DeleteFailed" xml:space="preserve">
-    <value>Could not delete the account. Try again.</value>
   </data>
   <data name="Validation_CurrentPasswordRequired" xml:space="preserve">
     <value>Enter your current password.</value>
@@ -2359,12 +2068,6 @@
   <data name="Password_RequiresNonAlphanumeric" xml:space="preserve">
     <value>The password must contain at least one special character.</value>
   </data>
-  <data name="Web_Profile_WatchesHint" xml:space="preserve">
-    <value>Connect watches and manage their access to your account.</value>
-  </data>
-  <data name="Web_Profile_Refreshing" xml:space="preserve">
-    <value>Refreshing…</value>
-  </data>
   <data name="Admin_SkipToContent" xml:space="preserve">
     <value>Skip to content</value>
   </data>
@@ -2377,12 +2080,6 @@
   <data name="Admin_SignOut" xml:space="preserve">
     <value>Sign out</value>
   </data>
-  <data name="Admin_EntryDescription" xml:space="preserve">
-    <value>System control panel</value>
-  </data>
-  <data name="Admin_Dashboard_Description" xml:space="preserve">
-    <value>Key product, activity and support metrics.</value>
-  </data>
   <data name="Admin_Dashboard_Loading" xml:space="preserve">
     <value>Loading the metrics</value>
   </data>
@@ -2390,13 +2087,10 @@
     <value>Collecting the current server statistics.</value>
   </data>
   <data name="Admin_Dashboard_LoadFailed" xml:space="preserve">
-    <value>Could not load the dashboard</value>
+    <value>Could not load the home page</value>
   </data>
   <data name="Admin_Dashboard_UsersTitle" xml:space="preserve">
     <value>Users</value>
-  </data>
-  <data name="Admin_Dashboard_UsersHint" xml:space="preserve">
-    <value>Sign-ups and real activity.</value>
   </data>
   <data name="Admin_Dashboard_OpenUsers" xml:space="preserve">
     <value>Open Users</value>
@@ -2425,20 +2119,8 @@
   <data name="Admin_Metric_Inactive30" xml:space="preserve">
     <value>Inactive for over 30 days</value>
   </data>
-  <data name="Admin_Dashboard_ProductTitle" xml:space="preserve">
-    <value>Product and support</value>
-  </data>
-  <data name="Admin_Dashboard_ProductHint" xml:space="preserve">
-    <value>Finished workouts and the ticket queue.</value>
-  </data>
-  <data name="Admin_Metric_Workouts24" xml:space="preserve">
-    <value>Workouts in 24 hours</value>
-  </data>
-  <data name="Admin_Metric_Workouts7" xml:space="preserve">
-    <value>Workouts in 7 days</value>
-  </data>
-  <data name="Admin_Metric_Workouts30" xml:space="preserve">
-    <value>Workouts in 30 days</value>
+  <data name="Admin_Dashboard_SupportTitle" xml:space="preserve">
+    <value>Support</value>
   </data>
   <data name="Admin_Metric_OpenTickets" xml:space="preserve">
     <value>Open tickets</value>
@@ -2446,20 +2128,11 @@
   <data name="Admin_Metric_NewTickets" xml:space="preserve">
     <value>New tickets</value>
   </data>
-  <data name="Admin_Metric_BackendErrors" xml:space="preserve">
-    <value>Backend errors in 24 hours</value>
-  </data>
-  <data name="Admin_Metric_NotWired" xml:space="preserve">
-    <value>The metric is not wired up</value>
-  </data>
   <data name="Admin_TryAgain" xml:space="preserve">
     <value>Try again.</value>
   </data>
   <data name="Admin_StatsUnavailable" xml:space="preserve">
     <value>Server statistics are temporarily unavailable.</value>
-  </data>
-  <data name="Admin_Users_Description" xml:space="preserve">
-    <value>Users, activity and diagnostics without any secrets.</value>
   </data>
   <data name="Admin_Users_SearchLabel" xml:space="preserve">
     <value>Name, email or UserId</value>
@@ -2518,9 +2191,6 @@
   <data name="Admin_NoData" xml:space="preserve">
     <value>No data</value>
   </data>
-  <data name="Admin_Support_Description" xml:space="preserve">
-    <value>The main working interface of GPlanner support.</value>
-  </data>
   <data name="Admin_Support_SearchLabel" xml:space="preserve">
     <value>TicketNumber, user or email</value>
   </data>
@@ -2565,9 +2235,6 @@
   </data>
   <data name="Admin_Ticket_Fallback" xml:space="preserve">
     <value>Ticket</value>
-  </data>
-  <data name="Admin_Ticket_Description" xml:space="preserve">
-    <value>The conversation history and the user's diagnostic context.</value>
   </data>
   <data name="Admin_Ticket_Loading" xml:space="preserve">
     <value>Loading the ticket</value>
@@ -2641,35 +2308,8 @@
   <data name="Admin_Ticket_StatusFailed" xml:space="preserve">
     <value>Could not update the status.</value>
   </data>
-  <data name="Admin_System_Description" xml:space="preserve">
-    <value>Safe basic diagnostics of server components without exposing configuration or secrets.</value>
-  </data>
-  <data name="Admin_Refresh" xml:space="preserve">
-    <value>Refresh</value>
-  </data>
-  <data name="Admin_System_Checking" xml:space="preserve">
-    <value>Checking the system</value>
-  </data>
-  <data name="Admin_System_Unavailable" xml:space="preserve">
-    <value>Diagnostics are unavailable</value>
-  </data>
-  <data name="Admin_System_CheckedAt" xml:space="preserve">
-    <value>Checked at {0}</value>
-  </data>
-  <data name="Admin_System_ComponentsAria" xml:space="preserve">
-    <value>Component status</value>
-  </data>
-  <data name="Admin_System_RetryLater" xml:space="preserve">
-    <value>Run the check again later.</value>
-  </data>
-  <data name="Admin_System_StateFailed" xml:space="preserve">
-    <value>Could not read the component status.</value>
-  </data>
   <data name="Admin_UserCard_Title" xml:space="preserve">
     <value>User card</value>
-  </data>
-  <data name="Admin_UserCard_Description" xml:space="preserve">
-    <value>Read-only diagnostics. Passwords, tokens, cookies and other secrets are never shown.</value>
   </data>
   <data name="Admin_UserCard_Loading" xml:space="preserve">
     <value>Loading the user</value>
@@ -2683,9 +2323,6 @@
   <data name="Admin_UserCard_Diagnostics" xml:space="preserve">
     <value>Diagnostics</value>
   </data>
-  <data name="Admin_UserCard_DiagnosticsHint" xml:space="preserve">
-    <value>No access to the account contents.</value>
-  </data>
   <data name="Admin_Field_CompletedWorkouts" xml:space="preserve">
     <value>Finished workouts</value>
   </data>
@@ -2694,9 +2331,6 @@
   </data>
   <data name="Admin_Field_MobileSessions" xml:space="preserve">
     <value>Active mobile sessions</value>
-  </data>
-  <data name="Admin_Field_EmailConfirmed" xml:space="preserve">
-    <value>Email confirmed</value>
   </data>
   <data name="Admin_Field_LockoutUntil" xml:space="preserve">
     <value>Locked out until</value>
@@ -2715,9 +2349,6 @@
   </data>
   <data name="Admin_Publications_Title" xml:space="preserve">
     <value>Publications</value>
-  </data>
-  <data name="Admin_Publications_Subtitle" xml:space="preserve">
-    <value>Create messages that appear in the users' notification centre.</value>
   </data>
   <data name="Admin_Publications_Editor" xml:space="preserve">
     <value>Editor</value>
@@ -2907,12 +2538,6 @@
   </data>
   <data name="Push_AccountNotification" xml:space="preserve">
     <value>You have a new account notification.</value>
-  </data>
-  <data name="Web_Register_ConfirmPassword" xml:space="preserve">
-    <value>Confirm the password</value>
-  </data>
-  <data name="Web_Register_Failed" xml:space="preserve">
-    <value>Could not finish the sign-up. Try again.</value>
   </data>
   <data name="Password_DuplicateEmail" xml:space="preserve">
     <value>A user with this email already exists.</value>
@@ -3409,5 +3034,173 @@
   </data>
   <data name="ExerciseBodyPart_Other" xml:space="preserve">
     <value>Other</value>
+  </data>
+  <data name="Admin_PanelLabel" xml:space="preserve">
+    <value>Admin Panel</value>
+  </data>
+  <data name="Admin_PageTitle" xml:space="preserve">
+    <value>{0} — GPlanner Admin</value>
+  </data>
+  <data name="Admin_Nav_Dashboard" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Admin_Nav_Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="Admin_Nav_Support" xml:space="preserve">
+    <value>Support</value>
+  </data>
+  <data name="Admin_Nav_Publications" xml:space="preserve">
+    <value>Publications</value>
+  </data>
+  <data name="Admin_Column_Support" xml:space="preserve">
+    <value>Support</value>
+  </data>
+  <data name="Admin_Field_UserId" xml:space="preserve">
+    <value>User ID</value>
+  </data>
+  <data name="Admin_SupportTicket_PageTitle" xml:space="preserve">
+    <value>Support ticket</value>
+  </data>
+  <data name="Admin_UserStatus_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Admin_UserStatus_Dormant" xml:space="preserve">
+    <value>Dormant</value>
+  </data>
+  <data name="Admin_UserStatus_Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="Admin_UserStatus_NeverActive" xml:space="preserve">
+    <value>Never active</value>
+  </data>
+  <data name="Admin_TicketStatus_New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Admin_TicketStatus_InProgress" xml:space="preserve">
+    <value>In progress</value>
+  </data>
+  <data name="Admin_TicketStatus_WaitingForUser" xml:space="preserve">
+    <value>Waiting for user</value>
+  </data>
+  <data name="Admin_TicketStatus_Resolved" xml:space="preserve">
+    <value>Resolved</value>
+  </data>
+  <data name="Admin_TicketStatus_Closed" xml:space="preserve">
+    <value>Closed</value>
+  </data>
+  <data name="Web_Error_PageTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Web_Error_Title" xml:space="preserve">
+    <value>Error.</value>
+  </data>
+  <data name="Web_Error_Message" xml:space="preserve">
+    <value>An error occurred while processing your request.</value>
+  </data>
+  <data name="Web_Error_RequestId" xml:space="preserve">
+    <value>Request ID:</value>
+  </data>
+  <data name="Web_Error_DevTitle" xml:space="preserve">
+    <value>Development Mode</value>
+  </data>
+  <data name="Web_Error_DevHint" xml:space="preserve">
+    <value>Swapping to the Development environment will display more detailed information about the error that occurred.</value>
+  </data>
+  <data name="Web_Error_DevWarning" xml:space="preserve">
+    <value>The Development environment shouldn&apos;t be enabled for deployed applications: it can display sensitive information from exceptions to end users. For local debugging, set the ASPNETCORE_ENVIRONMENT environment variable to Development and restart the app.</value>
+  </data>
+  <data name="Web_Reconnect_Rejoining" xml:space="preserve">
+    <value>Rejoining the server...</value>
+  </data>
+  <data name="Web_Reconnect_NextAttempt" xml:space="preserve">
+    <value>Rejoin failed. Seconds until the next attempt:</value>
+  </data>
+  <data name="Web_Reconnect_Failed" xml:space="preserve">
+    <value>Failed to rejoin.</value>
+  </data>
+  <data name="Web_Reconnect_RetryOrReload" xml:space="preserve">
+    <value>Please retry or reload the page.</value>
+  </data>
+  <data name="Web_Reconnect_Paused" xml:space="preserve">
+    <value>The session has been paused by the server.</value>
+  </data>
+  <data name="Web_Reconnect_ResumeFailed" xml:space="preserve">
+    <value>Failed to resume the session.</value>
+  </data>
+  <data name="Web_Reconnect_Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="Web_NotFound_Body" xml:space="preserve">
+    <value>This page does not exist. The address may be outdated or mistyped.</value>
+  </data>
+  <data name="Web_NotFound_Back" xml:space="preserve">
+    <value>Back to home</value>
+  </data>
+  <data name="Web_NotFound_PageTitle" xml:space="preserve">
+    <value>Page not found — GPlanner Admin</value>
+  </data>
+  <data name="Admin_Attention_NewHint" xml:space="preserve">
+    <value>New: </value>
+  </data>
+  <data name="Admin_Attention_NewUsers" xml:space="preserve">
+    <value>New: {0}</value>
+  </data>
+  <data name="Admin_Attention_UnseenTickets" xml:space="preserve">
+    <value>Unseen: {0}</value>
+  </data>
+  <data name="Web_Login_LockedOut" xml:space="preserve">
+    <value>Too many failed sign-in attempts. Try again in a few minutes.</value>
+  </data>
+  <data name="Admin_Publications_Editing" xml:space="preserve">
+    <value>Editing</value>
+  </data>
+  <data name="Admin_Publications_SaveChanges" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="Admin_Publications_Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="Admin_Publications_CancelEdit" xml:space="preserve">
+    <value>Cancel editing</value>
+  </data>
+  <data name="Admin_Publications_Updated" xml:space="preserve">
+    <value>Changes saved.</value>
+  </data>
+  <data name="Admin_Publications_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Admin_Publications_DeleteConfirm" xml:space="preserve">
+    <value>Delete for all users?</value>
+  </data>
+  <data name="Admin_Publications_DeleteYes" xml:space="preserve">
+    <value>Yes, delete</value>
+  </data>
+  <data name="Admin_Publications_Deleted" xml:space="preserve">
+    <value>Publication deleted.</value>
+  </data>
+  <data name="Admin_Publications_NotFound" xml:space="preserve">
+    <value>This publication has already been deleted.</value>
+  </data>
+  <data name="Admin_Publications_ReadStats" xml:space="preserve">
+    <value>read by {0} of {1}</value>
+  </data>
+  <data name="Admin_Publications_Push" xml:space="preserve">
+    <value>Send a push notification</value>
+  </data>
+  <data name="Admin_Publications_PushHint" xml:space="preserve">
+    <value>Goes to everyone who will see the publication. For a future date — at publication time.</value>
+  </data>
+  <data name="Admin_Publications_PushAlreadySent" xml:space="preserve">
+    <value>The push has already been sent and will not be sent again.</value>
+  </data>
+  <data name="Admin_Publications_PushSent" xml:space="preserve">
+    <value>push sent</value>
+  </data>
+  <data name="Admin_Publications_PushPending" xml:space="preserve">
+    <value>push scheduled</value>
+  </data>
+  <data name="Admin_Publications_RemoveImage" xml:space="preserve">
+    <value>Remove image</value>
   </data>
 </root>

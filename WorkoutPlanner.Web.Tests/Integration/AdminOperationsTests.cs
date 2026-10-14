@@ -145,6 +145,87 @@ public sealed class AdminOperationsTests
         Assert.Single(push.Notifications);
     }
 
+    [Fact]
+    public async Task Attention_CountsOnlyWhatAppearedAfterTheSectionWasViewed()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await app.CreateUserAsync("attention-admin");
+        var oldUser = await app.CreateUserAsync("attention-old-user");
+        var newUser = await app.CreateUserAsync("attention-new-user");
+        app.AuthenticationStateProvider.SetUser(admin.Id, ApplicationRoles.Admin);
+
+        // Первое обращение задаёт точку отсчёта: прошлое не считается новым.
+        await using (var scope = app.CreateScope())
+        {
+            var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
+            Assert.Equal(new AdminAttentionSnapshot(0, 0), await attention.GetAsync());
+        }
+
+        var now = DateTime.UtcNow;
+        await using (var seedScope = app.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            foreach (var view in await db.AdminSectionViews.ToListAsync())
+                view.LastViewedAtUtc = now.AddMinutes(-10);
+
+            db.UserActivities.Add(new UserActivity { UserId = oldUser.Id, RegisteredAtUtc = now.AddMinutes(-30) });
+            db.UserActivities.Add(new UserActivity { UserId = newUser.Id, RegisteredAtUtc = now.AddMinutes(-5) });
+
+            var oldTicket = NewTicket(oldUser.Id, "GP-ATT-000001", now.AddMinutes(-30));
+            db.SupportTickets.Add(oldTicket);
+            // Ответ пользователя после просмотра делает старое обращение непросмотренным.
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = oldTicket, SenderType = SupportMessageSenderType.User, Message = "Ещё вопрос", CreatedAtUtc = now.AddMinutes(-4) });
+
+            var answeredTicket = NewTicket(oldUser.Id, "GP-ATT-000002", now.AddMinutes(-30));
+            db.SupportTickets.Add(answeredTicket);
+            // Ответ поддержки — не повод подсвечивать.
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = answeredTicket, SenderType = SupportMessageSenderType.Support, Message = "Ответ", CreatedAtUtc = now.AddMinutes(-4) });
+
+            db.SupportTickets.Add(NewTicket(newUser.Id, "GP-ATT-000003", now.AddMinutes(-3)));
+            await db.SaveChangesAsync();
+        }
+
+        await using (var scope = app.CreateScope())
+        {
+            var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
+            Assert.Equal(new AdminAttentionSnapshot(1, 2), await attention.GetAsync());
+
+            var changed = 0;
+            attention.Changed += () => changed++;
+            await attention.MarkViewedAsync(AdminSection.Users);
+
+            Assert.Equal(1, changed);
+            Assert.Equal(new AdminAttentionSnapshot(0, 2), await attention.GetAsync());
+
+            await attention.MarkViewedAsync(AdminSection.Support);
+            Assert.Equal(new AdminAttentionSnapshot(0, 0), await attention.GetAsync());
+        }
+    }
+
+    [Fact]
+    public async Task Attention_RequiresAdminRole()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var user = await app.CreateUserAsync("attention-plain-user");
+        app.AuthenticationStateProvider.SetUser(user.Id);
+
+        await using var scope = app.CreateScope();
+        var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => attention.GetAsync());
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => attention.MarkViewedAsync(AdminSection.Support));
+    }
+
+    private static SupportTicket NewTicket(string userId, string ticketNumber, DateTime createdAtUtc) => new()
+    {
+        UserId = userId,
+        TicketNumber = ticketNumber,
+        Message = "Обращение",
+        CreatedAtUtc = createdAtUtc,
+        UpdatedAtUtc = createdAtUtc,
+        TelegramDeliveryStatus = SupportDeliveryStatus.Disabled
+    };
+
     private static async Task GrantAdminRoleAsync(
         TestApplication app,
         IdentityUser admin)

@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="utf-8" />
@@ -16,6 +16,16 @@
 </head>
 
 <body>
+
+    @* Фон как на экранах мобильного приложения: пыль, плывущая в 3D-перспективе. *@
+    <div class="ambient-dust" aria-hidden="true">
+        <span class="ambient-dust__layer ambient-dust__layer--far-a"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--far-b"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--far-c"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--near-a"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--near-b"></span>
+        <span class="ambient-dust__layer ambient-dust__layer--near-c"></span>
+    </div>
 
     <WorkoutPlanner.UI.Components.AppSplash @rendermode="InteractiveServer" />
 

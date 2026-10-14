@@ -6,4 +6,5 @@ public static class AdminAuditActions
     public const string SupportReplySent = nameof(SupportReplySent);
     public const string PublicationCreated = nameof(PublicationCreated);
     public const string PublicationUpdated = nameof(PublicationUpdated);
+    public const string PublicationDeleted = nameof(PublicationDeleted);
 }

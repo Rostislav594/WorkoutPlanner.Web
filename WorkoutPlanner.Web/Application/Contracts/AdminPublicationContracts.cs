@@ -10,6 +10,12 @@ public sealed record AdminPublicationDraft(
     PhotoUpload? Image = null,
     bool SendPushNotification = false);
 
+/// <param name="ReadCount">Сколько пользователей открыли публикацию.</param>
+/// <param name="AudienceCount">
+/// Сколько пользователей её видят: зарегистрированные до момента публикации
+/// (то же правило, что во «Входящих» на телефоне).
+/// </param>
+/// <param name="PushSentAtUtc">Когда разослан push; <c>null</c> — не рассылался.</param>
 public sealed record AdminPublicationItem(
     long Id,
     InboxMessageType Type,
@@ -18,4 +24,7 @@ public sealed record AdminPublicationItem(
     string? ImagePath,
     DateTime PublishedAtUtc,
     DateTime CreatedAtUtc,
-    bool SendPushNotification);
+    bool SendPushNotification,
+    int ReadCount = 0,
+    int AudienceCount = 0,
+    DateTime? PushSentAtUtc = null);

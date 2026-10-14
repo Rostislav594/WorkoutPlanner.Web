@@ -47,15 +47,6 @@ builder.Services.AddAuthorization(options =>
         ApplicationRoles.AdminPolicy,
         policy => policy.RequireAuthenticatedUser().RequireRole(ApplicationRoles.Admin));
     options.AddPolicy(
-        ApplicationRoles.AdminApiPolicy,
-        policy =>
-        {
-            policy.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
-            policy.RequireAuthenticatedUser();
-            policy.RequireRole(ApplicationRoles.Admin);
-            policy.AddRequirements(new MobileApiSessionRequirement());
-        });
-    options.AddPolicy(
         MobileApiAuthorization.PolicyName,
         policy =>
         {
@@ -303,6 +294,8 @@ builder.Services.AddScoped<IRemotePushProvider>(sp =>
         ? sp.GetRequiredService<FirebaseRemotePushProvider>()
         : sp.GetRequiredService<DisabledRemotePushProvider>());
 builder.Services.AddScoped<DisabledRemotePushProvider>();
+// Рассылка push о публикациях из админки, в том числе отложенных.
+builder.Services.AddHostedService<PublicationPushDispatcher>();
 if (builder.Configuration.GetValue<bool>("Push:Enabled"))
 {
     builder.Services.AddFirebasePush(builder.Configuration);
@@ -345,6 +338,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// Страница 404 для веба. Подключаем на верхнем уровне, а не внутри UseWhen:
+// в ветке UseWhen повторный запрос на /not-found не проходит маршрутизацию
+// и возвращается пустым. API сюда не попадает: его ветка ниже раньше
+// пишет свой ответ problem+json, а такие ответы повторно не выполняются.
+app.UseStatusCodePagesWithReExecute(
+    "/not-found",
+    createScopeForStatusCodePages: true);
 app.UseWhen(
     context => context.Request.Path.StartsWithSegments("/api"),
     api =>
@@ -352,21 +352,22 @@ app.UseWhen(
         api.UseExceptionHandler();
         api.UseStatusCodePages();
     });
-app.UseWhen(
-    context => !context.Request.Path.StartsWithSegments("/api"),
-    web => web.UseStatusCodePagesWithReExecute(
-        "/not-found",
-        createScopeForStatusCodePages: true));
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
 
-// Культура запроса берётся из Accept-Language (его шлёт мобильный клиент),
-// из ?culture= или из cookie. Ставим до UseAuthentication, чтобы любой
-// код ниже по конвейеру уже видел CurrentUICulture пользователя.
-app.UseRequestLocalization(GymPlannerLocalization.CreateOptions());
+// Для API культура запроса берётся из Accept-Language (его шлёт мобильный
+// клиент и часы), из ?culture= или из cookie. Веб-интерфейс — админка —
+// всегда на русском. Ставим до UseAuthentication, чтобы любой код ниже
+// по конвейеру уже видел нужную CurrentUICulture.
+app.UseWhen(
+    context => context.Request.Path.StartsWithSegments("/api"),
+    api => api.UseRequestLocalization(GymPlannerLocalization.CreateOptions()));
+app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/api"),
+    web => web.UseRequestLocalization(GymPlannerLocalization.CreateWebOptions()));
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -493,7 +494,6 @@ app.MapRazorComponents<App>()
 
 app.MapGymPlannerApi();
 app.MapWatchApi();
-app.MapAdminPublicationApi();
 app.MapAdminOperationsApi();
 app.MapTelegramSupportWebhook();
 

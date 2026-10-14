@@ -47,6 +47,9 @@ internal sealed class TestApplication : IAsyncDisposable
 
     public string WebRootPath { get; }
 
+    /// <summary>Сервисы приложения — например, для фоновых служб, которые создают свои области.</summary>
+    public IServiceProvider Services => _services;
+
     public static async Task<TestApplication> CreateAsync(
         IPushNotificationService? pushNotificationService = null)
     {
@@ -92,6 +95,8 @@ internal sealed class TestApplication : IAsyncDisposable
         services.AddScoped<CurrentUserService>();
         services.AddSingleton(
             pushNotificationService ?? NoopPushNotificationService.Instance);
+        services.AddSingleton<RecordingRemotePushProvider>();
+        services.AddSingleton<IRemotePushProvider>(sp => sp.GetRequiredService<RecordingRemotePushProvider>());
         services.AddScoped<AccountDeletionService>();
         services.AddScoped<StarterPlanService>();
         services.AddScoped<TrainingPlanService>();
@@ -168,6 +173,20 @@ internal sealed class TestApplication : IAsyncDisposable
         if (Directory.Exists(ContentRootPath))
         {
             Directory.Delete(ContentRootPath, recursive: true);
+        }
+    }
+
+    /// <summary>Вместо отправки push запоминает сообщения, чтобы тест мог их проверить.</summary>
+    public sealed class RecordingRemotePushProvider : IRemotePushProvider
+    {
+        public List<WorkoutPlanner.Web.Application.Contracts.PushDeliveryMessage> Messages { get; } = [];
+
+        public Task<WorkoutPlanner.Web.Application.Contracts.PushDeliveryResult> SendAsync(
+            WorkoutPlanner.Web.Application.Contracts.PushDeliveryMessage message,
+            CancellationToken cancellationToken = default)
+        {
+            Messages.Add(message);
+            return Task.FromResult(WorkoutPlanner.Web.Application.Contracts.PushDeliveryResult.Sent);
         }
     }
 

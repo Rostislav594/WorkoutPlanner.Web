@@ -19,12 +19,8 @@ public sealed record AdminDashboardSnapshot(
     long ActiveUsers7Days,
     long ActiveUsers30Days,
     long InactiveUsersOver30Days,
-    long CompletedWorkouts24Hours,
-    long CompletedWorkouts7Days,
-    long CompletedWorkouts30Days,
     long OpenSupportTickets,
-    long NewSupportTickets,
-    long? BackendErrors24Hours);
+    long NewSupportTickets);
 
 public sealed record AdminPagedResult<T>(
     IReadOnlyList<T> Items,
@@ -60,8 +56,6 @@ public sealed record AdminUserDetail(
     long WorkoutCount,
     long SupportTicketCount,
     long ActiveMobileSessionCount,
-    bool EmailConfirmed,
-    bool TwoFactorEnabled,
     DateTimeOffset? LockoutEnd);
 
 public sealed record AdminSupportListQuery(
@@ -107,18 +101,7 @@ public sealed record AdminSupportTicketDetail(
 
 public sealed record AdminSupportReply(string Message, SupportTicketStatus? Status = null);
 
-public enum AdminSystemHealthStatus
-{
-    Healthy,
-    Warning,
-    Error
-}
-
-public sealed record AdminSystemComponentHealth(
-    string Component,
-    AdminSystemHealthStatus Status,
-    string Summary);
-
-public sealed record AdminSystemHealthSnapshot(
-    IReadOnlyList<AdminSystemComponentHealth> Components,
-    DateTime CheckedAtUtc);
+/// <summary>Сколько нового админ ещё не видел в разделах админки.</summary>
+public sealed record AdminAttentionSnapshot(
+    int NewUsers,
+    int UnseenSupportTickets);

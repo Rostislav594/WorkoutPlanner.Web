@@ -1,9 +1,9 @@
 .admin-skip-link {
     position: fixed;
-    top: 12px;
-    left: 12px;
+    top: .75rem;
+    left: .75rem;
     z-index: 3000;
-    padding: 10px 14px;
+    padding: .625rem .875rem;
     border-radius: var(--radius-sm);
     background: var(--color-accent);
     color: #111;
@@ -19,35 +19,38 @@
 .admin-shell {
     min-height: 100dvh;
     display: grid;
-    grid-template-columns: 264px minmax(0, 1fr);
-    background: var(--color-bg);
+    grid-template-columns: 16.5rem minmax(0, 1fr);
+    background: transparent;
     color: var(--color-text);
 }
 
+/* Боковое меню — стекло, как шапка и нижнее меню мобильного приложения. */
 .admin-navigation {
     position: sticky;
     top: 0;
     height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: 24px 16px 18px;
-    border-right: var(--border-subtle);
-    background: var(--color-bg-elevated);
+    padding: 1.5rem 1rem 1.125rem;
+    border-right: 1px solid var(--glass-border-strong);
+    background: rgba(10, 11, 13, .35);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    backdrop-filter: var(--glass-blur-strong);
 }
 
 .admin-navigation__brand {
     display: flex;
     align-items: center;
-    gap: 13px;
-    min-height: 64px;
-    padding: 10px 12px;
+    gap: .8125rem;
+    min-height: 4rem;
+    padding: .625rem .75rem;
     color: var(--color-text);
     text-decoration: none;
 }
 
 .admin-navigation__brand > .material-symbols-rounded {
     color: var(--color-accent);
-    font-size: 36px;
+    font-size: 2.25rem;
 }
 
 .admin-navigation__brand strong,
@@ -56,14 +59,14 @@
 }
 
 .admin-navigation__brand strong {
-    font-size: 20px;
+    font-size: 1.25rem;
     letter-spacing: .01em;
 }
 
 .admin-navigation__brand small {
     margin-top: 2px;
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: .875rem;
     font-weight: 700;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -71,17 +74,18 @@
 
 .admin-navigation__links {
     display: grid;
-    gap: 6px;
-    margin-top: 30px;
+    gap: .375rem;
+    margin-top: 1.875rem;
 }
 
 .admin-navigation__links ::deep a,
 .admin-navigation__footer a {
-    min-height: 48px;
+    position: relative;
+    min-height: 3rem;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 0 14px;
+    gap: .75rem;
+    padding: 0 .875rem;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     color: var(--color-text-muted);
@@ -94,30 +98,70 @@
 .admin-navigation__links ::deep a:focus-visible,
 .admin-navigation__footer a:hover,
 .admin-navigation__footer a:focus-visible {
-    border-color: var(--color-border-strong);
-    background: var(--color-surface-hover);
+    border-color: var(--glass-border);
+    background: var(--glass-inset-hover);
     color: var(--color-text);
 }
 
+.admin-navigation__links ::deep a:focus-visible,
+.admin-navigation__footer a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -3px;
+}
+
+/* Активный пункт — как в нижнем меню мобилки: оранжевая подложка и метка. */
 .admin-navigation__links ::deep a.active {
-    border-color: rgba(255, 122, 26, .32);
+    border-color: rgba(255, 122, 26, .28);
     background: var(--color-accent-soft);
+    box-shadow: 0 0 .875rem rgba(255, 122, 26, .08);
     color: var(--color-text);
+}
+
+.admin-navigation__links ::deep a.active::before {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 3px;
+    height: 1.75rem;
+    border-radius: 0 3px 3px 0;
+    background: var(--color-accent);
+    content: "";
+    transform: translateY(-50%);
 }
 
 .admin-navigation__links ::deep a.active > .material-symbols-rounded {
     color: var(--color-accent);
 }
 
+/* Число непросмотренного в пункте меню — просто белая цифра. */
+.admin-navigation__links ::deep .admin-navigation__badge {
+    margin-left: auto;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+/* Подпись «Новых:» видна только экранному диктору. */
+.admin-navigation__links ::deep .admin-navigation__badge-hint {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
 .admin-navigation__links ::deep .material-symbols-rounded,
 .admin-navigation__footer .material-symbols-rounded {
-    font-size: 22px;
+    font-size: 1.375rem;
 }
 
 .admin-navigation__footer {
     margin-top: auto;
-    padding-top: 18px;
-    border-top: var(--border-subtle);
+    padding-top: 1.125rem;
+    border-top: 1px solid var(--glass-border);
 }
 
 .admin-shell__main {
@@ -126,36 +170,45 @@
 }
 
 .admin-shell__main ::deep .admin-page {
-    width: min(1540px, 100%);
+    width: min(96.25rem, 100%);
     min-height: 100%;
     margin-inline: auto;
-    padding: 38px clamp(24px, 4vw, 64px) 64px;
+    padding: 2.375rem clamp(1.5rem, 4vw, 4rem) 4rem;
+}
+
+/* Панели, таблицы, поиск и пустые состояния — стеклянные карточки, как в мобилке. */
+.admin-shell__main ::deep .admin-panel,
+.admin-shell__main ::deep .admin-state,
+.admin-shell__main ::deep .admin-table-wrap,
+.admin-shell__main ::deep .admin-toolbar {
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    background: var(--glass-surface);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--shadow-card);
 }
 
 .admin-shell__main ::deep .admin-panel {
     min-width: 0;
-    padding: 24px;
-    border: var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
 }
 
 .admin-shell__main ::deep .admin-panel__heading {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 18px;
-    margin-bottom: 20px;
+    gap: 1.125rem;
+    margin-bottom: 1.25rem;
 }
 
 .admin-shell__main ::deep .admin-panel__heading h2 {
     margin: 0;
-    font-size: 21px;
+    font-size: 1.3125rem;
 }
 
 .admin-shell__main ::deep .admin-panel__heading p {
-    margin: 5px 0 0;
+    margin: .3125rem 0 0;
     color: var(--color-text-muted);
     line-height: 1.5;
 }
@@ -164,72 +217,115 @@
     display: flex;
     align-items: flex-end;
     flex-wrap: wrap;
-    gap: 14px;
-    margin: 28px 0 20px;
-    padding: 18px;
-    border: var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface);
+    gap: .875rem;
+    margin: 1.75rem 0 1.25rem;
+    padding: 1.125rem;
 }
 
 .admin-shell__main ::deep .admin-field {
-    min-width: min(280px, 100%);
-    flex: 1 1 280px;
+    min-width: min(17.5rem, 100%);
+    flex: 1 1 17.5rem;
 }
 
 .admin-shell__main ::deep .admin-field--compact {
-    min-width: min(210px, 100%);
-    flex: 0 1 240px;
+    min-width: min(13.125rem, 100%);
+    flex: 0 1 15rem;
 }
 
 .admin-shell__main ::deep .admin-field label {
     display: block;
-    margin-bottom: 7px;
+    margin-bottom: .4375rem;
     color: var(--color-text-muted);
-    font-size: 13px;
+    font-size: .9375rem;
     font-weight: 750;
 }
 
+/* Поля — как в мобилке: стекло, при фокусе оранжевая рамка с мягким ореолом. */
 .admin-shell__main ::deep .admin-input {
     width: 100%;
-    min-height: 48px;
-    padding: 10px 13px;
+    min-height: 3rem;
+    padding: .625rem .8125rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
-    background: var(--color-bg-elevated);
+    background: var(--glass-surface-strong);
     color: var(--color-text);
     font: inherit;
+    transition: border-color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.admin-shell__main ::deep .admin-input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.admin-shell__main ::deep .admin-input:focus {
+    border-color: var(--color-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
 }
 
 .admin-shell__main ::deep textarea.admin-input {
-    min-height: 150px;
+    min-height: 9.375rem;
     resize: vertical;
     line-height: 1.55;
 }
 
 .admin-shell__main ::deep .admin-button,
 .admin-shell__main ::deep a.admin-button {
-    min-height: 48px;
+    min-height: 3rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 0 18px;
+    gap: .5rem;
+    padding: 0 1.125rem;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
     color: var(--color-text);
     font: inherit;
-    font-weight: 800;
+    font-weight: 700;
     text-decoration: none;
     cursor: pointer;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), box-shadow var(--transition-ui), color var(--transition-ui);
 }
 
+.admin-shell__main ::deep .admin-button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+}
+
+.admin-shell__main ::deep .admin-button:disabled {
+    cursor: not-allowed;
+    opacity: .52;
+}
+
+/* Главная кнопка — как в мобилке: тёмное стекло, зелёная рамка и текст, мягкое свечение. */
 .admin-shell__main ::deep .admin-button--primary {
-    background: var(--color-success);
+    border: 2px solid var(--color-success-hover);
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(63, 185, 80, .2) 0%, rgba(63, 185, 80, .07) 40%, transparent 72%),
+        rgba(15, 15, 16, .72);
+    color: var(--color-success-hover);
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .1),
+        0 .5rem 1.375rem rgba(63, 185, 80, .14),
+        inset 0 0 1.125rem rgba(63, 185, 80, .07);
+}
+
+.admin-shell__main ::deep .admin-button--primary:hover:not(:disabled) {
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(63, 185, 80, .28) 0%, rgba(63, 185, 80, .1) 45%, transparent 76%),
+        rgba(20, 20, 22, .78);
+    box-shadow:
+        0 0 0 1px rgba(79, 196, 107, .16),
+        0 .625rem 1.625rem rgba(63, 185, 80, .2),
+        inset 0 0 1.375rem rgba(63, 185, 80, .1);
 }
 
 .admin-shell__main ::deep .admin-button--secondary {
     border-color: var(--color-border-strong);
+    background: var(--color-surface-raised);
+}
+
+.admin-shell__main ::deep .admin-button--secondary:hover:not(:disabled) {
     background: var(--color-surface-hover);
 }
 
@@ -238,27 +334,24 @@
 }
 
 .admin-shell__main ::deep .admin-button .material-symbols-rounded {
-    font-size: 20px;
+    font-size: 1.25rem;
 }
 
 .admin-shell__main ::deep .admin-state {
-    min-height: 210px;
+    min-height: 13.125rem;
     display: grid;
     place-content: center;
     justify-items: center;
-    gap: 10px;
-    margin-top: 28px;
-    padding: 30px;
-    border: var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
+    gap: .625rem;
+    margin-top: 1.75rem;
+    padding: 1.875rem;
     color: var(--color-text-muted);
     text-align: center;
 }
 
 .admin-shell__main ::deep .admin-state > .material-symbols-rounded {
     color: var(--color-text-subtle);
-    font-size: 42px;
+    font-size: 2.625rem;
 }
 
 .admin-shell__main ::deep .admin-state h2,
@@ -268,38 +361,34 @@
 
 .admin-shell__main ::deep .admin-state h2 {
     color: var(--color-text);
-    font-size: 20px;
+    font-size: 1.25rem;
 }
 
 .admin-shell__main ::deep .admin-state .admin-button {
-    margin-top: 8px;
+    margin-top: .5rem;
 }
 
 .admin-shell__main ::deep .admin-table-wrap {
     overflow-x: auto;
-    border: var(--border-subtle);
-    border-radius: var(--radius-lg);
-    background: var(--color-surface-raised);
-    box-shadow: var(--shadow-card);
 }
 
 .admin-shell__main ::deep .admin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 1rem;
 }
 
 .admin-shell__main ::deep .admin-table th,
 .admin-shell__main ::deep .admin-table td {
-    padding: 15px 16px;
-    border-bottom: var(--border-subtle);
+    padding: .9375rem 1rem;
+    border-bottom: 1px solid var(--glass-border);
     text-align: left;
     vertical-align: middle;
 }
 
 .admin-shell__main ::deep .admin-table th {
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: .875rem;
     font-weight: 800;
     letter-spacing: .04em;
     text-transform: uppercase;
@@ -311,7 +400,7 @@
 }
 
 .admin-shell__main ::deep .admin-table tbody tr:hover {
-    background: var(--color-surface-hover);
+    background: var(--glass-inset-hover);
 }
 
 .admin-shell__main ::deep .admin-table a {
@@ -327,11 +416,11 @@
 }
 
 .admin-shell__main ::deep .admin-table__secondary {
-    max-width: 320px;
+    max-width: 20rem;
     margin-top: 3px;
     overflow: hidden;
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: .875rem;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -339,21 +428,21 @@
 .admin-shell__main ::deep .admin-status {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    min-height: 28px;
-    padding: 3px 10px;
+    gap: .4375rem;
+    min-height: 1.75rem;
+    padding: 3px .625rem;
     border: 1px solid var(--color-border-strong);
-    border-radius: 999px;
-    background: var(--color-surface);
+    border-radius: 62.4375rem;
+    background: var(--glass-inset);
     color: var(--color-text-muted);
-    font-size: 12px;
+    font-size: .875rem;
     font-weight: 800;
     white-space: nowrap;
 }
 
 .admin-shell__main ::deep .admin-status::before {
-    width: 7px;
-    height: 7px;
+    width: .4375rem;
+    height: .4375rem;
     border-radius: 50%;
     background: currentColor;
     content: "";
@@ -381,22 +470,22 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    margin-top: 18px;
+    gap: 1rem;
+    margin-top: 1.125rem;
     color: var(--color-text-muted);
-    font-size: 14px;
+    font-size: .9375rem;
 }
 
 .admin-shell__main ::deep .admin-pagination__buttons {
     display: flex;
-    gap: 8px;
+    gap: .5rem;
 }
 
 .admin-shell__main ::deep .admin-back-link {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 20px;
+    gap: .375rem;
+    margin-bottom: 1.25rem;
     color: var(--color-text-muted);
     font-weight: 700;
     text-decoration: none;
@@ -408,12 +497,12 @@
 }
 
 .admin-shell__main ::deep .admin-back-link .material-symbols-rounded {
-    font-size: 20px;
+    font-size: 1.25rem;
 }
 
 .admin-shell__main ::deep .admin-alert {
-    margin: 18px 0;
-    padding: 13px 15px;
+    margin: 1.125rem 0;
+    padding: .8125rem .9375rem;
     border: 1px solid var(--color-border-strong);
     border-radius: var(--radius-sm);
 }
@@ -438,24 +527,24 @@
     .admin-navigation {
         position: relative;
         height: auto;
-        padding: 12px 16px;
+        padding: .75rem 1rem;
         border-right: 0;
-        border-bottom: var(--border-subtle);
+        border-bottom: 1px solid var(--glass-border-strong);
     }
 
     .admin-navigation__brand {
-        min-height: 54px;
-        padding: 4px 6px 10px;
+        min-height: 3.375rem;
+        padding: .25rem .375rem .625rem;
     }
 
     .admin-navigation__brand > .material-symbols-rounded {
-        font-size: 30px;
+        font-size: 1.875rem;
     }
 
     .admin-navigation__links {
         display: flex;
-        gap: 6px;
-        margin-top: 4px;
+        gap: .375rem;
+        margin-top: .25rem;
         padding-bottom: 2px;
         overflow-x: auto;
         scrollbar-width: thin;
@@ -463,21 +552,31 @@
 
     .admin-navigation__links ::deep a {
         flex: 0 0 auto;
-        padding-inline: 12px;
+        padding-inline: .75rem;
+    }
+
+    /* В горизонтальном меню метка активного пункта сверху, как в мобилке. */
+    .admin-navigation__links ::deep a.active::before {
+        top: 0;
+        left: 50%;
+        width: 1.75rem;
+        height: 3px;
+        border-radius: 0 0 3px 3px;
+        transform: translateX(-50%);
     }
 
     .admin-navigation__footer {
         position: absolute;
-        top: 16px;
-        right: 16px;
+        top: 1rem;
+        right: 1rem;
         margin: 0;
         padding: 0;
         border: 0;
     }
 
     .admin-navigation__footer a {
-        width: 44px;
-        min-height: 44px;
+        width: 2.75rem;
+        min-height: 2.75rem;
         justify-content: center;
         padding: 0;
     }
@@ -494,17 +593,17 @@
     }
 
     .admin-shell__main ::deep .admin-page {
-        padding: 30px 20px 52px;
+        padding: 1.875rem 1.25rem 3.25rem;
     }
 }
 
 @media (max-width: 520px) {
     .admin-navigation__links ::deep a {
-        min-width: 48px;
+        min-width: 3rem;
         justify-content: center;
     }
 
-    .admin-navigation__links ::deep a > span:last-child {
+    .admin-navigation__links ::deep .admin-navigation__label {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -515,15 +614,24 @@
         border: 0;
     }
 
+    /* В меню из одних значков число новых висит в углу значка. */
+    .admin-navigation__links ::deep .admin-navigation__badge {
+        position: absolute;
+        top: .25rem;
+        right: .375rem;
+        margin: 0;
+        font-size: .875rem;
+    }
+
 
     .admin-shell__main ::deep .admin-page {
-        padding-inline: 16px;
+        padding-inline: 1rem;
     }
 
     .admin-shell__main ::deep .admin-toolbar {
         align-items: stretch;
         flex-direction: column;
-        padding: 14px;
+        padding: .875rem;
     }
 
     .admin-shell__main ::deep .admin-field,

@@ -273,6 +273,61 @@ public sealed class MobileApiTests
         Assert.Equal(definitions.Select(x => x.Name).Order(StringComparer.Create(new System.Globalization.CultureInfo(language), false)), definitions.Select(x => x.Name));
     }
 
+    [Theory]
+    [InlineData("uk-UA,uk;q=0.9")]
+    [InlineData("en-US,en;q=0.9")]
+    public async Task WebPages_AreRussian_WhileApiFollowsAcceptLanguage(string acceptLanguage)
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+
+        using var pageRequest = new HttpRequestMessage(HttpMethod.Get, "/account/login");
+        pageRequest.Headers.AcceptLanguage.ParseAdd(acceptLanguage);
+        using var page = await client.SendAsync(pageRequest);
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Equal(["ru"], page.Content.Headers.ContentLanguage);
+        Assert.Contains("<html lang=\"ru\">", await page.Content.ReadAsStringAsync());
+
+        using var apiRequest = new HttpRequestMessage(HttpMethod.Get, "/api/v1/ping");
+        apiRequest.Headers.AcceptLanguage.ParseAdd(acceptLanguage);
+        using var api = await client.SendAsync(apiRequest);
+        Assert.Equal([acceptLanguage[..2]], api.Content.Headers.ContentLanguage);
+    }
+
+    // Веб — только админка: прежних пользовательских страниц и веб-регистрации больше нет.
+    [Theory]
+    [InlineData("/account/register")]
+    [InlineData("/today")]
+    [InlineData("/workouts")]
+    [InlineData("/calendar")]
+    [InlineData("/history")]
+    [InlineData("/progress")]
+    [InlineData("/profile")]
+    [InlineData("/welcome-guide")]
+    public async Task LegacyUserWebPages_AreGone(string path)
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+
+        using var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("not-found-page", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task UnknownApiRoute_StaysProblemJson()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+
+        using var response = await client.GetAsync("/api/v1/no-such-endpoint");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
     [Fact]
     public async Task IdempotencyKey_PreventsDuplicateFreeWorkout_AndKeepsPhoneTime()
     {
@@ -555,11 +610,11 @@ public sealed class MobileApiTests
             "application/problem+json",
             anonymousProfile.Content.Headers.ContentType?.MediaType);
 
-        using var webProfile = await client.GetAsync("/profile");
-        Assert.Equal(HttpStatusCode.Redirect, webProfile.StatusCode);
+        using var webAdmin = await client.GetAsync("/admin");
+        Assert.Equal(HttpStatusCode.Redirect, webAdmin.StatusCode);
         Assert.Equal(
             "/Account/Login",
-            webProfile.Headers.Location?.AbsolutePath,
+            webAdmin.Headers.Location?.AbsolutePath,
             ignoreCase: true);
 
         using var registration = await client.PostAsJsonAsync(
@@ -3938,73 +3993,59 @@ public sealed class MobileApiTests
         Assert.Equal("PRIVATE_SENTINEL_direct_message_owner_only", ownedMessage.Body);
     }
 
-    [Fact]
-    public async Task AdminPublicationsEndpoint_RejectsAnonymousAndUser_ButAllowsAdmin()
+    [Theory]
+    [InlineData("/api/admin/publications")]
+    [InlineData("/api/admin/dashboard")]
+    [InlineData("/api/admin/users")]
+    public async Task AdminApi_IsGone_BecauseAdminPagesUseServicesDirectly(string path)
     {
         using var factory = new GymPlannerApiFactory();
-        using var anonymous = CreateClient(factory);
-        var request = new
-        {
-            Type = "News",
-            Title = "Новая функция",
-            Body = "В GPlanner появились таймеры отдыха.",
-            PublishedAtUtc = DateTime.UtcNow.AddMinutes(-1)
-        };
-        using var anonymousResponse = await anonymous.PostAsJsonAsync("/api/admin/publications", request);
-        Assert.Equal(HttpStatusCode.Unauthorized, anonymousResponse.StatusCode);
-        using var anonymousRead = await anonymous.GetAsync("/api/admin/publications");
-        Assert.Equal(HttpStatusCode.Unauthorized, anonymousRead.StatusCode);
+        using var client = CreateClient(factory);
 
-        using var userClient = CreateClient(factory);
-        using var registration = await userClient.PostAsJsonAsync(
-            "/api/v1/auth/register", new MobileRegisterRequest("admin-role@example.test", "password1"));
+        using var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task InboxPublication_CanBeReadAndDeletedByUser()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync(
+            "/api/v1/auth/register", new MobileRegisterRequest("publication-reader@example.test", "password1"));
         Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
-        var userTokens = await LoginAsync(userClient, "admin-role@example.test", "password1", "User session");
-        SetBearer(userClient, userTokens.AccessToken);
-        using var forbidden = await userClient.PostAsJsonAsync("/api/admin/publications", request);
-        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
-        using var forbiddenRead = await userClient.GetAsync("/api/admin/publications");
-        Assert.Equal(HttpStatusCode.Forbidden, forbiddenRead.StatusCode);
+        SetBearer(client, (await LoginAsync(client, "publication-reader@example.test", "password1", "Phone")).AccessToken);
 
+        // Публикация выходит после регистрации, поэтому пользователь её видит.
         await using (var scope = factory.Services.CreateAsyncScope())
         {
-            var users = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-            var user = await users.FindByEmailAsync("admin-role@example.test");
-            Assert.NotNull(user);
-            var result = await users.AddToRoleAsync(user, ApplicationRoles.Admin);
-            Assert.True(result.Succeeded, string.Join("; ", result.Errors.Select(x => x.Description)));
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            db.InboxPublications.Add(new InboxPublication
+            {
+                Type = InboxMessageType.News,
+                Title = "Новая функция",
+                Preview = "В GPlanner появились таймеры отдыха.",
+                Body = "В GPlanner появились таймеры отдыха.",
+                PublishedAtUtc = DateTime.UtcNow,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
         }
 
-        using var adminClient = CreateClient(factory);
-        var adminTokens = await LoginAsync(adminClient, "admin-role@example.test", "password1", "Admin session");
-        SetBearer(adminClient, adminTokens.AccessToken);
-        // This authorization test publishes after registration so the inbox is
-        // eligible under the registration-time audience rule.
-        request = request with { PublishedAtUtc = DateTime.UtcNow };
-        using var created = await adminClient.PostAsJsonAsync("/api/admin/publications", request);
-        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
-        using var allowedRead = await adminClient.GetAsync("/api/admin/publications");
-        Assert.Equal(HttpStatusCode.OK, allowedRead.StatusCode);
-
-        var inbox = await adminClient.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        var inbox = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
         Assert.NotNull(inbox);
         var publication = Assert.Single(inbox.Messages);
         Assert.True(publication.IsPublication);
         Assert.Equal(1, inbox.UnreadCount);
-        using var read = await adminClient.PostAsync($"/api/v1/inbox/publications/{publication.Id}/read", null);
+        using var read = await client.PostAsync($"/api/v1/inbox/publications/{publication.Id}/read", null);
         Assert.Equal(HttpStatusCode.OK, read.StatusCode);
-        using var deleted = await adminClient.DeleteAsync($"/api/v1/inbox/publications/{publication.Id}");
+        using var deleted = await client.DeleteAsync($"/api/v1/inbox/publications/{publication.Id}");
         Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
-        var afterDelete = await adminClient.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        var afterDelete = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
         Assert.NotNull(afterDelete);
         Assert.Empty(afterDelete.Messages);
-
-        using var logout = await adminClient.PostAsync("/api/v1/auth/logout", null);
-        Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
-        using var revokedRead = await adminClient.GetAsync("/api/admin/publications");
-        Assert.Equal(HttpStatusCode.Forbidden, revokedRead.StatusCode);
     }
-
     private static MultipartFormDataContent CreateSupportContent(
         string message,
         byte[]? screenshot = null,

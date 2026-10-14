@@ -27,6 +27,10 @@ public sealed class PushNotificationTemplateProvider :
             PushNotificationType.AccountNotification => new(
                 "GPlanner",
                 text["Push_AccountNotification"]),
+            // У публикации свой заголовок и текст; это запасной вариант.
+            PushNotificationType.Publication => new(
+                "GPlanner",
+                text["Push_InboxMessage"]),
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }

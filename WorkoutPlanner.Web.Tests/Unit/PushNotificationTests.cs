@@ -39,7 +39,8 @@ public sealed class PushNotificationTests
         { PushNotificationType.SupportReply, "support_reply" },
         { PushNotificationType.InboxMessage, "inbox_message" },
         { PushNotificationType.AppUpdate, "app_update" },
-        { PushNotificationType.AccountNotification, "account_notification" }
+        { PushNotificationType.AccountNotification, "account_notification" },
+        { PushNotificationType.Publication, "publication" }
     };
 
     [Theory]

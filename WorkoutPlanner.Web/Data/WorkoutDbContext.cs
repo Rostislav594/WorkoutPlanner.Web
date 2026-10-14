@@ -84,6 +84,8 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
     public DbSet<AdminAuditLog> AdminAuditLogs => Set<AdminAuditLog>();
 
+    public DbSet<AdminSectionView> AdminSectionViews => Set<AdminSectionView>();
+
     public DbSet<PushDeviceRegistration> PushDeviceRegistrations => Set<PushDeviceRegistration>();
 
     public DbSet<MobileIdempotencyRecord> MobileIdempotencyRecords => Set<MobileIdempotencyRecord>();
@@ -341,6 +343,16 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
 
         modelBuilder.Entity<AdminAuditLog>()
             .HasIndex(x => new { x.AdminUserId, x.CreatedAtUtc });
+
+        modelBuilder.Entity<AdminSectionView>()
+            .HasKey(x => new { x.AdminUserId, x.Section });
+        modelBuilder.Entity<AdminSectionView>()
+            .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.AdminUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<AdminSectionView>()
+            .Property(x => x.Section)
+            .HasConversion<string>()
+            .HasMaxLength(40);
 
         modelBuilder.Entity<PushDeviceRegistration>()
             .HasOne<IdentityUser>().WithMany().HasForeignKey(x => x.UserId)

@@ -1,0 +1,102 @@
+@using WorkoutPlanner.Web.Application.Abstractions
+@using WorkoutPlanner.Web.Application.Contracts
+@implements IDisposable
+@inject IAdminAttentionService Attention
+@inject IAppText Text
+@inject ILogger<AdminNavigationLinks> Logger
+
+@* Пункты меню админки. Компонент интерактивный: раз в 20 секунд спрашивает,
+   есть ли непросмотренное, и показывает число новых у «Пользователей» и «Поддержки». *@
+
+<NavLink href="/admin" Match="NavLinkMatch.All">
+    <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
+    <span class="admin-navigation__label">@Text["Admin_Nav_Dashboard"]</span>
+</NavLink>
+<NavLink href="/admin/users">
+    <span class="material-symbols-rounded" aria-hidden="true">group</span>
+    <span class="admin-navigation__label">@Text["Admin_Nav_Users"]</span>
+    @if (_snapshot?.NewUsers > 0)
+    {
+        <span class="admin-navigation__badge">
+            <span class="admin-navigation__badge-hint">@Text["Admin_Attention_NewHint"]</span>@_snapshot.NewUsers
+        </span>
+    }
+</NavLink>
+<NavLink href="/admin/support">
+    <span class="material-symbols-rounded" aria-hidden="true">support_agent</span>
+    <span class="admin-navigation__label">@Text["Admin_Nav_Support"]</span>
+    @if (_snapshot?.UnseenSupportTickets > 0)
+    {
+        <span class="admin-navigation__badge">
+            <span class="admin-navigation__badge-hint">@Text["Admin_Attention_NewHint"]</span>@_snapshot.UnseenSupportTickets
+        </span>
+    }
+</NavLink>
+<NavLink href="/admin/publications">
+    <span class="material-symbols-rounded" aria-hidden="true">campaign</span>
+    <span class="admin-navigation__label">@Text["Admin_Nav_Publications"]</span>
+</NavLink>
+
+@code {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(20);
+    private readonly CancellationTokenSource _disposal = new();
+    private AdminAttentionSnapshot? _snapshot;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Attention.Changed += OnAttentionChanged;
+        await RefreshAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Опрашиваем только в живой вкладке, не во время предварительной отрисовки.
+        if (firstRender && RendererInfo.IsInteractive)
+            _ = PollAsync(_disposal.Token);
+    }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(PollInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+                await InvokeAsync(RefreshAndRenderAsync);
+        }
+        catch (OperationCanceledException)
+        {
+            // Вкладка закрыта — опрос остановлен.
+        }
+    }
+
+    private void OnAttentionChanged() => _ = InvokeAsync(RefreshAndRenderAsync);
+
+    private async Task RefreshAndRenderAsync()
+    {
+        await RefreshAsync();
+        StateHasChanged();
+    }
+
+    private async Task RefreshAsync()
+    {
+        if (_disposal.IsCancellationRequested)
+            return;
+
+        try
+        {
+            _snapshot = await Attention.GetAsync(_disposal.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // Подсветка — вспомогательная: при сбое оставляем прошлое состояние меню.
+            Logger.LogWarning(exception, "Admin attention snapshot could not be loaded.");
+        }
+    }
+
+    public void Dispose()
+    {
+        Attention.Changed -= OnAttentionChanged;
+        // Только отменяем: запрос к базе может ещё держать этот токен.
+        _disposal.Cancel();
+    }
+}

@@ -14,7 +14,6 @@ public sealed class AdminAuthorizationTests
     [InlineData(typeof(AdminUserDetail))]
     [InlineData(typeof(AdminSupport))]
     [InlineData(typeof(AdminSupportTicket))]
-    [InlineData(typeof(AdminSystem))]
     public void AdministrativePages_RequireAdminRole(Type pageType)
     {
         var attributes = pageType

@@ -2,14 +2,16 @@
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
+@implements IDisposable
 @inject IAdminDashboardService Dashboard
+@inject IAdminAttentionService Attention
+@inject ILogger<AdminHome> Logger
 @inject IAppText Text
 
-<PageTitle>Dashboard — GPlanner Admin</PageTitle>
+<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_Nav_Dashboard"])</PageTitle>
 
 <div class="admin-page admin-dashboard">
-    <AdminPageHeader Title="Dashboard"
-                     Description="@Text["Admin_Dashboard_Description"]" />
+    <AdminPageHeader Title="@Text["Admin_Nav_Dashboard"]" />
 
     @if (_isLoading)
     {
@@ -32,11 +34,12 @@
     {
         <section class="dashboard-section" aria-labelledby="users-metrics-title">
             <div class="dashboard-section__heading">
-                <div><h2 id="users-metrics-title">@Text["Admin_Dashboard_UsersTitle"]</h2><p>@Text["Admin_Dashboard_UsersHint"]</p></div>
+                <div><h2 id="users-metrics-title">@Text["Admin_Dashboard_UsersTitle"]</h2></div>
                 <a href="/admin/users">@Text["Admin_Dashboard_OpenUsers"] <span class="material-symbols-rounded" aria-hidden="true">arrow_forward</span></a>
             </div>
             <div class="metric-grid metric-grid--users">
-                <MetricCard Label="@Text["Admin_Metric_TotalUsers"]" Value="@_snapshot.TotalUsers" Icon="group" Featured="true" />
+                <MetricCard Label="@Text["Admin_Metric_TotalUsers"]" Value="@_snapshot.TotalUsers" Icon="group" Featured="true"
+                            Attention="@(NewUsers > 0 ? "users" : null)" Note="@(NewUsers > 0 ? Text.Format("Admin_Attention_NewUsers", NewUsers) : null)" />
                 <MetricCard Label="@Text["Admin_Metric_New24"]" Value="@_snapshot.NewUsers24Hours" />
                 <MetricCard Label="@Text["Admin_Metric_New7"]" Value="@_snapshot.NewUsers7Days" />
                 <MetricCard Label="@Text["Admin_Metric_New30"]" Value="@_snapshot.NewUsers30Days" />
@@ -47,29 +50,40 @@
             </div>
         </section>
 
-        <section class="dashboard-section" aria-labelledby="product-metrics-title">
-            <div class="dashboard-section__heading"><div><h2 id="product-metrics-title">@Text["Admin_Dashboard_ProductTitle"]</h2><p>@Text["Admin_Dashboard_ProductHint"]</p></div></div>
+        <section class="dashboard-section" aria-labelledby="support-metrics-title">
+            <div class="dashboard-section__heading"><div><h2 id="support-metrics-title">@Text["Admin_Dashboard_SupportTitle"]</h2></div></div>
             <div class="metric-grid">
-                <MetricCard Label="@Text["Admin_Metric_Workouts24"]" Value="@_snapshot.CompletedWorkouts24Hours" Icon="fitness_center" />
-                <MetricCard Label="@Text["Admin_Metric_Workouts7"]" Value="@_snapshot.CompletedWorkouts7Days" />
-                <MetricCard Label="@Text["Admin_Metric_Workouts30"]" Value="@_snapshot.CompletedWorkouts30Days" />
-                <MetricCard Label="@Text["Admin_Metric_OpenTickets"]" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning" />
+                <MetricCard Label="@Text["Admin_Metric_OpenTickets"]" Value="@_snapshot.OpenSupportTickets" Icon="support_agent" Tone="warning"
+                            Attention="@(UnseenTickets > 0 ? "support" : null)" Note="@(UnseenTickets > 0 ? Text.Format("Admin_Attention_UnseenTickets", UnseenTickets) : null)" />
                 <MetricCard Label="@Text["Admin_Metric_NewTickets"]" Value="@_snapshot.NewSupportTickets" Tone="warning" />
-                <MetricCard Label="@Text["Admin_Metric_BackendErrors"]"
-                            Value="@(_snapshot.BackendErrors24Hours?.ToString() ?? "—")"
-                            Note="@(_snapshot.BackendErrors24Hours.HasValue ? null : Text["Admin_Metric_NotWired"])"
-                            Tone="@(_snapshot.BackendErrors24Hours > 0 ? "danger" : "muted")" />
             </div>
         </section>
     }
 </div>
 
 @code {
+    private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(20);
+    private readonly CancellationTokenSource _disposal = new();
     private AdminDashboardSnapshot? _snapshot;
+    private AdminAttentionSnapshot? _attention;
     private bool _isLoading = true;
     private string _error = string.Empty;
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    private int NewUsers => _attention?.NewUsers ?? 0;
+    private int UnseenTickets => _attention?.UnseenSupportTickets ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        await RefreshAttentionAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Цифры и подсветка обновляются сами, пока главная страница открыта.
+        if (firstRender && RendererInfo.IsInteractive)
+            _ = PollAsync(_disposal.Token);
+    }
 
     private async Task LoadAsync()
     {
@@ -88,4 +102,53 @@
             _isLoading = false;
         }
     }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(PollInterval);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+                await InvokeAsync(RefreshQuietlyAsync);
+        }
+        catch (OperationCanceledException)
+        {
+            // Страница закрыта — опрос остановлен.
+        }
+    }
+
+    /// <summary>Обновляет цифры без экрана загрузки; при сбое оставляет прежние.</summary>
+    private async Task RefreshQuietlyAsync()
+    {
+        if (_disposal.IsCancellationRequested)
+            return;
+
+        try
+        {
+            _snapshot = await Dashboard.GetAsync(_disposal.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Logger.LogWarning(exception, "Admin dashboard refresh failed.");
+        }
+
+        await RefreshAttentionAsync();
+        StateHasChanged();
+    }
+
+    private async Task RefreshAttentionAsync()
+    {
+        try
+        {
+            _attention = await Attention.GetAsync(_disposal.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // Подсветка — вспомогательная: без неё главная страница всё равно работает.
+            Logger.LogWarning(exception, "Admin attention snapshot could not be loaded.");
+        }
+    }
+
+    // Только отменяем: запрос к базе может ещё держать этот токен.
+    public void Dispose() => _disposal.Cancel();
 }

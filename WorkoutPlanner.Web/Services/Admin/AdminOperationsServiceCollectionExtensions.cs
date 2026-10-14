@@ -12,7 +12,7 @@ public static class AdminOperationsServiceCollectionExtensions
         services.AddScoped<IAdminDashboardService, AdminDashboardService>();
         services.AddScoped<IAdminUserService, AdminUserService>();
         services.AddScoped<IAdminSupportService, AdminSupportService>();
-        services.AddScoped<IAdminSystemHealthService, AdminSystemHealthService>();
+        services.AddScoped<IAdminAttentionService, AdminAttentionService>();
         return services;
     }
 }

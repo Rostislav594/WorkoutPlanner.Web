@@ -108,8 +108,6 @@ public sealed class AdminUserService(
             .Select(x => new IdentityDetailRow(
                 x.Id,
                 x.Email ?? x.UserName ?? string.Empty,
-                x.EmailConfirmed,
-                x.TwoFactorEnabled,
                 x.LockoutEnd))
             .SingleOrDefaultAsync(cancellationToken);
         if (identity is null)
@@ -148,8 +146,6 @@ public sealed class AdminUserService(
             workoutCount,
             ticketCount,
             sessionCount,
-            identity.EmailConfirmed,
-            identity.TwoFactorEnabled,
             identity.LockoutEnd);
     }
 
@@ -179,8 +175,6 @@ public sealed class AdminUserService(
     private sealed record IdentityDetailRow(
         string UserId,
         string Email,
-        bool EmailConfirmed,
-        bool TwoFactorEnabled,
         DateTimeOffset? LockoutEnd);
     private sealed record ProfileRow(string UserId, string FirstName, string LastName);
     private sealed record CountRow(string UserId, long Count);

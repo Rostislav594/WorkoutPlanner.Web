@@ -1,18 +1,10 @@
 ﻿@page "/"
 @attribute [Authorize(Roles = "Admin")]
-@inject IAppText Text
+@inject NavigationManager Navigation
 
-<PageTitle>GPlanner Admin</PageTitle>
+@* Отдельной стартовой страницы нет: веб — это админка, сразу открываем главную. *@
 
-<main class="admin-entry" aria-labelledby="admin-entry-title">
-    <div class="admin-entry__backdrop" aria-hidden="true"></div>
-    <section class="admin-entry__content">
-        <p class="admin-entry__eyebrow">GPlanner</p>
-        <a class="admin-entry__card" href="/admin" aria-describedby="admin-entry-description">
-            <span class="admin-entry__icon material-symbols-rounded" aria-hidden="true">admin_panel_settings</span>
-            <h1 id="admin-entry-title">ADMIN</h1>
-            <span class="admin-entry__arrow material-symbols-rounded" aria-hidden="true">arrow_forward</span>
-        </a>
-        <p id="admin-entry-description" class="admin-entry__description">@Text["Admin_EntryDescription"]</p>
-    </section>
-</main>
+@code {
+    protected override void OnInitialized() =>
+        Navigation.NavigateTo("/admin", replace: true);
+}

@@ -4,11 +4,13 @@
 @using WorkoutPlanner.Web.Application.Contracts
 @inject IAdminUserService Users
 @inject IAppText Text
+@inject IAdminAttentionService Attention
+@inject ILogger<AdminUsers> Logger
 
-<PageTitle>Users — GPlanner Admin</PageTitle>
+<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_Nav_Users"])</PageTitle>
 
 <div class="admin-page">
-    <AdminPageHeader Title="Users" Description="@Text["Admin_Users_Description"]" />
+    <AdminPageHeader Title="@Text["Admin_Nav_Users"]" />
 
     <div class="admin-toolbar" role="search">
         <div class="admin-field">
@@ -36,7 +38,7 @@
     {
         <div class="admin-table-wrap">
             <table class="admin-table">
-                <thead><tr><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Registered"]</th><th>@Text["Admin_Column_LastSeen"]</th><th>@Text["Admin_Column_Status"]</th><th>@Text["Admin_Column_Client"]</th><th>@Text["Admin_Column_Workouts"]</th><th>Support</th></tr></thead>
+                <thead><tr><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Registered"]</th><th>@Text["Admin_Column_LastSeen"]</th><th>@Text["Admin_Column_Status"]</th><th>@Text["Admin_Column_Client"]</th><th>@Text["Admin_Column_Workouts"]</th><th>@Text["Admin_Column_Support"]</th></tr></thead>
                 <tbody>
                     @foreach (var user in _result.Items)
                     {
@@ -44,7 +46,7 @@
                             <td><a href="@($"/admin/users/{Uri.EscapeDataString(user.UserId)}")"><span class="admin-table__primary">@user.DisplayName</span><span class="admin-table__secondary">@user.Email · @user.UserId</span></a></td>
                             <td>@FormatDate(user.RegisteredAtUtc)</td>
                             <td>@FormatDate(user.LastSeenAtUtc)</td>
-                            <td><span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(user.ActivityStatus)</span></td>
+                            <td><span class="admin-status @StatusClass(user.ActivityStatus)">@StatusLabel(Text, user.ActivityStatus)</span></td>
                             <td><span class="admin-table__primary">@(user.Platform ?? "—")</span><span class="admin-table__secondary">@(user.AppVersion is null ? Text["Admin_VersionUnknown"] : $"GPlanner {user.AppVersion}")</span></td>
                             <td>@user.WorkoutCount</td>
                             <td>@user.SupportTicketCount</td>
@@ -72,7 +74,18 @@
     private bool _isLoading = true;
     private int TotalPages => _result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
-    protected override Task OnInitializedAsync() => LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+        await MarkSectionViewedAsync();
+    }
+
+    // Раздел открыт — его подсветка в меню и на главной гаснет.
+    private async Task MarkSectionViewedAsync()
+    {
+        try { await Attention.MarkViewedAsync(WorkoutPlanner.Web.Models.AdminSection.Users); }
+        catch (Exception exception) { Logger.LogWarning(exception, "Admin section view could not be saved."); }
+    }
     private async Task SearchAsync() { _page = 1; await LoadAsync(); }
     private async Task PreviousAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
     private async Task NextAsync() { if (_page < TotalPages) { _page++; await LoadAsync(); } }
@@ -86,6 +99,6 @@
 
     private string FormatDate(DateTime? value) =>
         value?.ToLocalTime().ToString("dd.MM.yyyy, HH:mm") ?? Text["Admin_NoData"];
-    private static string StatusLabel(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "Active", AdminUserActivityStatus.Dormant => "Dormant", AdminUserActivityStatus.Inactive => "Inactive", _ => "Never active" };
+    internal static string StatusLabel(IAppText text, AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => text["Admin_UserStatus_Active"], AdminUserActivityStatus.Dormant => text["Admin_UserStatus_Dormant"], AdminUserActivityStatus.Inactive => text["Admin_UserStatus_Inactive"], _ => text["Admin_UserStatus_NeverActive"] };
     private static string StatusClass(AdminUserActivityStatus status) => status switch { AdminUserActivityStatus.Active => "admin-status--success", AdminUserActivityStatus.Dormant => "admin-status--warning", AdminUserActivityStatus.Inactive => "admin-status--danger", _ => string.Empty };
 }

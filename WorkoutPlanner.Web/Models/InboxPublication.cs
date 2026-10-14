@@ -14,6 +14,8 @@ public sealed class InboxPublication
     public DateTime CreatedAtUtc { get; set; }
     public string? CreatedByUserId { get; set; }
     public bool SendPushNotification { get; set; }
+    /// <summary>Когда разослан push о публикации; <c>null</c> — ещё не рассылался.</summary>
+    public DateTime? PushSentAtUtc { get; set; }
     public ICollection<InboxPublicationRead> Reads { get; set; } = [];
 }
 

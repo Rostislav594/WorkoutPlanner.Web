@@ -15,7 +15,13 @@ public enum PushNotificationType
     SupportReply,
     InboxMessage,
     AppUpdate,
-    AccountNotification
+    AccountNotification,
+
+    /// <summary>
+    /// Публикация из админки. В поле `inboxMessageId` приходит номер публикации,
+    /// а не личного сообщения: открывать её нужно как публикацию.
+    /// </summary>
+    Publication
 }
 
 public static class PushNotificationPayloadKeys
@@ -32,6 +38,7 @@ public static class PushNotificationTypeSerializer
         PushNotificationType.InboxMessage => "inbox_message",
         PushNotificationType.AppUpdate => "app_update",
         PushNotificationType.AccountNotification => "account_notification",
+        PushNotificationType.Publication => "publication",
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
     };
 
@@ -45,10 +52,11 @@ public static class PushNotificationTypeSerializer
             "inbox_message" => PushNotificationType.InboxMessage,
             "app_update" => PushNotificationType.AppUpdate,
             "account_notification" => PushNotificationType.AccountNotification,
+            "publication" => PushNotificationType.Publication,
             _ => default
         };
 
         return value is "support_reply" or "inbox_message" or
-            "app_update" or "account_notification";
+            "app_update" or "account_notification" or "publication";
     }
 }

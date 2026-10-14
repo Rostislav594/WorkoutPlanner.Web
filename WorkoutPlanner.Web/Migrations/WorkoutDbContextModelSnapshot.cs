@@ -268,6 +268,24 @@ namespace WorkoutPlanner.Web.Migrations
                     b.ToTable("AdminAuditLogs");
                 });
 
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.AdminSectionView", b =>
+                {
+                    b.Property<string>("AdminUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Section")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastViewedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("AdminUserId", "Section");
+
+                    b.ToTable("AdminSectionViews");
+                });
+
             modelBuilder.Entity("WorkoutPlanner.Web.Models.AppSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -559,6 +577,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("PushSentAtUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("SendPushNotification")
@@ -1390,6 +1411,15 @@ namespace WorkoutPlanner.Web.Migrations
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WorkoutPlanner.Web.Models.AdminSectionView", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                        .WithMany()
+                        .HasForeignKey("AdminUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

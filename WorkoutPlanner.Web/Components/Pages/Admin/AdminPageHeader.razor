@@ -1,12 +1,5 @@
 <header class="admin-page-header">
-    <div>
-        <p>@Eyebrow</p>
-        <h1>@Title</h1>
-        @if (!string.IsNullOrWhiteSpace(Description))
-        {
-            <span>@Description</span>
-        }
-    </div>
+    <h1>@Title</h1>
     @if (Actions is not null)
     {
         <div class="admin-page-header__actions">
@@ -16,8 +9,6 @@
 </header>
 
 @code {
-    [Parameter] public string Eyebrow { get; set; } = "GPlanner Admin";
     [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
-    [Parameter] public string? Description { get; set; }
     [Parameter] public RenderFragment? Actions { get; set; }
 }

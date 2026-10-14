@@ -44,7 +44,16 @@ public interface IAdminSupportService
         CancellationToken cancellationToken = default);
 }
 
-public interface IAdminSystemHealthService
+/// <summary>
+/// Непросмотренное в админке: новые пользователи и новые обращения или ответы
+/// в них с момента, когда админ последний раз открывал раздел.
+/// </summary>
+public interface IAdminAttentionService
 {
-    Task<AdminSystemHealthSnapshot> GetAsync(CancellationToken cancellationToken = default);
+    /// <summary>Срабатывает, когда админ открыл раздел и его подсветка погасла.</summary>
+    event Action? Changed;
+
+    Task<AdminAttentionSnapshot> GetAsync(CancellationToken cancellationToken = default);
+
+    Task MarkViewedAsync(AdminSection section, CancellationToken cancellationToken = default);
 }

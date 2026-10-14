@@ -1,5 +1,15 @@
 ﻿@page "/not-found"
 @layout MainLayout
+@attribute [AllowAnonymous]
 @inject IAppText Text
- <h1 style="text-align:center;">
-@Text["Web_NotFound"]</h1>
+
+<PageTitle>@Text["Web_NotFound_PageTitle"]</PageTitle>
+
+<main class="not-found-page">
+    <section>
+        <span class="material-symbols-rounded" aria-hidden="true">explore_off</span>
+        <h1>@Text["Web_NotFound"]</h1>
+        <p>@Text["Web_NotFound_Body"]</p>
+        <a href="/admin">@Text["Web_NotFound_Back"]</a>
+    </section>
+</main>

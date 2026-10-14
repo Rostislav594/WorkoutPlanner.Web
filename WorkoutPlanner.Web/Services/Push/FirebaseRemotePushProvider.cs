@@ -25,7 +25,7 @@ public sealed class FirebaseRemotePushProvider(
                     Token = target.PushToken,
                     Notification = new Notification { Title = message.Title, Body = message.Body },
                     Data = new Dictionary<string, string>(message.Data, StringComparer.Ordinal),
-                    Android = new AndroidConfig { Notification = new AndroidNotification { ChannelId = "gplanner-notifications", Tag = message.InboxMessageId.ToString() } }
+                    Android = new AndroidConfig { Notification = new AndroidNotification { ChannelId = "gplanner-notifications", Tag = $"{WorkoutPlanner.Api.Contracts.PushNotificationTypeSerializer.ToPayloadValue(message.Type)}-{message.InboxMessageId}" } }
                 }, cancellationToken);
                 sent++;
                 logger.LogInformation("FCM push sent for installation {InstallationId}: {MessageId}", target.InstallationId, response);

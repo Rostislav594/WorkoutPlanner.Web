@@ -2023,23 +2023,8 @@
     <value>✓ {0}</value>
     <comment>Отметка выбранного пункта одинакова во всех языках.</comment>
   </data>
-  <data name="Web_MainMenu" xml:space="preserve">
-    <value>Главное меню</value>
-  </data>
   <data name="Web_NotFound" xml:space="preserve">
-    <value>Я пока не знаю что здесь будет 😎</value>
-  </data>
-  <data name="Web_WelcomeSaveFailed" xml:space="preserve">
-    <value>Не удалось сохранить завершение знакомства. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Today_NoWorkout" xml:space="preserve">
-    <value>На сегодня тренировка не назначена.</value>
-  </data>
-  <data name="Web_Today_NoWorkoutAlt" xml:space="preserve">
-    <value>Нет тренировки</value>
-  </data>
-  <data name="Web_Today_Completed" xml:space="preserve">
-    <value>Выполнено {0} из {1}</value>
+    <value>Страница не найдена</value>
   </data>
   <data name="Web_Rate_Easy" xml:space="preserve">
     <value>😊 Легко</value>
@@ -2072,285 +2057,9 @@
   <data name="Web_Today_RateCancel" xml:space="preserve">
     <value>❌ Отмена</value>
   </data>
-  <data name="Web_Today_NotRatedTitle" xml:space="preserve">
-    <value>⚠️ Не все упражнения оценены</value>
-  </data>
-  <data name="Web_Today_NotRatedBody" xml:space="preserve">
-    <value>Пожалуйста, оцените все упражнения перед завершением тренировки.</value>
-  </data>
-  <data name="Web_Ok" xml:space="preserve">
-    <value>Понятно</value>
-  </data>
-  <data name="Web_Today_Finished" xml:space="preserve">
-    <value>Тренировка завершена!</value>
-  </data>
-  <data name="Web_Today_ExercisesLabel" xml:space="preserve">
-    <value>✅ Упражнений:</value>
-  </data>
-  <data name="Web_Today_ProgressSaved" xml:space="preserve">
-    <value>📈 Прогресс сохранён</value>
-  </data>
-  <data name="Web_Today_HistoryUpdated" xml:space="preserve">
-    <value>📚 История обновлена</value>
-  </data>
-  <data name="Web_Today_GreatJob" xml:space="preserve">
-    <value>Отличная работа 💪</value>
-  </data>
-  <data name="Web_Today_SetUpdatedFromWatch" xml:space="preserve">
-    <value>Подход {0} упражнения «{1}» обновлён с часов.</value>
-  </data>
-  <data name="Web_Today_FinishedFromWatch" xml:space="preserve">
-    <value>Тренировка завершена с часов.</value>
-  </data>
-  <data name="Web_Today_RateAllFirst" xml:space="preserve">
-    <value>Оцените все упражнения перед завершением тренировки</value>
-  </data>
-  <data name="Web_Today_FinishFailed" xml:space="preserve">
-    <value>Не удалось завершить тренировку. Обновите страницу и попробуйте снова.</value>
-  </data>
-  <data name="Web_Today_SaveSetFailed" xml:space="preserve">
-    <value>Не удалось сохранить подход. Обновите страницу и попробуйте снова.</value>
-  </data>
-  <data name="Web_Calendar_WorkoutLabel" xml:space="preserve">
-    <value>Тренировка:</value>
-  </data>
-  <data name="Web_Calendar_NotAssigned" xml:space="preserve">
-    <value>Тренировка не назначена</value>
-  </data>
-  <data name="Web_Calendar_PickWorkout" xml:space="preserve">
-    <value>Выберите тренировку</value>
-  </data>
-  <data name="Web_Calendar_AssignConfirm" xml:space="preserve">
-    <value>✅ Назначить</value>
-  </data>
-  <data name="Web_Workouts_Empty" xml:space="preserve">
-    <value>Шаблонов пока нет</value>
-  </data>
-  <data name="Web_Workouts_Add" xml:space="preserve">
-    <value>+ Добавить шаблон</value>
-  </data>
-  <data name="Web_Workouts_AddExercisesHint" xml:space="preserve">
-    <value>Добавьте упражнения внутри шаблона</value>
-  </data>
-  <data name="Web_Details_SetupExercise" xml:space="preserve">
-    <value>Настроить упражнение {0}</value>
-  </data>
-  <data name="Web_Details_OpenPhotoFull" xml:space="preserve">
-    <value>Открыть фото упражнения {0} в полном размере</value>
-  </data>
-  <data name="Web_Details_PhotoFullAlt" xml:space="preserve">
-    <value>Фото упражнения {0} в полном размере</value>
-  </data>
-  <data name="Web_Details_CloseFullPhoto" xml:space="preserve">
-    <value>Закрыть полноразмерное фото</value>
-  </data>
-  <data name="Web_Details_ReplacePhoto" xml:space="preserve">
-    <value>Заменить фото</value>
-  </data>
-  <data name="Web_Details_Uploading" xml:space="preserve">
-    <value>Загружаем…</value>
-  </data>
-  <data name="Web_Details_SetWeightLabel" xml:space="preserve">
-    <value>Подход {0} · вес, кг</value>
-  </data>
-  <data name="Web_Details_NotSelectedOption" xml:space="preserve">
-    <value>-- Не выбрано --</value>
-  </data>
-  <data name="Web_Details_Adding" xml:space="preserve">
-    <value>Добавляем…</value>
-  </data>
-  <data name="Web_Details_Add" xml:space="preserve">
-    <value>Добавить</value>
-  </data>
-  <data name="Web_Details_LoadFailed" xml:space="preserve">
-    <value>Не удалось загрузить тренировку. Обновите страницу и попробуйте снова.</value>
-  </data>
-  <data name="Web_Details_NameRequired" xml:space="preserve">
-    <value>Введите название упражнения.</value>
-  </data>
-  <data name="Web_Details_CheckWeights" xml:space="preserve">
-    <value>Проверьте вес во всех подходах.</value>
-  </data>
-  <data name="Web_Details_AddFailed" xml:space="preserve">
-    <value>Не удалось добавить упражнение. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Details_DeleteFailed" xml:space="preserve">
-    <value>Не удалось удалить упражнение. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Details_SetsRange" xml:space="preserve">
-    <value>Количество подходов должно быть от 1 до 10.</value>
-  </data>
-  <data name="Web_Details_CheckWeightsAndReps" xml:space="preserve">
-    <value>Проверьте вес и повторения во всех подходах.</value>
-  </data>
-  <data name="Web_Details_SaveFailed" xml:space="preserve">
-    <value>Не удалось сохранить изменения. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Details_PhotoDeleteFailed" xml:space="preserve">
-    <value>Не удалось удалить фото. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Details_PhotoInvalid" xml:space="preserve">
-    <value>Выберите корректное изображение JPG, PNG или WebP до 5 МБ.</value>
-  </data>
-  <data name="Web_Details_PhotoSaveFailed" xml:space="preserve">
-    <value>Не удалось сохранить фото. Проверьте размер файла и попробуйте снова.</value>
-  </data>
-  <data name="Web_Details_PhotoUpdateFailed" xml:space="preserve">
-    <value>Не удалось обновить фото. Старое изображение сохранено.</value>
-  </data>
-  <data name="Web_History_EmptyAlt" xml:space="preserve">
-    <value>История пуста</value>
-  </data>
-  <data name="Web_Progress_ChartSubtitle" xml:space="preserve">
-    <value>Последние 30 дней · изменение относительно первой тренировки</value>
-  </data>
-  <data name="Web_Progress_SinglePoint" xml:space="preserve">
-    <value>Пока есть только одна точка. Кривая появится после второй сохраненной тренировки.</value>
-  </data>
-  <data name="Web_Progress_NoData" xml:space="preserve">
-    <value>Нет записей за последние 30 дней</value>
-  </data>
-  <data name="Web_Progress_ClearHistory" xml:space="preserve">
-    <value>🗑 Очистить историю</value>
-  </data>
-  <data name="Web_Progress_ExerciseCleared" xml:space="preserve">
-    <value>История упражнения успешно удалена.</value>
-  </data>
-  <data name="Web_Progress_WorkoutCleared" xml:space="preserve">
-    <value>История успешно удалена.</value>
-  </data>
-  <data name="Web_Profile_SecurityTitle" xml:space="preserve">
-    <value>Настройки безопасности</value>
-  </data>
-  <data name="Web_Profile_TrainingTitle" xml:space="preserve">
-    <value>Настройки тренировок</value>
-  </data>
-  <data name="Web_Profile_TourHint" xml:space="preserve">
-    <value>Краткое знакомство с основными возможностями приложения.</value>
-  </data>
-  <data name="Web_Profile_RepeatTour" xml:space="preserve">
-    <value>Повторить знакомство</value>
-  </data>
-  <data name="Web_Profile_RefreshList" xml:space="preserve">
-    <value>Обновить список</value>
-  </data>
-  <data name="Web_Profile_ConnectNewWatch" xml:space="preserve">
-    <value>Подключить новые часы</value>
-  </data>
-  <data name="Web_Profile_CodeReady" xml:space="preserve">
-    <value>Код готов</value>
-  </data>
-  <data name="Web_Profile_EnterCodeOnWatch" xml:space="preserve">
-    <value>Введите этот код на часах.</value>
-  </data>
-  <data name="Web_Profile_CodeValidUntil" xml:space="preserve">
-    <value>Код действует до</value>
-  </data>
-  <data name="Web_Profile_CodeHint" xml:space="preserve">
-    <value>Код состоит из шести цифр и действует ограниченное время. Новый код отменит ранее созданный.</value>
-  </data>
-  <data name="Web_Profile_ActiveCount" xml:space="preserve">
-    <value>{0} активных</value>
-  </data>
-  <data name="Web_Profile_DisconnectAll" xml:space="preserve">
-    <value>Отключить все</value>
-  </data>
-  <data name="Web_Profile_LoadingWatches" xml:space="preserve">
-    <value>Загружаем подключённые часы…</value>
-  </data>
-  <data name="Web_Profile_NoWatches" xml:space="preserve">
-    <value>Нет подключённых часов</value>
-  </data>
-  <data name="Web_Profile_NoWatchesHint" xml:space="preserve">
-    <value>Создайте код и введите его в приложении на часах.</value>
-  </data>
-  <data name="Web_Profile_DeviceName" xml:space="preserve">
-    <value>Название устройства</value>
-  </data>
-  <data name="Web_Profile_StatusConnected" xml:space="preserve">
-    <value>Подключены</value>
-  </data>
-  <data name="Web_Profile_StatusDisconnected" xml:space="preserve">
-    <value>Отключены</value>
-  </data>
   <data name="Web_Profile_Model" xml:space="preserve">
     <value>Модель</value>
     <comment>В украинском слово совпадает с русским.</comment>
-  </data>
-  <data name="Web_Profile_ModelUnknown" xml:space="preserve">
-    <value>Не указана</value>
-  </data>
-  <data name="Web_Profile_ModelUnknownLong" xml:space="preserve">
-    <value>Модель не указана</value>
-  </data>
-  <data name="Web_Profile_LastSeen" xml:space="preserve">
-    <value>Последняя активность</value>
-  </data>
-  <data name="Web_Profile_NeverSeen" xml:space="preserve">
-    <value>Ещё не было</value>
-  </data>
-  <data name="Web_Profile_Rename" xml:space="preserve">
-    <value>Переименовать</value>
-  </data>
-  <data name="Web_Profile_RevokedDevices" xml:space="preserve">
-    <value>Отключённые устройства ({0})</value>
-  </data>
-  <data name="Web_Profile_Sections" xml:space="preserve">
-    <value>Разделы профиля</value>
-  </data>
-  <data name="Web_Profile_WatchesTab" xml:space="preserve">
-    <value>Часы</value>
-  </data>
-  <data name="Web_Profile_DeleteTitle" xml:space="preserve">
-    <value>⚠️ Удаление аккаунта</value>
-  </data>
-  <data name="Web_Profile_DeleteWarning" xml:space="preserve">
-    <value>Будут удалены профиль, история тренировок, прогресс и все пользовательские данные.</value>
-  </data>
-  <data name="Web_Profile_DisconnectAllTitle" xml:space="preserve">
-    <value>Отключить все часы?</value>
-  </data>
-  <data name="Web_Profile_DisconnectAllBody" xml:space="preserve">
-    <value>Все подключённые часы потеряют доступ к аккаунту. Для повторного подключения потребуется новый код.</value>
-  </data>
-  <data name="Web_Profile_DisconnectOneBody" xml:space="preserve">
-    <value>Устройство «{0}» потеряет доступ к аккаунту. Для повторного подключения потребуется новый код.</value>
-  </data>
-  <data name="Web_Profile_NotFound" xml:space="preserve">
-    <value>Профиль не найден.</value>
-  </data>
-  <data name="Web_Profile_Saved" xml:space="preserve">
-    <value>Данные профиля сохранены.</value>
-  </data>
-  <data name="Web_Profile_PasswordChanged" xml:space="preserve">
-    <value>Пароль изменен.</value>
-  </data>
-  <data name="Web_Profile_CodeFailed" xml:space="preserve">
-    <value>Не удалось создать код подключения. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Profile_WatchesLoadFailed" xml:space="preserve">
-    <value>Не удалось загрузить список часов. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Profile_NameLength" xml:space="preserve">
-    <value>Введите название длиной от 1 до 120 символов.</value>
-  </data>
-  <data name="Web_Profile_WatchAlreadyGone" xml:space="preserve">
-    <value>Часы уже отключены или больше недоступны.</value>
-  </data>
-  <data name="Web_Profile_WatchRenamed" xml:space="preserve">
-    <value>Название часов сохранено.</value>
-  </data>
-  <data name="Web_Profile_RenameFailed" xml:space="preserve">
-    <value>Не удалось переименовать часы. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Profile_WatchWasDisconnected" xml:space="preserve">
-    <value>Часы уже были отключены.</value>
-  </data>
-  <data name="Web_Profile_DisconnectFailed" xml:space="preserve">
-    <value>Не удалось отключить часы. Попробуйте ещё раз.</value>
-  </data>
-  <data name="Web_Profile_DeleteFailed" xml:space="preserve">
-    <value>Не удалось удалить аккаунт. Попробуйте ещё раз.</value>
   </data>
   <data name="Validation_CurrentPasswordRequired" xml:space="preserve">
     <value>Введите текущий пароль.</value>
@@ -2379,29 +2088,17 @@
   <data name="Password_RequiresNonAlphanumeric" xml:space="preserve">
     <value>Пароль должен содержать хотя бы один специальный символ.</value>
   </data>
-  <data name="Web_Profile_WatchesHint" xml:space="preserve">
-    <value>Подключайте часы и управляйте их доступом к вашему аккаунту.</value>
-  </data>
-  <data name="Web_Profile_Refreshing" xml:space="preserve">
-    <value>Обновляем…</value>
-  </data>
   <data name="Admin_SkipToContent" xml:space="preserve">
     <value>К содержимому</value>
   </data>
   <data name="Admin_BrandHome" xml:space="preserve">
-    <value>GPlanner Admin — главная</value>
+    <value>Админ-панель GPlanner — главная</value>
   </data>
   <data name="Admin_Sections" xml:space="preserve">
     <value>Разделы администрирования</value>
   </data>
   <data name="Admin_SignOut" xml:space="preserve">
     <value>Выйти</value>
-  </data>
-  <data name="Admin_EntryDescription" xml:space="preserve">
-    <value>Панель управления системой</value>
-  </data>
-  <data name="Admin_Dashboard_Description" xml:space="preserve">
-    <value>Ключевые показатели продукта, активности и поддержки.</value>
   </data>
   <data name="Admin_Dashboard_Loading" xml:space="preserve">
     <value>Загружаем показатели</value>
@@ -2410,16 +2107,13 @@
     <value>Собираем актуальную серверную статистику.</value>
   </data>
   <data name="Admin_Dashboard_LoadFailed" xml:space="preserve">
-    <value>Не удалось загрузить Dashboard</value>
+    <value>Не удалось загрузить главную</value>
   </data>
   <data name="Admin_Dashboard_UsersTitle" xml:space="preserve">
     <value>Пользователи</value>
   </data>
-  <data name="Admin_Dashboard_UsersHint" xml:space="preserve">
-    <value>Регистрации и фактическая активность.</value>
-  </data>
   <data name="Admin_Dashboard_OpenUsers" xml:space="preserve">
-    <value>Открыть Users</value>
+    <value>Все пользователи</value>
   </data>
   <data name="Admin_Metric_TotalUsers" xml:space="preserve">
     <value>Всего пользователей</value>
@@ -2445,20 +2139,8 @@
   <data name="Admin_Metric_Inactive30" xml:space="preserve">
     <value>Неактивны более 30 дней</value>
   </data>
-  <data name="Admin_Dashboard_ProductTitle" xml:space="preserve">
-    <value>Продукт и поддержка</value>
-  </data>
-  <data name="Admin_Dashboard_ProductHint" xml:space="preserve">
-    <value>Завершённые тренировки и очередь обращений.</value>
-  </data>
-  <data name="Admin_Metric_Workouts24" xml:space="preserve">
-    <value>Тренировки за 24 часа</value>
-  </data>
-  <data name="Admin_Metric_Workouts7" xml:space="preserve">
-    <value>Тренировки за 7 дней</value>
-  </data>
-  <data name="Admin_Metric_Workouts30" xml:space="preserve">
-    <value>Тренировки за 30 дней</value>
+  <data name="Admin_Dashboard_SupportTitle" xml:space="preserve">
+    <value>Поддержка</value>
   </data>
   <data name="Admin_Metric_OpenTickets" xml:space="preserve">
     <value>Открытые обращения</value>
@@ -2466,20 +2148,11 @@
   <data name="Admin_Metric_NewTickets" xml:space="preserve">
     <value>Новые обращения</value>
   </data>
-  <data name="Admin_Metric_BackendErrors" xml:space="preserve">
-    <value>Ошибки backend за 24 часа</value>
-  </data>
-  <data name="Admin_Metric_NotWired" xml:space="preserve">
-    <value>Метрика не подключена</value>
-  </data>
   <data name="Admin_TryAgain" xml:space="preserve">
     <value>Попробуйте ещё раз.</value>
   </data>
   <data name="Admin_StatsUnavailable" xml:space="preserve">
     <value>Серверная статистика временно недоступна.</value>
-  </data>
-  <data name="Admin_Users_Description" xml:space="preserve">
-    <value>Пользователи, активность и диагностическая информация без секретов.</value>
   </data>
   <data name="Admin_Users_SearchLabel" xml:space="preserve">
     <value>Имя, email или UserId</value>
@@ -2497,7 +2170,7 @@
     <value>Выполняется серверный запрос.</value>
   </data>
   <data name="Admin_Users_LoadFailed" xml:space="preserve">
-    <value>Не удалось загрузить Users</value>
+    <value>Не удалось загрузить пользователей</value>
   </data>
   <data name="Admin_Users_NotFound" xml:space="preserve">
     <value>Пользователи не найдены</value>
@@ -2539,11 +2212,8 @@
   <data name="Admin_NoData" xml:space="preserve">
     <value>Нет данных</value>
   </data>
-  <data name="Admin_Support_Description" xml:space="preserve">
-    <value>Основной рабочий интерфейс технической поддержки GPlanner.</value>
-  </data>
   <data name="Admin_Support_SearchLabel" xml:space="preserve">
-    <value>TicketNumber, пользователь или email</value>
+    <value>Номер обращения, пользователь или email</value>
   </data>
   <data name="Admin_Support_SearchPlaceholder" xml:space="preserve">
     <value>Поиск обращений</value>
@@ -2558,7 +2228,7 @@
     <value>Загружаем обращения</value>
   </data>
   <data name="Admin_Support_Unavailable" xml:space="preserve">
-    <value>Support недоступен</value>
+    <value>Поддержка недоступна</value>
   </data>
   <data name="Admin_Support_NotFound" xml:space="preserve">
     <value>Обращений не найдено</value>
@@ -2587,9 +2257,6 @@
   <data name="Admin_Ticket_Fallback" xml:space="preserve">
     <value>Обращение</value>
   </data>
-  <data name="Admin_Ticket_Description" xml:space="preserve">
-    <value>История переписки и диагностический контекст пользователя.</value>
-  </data>
   <data name="Admin_Ticket_Loading" xml:space="preserve">
     <value>Загружаем обращение</value>
   </data>
@@ -2609,7 +2276,7 @@
     <value>Ответ пользователю</value>
   </data>
   <data name="Admin_Ticket_ReplyPlaceholder" xml:space="preserve">
-    <value>Ответ появится в существующем Inbox пользователя</value>
+    <value>Ответ появится в уведомлениях пользователя</value>
   </data>
   <data name="Admin_Ticket_StatusAfterSend" xml:space="preserve">
     <value>Статус после отправки</value>
@@ -2618,7 +2285,7 @@
     <value>Отправляем…</value>
   </data>
   <data name="Admin_Ticket_SendToInbox" xml:space="preserve">
-    <value>Отправить в Inbox</value>
+    <value>Отправить в уведомления</value>
   </data>
   <data name="Admin_Ticket_UserPanel" xml:space="preserve">
     <value>Пользователь</value>
@@ -2653,7 +2320,7 @@
     <value>Обращение временно недоступно.</value>
   </data>
   <data name="Admin_Ticket_ReplySaved" xml:space="preserve">
-    <value>Ответ сохранён и отправлен в Inbox пользователя.</value>
+    <value>Ответ сохранён и отправлен в уведомления пользователя.</value>
   </data>
   <data name="Admin_Ticket_ReplyFailed" xml:space="preserve">
     <value>Не удалось отправить ответ. Повторите попытку.</value>
@@ -2664,35 +2331,8 @@
   <data name="Admin_Ticket_StatusFailed" xml:space="preserve">
     <value>Не удалось обновить статус.</value>
   </data>
-  <data name="Admin_System_Description" xml:space="preserve">
-    <value>Безопасная базовая диагностика серверных компонентов без раскрытия конфигурации и секретов.</value>
-  </data>
-  <data name="Admin_Refresh" xml:space="preserve">
-    <value>Обновить</value>
-  </data>
-  <data name="Admin_System_Checking" xml:space="preserve">
-    <value>Проверяем систему</value>
-  </data>
-  <data name="Admin_System_Unavailable" xml:space="preserve">
-    <value>Диагностика недоступна</value>
-  </data>
-  <data name="Admin_System_CheckedAt" xml:space="preserve">
-    <value>Проверено {0}</value>
-  </data>
-  <data name="Admin_System_ComponentsAria" xml:space="preserve">
-    <value>Состояние компонентов</value>
-  </data>
-  <data name="Admin_System_RetryLater" xml:space="preserve">
-    <value>Повторите проверку позже.</value>
-  </data>
-  <data name="Admin_System_StateFailed" xml:space="preserve">
-    <value>Не удалось получить состояние компонентов.</value>
-  </data>
   <data name="Admin_UserCard_Title" xml:space="preserve">
     <value>Карточка пользователя</value>
-  </data>
-  <data name="Admin_UserCard_Description" xml:space="preserve">
-    <value>Read-only диагностика. Пароли, токены, cookies и другие секреты не отображаются.</value>
   </data>
   <data name="Admin_UserCard_Loading" xml:space="preserve">
     <value>Загружаем пользователя</value>
@@ -2706,9 +2346,6 @@
   <data name="Admin_UserCard_Diagnostics" xml:space="preserve">
     <value>Диагностика</value>
   </data>
-  <data name="Admin_UserCard_DiagnosticsHint" xml:space="preserve">
-    <value>Без доступа к содержимому аккаунта.</value>
-  </data>
   <data name="Admin_Field_CompletedWorkouts" xml:space="preserve">
     <value>Завершённые тренировки</value>
   </data>
@@ -2716,10 +2353,7 @@
     <value>Обращения поддержки</value>
   </data>
   <data name="Admin_Field_MobileSessions" xml:space="preserve">
-    <value>Активные Mobile-сессии</value>
-  </data>
-  <data name="Admin_Field_EmailConfirmed" xml:space="preserve">
-    <value>Email подтверждён</value>
+    <value>Активные сессии в мобильном приложении</value>
   </data>
   <data name="Admin_Field_LockoutUntil" xml:space="preserve">
     <value>Блокировка до</value>
@@ -2731,16 +2365,13 @@
     <value>Данные временно недоступны.</value>
   </data>
   <data name="Admin_Publications_PageTitle" xml:space="preserve">
-    <value>Публикации — GPlanner Admin</value>
+    <value>Публикации — админ-панель GPlanner</value>
   </data>
   <data name="Admin_Publications_Back" xml:space="preserve">
     <value>← Панель управления</value>
   </data>
   <data name="Admin_Publications_Title" xml:space="preserve">
     <value>Публикации</value>
-  </data>
-  <data name="Admin_Publications_Subtitle" xml:space="preserve">
-    <value>Создавайте сообщения, которые появятся в центре уведомлений пользователей.</value>
   </data>
   <data name="Admin_Publications_Editor" xml:space="preserve">
     <value>Редактор</value>
@@ -2939,12 +2570,6 @@
   <data name="Push_AccountNotification" xml:space="preserve">
     <value>У вас новое уведомление аккаунта.</value>
   </data>
-  <data name="Web_Register_ConfirmPassword" xml:space="preserve">
-    <value>Подтверждение пароля</value>
-  </data>
-  <data name="Web_Register_Failed" xml:space="preserve">
-    <value>Не удалось завершить регистрацию. Попробуйте ещё раз.</value>
-  </data>
   <data name="Password_DuplicateEmail" xml:space="preserve">
     <value>Пользователь с таким Email уже зарегистрирован.</value>
   </data>
@@ -2952,7 +2577,7 @@
     <value>Неверный email или пароль.</value>
   </data>
   <data name="Web_AccessDenied_PageTitle" xml:space="preserve">
-    <value>Доступ запрещён — GPlanner Admin</value>
+    <value>Доступ запрещён — админ-панель GPlanner</value>
   </data>
   <data name="Web_AccessDenied_Title" xml:space="preserve">
     <value>Доступ запрещён</value>
@@ -3440,5 +3065,173 @@
   </data>
   <data name="ExerciseBodyPart_Other" xml:space="preserve">
     <value>Другое</value>
+  </data>
+  <data name="Admin_PanelLabel" xml:space="preserve">
+    <value>Админ-панель</value>
+  </data>
+  <data name="Admin_PageTitle" xml:space="preserve">
+    <value>{0} — админ-панель GPlanner</value>
+  </data>
+  <data name="Admin_Nav_Dashboard" xml:space="preserve">
+    <value>Главная</value>
+  </data>
+  <data name="Admin_Nav_Users" xml:space="preserve">
+    <value>Пользователи</value>
+  </data>
+  <data name="Admin_Nav_Support" xml:space="preserve">
+    <value>Поддержка</value>
+  </data>
+  <data name="Admin_Nav_Publications" xml:space="preserve">
+    <value>Публикации</value>
+  </data>
+  <data name="Admin_Column_Support" xml:space="preserve">
+    <value>Обращения</value>
+  </data>
+  <data name="Admin_Field_UserId" xml:space="preserve">
+    <value>ID пользователя</value>
+  </data>
+  <data name="Admin_SupportTicket_PageTitle" xml:space="preserve">
+    <value>Обращение</value>
+  </data>
+  <data name="Admin_UserStatus_Active" xml:space="preserve">
+    <value>Активен</value>
+  </data>
+  <data name="Admin_UserStatus_Dormant" xml:space="preserve">
+    <value>Давно не заходил</value>
+  </data>
+  <data name="Admin_UserStatus_Inactive" xml:space="preserve">
+    <value>Неактивен</value>
+  </data>
+  <data name="Admin_UserStatus_NeverActive" xml:space="preserve">
+    <value>Ни разу не заходил</value>
+  </data>
+  <data name="Admin_TicketStatus_New" xml:space="preserve">
+    <value>Новое</value>
+  </data>
+  <data name="Admin_TicketStatus_InProgress" xml:space="preserve">
+    <value>В работе</value>
+  </data>
+  <data name="Admin_TicketStatus_WaitingForUser" xml:space="preserve">
+    <value>Ждёт ответа пользователя</value>
+  </data>
+  <data name="Admin_TicketStatus_Resolved" xml:space="preserve">
+    <value>Решено</value>
+  </data>
+  <data name="Admin_TicketStatus_Closed" xml:space="preserve">
+    <value>Закрыто</value>
+  </data>
+  <data name="Web_Error_PageTitle" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Web_Error_Title" xml:space="preserve">
+    <value>Ошибка.</value>
+  </data>
+  <data name="Web_Error_Message" xml:space="preserve">
+    <value>При обработке запроса произошла ошибка.</value>
+  </data>
+  <data name="Web_Error_RequestId" xml:space="preserve">
+    <value>ID запроса:</value>
+  </data>
+  <data name="Web_Error_DevTitle" xml:space="preserve">
+    <value>Режим разработки</value>
+  </data>
+  <data name="Web_Error_DevHint" xml:space="preserve">
+    <value>В среде Development будет показана подробная информация о возникшей ошибке.</value>
+  </data>
+  <data name="Web_Error_DevWarning" xml:space="preserve">
+    <value>Не включайте среду Development в развёрнутом приложении: пользователи могут увидеть конфиденциальные данные из исключений. Для локальной отладки задайте переменной окружения ASPNETCORE_ENVIRONMENT значение Development и перезапустите приложение.</value>
+  </data>
+  <data name="Web_Reconnect_Rejoining" xml:space="preserve">
+    <value>Восстанавливаем подключение к серверу…</value>
+  </data>
+  <data name="Web_Reconnect_NextAttempt" xml:space="preserve">
+    <value>Не удалось переподключиться. Секунд до следующей попытки:</value>
+  </data>
+  <data name="Web_Reconnect_Failed" xml:space="preserve">
+    <value>Не удалось переподключиться.</value>
+  </data>
+  <data name="Web_Reconnect_RetryOrReload" xml:space="preserve">
+    <value>Повторите попытку или перезагрузите страницу.</value>
+  </data>
+  <data name="Web_Reconnect_Paused" xml:space="preserve">
+    <value>Сервер приостановил сессию.</value>
+  </data>
+  <data name="Web_Reconnect_ResumeFailed" xml:space="preserve">
+    <value>Не удалось возобновить сессию.</value>
+  </data>
+  <data name="Web_Reconnect_Resume" xml:space="preserve">
+    <value>Продолжить</value>
+  </data>
+  <data name="Web_NotFound_Body" xml:space="preserve">
+    <value>Такой страницы нет. Возможно, адрес устарел или в нём опечатка.</value>
+  </data>
+  <data name="Web_NotFound_Back" xml:space="preserve">
+    <value>На главную</value>
+  </data>
+  <data name="Web_NotFound_PageTitle" xml:space="preserve">
+    <value>Страница не найдена — админ-панель GPlanner</value>
+  </data>
+  <data name="Admin_Attention_NewHint" xml:space="preserve">
+    <value>Новых: </value>
+  </data>
+  <data name="Admin_Attention_NewUsers" xml:space="preserve">
+    <value>Новых: {0}</value>
+  </data>
+  <data name="Admin_Attention_UnseenTickets" xml:space="preserve">
+    <value>Непросмотренных: {0}</value>
+  </data>
+  <data name="Web_Login_LockedOut" xml:space="preserve">
+    <value>Слишком много неудачных попыток входа. Повторите через несколько минут.</value>
+  </data>
+  <data name="Admin_Publications_Editing" xml:space="preserve">
+    <value>Редактирование</value>
+  </data>
+  <data name="Admin_Publications_SaveChanges" xml:space="preserve">
+    <value>Сохранить изменения</value>
+  </data>
+  <data name="Admin_Publications_Saving" xml:space="preserve">
+    <value>Сохраняем…</value>
+  </data>
+  <data name="Admin_Publications_CancelEdit" xml:space="preserve">
+    <value>Отменить правку</value>
+  </data>
+  <data name="Admin_Publications_Updated" xml:space="preserve">
+    <value>Изменения сохранены.</value>
+  </data>
+  <data name="Admin_Publications_Edit" xml:space="preserve">
+    <value>Изменить</value>
+  </data>
+  <data name="Admin_Publications_DeleteConfirm" xml:space="preserve">
+    <value>Удалить у всех пользователей?</value>
+  </data>
+  <data name="Admin_Publications_DeleteYes" xml:space="preserve">
+    <value>Да, удалить</value>
+  </data>
+  <data name="Admin_Publications_Deleted" xml:space="preserve">
+    <value>Публикация удалена.</value>
+  </data>
+  <data name="Admin_Publications_NotFound" xml:space="preserve">
+    <value>Эта публикация уже удалена.</value>
+  </data>
+  <data name="Admin_Publications_ReadStats" xml:space="preserve">
+    <value>прочитали {0} из {1}</value>
+  </data>
+  <data name="Admin_Publications_Push" xml:space="preserve">
+    <value>Отправить push-уведомление</value>
+  </data>
+  <data name="Admin_Publications_PushHint" xml:space="preserve">
+    <value>Придёт всем, кто увидит публикацию. Если дата в будущем — в момент публикации.</value>
+  </data>
+  <data name="Admin_Publications_PushAlreadySent" xml:space="preserve">
+    <value>Push уже отправлен — повторно он не уйдёт.</value>
+  </data>
+  <data name="Admin_Publications_PushSent" xml:space="preserve">
+    <value>push отправлен</value>
+  </data>
+  <data name="Admin_Publications_PushPending" xml:space="preserve">
+    <value>push будет отправлен</value>
+  </data>
+  <data name="Admin_Publications_RemoveImage" xml:space="preserve">
+    <value>Убрать изображение</value>
   </data>
 </root>

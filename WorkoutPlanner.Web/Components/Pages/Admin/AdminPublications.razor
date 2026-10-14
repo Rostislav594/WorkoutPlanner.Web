@@ -12,9 +12,7 @@
 <div class="admin-publications">
     <header class="admin-publications__heading">
         <a href="/admin">@Text["Admin_Publications_Back"]</a>
-        <p>GPlanner Admin</p>
         <h1>@Text["Admin_Publications_Title"]</h1>
-        <span>@Text["Admin_Publications_Subtitle"]</span>
     </header>
 
     <div class="admin-publications__layout">
@@ -22,7 +20,7 @@
             <div class="admin-panel__heading">
                 <div>
                     <span>@Text["Admin_Publications_Editor"]</span>
-                    <h2 id="new-publication-title">@Text["Admin_Publications_New"]</h2>
+                    <h2 id="new-publication-title">@(IsEditing ? Text["Admin_Publications_Editing"] : Text["Admin_Publications_New"])</h2>
                 </div>
                 <small>@Text["Admin_Publications_RequiredHint"]</small>
             </div>
@@ -34,9 +32,8 @@
             {
                 <div class="admin-alert admin-alert--success" role="status">@_success</div>
             }
-            <EditForm Model="_form" OnValidSubmit="PublishAsync" FormName="admin-publication">
+            <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="admin-publication">
                 <DataAnnotationsValidator />
-                <ValidationSummary class="admin-validation" />
                 <div class="admin-field-grid">
                     <div class="admin-field">
                         <label for="publication-type">@Text["Admin_Publications_Type"]</label>
@@ -69,10 +66,28 @@
                     <label for="publication-image">@Text["Admin_Publications_Image"] <span>@Text["Admin_Publications_Optional"]</span></label>
                     <InputFile id="publication-image" class="admin-file" OnChange="SelectImageAsync" accept="image/jpeg,image/png,image/webp" />
                     <small>@Text["Admin_Publications_ImageHint"]</small>
+                    @if (IsEditing && _editing!.ImagePath is not null && _image is null)
+                    {
+                        <label class="admin-check">
+                            <input type="checkbox" @bind="_removeImage" />
+                            <span>@Text["Admin_Publications_RemoveImage"]</span>
+                        </label>
+                    }
+                </div>
+                <div class="admin-field">
+                    <label class="admin-check">
+                        <input type="checkbox" @bind="_form.SendPush" disabled="@PushAlreadySent" />
+                        <span>@Text["Admin_Publications_Push"]</span>
+                    </label>
+                    <small>@(PushAlreadySent ? Text["Admin_Publications_PushAlreadySent"] : Text["Admin_Publications_PushHint"])</small>
                 </div>
                 <div class="admin-actions">
+                    @if (IsEditing)
+                    {
+                        <button class="admin-button admin-button--secondary" type="button" @onclick="CancelEdit" disabled="@_isSaving">@Text["Admin_Publications_CancelEdit"]</button>
+                    }
                     <button class="admin-button admin-button--secondary" type="button" @onclick="TogglePreview">@(_showPreview ? Text["Admin_Publications_HidePreview"] : Text["Admin_Publications_Preview"])</button>
-                    <button class="admin-button admin-button--primary" type="submit" disabled="@_isSaving">@(_isSaving ? Text["Admin_Publications_Publishing"] : Text["Admin_Publications_Publish"])</button>
+                    <button class="admin-button admin-button--primary" type="submit" disabled="@_isSaving">@SubmitLabel</button>
                 </div>
             </EditForm>
         </section>
@@ -86,9 +101,9 @@
                         <time>@_publishedLocal.ToString("dd.MM.yyyy, HH:mm")</time>
                     </div>
                     <h2 id="preview-title">@(string.IsNullOrWhiteSpace(_form.Title) ? Text["Admin_Publications_PreviewTitle"] : _form.Title)</h2>
-                    @if (!string.IsNullOrWhiteSpace(_previewImageDataUrl))
+                    @if (PreviewImageSource is { } imageSource)
                     {
-                        <img class="admin-preview__image" src="@_previewImageDataUrl" alt="@Text["Admin_Publications_PreviewImageAlt"]" />
+                        <img class="admin-preview__image" src="@imageSource" alt="@Text["Admin_Publications_PreviewImageAlt"]" />
                     }
                     <p>@(string.IsNullOrWhiteSpace(_form.Body) ? Text["Admin_Publications_PreviewBody"] : _form.Body)</p>
                 </section>
@@ -105,7 +120,37 @@
                     <div class="admin-publication-list">
                         @foreach (var item in _recent)
                         {
-                            <article><div><strong>@item.Title</strong><span>@TypeLabel(item.Type)</span></div><time datetime="@item.PublishedAtUtc.ToString("O")">@item.PublishedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time><small>@(item.PublishedAtUtc <= DateTime.UtcNow ? Text["Admin_Publications_Published"] : Text["Admin_Publications_Scheduled"])</small></article>
+                            var isPublished = item.PublishedAtUtc <= DateTime.UtcNow;
+                            <article class="@(item.Id == _editing?.Id ? "is-editing" : null)">
+                                <div><strong>@item.Title</strong><span>@TypeLabel(item.Type)</span></div>
+                                <time datetime="@item.PublishedAtUtc.ToString("O")">@item.PublishedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</time>
+                                <small>
+                                    @(isPublished
+                                        ? $"{Text["Admin_Publications_Published"]} · {Text.Format("Admin_Publications_ReadStats", item.ReadCount, item.AudienceCount)}"
+                                        : Text["Admin_Publications_Scheduled"])
+                                    @if (item.PushSentAtUtc is not null)
+                                    {
+                                        <span class="admin-publication-list__push">@Text["Admin_Publications_PushSent"]</span>
+                                    }
+                                    else if (item.SendPushNotification)
+                                    {
+                                        <span class="admin-publication-list__push">@Text["Admin_Publications_PushPending"]</span>
+                                    }
+                                </small>
+                                <div class="admin-publication-list__actions">
+                                    @if (_confirmDeleteId == item.Id)
+                                    {
+                                        <span class="admin-publication-list__confirm">@Text["Admin_Publications_DeleteConfirm"]</span>
+                                        <button class="admin-button admin-button--danger admin-button--small" type="button" disabled="@_isSaving" @onclick="() => DeleteAsync(item)">@Text["Admin_Publications_DeleteYes"]</button>
+                                        <button class="admin-button admin-button--secondary admin-button--small" type="button" @onclick="() => _confirmDeleteId = null">@Text["Common_Cancel"]</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => StartEdit(item)">@Text["Admin_Publications_Edit"]</button>
+                                        <button class="admin-button admin-button--secondary admin-button--small" type="button" disabled="@_isSaving" @onclick="() => _confirmDeleteId = item.Id">@Text["Common_Delete"]</button>
+                                    }
+                                </div>
+                            </article>
                         }
                     </div>
                 }
@@ -118,14 +163,35 @@
     private readonly FormModel _form = new();
     private readonly List<AdminPublicationItem> _recent = [];
     private IBrowserFile? _image;
+    private string? _previewImageDataUrl;
     private DateTime _publishedLocal = DateTime.Now;
+    private AdminPublicationItem? _editing;
+    private bool _removeImage;
+    private long? _confirmDeleteId;
     private bool _showPreview = true;
     private bool _isSaving;
     private string? _error;
     private string? _success;
 
+    private bool IsEditing => _editing is not null;
+    private bool PushAlreadySent => _editing?.PushSentAtUtc is not null;
+
+    private string SubmitLabel => (IsEditing, _isSaving) switch
+    {
+        (true, true) => Text["Admin_Publications_Saving"],
+        (true, false) => Text["Admin_Publications_SaveChanges"],
+        (false, true) => Text["Admin_Publications_Publishing"],
+        _ => Text["Admin_Publications_Publish"]
+    };
+
+    // Новое изображение — из выбранного файла; при правке — уже сохранённое
+    // (сервер отдаёт его только у вышедших публикаций).
+    private string? PreviewImageSource =>
+        _previewImageDataUrl ??
+        (_editing is { ImagePath: { } path } item && !_removeImage && item.PublishedAtUtc <= DateTime.UtcNow ? path : null);
+
     protected override async Task OnInitializedAsync() => await ReloadAsync();
-    private string? _previewImageDataUrl;
+
     private async Task SelectImageAsync(InputFileChangeEventArgs args)
     {
         _image = args.File;
@@ -136,9 +202,48 @@
         await stream.CopyToAsync(buffer);
         _previewImageDataUrl = $"data:{_image.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
     }
+
     private void TogglePreview() => _showPreview = !_showPreview;
+
     private async Task ReloadAsync() { _recent.Clear(); _recent.AddRange(await Publications.GetRecentAsync()); }
-    private async Task PublishAsync()
+
+    private void StartEdit(AdminPublicationItem item)
+    {
+        _editing = item;
+        _confirmDeleteId = null;
+        _form.Type = item.Type;
+        _form.Title = item.Title;
+        _form.Body = item.Body;
+        _form.SendPush = item.SendPushNotification;
+        _publishedLocal = item.PublishedAtUtc.ToLocalTime();
+        _image = null;
+        _previewImageDataUrl = null;
+        _removeImage = false;
+        _error = null;
+        _success = null;
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+        _error = null;
+        _success = null;
+    }
+
+    private void ResetForm()
+    {
+        _editing = null;
+        _form.Type = InboxMessageType.News;
+        _form.Title = string.Empty;
+        _form.Body = string.Empty;
+        _form.SendPush = false;
+        _publishedLocal = DateTime.Now;
+        _image = null;
+        _previewImageDataUrl = null;
+        _removeImage = false;
+    }
+
+    private async Task SaveAsync()
     {
         if (_isSaving) return;
         _isSaving = true; _error = null; _success = null;
@@ -146,25 +251,55 @@
         {
             PhotoUpload? upload = null;
             if (_image is not null) upload = new PhotoUpload(_image.OpenReadStream(5 * 1024 * 1024), _image.ContentType, _image.Size);
-            await Publications.CreateAsync(new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload));
-            _success = Text["Admin_Publications_Saved"];
-            _form.Title = string.Empty; _form.Body = string.Empty; _image = null; _previewImageDataUrl = null;
+            var draft = new AdminPublicationDraft(_form.Type, _form.Title, _form.Body, _publishedLocal.ToUniversalTime(), upload, _form.SendPush);
+            if (_editing is { } editing)
+            {
+                var updated = await Publications.UpdateAsync(editing.Id, draft, _removeImage);
+                _success = updated is null ? null : Text["Admin_Publications_Updated"];
+                _error = updated is null ? Text["Admin_Publications_NotFound"] : null;
+            }
+            else
+            {
+                await Publications.CreateAsync(draft);
+                _success = Text["Admin_Publications_Saved"];
+            }
+            ResetForm();
             await ReloadAsync();
         }
         catch (Exception exception) when (exception is InvalidDataException or IOException) { _error = exception.Message; }
         finally { _isSaving = false; }
     }
+
+    private async Task DeleteAsync(AdminPublicationItem item)
+    {
+        if (_isSaving) return;
+        _isSaving = true; _error = null; _success = null;
+        try
+        {
+            var deleted = await Publications.DeleteAsync(item.Id);
+            _success = deleted ? Text["Admin_Publications_Deleted"] : null;
+            _error = deleted ? null : Text["Admin_Publications_NotFound"];
+            if (_editing?.Id == item.Id) ResetForm();
+            _confirmDeleteId = null;
+            await ReloadAsync();
+        }
+        catch (IOException exception) { _error = exception.Message; }
+        finally { _isSaving = false; }
+    }
+
     private string TypeLabel(InboxMessageType type) => type switch
     {
         InboxMessageType.News => Text["InboxType_News"],
         InboxMessageType.Update => Text["InboxType_Update"],
         _ => Text["InboxType_System"]
     };
+
     private sealed class FormModel
     {
         public InboxMessageType Type { get; set; } = InboxMessageType.News;
         // В атрибутах лежат ключи ресурсов: их печатает LocalizedValidationMessage.
         [Required(ErrorMessage = "Admin_Publications_TitleRequired"), StringLength(160, ErrorMessage = "Admin_Publications_TitleTooLong")] public string Title { get; set; } = string.Empty;
         [Required(ErrorMessage = "Admin_Publications_BodyRequired"), StringLength(8000, ErrorMessage = "Admin_Publications_BodyTooLong")] public string Body { get; set; } = string.Empty;
+        public bool SendPush { get; set; }
     }
 }

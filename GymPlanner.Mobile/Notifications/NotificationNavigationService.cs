@@ -36,7 +36,7 @@ public sealed class NotificationNavigationService
 
     public bool OpenPush(string? type, string? inboxMessageId)
     {
-        if (!PushNotificationTypeSerializer.TryParsePayloadValue(type, out _) ||
+        if (!PushNotificationTypeSerializer.TryParsePayloadValue(type, out var pushType) ||
             !long.TryParse(
                 inboxMessageId,
                 NumberStyles.None,
@@ -47,7 +47,10 @@ public sealed class NotificationNavigationService
             return false;
         }
 
-        Open($"/notifications/message/{messageId}");
+        // У push о публикации в том же поле приходит номер публикации,
+        // и открывать её нужно на экране публикации, а не личного сообщения.
+        var kind = pushType == PushNotificationType.Publication ? "publication" : "message";
+        Open($"/notifications/{kind}/{messageId}");
         return true;
     }
 
@@ -111,12 +114,16 @@ public sealed class NotificationNavigationService
         if (route.StartsWith("/watch/approve/", StringComparison.Ordinal))
             return IsPairingRequestId(route["/watch/approve/".Length..]);
 
-        return route.StartsWith("/notifications/message/", StringComparison.Ordinal) &&
-            long.TryParse(
-                route["/notifications/message/".Length..],
-                NumberStyles.None,
-                CultureInfo.InvariantCulture,
-                out var messageId) &&
-            messageId > 0;
+        return IsNotificationRoute(route, "/notifications/message/") ||
+            IsNotificationRoute(route, "/notifications/publication/");
     }
+
+    private static bool IsNotificationRoute(string route, string prefix) =>
+        route.StartsWith(prefix, StringComparison.Ordinal) &&
+        long.TryParse(
+            route[prefix.Length..],
+            NumberStyles.None,
+            CultureInfo.InvariantCulture,
+            out var id) &&
+        id > 0;
 }

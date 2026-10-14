@@ -9,19 +9,19 @@
 
 <div class="auth-page">
 
+    @* Шестерёнка и название парят над карточкой прямо на фоне с пылью. *@
+    <div class="login-hero">
+
+        <span class="login-gear material-symbols-rounded" aria-hidden="true">settings</span>
+
+        @* Название входа в админку — фирменное, не переводится. *@
+        <h1>Moderator</h1>
+
+        <div class="title-line"></div>
+
+    </div>
+
     <div class="auth-card">
-
-        <div class="login-logo-container">
-
-            <img src="images/Emblem.png"
-                 alt="GPlanner"
-                 class="login-logo" />
-
-            <h1>@Text["Login_Title"]</h1>
-
-            <div class="title-line"></div>
-
-        </div>
 
         @if (!string.IsNullOrWhiteSpace(ErrorMessage))
         {
@@ -89,7 +89,9 @@
             InputModel.Email,
             InputModel.Password,
             InputModel.RememberMe,
-            lockoutOnFailure: false);
+            // Как в API для телефона: после серии неверных паролей вход
+            // временно закрывается, чтобы пароль админа нельзя было подобрать.
+            lockoutOnFailure: true);
 
         if (result.Succeeded)
         {
@@ -104,16 +106,18 @@
             return;
         }
 
-        ErrorMessage = Text["Web_Login_InvalidCredentials"];
+        ErrorMessage = result.IsLockedOut
+            ? Text["Web_Login_LockedOut"]
+            : Text["Web_Login_InvalidCredentials"];
     }
 
     private string GetReturnUrl()
     {
         if (string.IsNullOrWhiteSpace(ReturnUrl))
-            return "/";
+            return "/admin";
 
         if (ReturnUrl.StartsWith("//") || ReturnUrl.Contains('\\'))
-            return "/";
+            return "/admin";
 
         return ReturnUrl.StartsWith('/')
             ? ReturnUrl

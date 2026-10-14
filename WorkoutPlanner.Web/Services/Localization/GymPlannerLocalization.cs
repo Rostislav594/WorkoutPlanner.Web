@@ -32,4 +32,24 @@ public static class GymPlannerLocalization
 
         return options;
     }
+
+    /// <summary>
+    /// Настройки культуры для веб-интерфейса (админки): он всегда на русском,
+    /// какой бы язык ни стоял в браузере. Источников культуры нет, поэтому
+    /// и Accept-Language, и cookie игнорируются.
+    /// </summary>
+    public static RequestLocalizationOptions CreateWebOptions()
+    {
+        var russian = new CultureInfo(AppLanguages.Russian);
+        var options = new RequestLocalizationOptions
+        {
+            DefaultRequestCulture = new RequestCulture(russian),
+            SupportedCultures = [russian],
+            SupportedUICultures = [russian],
+            ApplyCurrentCultureToResponseHeaders = true
+        };
+        options.RequestCultureProviders.Clear();
+
+        return options;
+    }
 }

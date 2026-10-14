@@ -6,11 +6,11 @@
 @inject IAdminSupportService Support
 @inject IAppText Text
 
-<PageTitle>Support ticket — GPlanner Admin</PageTitle>
+<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_SupportTicket_PageTitle"])</PageTitle>
 
 <div class="admin-page">
-    <a class="admin-back-link" href="/admin/support"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>Support</a>
-    <AdminPageHeader Title="@(_ticket?.TicketNumber ?? Text["Admin_Ticket_Fallback"])" Description="@Text["Admin_Ticket_Description"]" />
+    <a class="admin-back-link" href="/admin/support"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>@Text["Admin_Nav_Support"]</a>
+    <AdminPageHeader Title="@(_ticket?.TicketNumber ?? Text["Admin_Ticket_Fallback"])" />
     @if (_isLoading) { <section class="admin-state" role="status"><h2>@Text["Admin_Ticket_Loading"]</h2></section> }
     else if (_ticket is null) { <section class="admin-state" role="alert"><h2>@Text["Admin_Ticket_NotFound"]</h2><p>@_error</p></section> }
     else
@@ -18,7 +18,7 @@
         @if (_feedback is not null) { <div class="admin-alert @(_feedbackIsError ? "admin-alert--error" : "admin-alert--success")" role="@(_feedbackIsError ? "alert" : "status")">@_feedback</div> }
         <div class="support-detail-layout">
             <section class="support-conversation admin-panel" aria-labelledby="conversation-title">
-                <div class="admin-panel__heading"><div><h2 id="conversation-title">@Text["Admin_Ticket_Conversation"]</h2><p>@Text.Format("Admin_Ticket_MessageCount", _ticket.Messages.Count)</p></div><span class="admin-status @AdminSupport.StatusClass(_ticket.Status)">@AdminSupport.StatusLabel(_ticket.Status)</span></div>
+                <div class="admin-panel__heading"><div><h2 id="conversation-title">@Text["Admin_Ticket_Conversation"]</h2><p>@Text.Format("Admin_Ticket_MessageCount", _ticket.Messages.Count)</p></div><span class="admin-status @AdminSupport.StatusClass(_ticket.Status)">@AdminSupport.StatusLabel(Text, _ticket.Status)</span></div>
                 <div class="support-messages">
                     @foreach (var message in _ticket.Messages)
                     {
@@ -28,13 +28,13 @@
                 <div class="support-reply">
                     <label for="support-reply">@Text["Admin_Ticket_ReplyLabel"]</label>
                     <textarea id="support-reply" class="admin-input" maxlength="8000" @bind="_reply" @bind:event="oninput" placeholder="@Text["Admin_Ticket_ReplyPlaceholder"]"></textarea>
-                    <div class="support-reply__actions"><div class="admin-field admin-field--compact"><label for="reply-status">@Text["Admin_Ticket_StatusAfterSend"]</label><select id="reply-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(status)</option> }</select></div><button class="admin-button admin-button--primary" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_reply))" @onclick="ReplyAsync">@(_isSaving ? Text["Admin_Ticket_Sending"] : Text["Admin_Ticket_SendToInbox"])</button></div>
+                    <div class="support-reply__actions"><div class="admin-field admin-field--compact"><label for="reply-status">@Text["Admin_Ticket_StatusAfterSend"]</label><select id="reply-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(Text, status)</option> }</select></div><button class="admin-button admin-button--primary" disabled="@(_isSaving || string.IsNullOrWhiteSpace(_reply))" @onclick="ReplyAsync">@(_isSaving ? Text["Admin_Ticket_Sending"] : Text["Admin_Ticket_SendToInbox"])</button></div>
                 </div>
             </section>
             <aside class="support-context">
-                <section class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_Ticket_UserPanel"]</h2><p>@_ticket.Email</p></div></div><dl class="support-facts"><div><dt>@Text["Admin_Field_Name"]</dt><dd>@_ticket.DisplayName</dd></div><div><dt>UserId</dt><dd>@_ticket.UserId</dd></div><div><dt>@Text["Admin_Column_Created"]</dt><dd>@_ticket.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</dd></div><div><dt>GPlanner</dt><dd>@(_ticket.AppVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Platform"]</dt><dd>@(_ticket.Platform ?? "—")</dd></div><div><dt>@Text["Admin_Field_Os"]</dt><dd>@(_ticket.OsVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Device"]</dt><dd>@(_ticket.DeviceModel ?? "—")</dd></div></dl></section>
+                <section class="admin-panel"><div class="admin-panel__heading"><div><h2>@Text["Admin_Ticket_UserPanel"]</h2><p>@_ticket.Email</p></div></div><dl class="support-facts"><div><dt>@Text["Admin_Field_Name"]</dt><dd>@_ticket.DisplayName</dd></div><div><dt>@Text["Admin_Field_UserId"]</dt><dd>@_ticket.UserId</dd></div><div><dt>@Text["Admin_Column_Created"]</dt><dd>@_ticket.CreatedAtUtc.ToLocalTime().ToString("dd.MM.yyyy, HH:mm")</dd></div><div><dt>@Text["Admin_Field_AppVersion"]</dt><dd>@(_ticket.AppVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Platform"]</dt><dd>@(_ticket.Platform ?? "—")</dd></div><div><dt>@Text["Admin_Field_Os"]</dt><dd>@(_ticket.OsVersion ?? "—")</dd></div><div><dt>@Text["Admin_Field_Device"]</dt><dd>@(_ticket.DeviceModel ?? "—")</dd></div></dl></section>
                 @if (_ticket.HasScreenshot) { <section class="admin-panel support-screenshot"><h2>@Text["Admin_Column_Screenshot"]</h2><img src="@($"/admin/support/tickets/{_ticket.Id}/screenshot")" alt="@Text.Format("Admin_Ticket_ScreenshotAlt", _ticket.TicketNumber)" /></section> }
-                <section class="admin-panel"><label for="ticket-status">@Text["Admin_Ticket_ChangeStatus"]</label><select id="ticket-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(status)</option> }</select><button class="admin-button admin-button--secondary support-status-button" disabled="@_isSaving" @onclick="ChangeStatusAsync">@Text["Admin_Ticket_SaveStatus"]</button></section>
+                <section class="admin-panel"><label for="ticket-status">@Text["Admin_Ticket_ChangeStatus"]</label><select id="ticket-status" class="admin-input" @bind="_selectedStatus">@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@AdminSupport.StatusLabel(Text, status)</option> }</select><button class="admin-button admin-button--secondary support-status-button" disabled="@_isSaving" @onclick="ChangeStatusAsync">@Text["Admin_Ticket_SaveStatus"]</button></section>
             </aside>
         </div>
     }

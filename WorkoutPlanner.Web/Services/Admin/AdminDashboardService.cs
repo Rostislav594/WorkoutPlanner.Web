@@ -49,15 +49,6 @@ public sealed class AdminDashboardService(
                   x.RegisteredAtUtc < days30),
             cancellationToken);
 
-        var workout24 = await db.WorkoutHistory.LongCountAsync(
-            x => x.Date >= hours24,
-            cancellationToken);
-        var workout7 = await db.WorkoutHistory.LongCountAsync(
-            x => x.Date >= days7,
-            cancellationToken);
-        var workout30 = await db.WorkoutHistory.LongCountAsync(
-            x => x.Date >= days30,
-            cancellationToken);
         var openTickets = await db.SupportTickets.LongCountAsync(
             x => x.Status != SupportTicketStatus.Resolved &&
                  x.Status != SupportTicketStatus.Closed,
@@ -75,11 +66,7 @@ public sealed class AdminDashboardService(
             active7,
             active30,
             inactive30,
-            workout24,
-            workout7,
-            workout30,
             openTickets,
-            newTickets,
-            BackendErrors24Hours: null);
+            newTickets);
     }
 }

@@ -1,4 +1,4 @@
-<article class="metric-card metric-card--@Tone @(Featured ? "metric-card--featured" : null)">
+<article class="metric-card metric-card--@Tone @(Featured ? "metric-card--featured" : null) @(Attention is null ? null : $"admin-attention admin-attention--{Attention}")">
     @if (!string.IsNullOrWhiteSpace(Icon))
     {
         <span class="metric-card__icon material-symbols-rounded" aria-hidden="true">@Icon</span>
@@ -18,4 +18,6 @@
     [Parameter] public string? Note { get; set; }
     [Parameter] public string Tone { get; set; } = "default";
     [Parameter] public bool Featured { get; set; }
+    /// <summary>Раздел с непросмотренным («users», «support») — карточка мигает его цветом.</summary>
+    [Parameter] public string? Attention { get; set; }
 }
