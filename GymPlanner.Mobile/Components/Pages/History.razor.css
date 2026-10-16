@@ -411,7 +411,9 @@
 
 @media (max-width: 599px) {
     .modal-overlay { align-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
-    .modal-window { max-height: calc(100dvh - 32px); border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg); }
+    /* Высота за вычетом тех же отступов, что у подложки, включая системные
+       строку сверху и кнопки снизу, — иначе окно заезжает под них. */
+    .modal-window { max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom))); border-bottom: 1px solid var(--color-border); border-radius: var(--radius-lg); }
 
     .history-empty {
         min-height: 0;
@@ -966,4 +968,57 @@
     .loading-spinner {
         animation: none;
     }
+}
+
+/* Окно тренировки — прозрачное матовое стекло, как окно графика прогресса.
+   Подложка светлее обычной и без своего размытия, иначе стекло на чёрном
+   не читается и фон размывается дважды. */
+.modal-overlay.history-overlay {
+    background: rgba(0, 0, 0, .28);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.history-overlay .modal-window.history-dialog {
+    border: 1px solid rgba(255, 255, 255, .16);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
+    box-shadow:
+        var(--shadow-modal),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+
+/* Стеклом сделано только само окно. Упражнения в нём лежат без своих
+   коробок, прямо на стекле, и отделены друг от друга тонкой перегородкой.
+   Подходы остаются плотными плашками, как были. */
+.history-overlay .history-exercises {
+    gap: 18px;
+}
+
+.history-overlay .history-exercise,
+.history-overlay .history-exercise.history-superset {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+}
+
+.history-overlay .history-exercise + .history-exercise {
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, .1);
+}
+
+.history-overlay .snapshot-unavailable {
+    background: #202022;
+}
+
+/* Подходы суперсета — такие же плашки, как у обычных упражнений: тот же
+   цвет и та же рамка. */
+.history-overlay .history-set,
+.history-overlay .history-set.history-superset-set {
+    border: 1px solid var(--glass-border, var(--color-border));
+    background: #2a2a2b;
 }
