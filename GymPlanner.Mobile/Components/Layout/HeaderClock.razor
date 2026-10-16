@@ -1,0 +1,39 @@
+@implements IDisposable
+
+@* Часы в шапке. Отдельный компонент: раз в секунду перерисовывается только
+   он, а не весь макет со страницей. *@
+<span class="header-clock" role="timer">@_now.ToString("HH:mm:ss")</span>
+
+@code {
+    private readonly CancellationTokenSource _disposal = new();
+    private DateTime _now = DateTime.Now;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            _ = TickAsync(_disposal.Token);
+    }
+
+    private async Task TickAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // Ждём начала следующей секунды, чтобы цифры менялись ровно.
+                await Task.Delay(1000 - DateTime.Now.Millisecond, cancellationToken);
+                _now = DateTime.Now;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    public void Dispose()
+    {
+        _disposal.Cancel();
+        _disposal.Dispose();
+    }
+}

@@ -8,27 +8,52 @@
     transition: background-color 180ms ease;
 }
 
+/* Шапка — такой же отдельный стеклянный прямоугольник, как нижнее меню, но
+   по ширине своей группы: уведомления и профиль вплотную к часам по центру. */
 .mobile-header {
     position: sticky;
-    top: 0;
+    top: calc(8px + env(safe-area-inset-top));
     z-index: 20;
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto auto auto;
     align-items: center;
-    gap: 8px;
-    min-height: calc(58px + env(safe-area-inset-top));
-    padding: calc(4px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 4px max(16px, env(safe-area-inset-left));
-    border-bottom: 1px solid var(--color-border);
-    background: rgba(15, 15, 16, .94);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, .28);
-    backdrop-filter: blur(16px);
+    gap: 2px;
+    width: fit-content;
+    /* Высота фиксирована: по ней окно уведомлений встаёт поверх виджетов. */
+    box-sizing: border-box;
+    height: 56px;
+    margin: calc(8px + env(safe-area-inset-top)) auto 0;
+    padding: 3px 4px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: var(--radius-xl);
+    background: rgba(16, 17, 19, .56);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .32);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+/* Новое сообщение: от колокольчика на стекло шапки ложится оранжевое свечение,
+   как у точки в виджете календаря. */
+.mobile-header--unread::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(90% 150% at 12% 50%, rgba(255, 122, 26, .3), rgba(255, 122, 26, .1) 45%, transparent 75%);
+    content: "";
+    pointer-events: none;
+}
+
+.mobile-header ::deep .header-clock {
+    grid-column: 2;
+    padding-inline: 2px;
 }
 
 .header-actions {
+    grid-column: 3;
     display: flex;
     align-items: center;
-    justify-self: end;
-    gap: 4px;
+    gap: 2px;
 }
 
 .profile-button {
@@ -45,7 +70,8 @@
     border-radius: var(--radius-sm);
     background: transparent !important;
     box-shadow: none !important;
-    color: var(--color-text);
+    /* !important перебивает общий серый цвет кнопок-иконок из app.css. */
+    color: #fff !important;
     font: inherit;
     font-size: 14px;
     font-weight: 700;
@@ -66,8 +92,10 @@
     color: var(--color-accent-hover);
 }
 
+/* Значок профиля соразмерен колокольчику; !important перебивает общий
+   размер значков кнопок из app.css. */
 .profile-button .material-symbols-rounded {
-    font-size: 22px;
+    font-size: 30px !important;
 }
 
 /* Значок пропавшей связи: та же кнопка-иконка, что профиль, но в цвете
@@ -134,7 +162,9 @@
     width: min(1080px, 100%);
     min-width: 0;
     margin: 0 auto;
-    padding: 20px max(16px, env(safe-area-inset-right)) calc(94px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    /* Шапка есть только на главной, поэтому отступ от системной строки
+       сверху держит сам контент. */
+    padding: calc(20px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(94px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     scroll-padding-bottom: calc(94px + env(safe-area-inset-bottom));
     transition: background-color 180ms ease;
 }
@@ -232,9 +262,7 @@
 }
 
 .wallpaper-shell .mobile-header {
-    border-bottom: 1px solid rgba(255, 255, 255, .14);
     background: rgba(10, 11, 13, .2);
-    box-shadow: none;
     -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
 }
@@ -541,7 +569,8 @@
     overflow: hidden;
     border: 1px solid transparent;
     border-radius: var(--radius-sm);
-    color: var(--color-text-muted);
+    /* Значки и подписи белые, как значки шапки; выбранный пункт — оранжевый. */
+    color: #fff;
     text-align: center;
     text-decoration: none;
     -webkit-tap-highlight-color: transparent;
@@ -593,7 +622,8 @@
 }
 
 .mobile-navigation ::deep .material-symbols-rounded {
-    font-size: 25px;
+    /* Того же размера, что значок профиля в шапке. */
+    font-size: 30px;
     transition: color .18s ease, transform .22s ease, filter .22s ease;
 }
 
@@ -638,13 +668,6 @@
 }
 
 @media (max-width: 390px) {
-    .mobile-header {
-        grid-template-columns: auto minmax(64px, 1fr) auto;
-        gap: 4px;
-        padding-right: max(10px, env(safe-area-inset-right));
-        padding-left: max(6px, env(safe-area-inset-left));
-    }
-
     .profile-button {
         padding: 0 9px;
     }
@@ -676,7 +699,7 @@
     }
 
     .mobile-navigation ::deep .material-symbols-rounded {
-        font-size: 23px;
+        font-size: 27px;
     }
 
     .mobile-navigation ::deep .navigation-label {

@@ -6,7 +6,7 @@
 @inject IAppText Text
 
 <div class="inbox-popover" @onkeydown="OnKeyDown">
-    <button class="inbox-trigger"
+    <button class="inbox-trigger @(InboxState.UnreadCount > 0 ? "inbox-trigger--unread" : null)"
             type="button"
             aria-label="@Text["Inbox_Open"]"
             aria-expanded="@_isOpen"

@@ -7,6 +7,7 @@
 @inject NotificationNavigationService NotificationNavigation
 @inject PushRegistrationCoordinator PushRegistration
 @inject OfflineStatusService OfflineStatus
+@inject InboxNotificationState InboxState
 @inject IAppText Text
 
 <div class="mobile-shell @(IsPrimaryNavigationPage ? "wallpaper-shell" : "ambient-shell") @(IsHomePage ? "home-shell" : null) @(HidesApplicationNavigation ? "mobile-shell--flow" : null)"
@@ -21,14 +22,16 @@
         <span class="ambient-dust__layer ambient-dust__layer--far"></span>
         <span class="ambient-dust__layer ambient-dust__layer--near"></span>
     </div>
-    @if (!HidesApplicationNavigation)
+    @* Шапка с уведомлениями, часами и профилем есть только на главной. *@
+    @if (!HidesApplicationNavigation && IsHomePage)
     {
-        <header class="mobile-header">
+        <header class="mobile-header @(InboxState.UnreadCount > 0 ? "mobile-header--unread" : null)">
             <AuthorizeView>
                 <Authorized>
                     <CascadingValue Value="OfflineStatus.IsOffline" Name="IsOffline">
                         <InboxPopover />
                     </CascadingValue>
+                    <HeaderClock />
                     <div class="header-actions">
                         @if (OfflineStatus.ShowsIndicator)
                         {
@@ -174,6 +177,7 @@
         _previousNavigationIndex = Math.Max(0, _activeNavigationIndex);
         _previousPageRoute = CurrentRoute;
         OfflineStatus.Changed += OnOfflineStatusChanged;
+        InboxState.Changed += OnInboxChanged;
         NotificationNavigation.RouteRequested += OpenNotificationRoute;
         Navigation.LocationChanged += OnLocationChanged;
     }
@@ -291,6 +295,9 @@
 
     private void OnOfflineStatusChanged() => _ = InvokeAsync(StateHasChanged);
 
+    // Шапка подсвечивается, пока есть непрочитанные сообщения.
+    private void OnInboxChanged() => _ = InvokeAsync(StateHasChanged);
+
     // Проблема важнее всего: пока она не просмотрена, значок говорит о ней.
     private string OfflineIndicatorIcon => OfflineStatus.HasProblem ? "sync_problem" : "cloud_off";
 
@@ -302,6 +309,7 @@
     public void Dispose()
     {
         OfflineStatus.Changed -= OnOfflineStatusChanged;
+        InboxState.Changed -= OnInboxChanged;
         NotificationNavigation.RouteRequested -= OpenNotificationRoute;
         Navigation.LocationChanged -= OnLocationChanged;
     }
