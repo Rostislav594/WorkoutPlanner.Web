@@ -296,165 +296,52 @@
     pointer-events: none;
 }
 
-.ambient-dust__layer {
+/* Каждая пылинка плывёт по своему изогнутому пути со своей скоростью и
+   отдельно мерцает, поэтому они движутся вразнобой. Параметры задаёт
+   AmbientDustField. Анимируются только transform и opacity маленьких
+   элементов — это дешевле прежних двух слоёв во весь экран. */
+.ambient-dust__particle {
+    --rgb: 255, 255, 255;
     position: absolute;
-    inset: -18%;
-    background-repeat: repeat;
-    backface-visibility: hidden;
+    top: var(--y);
+    left: var(--x);
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(var(--rgb), .95) 0 32%, rgba(var(--rgb), .28) 58%, transparent 74%);
+    opacity: calc(var(--o) * var(--dust-dim, 1));
     pointer-events: none;
-    transform-origin: center;
     will-change: transform, opacity;
+    animation:
+        ambient-dust-drift var(--drift) ease-in-out var(--drift-delay) infinite alternate,
+        ambient-dust-twinkle var(--twinkle) ease-in-out var(--twinkle-delay) infinite alternate;
 }
 
-.ambient-dust__layer--far {
-    background-image:
-        radial-gradient(circle, rgba(255, 255, 255, .18) 0 .45px, transparent 1.05px),
-        radial-gradient(circle, rgba(255, 122, 26, .18) 0 .65px, transparent 1.3px),
-        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .6px, transparent 1.25px),
-        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .5px, transparent 1.1px),
-        radial-gradient(circle, rgba(255, 122, 26, .16) 0 .55px, transparent 1.2px),
-        radial-gradient(circle, rgba(255, 255, 255, .3) 0 .72px, transparent 1.4px),
-        radial-gradient(circle, rgba(255, 122, 26, .2) 0 .7px, transparent 1.35px),
-        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .55px, transparent 1.2px),
-        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .68px, transparent 1.3px),
-        radial-gradient(circle, rgba(255, 122, 26, .17) 0 .52px, transparent 1.15px),
-        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .48px, transparent 1.08px),
-        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .6px, transparent 1.25px),
-        radial-gradient(circle, rgba(255, 255, 255, .2) 0 .5px, transparent 1.1px),
-        radial-gradient(circle, rgba(255, 122, 26, .16) 0 .55px, transparent 1.2px),
-        radial-gradient(circle, rgba(255, 255, 255, .24) 0 .6px, transparent 1.25px),
-        radial-gradient(circle, rgba(255, 255, 255, .18) 0 .45px, transparent 1.05px),
-        radial-gradient(circle, rgba(255, 122, 26, .18) 0 .62px, transparent 1.3px),
-        radial-gradient(circle, rgba(255, 255, 255, .26) 0 .66px, transparent 1.35px),
-        radial-gradient(circle, rgba(255, 122, 26, .15) 0 .5px, transparent 1.15px),
-        radial-gradient(circle, rgba(255, 255, 255, .22) 0 .52px, transparent 1.12px);
-    background-position:
-        17px 43px,
-        113px 197px,
-        -67px 89px,
-        251px -37px,
-        -149px 223px,
-        79px -131px,
-        307px 151px,
-        -211px -83px,
-        163px 277px,
-        -97px 347px,
-        389px -173px,
-        -281px 109px,
-        41px 7px,
-        -53px 131px,
-        199px 61px,
-        -127px -19px,
-        71px 233px,
-        263px 97px,
-        -173px 181px,
-        137px -89px;
-    background-size:
-        133px 164px,
-        179px 213px,
-        224px 261px,
-        269px 312px,
-        317px 366px,
-        366px 424px,
-        417px 473px,
-        473px 536px,
-        536px 603px,
-        603px 669px,
-        669px 734px,
-        734px 805px,
-        97px 121px,
-        151px 187px,
-        199px 239px,
-        247px 289px,
-        293px 341px,
-        343px 397px,
-        391px 449px,
-        443px 509px;
-    opacity: .6;
-    animation: ambient-dust-far 34s ease-in-out infinite alternate;
+.ambient-dust__particle--warm {
+    --rgb: 255, 122, 26;
 }
 
-.ambient-dust__layer--near {
-    background-image:
-        radial-gradient(circle, rgba(255, 255, 255, .3) 0 .8px, rgba(255, 255, 255, .08) 1.45px, transparent 2.3px),
-        radial-gradient(circle, rgba(255, 122, 26, .3) 0 1px, rgba(255, 122, 26, .08) 1.8px, transparent 2.8px),
-        radial-gradient(circle, rgba(255, 255, 255, .48) 0 1.2px, rgba(255, 255, 255, .11) 1.9px, transparent 3px),
-        radial-gradient(circle, rgba(255, 122, 26, .34) 0 .9px, rgba(255, 122, 26, .09) 1.7px, transparent 2.7px),
-        radial-gradient(circle, rgba(255, 255, 255, .36) 0 1px, rgba(255, 255, 255, .08) 1.7px, transparent 2.6px),
-        radial-gradient(circle, rgba(255, 122, 26, .28) 0 1.15px, rgba(255, 122, 26, .08) 2px, transparent 3.1px),
-        radial-gradient(circle, rgba(255, 255, 255, .42) 0 .95px, rgba(255, 255, 255, .09) 1.65px, transparent 2.65px),
-        radial-gradient(circle, rgba(255, 122, 26, .24) 0 .82px, rgba(255, 122, 26, .07) 1.5px, transparent 2.4px),
-        radial-gradient(circle, rgba(255, 255, 255, .34) 0 .85px, rgba(255, 255, 255, .09) 1.5px, transparent 2.4px),
-        radial-gradient(circle, rgba(255, 122, 26, .28) 0 .95px, rgba(255, 122, 26, .07) 1.7px, transparent 2.7px),
-        radial-gradient(circle, rgba(255, 255, 255, .4) 0 1.05px, rgba(255, 255, 255, .1) 1.75px, transparent 2.8px),
-        radial-gradient(circle, rgba(255, 122, 26, .3) 0 .88px, rgba(255, 122, 26, .08) 1.6px, transparent 2.6px),
-        radial-gradient(circle, rgba(255, 255, 255, .38) 0 1.1px, rgba(255, 255, 255, .1) 1.85px, transparent 2.9px),
-        radial-gradient(circle, rgba(255, 122, 26, .26) 0 .8px, rgba(255, 122, 26, .07) 1.5px, transparent 2.5px);
-    background-position:
-        31px 71px,
-        173px 229px,
-        -83px 149px,
-        287px -59px,
-        -191px 311px,
-        97px -173px,
-        353px 197px,
-        -263px 43px,
-        59px 13px,
-        -127px 97px,
-        211px 173px,
-        -37px -113px,
-        149px 263px,
-        -229px 211px;
-    background-size:
-        193px 230px,
-        249px 297px,
-        312px 356px,
-        377px 428px,
-        445px 499px,
-        516px 575px,
-        596px 654px,
-        688px 754px,
-        157px 187px,
-        223px 263px,
-        281px 331px,
-        341px 389px,
-        409px 461px,
-        479px 541px;
-    opacity: .68;
-    animation: ambient-dust-near 19s ease-in-out infinite alternate;
-}
-
-@keyframes ambient-dust-far {
+@keyframes ambient-dust-drift {
     0% {
-        opacity: .55;
-        transform: translate3d(-1.5%, 2.5%, -80px) scale(.96);
+        transform: translate3d(0, 0, 0);
     }
 
-    52% {
-        opacity: .7;
-        transform: translate3d(1.5%, -1%, -38px) scale(.99);
+    50% {
+        transform: translate3d(var(--dx), var(--dy), 0);
     }
 
     100% {
-        opacity: .6;
-        transform: translate3d(-.5%, -4.5%, -10px) scale(1.02);
+        transform: translate3d(var(--dx2), var(--dy2), 0);
     }
 }
 
-@keyframes ambient-dust-near {
-    0% {
-        opacity: .62;
-        transform: translate3d(2%, 4%, 36px) scale(1.02);
+@keyframes ambient-dust-twinkle {
+    from {
+        opacity: calc(var(--o) * var(--dust-dim, 1));
     }
 
-    45% {
-        opacity: .78;
-        transform: translate3d(-2%, -.5%, 58px) scale(1.045);
-    }
-
-    100% {
-        opacity: .68;
-        transform: translate3d(1%, -5%, 82px) scale(1.075);
+    to {
+        opacity: calc(var(--o) * var(--dust-dim, 1) * .35);
     }
 }
 
@@ -706,8 +593,8 @@
         font-size: 9px;
     }
 
-    .ambient-dust__layer--near {
-        opacity: .46;
+    .ambient-dust__particle--near {
+        --dust-dim: .7;
     }
 }
 
@@ -729,17 +616,8 @@
         animation: none;
     }
 
-    .ambient-dust__layer {
+    .ambient-dust__particle {
         animation: none;
-        transform: none;
-    }
-
-    .ambient-dust__layer--far {
-        opacity: .38;
-    }
-
-    .ambient-dust__layer--near {
-        opacity: .24;
     }
 
     .mobile-navigation ::deep a.active .material-symbols-rounded {

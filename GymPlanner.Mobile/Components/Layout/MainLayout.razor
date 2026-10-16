@@ -19,8 +19,10 @@
         </div>
     }
     <div class="ambient-dust" aria-hidden="true">
-        <span class="ambient-dust__layer ambient-dust__layer--far"></span>
-        <span class="ambient-dust__layer ambient-dust__layer--near"></span>
+        @foreach (var particle in AmbientDustField.Particles)
+        {
+            <span class="@particle.CssClass" style="@particle.Style"></span>
+        }
     </div>
     @* Шапка с уведомлениями, часами и профилем есть только на главной. *@
     @if (!HidesApplicationNavigation && IsHomePage)
