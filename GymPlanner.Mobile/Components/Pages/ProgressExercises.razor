@@ -70,7 +70,7 @@
 
 @if (_selectedExercise is not null)
 {
-    <div class="modal-overlay top-layer" @onclick="CloseExerciseProgress">
+    <div class="modal-overlay top-layer progress-overlay" @onclick="CloseExerciseProgress">
         <section class="modal-window progress-modal"
                  role="dialog"
                  aria-modal="true"
@@ -100,41 +100,53 @@
             else if (_exerciseProgress is not null && _exerciseProgress.Chart.Count > 0)
             {
                 <div class="chart-page-content chart-page-content--staged">
-                    <ProgressLineChart Title="@Text["Progress_ChartTitle"]" Points="_exerciseProgress.Chart" StagedReveal="true" CompactPresentation="true" />
+                    <ProgressLineChart Title="@Text["Progress_ChartTitle"]" ShowTitle="false" Points="_exerciseProgress.Chart" StagedReveal="true" CompactPresentation="true" />
 
                     <div class="progress-summary">
-                        <article class="summary-card">
+                        <button class="summary-card" type="button" aria-expanded="@(_openHint == 0 ? "true" : "false")" @onclick="() => ToggleHintAsync(0)">
                             <span class="card-icon growth-icon @TrendClass" aria-hidden="true">
                                 <span class="material-symbols-rounded">trending_up</span>
                             </span>
-                            <div class="card-content">
+                            <span class="card-content">
                                 <span class="card-title">@Text["Progress_Growth"]</span>
                                 <strong class="card-value @TrendClass">@SignedPercent(LastTrend)</strong>
                                 <span class="card-subtitle">@Text["Progress_GrowthSubtitle"]</span>
-                            </div>
-                        </article>
+                            </span>
+                            @if (_openHint == 0)
+                            {
+                                <span class="summary-hint" role="status">@Text["Progress_GrowthHint"]</span>
+                            }
+                        </button>
 
-                        <article class="summary-card">
+                        <button class="summary-card" type="button" aria-expanded="@(_openHint == 1 ? "true" : "false")" @onclick="() => ToggleHintAsync(1)">
                             <span class="card-icon best-icon" aria-hidden="true">
                                 <span class="material-symbols-rounded">emoji_events</span>
                             </span>
-                            <div class="card-content">
+                            <span class="card-content">
                                 <span class="card-title">@Text["Progress_Best"]</span>
                                 <strong class="card-value purple">@SignedPercent(BestGrowth)</strong>
                                 <span class="card-subtitle">@Text["Progress_BestSubtitle"]</span>
-                            </div>
-                        </article>
+                            </span>
+                            @if (_openHint == 1)
+                            {
+                                <span class="summary-hint" role="status">@Text["Progress_BestHint"]</span>
+                            }
+                        </button>
 
-                        <article class="summary-card">
+                        <button class="summary-card" type="button" aria-expanded="@(_openHint == 2 ? "true" : "false")" @onclick="() => ToggleHintAsync(2)">
                             <span class="card-icon workout-icon" aria-hidden="true">
                                 <span class="material-symbols-rounded">calendar_month</span>
                             </span>
-                            <div class="card-content">
+                            <span class="card-content">
                                 <span class="card-title">@Text["Progress_WorkoutsCount"]</span>
                                 <strong class="card-value blue">@_exerciseProgress.Chart.Count</strong>
                                 <span class="card-subtitle">@Text["Progress_WorkoutsLast30Subtitle"]</span>
-                            </div>
-                        </article>
+                            </span>
+                            @if (_openHint == 2)
+                            {
+                                <span class="summary-hint" role="status">@Text["Progress_WorkoutsLast30Hint"]</span>
+                            }
+                        </button>
                     </div>
                 </div>
             }
@@ -211,6 +223,8 @@
     private bool _isLoadingProgress;
     private bool _isBusy;
     private bool _showToast;
+    private int? _openHint;
+    private CancellationTokenSource? _hintCts;
     private IReadOnlyList<ExerciseEntry> ExerciseEntries => _plans
         .SelectMany(plan => plan.Exercises.Select(exercise =>
             new ExerciseEntry(plan.Id, plan.WorkoutName, exercise.Name)))
@@ -296,6 +310,36 @@
             _selectedPlan = null;
         _exerciseProgress = null;
         _progressErrors.Clear();
+        CloseHint();
+    }
+
+    // Подсказка к надписи под графиком: открывается нажатием, повторное
+    // нажатие закрывает, а сама она гаснет через несколько секунд.
+    private async Task ToggleHintAsync(int hint)
+    {
+        var wasOpen = _openHint == hint;
+        CloseHint();
+        if (wasOpen)
+            return;
+
+        _openHint = hint;
+        var timer = _hintCts = CancellationTokenSource.CreateLinkedTokenSource(_disposeCts.Token);
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(4), timer.Token);
+            CloseHint();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void CloseHint()
+    {
+        _openHint = null;
+        _hintCts?.Cancel();
+        _hintCts?.Dispose();
+        _hintCts = null;
     }
 
     private void AskToClear(ExerciseEntry entry)
@@ -357,6 +401,7 @@
     public void Dispose()
     {
         OrientationService.RestoreAutomaticOrientation();
+        CloseHint();
         _disposeCts.Cancel();
         _progressLoadCts?.Cancel();
         _progressLoadCts?.Dispose();

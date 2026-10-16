@@ -637,3 +637,161 @@
         transition: none;
     }
 }
+
+/* Окно графика прогресса: почти на весь экран, прозрачное матовое стекло.
+   Подложка светлее обычной, иначе стекло на чёрном не читается. Сводка под
+   графиком — не карточки, а надписи прямо на стекле окна. */
+.modal-overlay.progress-overlay {
+    align-items: center;
+    padding: max(6px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left));
+    background: rgba(0, 0, 0, .28);
+    /* Окно графика можно увеличивать двумя пальцами. Чтобы в увеличенном виде
+       по нему можно было двигаться, сдвиг не должен застревать в окне. */
+    overscroll-behavior: auto;
+}
+
+.progress-overlay .modal-window.progress-modal {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    flex-direction: column;
+    /* Всё помещается на экран: своей прокрутки у окна нет, и жест сдвига
+       уходит WebView, который двигает увеличенную картинку. */
+    overflow: visible;
+    overscroll-behavior: auto;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: var(--radius-xl);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
+    box-shadow:
+        var(--shadow-modal),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+
+.progress-overlay .chart-page-content {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+/* Поле графика забирает всю свободную высоту окна. */
+.progress-overlay .progress-modal ::deep .chart-bars {
+    height: max(7rem, calc(100dvh - 210px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+}
+
+.progress-overlay .progress-summary {
+    flex-direction: row;
+    gap: 0;
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.progress-overlay .summary-card {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Надпись — кнопка без своей рамки: нажатие показывает подсказку над ней. */
+.progress-overlay .summary-card {
+    position: relative;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.progress-overlay .summary-card:focus-visible {
+    border-radius: var(--radius-sm);
+}
+
+/* Общий фильтр нажатия кнопок здесь не нужен: под матовым стеклом окна он
+   заставляет WebView перерисовывать стекло, и соседние надписи моргают.
+   Откликом на нажатие служит сама подсказка. */
+.progress-overlay .summary-card:active {
+    filter: none;
+}
+
+.summary-hint {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    z-index: 5;
+    width: max-content;
+    max-width: min(17rem, 80vw);
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: var(--radius-md);
+    /* Без собственного размытия: плотный фон не тянет перерисовку стекла окна. */
+    background: rgba(22, 23, 26, .94);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .35);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 600;
+    line-height: 1.35;
+    text-align: center;
+    pointer-events: none;
+    translate: -50% 0;
+    animation: summary-hint-in .18s ease-out;
+}
+
+/* Крайние подсказки прижаты к своему краю, чтобы не выходить за окно. */
+.progress-overlay .summary-card:first-child .summary-hint {
+    left: 0;
+    translate: none;
+}
+
+.progress-overlay .summary-card:last-child .summary-hint {
+    right: 0;
+    left: auto;
+    translate: none;
+}
+
+@keyframes summary-hint-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .summary-hint { animation: none; }
+}
+
+.progress-overlay .card-icon {
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
+    border-radius: 0;
+    background: transparent;
+}
+
+.progress-overlay .card-icon .material-symbols-rounded {
+    font-size: 26px;
+    filter: drop-shadow(0 0 6px currentColor);
+}
+
+.progress-overlay .card-title {
+    color: rgba(255, 255, 255, .72);
+    font-size: .86rem;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .4);
+}
+
+.progress-overlay .card-value {
+    font-size: 1.2rem;
+    text-shadow: 0 0 14px currentColor;
+}
+
+.progress-overlay .card-subtitle {
+    display: none;
+}

@@ -1,12 +1,22 @@
-﻿@using System.Globalization
-@using System.Text
+@using System.Globalization
+@using Microsoft.JSInterop
 @using WorkoutPlanner.Api.Contracts
+@implements IAsyncDisposable
 @inject IAppText Text
+@inject IJSRuntime JS
 
-<section class="progress-chart @(StagedReveal ? "staged-reveal" : null) @(CompactPresentation ? "compact-presentation" : null)" aria-label="@Title">
-    <div class="chart-heading">
-        <h3>@Title</h3>
-        @if (!CompactPresentation)
+@* Столбики по тренировкам — в том же виде, что графики на главной админки:
+   плоскость чуть наклонена вглубь, под ней отражение, как на глянцевом полу.
+   Столбики идут по порядку тренировок, а не по датам: несколько тренировок
+   за один день не слипаются в одну точку. Последняя тренировка — оранжевая. *@
+<section class="progress-chart @(StagedReveal ? "staged-reveal" : null) @(CompactPresentation ? "compact-presentation" : null)" aria-label="@Title" style="@RevealStyle">
+    <div class="chart-heading @(ShowTitle ? null : "chart-heading--untitled")">
+        <h3 class="@(ShowTitle ? null : "chart-title--hidden")">@Title</h3>
+        @if (Points.Count > 0)
+        {
+            <strong class="chart-latest">@FormatChartPercent(Points[^1].Percent)</strong>
+        }
+        else if (!CompactPresentation)
         {
             <span>@Text["Chart_Last30Days"]</span>
         }
@@ -17,83 +27,45 @@
     }
     else
     {
-        <div class="chart-frame" role="img" aria-label="@AccessibleSummary">
-            <svg viewBox="0 0 600 260" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-                <defs>
-                    @* Значения перенесены из макета: один цвет #3FB950, у нуля
-                       непрозрачность 100% и далее спад до 25% к дальнему краю. *@
-                    <linearGradient id="@LineGradientId" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stop-color="#3FB950" stop-opacity="1" />
-                        <stop offset="19%" stop-color="#3FB950" stop-opacity="0.8" />
-                        <stop offset="37%" stop-color="#3FB950" stop-opacity="0.55" />
-                        <stop offset="56%" stop-color="#3FB950" stop-opacity="0.4" />
-                        <stop offset="77%" stop-color="#3FB950" stop-opacity="0.3" />
-                        <stop offset="100%" stop-color="#3FB950" stop-opacity="0.25" />
-                    </linearGradient>
-                    @* Кривая раскрывается движением правой границы этой маски.
-                       Маска идёт ровно от первой точки до последней, поэтому
-                       момент раскрытия совпадает с задержкой появления точки:
-                       и то и другое отсчитывается по оси X. *@
-                    <clipPath id="@CurveClipId">
-                        <rect class="curve-reveal"
-                              x="@Format(PlotLeft)"
-                              y="0"
-                              width="@Format(PlotRight + 12 - PlotLeft)"
-                              height="260" />
-                    </clipPath>
-                </defs>
-                @if (Minimum < 0 && Maximum > 0)
-                {
-                    <line class="zero-line" x1="@Format(PlotLeft)" y1="@Format(Y(0))" x2="@Format(PlotRight + 12)" y2="@Format(Y(0))" />
-                }
-                <line class="axis-line" x1="@Format(PlotLeft)" y1="@Format(PlotTop - 16)" x2="@Format(PlotLeft)" y2="@Format(PlotBottom + 18)" />
-                <line class="axis-line" x1="@Format(PlotLeft - 26)" y1="@Format(PlotBottom)" x2="@Format(PlotRight + 12)" y2="@Format(PlotBottom)" />
+        <div class="chart-frame">
+            <div class="chart-stage">
+                <div class="chart-bars"
+                     @ref="_bars"
+                     role="@(PointSelected.HasDelegate ? "group" : "img")"
+                     aria-label="@AccessibleSummary"
+                     style="--zero:@Format(ZeroRatio);">
+                    @for (var index = 0; index < Points.Count; index++)
+                    {
+                        var point = Points[index];
+                        var label = $"{point.Date:dd.MM.yyyy}: {FormatSignedPercent(point.Percent)}";
+                        var barClass = BarClass(index);
+                        if (PointSelected.HasDelegate)
+                        {
+                            <button class="chart-column"
+                                    type="button"
+                                    style="@ColumnStyle(index)"
+                                    title="@label"
+                                    aria-label="@label"
+                                    @onclick="() => PointSelected.InvokeAsync(point)">
+                                <span class="@barClass" aria-hidden="true">@BarLabel(index)</span>
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="chart-column" style="@ColumnStyle(index)" title="@label">
+                                <span class="@barClass" aria-hidden="true">@BarLabel(index)</span>
+                            </span>
+                        }
+                    }
+                </div>
+            </div>
+            <div class="chart-axis" aria-hidden="true" style="--count:@Points.Count;">
+                <span class="@(Points.Count > 1 ? "chart-axis__start" : "chart-axis__single")">@Points[0].Date.ToString("dd.MM", CultureInfo.CurrentCulture)</span>
                 @if (Points.Count > 1)
                 {
-                    <g clip-path="url(#@CurveClipId)">
-                        <path class="progress-line"
-                              style="stroke:url(#@LineGradientId)"
-                              d="@CurvePath" />
-                    </g>
+                    <span class="chart-axis__end">@Points[^1].Date.ToString("dd.MM", CultureInfo.CurrentCulture)</span>
                 }
-            </svg>
-
-            @foreach (var tick in XAxisTicks)
-            {
-                <span class="axis-label x-axis-label" style="@XLabelStyle(tick)">@tick.ToString("dd.MM", CultureInfo.CurrentCulture)</span>
-            }
-            @foreach (var index in LabelledIndices)
-            {
-                var labelled = Points[index];
-                <span class="chart-value-label @LabelEdgeClass(index)"
-                      style="@MarkerStyle(labelled)">@FormatPercent(labelled.Percent)</span>
-            }
-            @for (var index = 0; index < Points.Count; index++)
-            {
-                @* Опорная точка не рисуется: от неё ведётся отсчёт, собственного
-                   изменения у неё нет. Подпись 0% при этом остаётся. *@
-                if (IsBaseline(index))
-                    continue;
-
-                var point = Points[index];
-                if (PointSelected.HasDelegate)
-                {
-                    <button class="chart-marker-hit-target"
-                            type="button"
-                            style="@MarkerStyle(point)"
-                            title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"
-                            aria-label="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"
-                            @onclick="() => PointSelected.InvokeAsync(point)">
-                        <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)" aria-hidden="true"></span>
-                    </button>
-                }
-                else
-                {
-                    <span class="chart-marker @(index == Points.Count - 1 ? "latest" : null)"
-                          style="@MarkerStyle(point)"
-                          title="@($"{point.Date:dd.MM.yyyy}: {FormatPercent(point.Percent)}")"></span>
-                }
-            }
+            </div>
         </div>
 
         @if (!CompactPresentation)
@@ -131,31 +103,24 @@
 </section>
 
 @code {
-    private const double PlotLeft = 34;
-    private const double PlotRight = 574;
-    private const double PlotTop = 38;
-    private const double PlotBottom = 206;
-    // Минимальный зазор между подписями как доля ширины поля. Подпись занимает
-    // около 55 пикселей при ширине поля порядка 790 в горизонтали.
-    private const double MinLabelGap = 0.075;
-
-    // Должно совпадать с длительностью chart-reveal в стилях.
-    private const double CurveDurationSeconds = 1.8;
-
-    // Идентификатор градиента уникален на экземпляр: несколько графиков на одной
-    // странице не должны ссылаться на чужой <defs>.
-    private readonly string _lineGradientId = $"progress-line-{Guid.NewGuid():N}";
-    private readonly string _curveClipId = $"progress-clip-{Guid.NewGuid():N}";
-
-    private string LineGradientId => _lineGradientId;
-
-    private string CurveClipId => _curveClipId;
+    // Столбики вырастают по очереди за это время, как бы много их ни было.
+    private const double GrowTotalSeconds = 1.2;
+    private const double GrowStepMaxSeconds = .08;
+    // Длительность chart-bar-grow в ProgressLineChart.razor.css.
+    private const double GrowSeconds = .6;
 
     [Parameter, EditorRequired]
     public string Title { get; set; } = string.Empty;
 
     [Parameter]
     public IReadOnlyList<ProgressChartPointApiResponse> Points { get; set; } = [];
+
+    /// <summary>
+    /// false прячет заголовок с экрана, но оставляет его экранному диктору:
+    /// окно прогресса и так подписано названием тренировки.
+    /// </summary>
+    [Parameter]
+    public bool ShowTitle { get; set; } = true;
 
     [Parameter]
     public bool StagedReveal { get; set; }
@@ -166,239 +131,116 @@
     [Parameter]
     public EventCallback<ProgressChartPointApiResponse> PointSelected { get; set; }
 
-    private DateTime StartDate => Points.Min(x => x.Date).Date;
-    private DateTime EndDate => Points.Max(x => x.Date).Date;
+    // Шкала всегда включает ноль: рост идёт вверх от нулевой линии, спад — вниз.
+    private decimal Highest => Points.Count == 0 ? 0 : Math.Max(0, Points.Max(x => x.Percent));
+    private decimal Lowest => Points.Count == 0 ? 0 : Math.Min(0, Points.Min(x => x.Percent));
+    private decimal Range => Highest - Lowest;
 
-    // Пока значения неотрицательны, нижняя граница шкалы совпадает с нулём:
-    // горизонтальная ось становится базовой линией, от которой растёт кривая,
-    // как на референсе. Отрицательные значения по-прежнему получают запас снизу.
-    private decimal Minimum
+    // Положение нулевой линии от низа поля, в долях высоты.
+    private double ZeroRatio => Range == 0 ? 0 : (double)(-Lowest / Range);
+
+    private string BarClass(int index)
     {
-        get
-        {
-            if (Points.Count == 0)
-                return 0;
-            var lowest = Points.Min(x => x.Percent);
-            if (lowest >= 0)
-                return 0;
-            var highest = Math.Max(0, Points.Max(x => x.Percent));
-            var padding = Math.Max(2, (highest - lowest) * .12m);
-            return Math.Floor(lowest - padding);
-        }
+        var classes = "chart-bar";
+        if (Points[index].Percent == 0 || Range == 0)
+            classes += " chart-bar--empty";
+        else if (Points[index].Percent < 0)
+            classes += " chart-bar--negative";
+        if (index == Points.Count - 1)
+            classes += " chart-bar--latest";
+        return classes;
     }
 
-    private decimal Maximum
+    private double GrowStepSeconds => Math.Min(GrowStepMaxSeconds, GrowTotalSeconds / Math.Max(1, Points.Count));
+
+    // Нижний край и высота столбика в долях поля; задержка роста — по номеру.
+    private string ColumnStyle(int index)
     {
-        get
-        {
-            if (Points.Count == 0)
-                return 5;
-            var lowest = Math.Min(0, Points.Min(x => x.Percent));
-            var highest = Points.Max(x => x.Percent);
-            if (highest <= lowest)
-                return lowest + 5;
-            var padding = Math.Max(2, (highest - lowest) * .12m);
-            return Math.Ceiling(highest + padding);
-        }
+        var value = Points[index].Percent;
+        var size = Range == 0 ? 0 : (double)(Math.Abs(value) / Range);
+        var bottom = value < 0 ? ZeroRatio - size : ZeroRatio;
+        return $"--bottom:{Format(bottom)};--size:{Format(size)};--grow-delay:{Format(GrowStepSeconds * index)}s;";
     }
 
-    private IReadOnlyList<DateTime> XAxisTicks
-    {
-        get
-        {
-            var days = Math.Max(0, (EndDate - StartDate).Days);
-            var tickCount = Math.Min(5, days + 1);
-            if (tickCount <= 1)
-                return [StartDate];
-
-            return Enumerable.Range(0, tickCount)
-                .Select(index => StartDate.AddDays(
-                    Math.Round(days * index / (double)(tickCount - 1))))
-                .Distinct()
-                .ToList();
-        }
-    }
-
-    // Референс подписывает значение над каждой точкой. Подписи отбираются слева
-    // направо по фактическому зазору между точками, а не по номеру: при плотном
-    // ряде соседние подписи иначе наезжают друг на друга. Последняя точка
-    // подписывается всегда — при нехватке места уступает предыдущая.
-    private IReadOnlyList<int> LabelledIndices
-    {
-        get
-        {
-            var count = Points.Count;
-            if (count == 0)
-                return [];
-            if (count == 1)
-                return [0];
-
-            var kept = new List<int> { 0 };
-            var lastOffset = LabelOffset(0);
-
-            for (var index = 1; index < count - 1; index++)
-            {
-                var offset = LabelOffset(index);
-                if (offset - lastOffset < MinLabelGap)
-                    continue;
-                kept.Add(index);
-                lastOffset = offset;
-            }
-
-            var finalOffset = LabelOffset(count - 1);
-            while (kept.Count > 1 && finalOffset - LabelOffset(kept[^1]) < MinLabelGap)
-                kept.RemoveAt(kept.Count - 1);
-
-            kept.Add(count - 1);
-            return kept;
-        }
-    }
-
-    // Положение точки как доля ширины поля — в тех же единицах, что и left в стиле.
-    private double LabelOffset(int index) =>
-        X(Points[index].Date) / 600d;
-
-    // Монотонная кубическая интерполяция (Fritsch–Carlson): даёт плавную кривую
-    // референса и при этом не выносит линию за пределы фактических значений.
-    private string CurvePath
-    {
-        get
-        {
-            var plotted = Points
-                .Select(point => (X: X(point.Date), Y: Y(point.Percent)))
-                .ToList();
-
-            if (plotted.Count < 2)
-                return string.Empty;
-
-            var count = plotted.Count;
-            var widths = new double[count - 1];
-            var slopes = new double[count - 1];
-            for (var index = 0; index < count - 1; index++)
-            {
-                widths[index] = plotted[index + 1].X - plotted[index].X;
-                slopes[index] = widths[index] == 0
-                    ? 0
-                    : (plotted[index + 1].Y - plotted[index].Y) / widths[index];
-            }
-
-            var tangents = new double[count];
-            tangents[0] = slopes[0];
-            tangents[count - 1] = slopes[count - 2];
-            for (var index = 1; index < count - 1; index++)
-            {
-                tangents[index] = slopes[index - 1] * slopes[index] <= 0
-                    ? 0
-                    : (slopes[index - 1] + slopes[index]) / 2;
-            }
-
-            for (var index = 0; index < count - 1; index++)
-            {
-                if (slopes[index] == 0)
-                {
-                    tangents[index] = 0;
-                    tangents[index + 1] = 0;
-                    continue;
-                }
-
-                var start = tangents[index] / slopes[index];
-                var end = tangents[index + 1] / slopes[index];
-                var magnitude = start * start + end * end;
-                if (magnitude <= 9)
-                    continue;
-
-                var limiter = 3 / Math.Sqrt(magnitude);
-                tangents[index] = limiter * start * slopes[index];
-                tangents[index + 1] = limiter * end * slopes[index];
-            }
-
-            var path = new StringBuilder();
-            path.Append(CultureInfo.InvariantCulture, $"M {Format(plotted[0].X)} {Format(plotted[0].Y)}");
-            for (var index = 0; index < count - 1; index++)
-            {
-                var third = widths[index] / 3;
-                var firstX = plotted[index].X + third;
-                var firstY = plotted[index].Y + tangents[index] * third;
-                var secondX = plotted[index + 1].X - third;
-                var secondY = plotted[index + 1].Y - tangents[index + 1] * third;
-                path.Append(
-                    CultureInfo.InvariantCulture,
-                    $" C {Format(firstX)} {Format(firstY)}, {Format(secondX)} {Format(secondY)}, {Format(plotted[index + 1].X)} {Format(plotted[index + 1].Y)}");
-            }
-
-            return path.ToString();
-        }
-    }
+    // Число последней тренировки появляется, когда дорос последний столбик.
+    private string? RevealStyle => StagedReveal && Points.Count > 0
+        ? $"--latest-delay:{Format(GrowStepSeconds * (Points.Count - 1) + GrowSeconds)}s;"
+        : null;
 
     private string AccessibleSummary => Text.Format(
         "Chart_Summary",
         Title,
-        StartDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
-        EndDate.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+        Points.Min(x => x.Date).ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
+        Points.Max(x => x.Date).ToString("dd.MM.yyyy", CultureInfo.InvariantCulture),
         Points.Count,
         FormatPercent(Points[^1].Percent),
         FormatPercent(Points.Max(x => x.Percent)));
 
-    private double X(DateTime date)
+    // Процент внутри столбика: вертикальная белая надпись. У последней
+    // тренировки её нет — тот же процент уже написан над графиком.
+    // Размер и проявление при масштабировании задаёт chartBarLabels.js.
+    private RenderFragment? BarLabel(int index) =>
+        Points[index].Percent == 0 || Range == 0 || index == Points.Count - 1
+            ? null
+            : @<span class="chart-bar-label">@FormatChartPercent(Points[index].Percent, "0.#")</span>;
+
+    private ElementReference _bars;
+    private IJSObjectReference? _labels;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var totalDays = (EndDate - StartDate).TotalDays;
-        if (totalDays <= 0)
-            return (PlotLeft + PlotRight) / 2;
-        return PlotLeft + (PlotRight - PlotLeft) * (date.Date - StartDate).TotalDays / totalDays;
+        if (Points.Count == 0)
+            return;
+
+        try
+        {
+            if (_labels is null)
+            {
+                _labels = await JS.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/WorkoutPlanner.UI/js/chartBarLabels.js");
+                await _labels.InvokeVoidAsync("attach", _bars);
+            }
+            else
+            {
+                await _labels.InvokeVoidAsync("refresh", _bars);
+            }
+        }
+        catch (JSException exception)
+        {
+            // Без модуля надписи просто не появятся — сам график работает.
+            System.Diagnostics.Debug.WriteLine($"Chart bar labels failed: {exception.Message}");
+        }
     }
 
-    private double Y(decimal value)
+    public async ValueTask DisposeAsync()
     {
-        var range = Maximum - Minimum;
-        if (range == 0)
-            return (PlotTop + PlotBottom) / 2;
-        var ratio = (double)((value - Minimum) / range);
-        return PlotBottom - (PlotBottom - PlotTop) * ratio;
+        if (_labels is null)
+            return;
+
+        try
+        {
+            await _labels.InvokeVoidAsync("detach", _bars);
+            await _labels.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // WebView уже закрыт вместе со страницей.
+        }
     }
 
-    // Первая точка отсчёта: без собственного маркера, поэтому её подпись
-    // остаётся обычной, даже когда она же является последней точкой ряда.
-    private bool IsBaseline(int index) =>
-        index == 0 && Points[0].Percent == 0;
-
-    private string LabelEdgeClass(int index) =>
-        index == 0
-            ? "leading"
-            : index == Points.Count - 1 ? "latest" : string.Empty;
-
-    // Точка всплывает в тот момент, когда прочерчиваемая линия доходит до неё,
-    // поэтому задержка берётся из фактического положения по оси, а не из номера:
-    // интервалы между тренировками неравномерные.
-    private string MarkerStyle(ProgressChartPointApiResponse point)
-    {
-        var horizontal = X(point.Date);
-        return $"left:{Format(horizontal / 6)}%;" +
-            $"top:{Format(Y(point.Percent) / 2.6)}%;" +
-            $"--draw-delay:{Format(DrawDelaySeconds(horizontal))}s;";
-    }
-
-    private double DrawDelaySeconds(double horizontal)
-    {
-        if (Points.Count < 2)
-            return 0;
-
-        var first = X(Points[0].Date);
-        var last = X(Points[^1].Date);
-        var span = last - first;
-        if (span <= 0)
-            return 0;
-
-        return CurveDurationSeconds * Math.Clamp((horizontal - first) / span, 0, 1);
-    }
-
-    private string XLabelStyle(DateTime date) =>
-        $"left:{Format(X(date) / 6)}%;top:{Format((PlotBottom + 16) / 2.6)}%;";
-
+    // Значения уходят в CSS, поэтому только с точкой, а не с русской запятой.
     private static string Format(double value) =>
-        value.ToString("0.##", CultureInfo.InvariantCulture);
+        value.ToString("0.####", CultureInfo.InvariantCulture);
 
-    private static string FormatPercent(decimal value) =>
-        $"{value.ToString("0.##", CultureInfo.CurrentCulture)}%";
+    private static string FormatPercent(decimal value, string format = "0.##") =>
+        $"{value.ToString(format, CultureInfo.CurrentCulture)}%";
+
+    // На самом графике рост без «+», спад — с обычным дефисом.
+    private static string FormatChartPercent(decimal value, string format = "0.##")
+    {
+        var magnitude = FormatPercent(Math.Abs(value), format);
+        return value < 0 && magnitude != "0%" ? $"-{magnitude}" : magnitude;
+    }
 
     private static string FormatSignedPercent(decimal value) =>
         $"{(value > 0 ? "+" : string.Empty)}{FormatPercent(value)}";

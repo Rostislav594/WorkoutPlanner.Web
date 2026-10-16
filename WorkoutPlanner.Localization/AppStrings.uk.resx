@@ -787,6 +787,18 @@
   <data name="Progress_WorkoutsLast30Subtitle" xml:space="preserve">
     <value>За останні 30 днів</value>
   </data>
+  <data name="Progress_GrowthHint" xml:space="preserve">
+    <value>Відсоток зростання відносно попереднього тренування</value>
+  </data>
+  <data name="Progress_BestHint" xml:space="preserve">
+    <value>Найбільше зростання відносно першого тренування</value>
+  </data>
+  <data name="Progress_WorkoutsTotalHint" xml:space="preserve">
+    <value>Кількість виконань цього тренування</value>
+  </data>
+  <data name="Progress_WorkoutsLast30Hint" xml:space="preserve">
+    <value>Кількість тренувань із цією вправою за останні 30 днів</value>
+  </data>
   <data name="Progress_NoRecordsTitle" xml:space="preserve">
     <value>Немає записів за останні 30 днів</value>
   </data>

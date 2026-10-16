@@ -1,169 +1,187 @@
+/* График в виде графиков главной админки: без коробки, плоскость со столбиками
+   чуть наклонена вглубь, под ней отражение, как на глянцевом полу. Столбики
+   зелёные, последняя тренировка — оранжевая. */
 .progress-chart {
-    --chart-line: #3fb950;
-    --chart-axis: rgba(63, 185, 80, .85);
-    --chart-marker: #ff7a1a;
-    --chart-marker-ring: 63, 185, 80;
-    --chart-value: #f08c34;
-    /* Без собственной рамки, фона и скругления: график лежит на поверхности
-       окна, а не выглядит вложенной карточкой. */
+    --chart-color: var(--color-success, #3fb950);
+    --chart-glow: rgba(63, 185, 80, .35);
+    --chart-latest: var(--color-accent, #ff7a1a);
+    --chart-latest-glow: rgba(255, 122, 26, .45);
     padding: 0;
+    animation: chart-float 12s ease-in-out infinite alternate;
 }
+
 .chart-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .35rem .75rem; }
 .chart-heading h3 { margin: 0; color: #fff; font-size: 1rem; }
 .chart-heading span { color: #aeb7c2; font-size: .78rem; }
-.chart-frame { position: relative; width: 100%; height: clamp(12rem, 48vw, 15rem); min-width: 0; margin-top: .65rem; }
-.chart-frame svg { width: 100%; height: 100%; overflow: visible; }
+.chart-heading .chart-title--hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+/* Без видимого заголовка число последней тренировки стоит справа. */
+.chart-heading--untitled { justify-content: flex-end; }
 
-.axis-line {
-    stroke: var(--chart-axis);
-    stroke-width: 2;
-    stroke-linecap: round;
-    vector-effect: non-scaling-stroke;
+.chart-latest {
+    color: #fff;
+    font-size: 1.25rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 1.25rem var(--chart-latest-glow);
 }
 
-.zero-line {
-    stroke: rgba(104, 117, 130, .55);
-    stroke-width: 1;
-    stroke-dasharray: 4 6;
-    vector-effect: non-scaling-stroke;
+.chart-frame { position: relative; min-width: 0; margin-top: .65rem; }
+
+.chart-stage {
+    perspective: 40rem;
+    perspective-origin: 50% 0;
 }
 
-.progress-line {
-    fill: none;
-    stroke: var(--chart-line);
-    stroke-width: 3;
-    stroke-opacity: .85;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
+.chart-bars {
+    position: relative;
+    display: flex;
+    gap: 3px;
+    height: clamp(9rem, 38vw, 11.5rem);
+    transform: rotateX(14deg);
+    transform-origin: 50% 100%;
+    -webkit-box-reflect: below 2px linear-gradient(transparent 62%, rgba(255, 255, 255, .22));
 }
 
-/* Прочерчивание от нулевой точки: у маски разъезжается правая граница.
-   Штриховкой это делать нельзя — stroke-dasharray считается в экранном
-   пространстве из-за non-scaling-stroke, а SVG растянут неравномерно
-   (preserveAspectRatio="none"), поэтому нормированная длина не совпадает с
-   реальной и линия не дочерчивается до конца.
-   Ширина в кадре только начальная: конечная берётся из атрибута, поэтому
-   fill-mode не нужен. */
-.curve-reveal {
-    animation: chart-reveal 1.8s linear;
-}
-
-@keyframes chart-reveal {
-    from {
-        width: 0;
-    }
-}
-
-/* Значения из макета, одинаковые для всех точек в долях радиуса.
-   Верхний слой — обводка: радиальный #3FB950, прозрачный до 66% радиуса и
-   сплошной к краю, непрозрачность 90%. В макете это stroke inside: вес 2 на
-   кружке 10 и вес 4 на кружке 20 — то есть одна и та же полоса 60–100%.
-   Нижний слой — заливка: радиальный #FF7A1A, непрозрачность 78% → 92%.
-   closest-side привязывает 100% градиента к краю кружка, а не к диагонали.
-   Эффектов в макете нет, поэтому свечения тоже нет. */
-.chart-marker {
+/* Линия «пола» на уровне нуля тает к краям, чтобы не превращаться в рамку. */
+.chart-bars::after {
     position: absolute;
-    z-index: 2;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-image:
-        radial-gradient(circle closest-side,
-            rgba(var(--chart-marker-ring), 0) 66%,
-            rgba(var(--chart-marker-ring), .9) 100%),
-        radial-gradient(circle closest-side,
-            rgba(255, 122, 26, .78) 31%,
-            rgba(255, 122, 26, .92) 57%);
-    box-sizing: border-box;
-    transform: translate(-50%, -50%);
-    /* backwards прячет точку на время задержки; после анимации значения
-       возвращаются к обычным, поэтому forwards не нужен. */
-    animation: chart-marker-in .34s ease-out var(--draw-delay, 0s) backwards;
+    right: 0;
+    bottom: calc(var(--zero, 0) * 100%);
+    left: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, .14) 12%, rgba(255, 255, 255, .14) 88%, transparent);
+    content: "";
+    pointer-events: none;
 }
 
-@keyframes chart-marker-in {
-    from {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(.35);
-    }
-
-    to {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-}
-
-/* Последняя точка (Ellipse 10) — вдвое крупнее при той же отделке. */
-.chart-marker.latest {
-    z-index: 3;
-    width: 20px;
-    height: 20px;
-}
-
-.chart-marker-hit-target {
-    position: absolute;
-    z-index: 4;
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
+/* Колонка на всю высоту поля: по ней удобно попасть пальцем, даже если
+   столбик низкий или узкий. */
+.chart-column {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    margin: 0;
     padding: 0;
     border: 0;
+    border-radius: 0;
     background: transparent;
-    cursor: pointer;
+    box-shadow: none;
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    transform: translate(-50%, -50%);
 }
 
-.chart-marker-hit-target .chart-marker {
-    top: 50%;
-    left: 50%;
-}
+button.chart-column { cursor: pointer; }
 
-.chart-marker-hit-target:focus-visible {
-    border-radius: 50%;
-    outline: 2px solid #80d89b;
+button.chart-column:focus-visible {
+    border-radius: 4px;
+    outline: 2px solid var(--chart-color);
     outline-offset: 1px;
 }
 
-.chart-value-label {
+/* Столбик не шире 28px и стоит по центру своей колонки: при одной-двух
+   тренировках он не растекается на всю ширину. */
+.chart-bar {
     position: absolute;
-    z-index: 1;
-    color: var(--chart-value);
+    right: 0;
+    bottom: calc(var(--bottom, 0) * 100%);
+    left: 0;
+    width: min(100%, 1.75rem);
+    height: max(3px, calc(var(--size, 0) * 100%));
+    margin-inline: auto;
+    border-radius: 3px 3px 1px 1px;
+    background: linear-gradient(to top, color-mix(in srgb, var(--chart-color) 45%, transparent), var(--chart-color));
+    box-shadow: 0 0 .75rem var(--chart-glow);
+    transform-origin: 50% 100%;
+    transition: filter .16s ease;
+    animation: chart-bar-grow .6s cubic-bezier(.22, 1, .36, 1) var(--grow-delay, 0s) backwards;
+}
+
+/* Спад растёт вниз от нулевой линии. */
+.chart-bar--negative {
+    border-radius: 1px 1px 3px 3px;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--chart-color) 45%, transparent), var(--chart-color));
+    transform-origin: 50% 0;
+}
+
+.chart-bar--latest {
+    --chart-color: var(--chart-latest);
+    --chart-glow: var(--chart-latest-glow);
+}
+
+.chart-bar--empty {
+    height: 3px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .14);
+    box-shadow: none;
+}
+
+.chart-bar--empty.chart-bar--latest {
+    background: var(--chart-latest);
+    box-shadow: 0 0 .5rem var(--chart-latest-glow);
+}
+
+/* Процент написан в самом столбике: вертикальный белый текст с лёгкой тенью,
+   чтобы читался и на светлой верхушке. Размер шрифта и проявление при
+   масштабировании задаёт chartBarLabels.js; до его работы надпись невидима. */
+.chart-bar-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    color: #fff;
     font-family: system-ui, sans-serif;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 1px;
+    font-weight: 800;
     line-height: 1;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 2px rgba(0, 0, 0, .35);
+    writing-mode: vertical-rl;
+    opacity: 0;
     pointer-events: none;
-    transform: translate(-64%, -215%);
-    /* Подпись появляется чуть позже своей точки. Анимируется только
-       непрозрачность: смещение у подписей разное (leading, latest), и трогать
-       transform в кадрах значило бы дублировать их для каждого варианта. */
-    animation: chart-label-in .38s ease-out calc(var(--draw-delay, 0s) + .1s) backwards;
+    transform: translate(-50%, -50%) rotate(180deg);
+    transition: opacity .25s ease;
 }
 
-@keyframes chart-label-in {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-/* Первая точка стоит на самой оси: подпись уводится вправо, иначе линия оси
-   проходит сквозь текст. */
-.chart-value-label.leading { transform: translate(9px, -215%); }
-.chart-value-label.latest {
-    font-size: 16px;
-    font-weight: 700;
-    transform: translate(-72%, -180%);
+.chart-column:hover .chart-bar,
+.chart-column:active .chart-bar {
+    filter: brightness(1.3);
 }
 
-.axis-label { position: absolute; color: #8d97a3; font-family: system-ui, sans-serif; font-size: 12px; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; }
-.x-axis-label { transform: translate(-50%, 0); }
+/* Даты стоят точно под первым и последним столбиком. */
+.chart-axis {
+    position: relative;
+    height: 12px;
+    margin-top: 1.25rem;
+    color: #8d97a3;
+    font-family: system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Подпись ~2.4em шириной: центр под столбиком, но не за краем поля. */
+.chart-axis > span {
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+}
+
+.chart-axis__start {
+    left: max(0px, calc(.5 / var(--count, 1) * 100% - 1.2em));
+}
+
+.chart-axis__end {
+    right: max(0px, calc(.5 / var(--count, 1) * 100% - 1.2em));
+}
+
+.chart-axis__single {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 .chart-values { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-top: .25rem; color: #aeb7c2; font-size: .85rem; }
 .chart-values strong { color: #80d89b; }
 .chart-data-details { margin-top: .55rem; color: #d9e0e7; }
@@ -171,35 +189,33 @@
 .chart-data-details summary:focus-visible { border-radius: .35rem; outline: 2px solid #4fc46b; outline-offset: 2px; }
 .chart-data-scroll { max-height: 14rem; overflow: auto; }
 
-/* The mobile progress dialogs reveal the summaries first, then the axes, then
-   the existing 1.8-second curve drawing. Other chart consumers keep their timing. */
+@keyframes chart-float {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(0, -.3125rem, 0); }
+}
+
+@keyframes chart-bar-grow {
+    from { transform: scaleY(0); }
+}
+
+/* Экраны прогресса сначала показывают сводку, затем подписи, затем столбики. */
 .staged-reveal {
     --scaffold-delay: 3.3s;
     --plot-delay: 4s;
 }
 
 .staged-reveal .chart-heading,
-.staged-reveal .axis-label,
-.staged-reveal .zero-line {
+.staged-reveal .chart-axis {
     animation: chart-scaffold-in .55s ease-out var(--scaffold-delay) backwards;
 }
 
-.staged-reveal .axis-line {
-    stroke-dasharray: 600;
-    animation: chart-axis-draw .65s ease-out var(--scaffold-delay) backwards;
+.staged-reveal .chart-bar {
+    animation-delay: calc(var(--plot-delay) + var(--grow-delay, 0s));
 }
 
-.staged-reveal .curve-reveal {
-    animation-delay: var(--plot-delay);
-    animation-fill-mode: backwards;
-}
-
-.staged-reveal .chart-marker {
-    animation-delay: calc(var(--plot-delay) + var(--draw-delay, 0s));
-}
-
-.staged-reveal .chart-value-label {
-    animation-delay: calc(var(--plot-delay) + var(--draw-delay, 0s) + .1s);
+/* Число последней тренировки — последним, когда дорос оранжевый столбик. */
+.staged-reveal .chart-latest {
+    animation: chart-scaffold-in .55s ease-out calc(var(--plot-delay) + var(--latest-delay, 1.8s)) backwards;
 }
 
 .staged-reveal .chart-values,
@@ -210,11 +226,6 @@
 @keyframes chart-scaffold-in {
     from { opacity: 0; }
     to { opacity: 1; }
-}
-
-@keyframes chart-axis-draw {
-    from { stroke-dashoffset: 600; opacity: 0; }
-    to { stroke-dashoffset: 0; opacity: 1; }
 }
 
 @keyframes chart-detail-in {
@@ -229,19 +240,21 @@ th:last-child, td:last-child { text-align: right; }
 .empty { margin: 0; color: #aeb7c2; }
 
 @media (max-width: 390px) {
-    .axis-label { font-size: 11px; }
-    .chart-value-label { font-size: 11px; }
-    .chart-value-label.latest { font-size: 14px; }
+    .chart-axis { font-size: 11px; }
+    .chart-latest { font-size: 1.125rem; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
-    .chart-frame {
-        height: clamp(10.5rem, 44dvh, 13rem);
-        margin-top: .35rem;
+    .chart-bars {
+        height: clamp(8rem, 34dvh, 10rem);
     }
 
-    .compact-presentation .chart-frame {
-        height: clamp(9rem, 38dvh, 10.5rem);
+    .compact-presentation .chart-bars {
+        height: clamp(7rem, 30dvh, 8.5rem);
+    }
+
+    .chart-frame {
+        margin-top: .35rem;
     }
 
     .chart-data-details {
@@ -250,15 +263,13 @@ th:last-child, td:last-child { text-align: right; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .progress-chart,
+    .chart-bar,
     .staged-reveal .chart-heading,
-    .staged-reveal .axis-label,
-    .staged-reveal .zero-line,
-    .staged-reveal .axis-line,
+    .staged-reveal .chart-latest,
+    .staged-reveal .chart-axis,
     .staged-reveal .chart-values,
-    .staged-reveal .chart-data-details,
-    .curve-reveal,
-    .chart-marker,
-    .chart-value-label {
+    .staged-reveal .chart-data-details {
         animation: none;
     }
 }
