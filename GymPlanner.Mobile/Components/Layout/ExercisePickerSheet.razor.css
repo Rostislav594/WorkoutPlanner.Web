@@ -8,7 +8,9 @@
     align-items: flex-end;
     justify-content: center;
     padding-top: max(24px, env(safe-area-inset-top));
-    background: var(--color-overlay);
+    /* Подложка светлее обычной: окно — полупрозрачное стекло, на почти
+       чёрном фоне его не было бы видно. */
+    background: rgba(0, 0, 0, .28);
     overscroll-behavior: contain;
     animation: exercise-picker-fade 160ms ease-out;
 }
@@ -19,11 +21,18 @@
     flex-direction: column;
     width: min(100%, 560px);
     height: min(90dvh, 100%);
-    border: 1px solid var(--glass-border, var(--color-border));
+    border: 1px solid rgba(255, 255, 255, .16);
     border-bottom: 0;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--color-bg-elevated);
-    box-shadow: var(--shadow-modal);
+    /* Матовое полупрозрачное стекло, как окна графика, истории и упражнения. */
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
+    box-shadow:
+        var(--shadow-modal),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
     color: var(--color-text);
     animation: exercise-picker-rise 220ms cubic-bezier(.2, .8, .2, 1);
 }
@@ -32,7 +41,7 @@
     display: grid;
     gap: 12px;
     padding: 16px 16px 12px;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
 }
 
 .exercise-picker__title-row {
@@ -116,16 +125,20 @@
     gap: 8px;
 }
 
+/* Капсулы разделов — в стиле плашки с инициалами в профиле: скруглённый
+   квадрат со светлой рамкой и жирной подписью. Выбранная — сплошная
+   оранжевая с тёмным текстом и оранжевым свечением, остальные — тёмные. */
 .exercise-picker__chip {
     min-height: 40px !important;
     padding: 0 14px;
-    border: 1px solid var(--color-border-strong);
-    border-radius: 999px;
-    background: transparent;
+    border: 2px solid rgba(255, 255, 255, .14);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .04);
     color: var(--color-text-muted);
     font-size: var(--text-label);
-    font-weight: 600;
-    transition: background-color var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui);
+    font-weight: 800;
+    letter-spacing: .04em;
+    transition: background-color var(--transition-ui), color var(--transition-ui), box-shadow var(--transition-ui);
 }
 
 .exercise-picker__chip:active {
@@ -133,13 +146,13 @@
 }
 
 .exercise-picker__chip--active {
-    border-color: var(--color-orange-border);
-    background: var(--color-accent-soft);
-    color: var(--color-accent-hover);
+    background: var(--color-accent);
+    color: #17110c;
+    box-shadow: 0 8px 20px rgba(255, 122, 26, .22);
 }
 
 .exercise-picker__chip--active:active {
-    background: var(--color-accent-soft-hover);
+    background: var(--color-accent-hover);
 }
 
 .exercise-picker__list {

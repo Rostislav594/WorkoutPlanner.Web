@@ -2,6 +2,7 @@
 @using GymPlanner.Mobile.ExerciseLibrary
 @inject ExercisePicker Picker
 @inject MobileBackNavigationService BackNavigation
+@inject NavigationManager Navigation
 @inject IAppText Text
 
 @* Окно выбора упражнения. Живёт в макете, а не в модальном окне страницы:
@@ -128,8 +129,19 @@
     private ElementReference _selectedItem;
     private bool _revealSelected;
 
-    protected override void OnInitialized() =>
+    protected override void OnInitialized()
+    {
         Picker.Changed += OnPickerChanged;
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    // Окно живёт в макете и само не знает о смене страницы: без этого оно
+    // осталось бы висеть поверх новой. Уход со страницы — отмена выбора.
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        if (Picker.Request is not null)
+            RequestCancel();
+    }
 
     private void OnPickerChanged() =>
         _ = InvokeAsync(() =>
@@ -236,6 +248,7 @@
     public void Dispose()
     {
         Picker.Changed -= OnPickerChanged;
+        Navigation.LocationChanged -= OnLocationChanged;
         if (_request is not null)
             BackNavigation.SetOverlayInterceptor(null);
 
