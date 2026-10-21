@@ -82,7 +82,7 @@
                 <button class="icon-close-button"
                         type="button"
                         aria-label="@Text["Common_Close"]"
-                        @onclick="CloseMenu">×</button>
+                        @onclick="CloseMenu"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
             <div class="modal-body workout-template-actions-body">
                 <p>@MenuPlan.WorkoutName</p>
@@ -109,7 +109,7 @@
                         type="button"
                         aria-label="@Text["Common_Close"]"
                         disabled="@_isBusy"
-                        @onclick="ClosePlanDialog">×</button>
+                        @onclick="ClosePlanDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
 
             <div class="modal-body" data-tour="@(_isCreateOpen ? "template-name" : null)">
@@ -182,7 +182,7 @@
                         type="button"
                         aria-label="@Text["Common_Close"]"
                         disabled="@_isBusy"
-                        @onclick="CloseDeleteDialog">×</button>
+                        @onclick="CloseDeleteDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
             <div class="modal-body">
                 <p id="delete-dialog-description">

@@ -266,7 +266,7 @@
                     <span>@Text["WorkoutDetails_ManageExercise"]</span>
                     <h2 id="exercise-actions-title">@_actionExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus @onclick="CloseActions">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus @onclick="CloseActions"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
 
             @if (_deleteExerciseId == _actionExercise.Id)
@@ -313,7 +313,7 @@
                     <span>@(_editingId is null ? Text["WorkoutDetails_NewTemplateItem"] : Text["WorkoutDetails_TemplateParameters"])</span>
                     <h2 id="exercise-editor-title">@(_editingId is null ? Text["WorkoutDetails_NewExercise"] : Text["WorkoutDetails_EditExercise"])</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseEditor">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseEditor"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
 
             <div class="modal-body">
@@ -386,7 +386,7 @@
                     <span>@Text["WorkoutDetails_PhotoTitle"]</span>
                     <h2 id="photo-editor-title">@_photoExercise.Name</h2>
                 </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus disabled="@(_photoBusy || IsOffline)" @onclick="ClosePhoto">×</button>
+                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" autofocus disabled="@(_photoBusy || IsOffline)" @onclick="ClosePhoto"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
             </div>
 
             <div class="modal-body">

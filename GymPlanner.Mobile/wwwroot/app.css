@@ -667,6 +667,8 @@ button:is(
     .dialog-close,
     .notebook-modal-close,
     .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
     .photo-lightbox-close
 ),
 a:is(.back-button, .back-link),
@@ -682,6 +684,45 @@ a:is(.back-button, .back-link),
     background: transparent !important;
     box-shadow: none !important;
     color: var(--color-text-muted) !important;
+}
+
+/* Крестик закрытия везде одинаковый: белый значок без коробки, одного
+   размера, с полем нажатия во всю кнопку. */
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
+    .photo-lightbox-close
+),
+.help-dialog__header button {
+    border: 0 !important;
+    border-radius: 50% !important;
+    color: #fff !important;
+}
+
+button:is(
+    .icon-close-button,
+    .close-button,
+    .modal-close,
+    .quick-action-close,
+    .dialog-close,
+    .notebook-modal-close,
+    .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
+    .photo-lightbox-close
+) .material-symbols-rounded,
+.help-dialog__header button .material-symbols-rounded {
+    color: #fff !important;
+    font-size: 26px !important;
+    font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24 !important;
+    line-height: 1;
 }
 
 a.back-link {
@@ -700,6 +741,8 @@ button:is(
     .dialog-close,
     .notebook-modal-close,
     .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
     .photo-lightbox-close
 ):hover:not(:disabled),
 button:is(
@@ -710,6 +753,8 @@ button:is(
     .dialog-close,
     .notebook-modal-close,
     .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
     .photo-lightbox-close
 ):focus-visible,
 a:is(.back-button, .back-link):hover,
@@ -717,7 +762,7 @@ a:is(.back-button, .back-link):focus-visible,
 .help-dialog__header button:hover,
 .help-dialog__header button:focus-visible {
     background: transparent !important;
-    color: var(--color-text) !important;
+    color: #fff !important;
 }
 
 button:is(
@@ -728,6 +773,8 @@ button:is(
     .dialog-close,
     .notebook-modal-close,
     .notification-page__close,
+    .notification-poster__close,
+    .exercise-picker__close,
     .photo-lightbox-close
 ):focus-visible,
 a:is(.back-button, .back-link):focus-visible,

@@ -589,7 +589,7 @@
 
 @if (_showFreeExerciseEditor && _freeEditorDraft is not null)
 {
-    <div class="modal-overlay" @onclick="CloseFreeExerciseEditor">
+    <div class="modal-overlay free-editor-overlay" @onclick="CloseFreeExerciseEditor">
         <section class="modal-window free-exercise-editor"
                  role="dialog"
                  aria-modal="true"
@@ -597,7 +597,6 @@
                  @onclick:stopPropagation="true">
             <div class="editor-heading">
                 <div>
-                    <span>@Text["Today_FreeWorkout"]</span>
                     <h2 id="free-exercise-editor-title">@(_isCreatingFreeExercise ? Text["WorkoutDetails_NewExercise"] : Text["Today_ExerciseParameters"])</h2>
                 </div>
                 <button class="quick-action-close editor-close"

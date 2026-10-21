@@ -492,10 +492,6 @@
     color: var(--color-text);
 }
 
-.close-button .material-symbols-rounded {
-    font-size: 25px;
-}
-
 .history-exercises {
     display: grid;
     gap: 12px;
