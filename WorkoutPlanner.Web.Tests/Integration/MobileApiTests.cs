@@ -4282,6 +4282,9 @@ public sealed class MobileApiTests
             {
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
+                    // Тесты всегда на своём файле SQLite, даже в среде Development,
+                    // где сервер по умолчанию ходит в локальный PostgreSQL.
+                    ["Database:Provider"] = "Sqlite",
                     ["ConnectionStrings:WorkoutDatabase"] = $"Data Source={_databasePath}",
                     ["TelegramSupport:ChatId"] = "1198730360",
                     ["TelegramSupport:WebhookSecret"] = "test-webhook-secret",

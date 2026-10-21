@@ -118,6 +118,11 @@ try {
     }
 
     if ($null -eq $listener) {
+        # В среде разработки сервер работает с локальным PostgreSQL из Docker.
+        Write-Host 'Поднимаем локальный PostgreSQL…' -ForegroundColor Cyan
+        & docker compose -f (Join-Path $repositoryRoot 'docker-compose.postgres.yml') up -d --wait
+        if ($LASTEXITCODE -ne 0) { throw 'PostgreSQL не запустился. Запустите Docker Desktop и повторите.' }
+
         Write-Host 'Собираем backend…' -ForegroundColor Cyan
         & dotnet build $webProject -c Debug
         if ($LASTEXITCODE -ne 0) { throw 'Сборка backend завершилась ошибкой.' }

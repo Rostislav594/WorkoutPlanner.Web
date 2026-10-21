@@ -27,11 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
-builder.Services.AddDbContextFactory<WorkoutDbContext>(
-    options =>
-        options.UseSqlite(
-            builder.Configuration.GetConnectionString("WorkoutDatabase")
-            ?? "Data Source=workoutplanner.db"));
+builder.Services.AddWorkoutDatabase();
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(
@@ -500,6 +496,16 @@ app.MapTelegramSupportWebhook();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+}
+
+// Разовый перенос данных из SQLite в PostgreSQL: выполняется и сервер выходит.
+var importIndex = Array.IndexOf(args, SqliteToPostgresImporter.CommandLineSwitch);
+if (importIndex >= 0)
+{
+    var sqlitePath = importIndex + 1 < args.Length ? args[importIndex + 1] : "workoutplanner.db";
+    await SqliteToPostgresImporter.RunAsync(
+        app.Services, sqlitePath, app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Import"));
+    return;
 }
 
 using (var scope = app.Services.CreateScope())

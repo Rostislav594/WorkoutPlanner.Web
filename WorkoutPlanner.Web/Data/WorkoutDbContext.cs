@@ -13,6 +13,13 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     {
     }
 
+    // Для PostgresWorkoutDbContext: у PostgreSQL свой набор миграций, а EF
+    // различает наборы по типу контекста.
+    protected WorkoutDbContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
     public DbSet<Exercise> Exercises =>
     Set<Exercise>();
 
@@ -91,6 +98,14 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
     public DbSet<PushDeviceRegistration> PushDeviceRegistrations => Set<PushDeviceRegistration>();
 
     public DbSet<MobileIdempotencyRecord> MobileIdempotencyRecords => Set<MobileIdempotencyRecord>();
+
+    // Ограничения и фильтры записаны с именами колонок в [скобках] — так их
+    // понимает SQLite, и в его миграциях они остались такими. PostgreSQL
+    // скобок не знает, ему те же имена нужны в "кавычках".
+    private string Sql(string sql) =>
+        Database.ProviderName == "Npgsql.EntityFrameworkCore.PostgreSQL"
+            ? System.Text.RegularExpressions.Regex.Replace(sql, @"\[(\w+)\]", "\"$1\"")
+            : sql;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -177,7 +192,7 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<WatchDevice>()
             .ToTable(table => table.HasCheckConstraint(
                 "CK_WatchDevices_RefreshTokenExpiry",
-                "[RefreshTokenExpiresAtUtc] > [CreatedAtUtc]"));
+                Sql("[RefreshTokenExpiresAtUtc] > [CreatedAtUtc]")));
 
         modelBuilder.Entity<WatchPairingCode>()
             .HasOne<IdentityUser>()
@@ -203,10 +218,10 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             {
                 table.HasCheckConstraint(
                     "CK_WatchPairingCodes_Expiry",
-                    "[ExpiresAtUtc] > [CreatedAtUtc]");
+                    Sql("[ExpiresAtUtc] > [CreatedAtUtc]"));
                 table.HasCheckConstraint(
                     "CK_WatchPairingCodes_AttemptCount",
-                    "[AttemptCount] >= 0");
+                    Sql("[AttemptCount] >= 0"));
             });
 
         modelBuilder.Entity<WatchPairingRequest>()
@@ -251,10 +266,10 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             {
                 table.HasCheckConstraint(
                     "CK_WatchPairingRequests_Expiry",
-                    "[ExpiresAtUtc] > [CreatedAtUtc]");
+                    Sql("[ExpiresAtUtc] > [CreatedAtUtc]"));
                 table.HasCheckConstraint(
                     "CK_WatchPairingRequests_PollCount",
-                    "[PollCount] >= 0");
+                    Sql("[PollCount] >= 0"));
             });
 
         modelBuilder.Entity<WatchSyncOperation>()
@@ -283,7 +298,7 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<WatchSyncOperation>()
             .ToTable(table => table.HasCheckConstraint(
                 "CK_WatchSyncOperations_Expiry",
-                "[ExpiresAtUtc] > [ReceivedAtUtc]"));
+                Sql("[ExpiresAtUtc] > [ReceivedAtUtc]")));
 
         modelBuilder.Entity<SupportTicket>()
             .HasOne<IdentityUser>()
@@ -402,7 +417,7 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
         modelBuilder.Entity<InboxMessage>()
             .HasIndex(x => x.TelegramMessageId)
             .IsUnique()
-            .HasFilter("[TelegramMessageId] IS NOT NULL");
+            .HasFilter(Sql("[TelegramMessageId] IS NOT NULL"));
 
         modelBuilder.Entity<InboxMessage>()
             .Property(x => x.Type)
