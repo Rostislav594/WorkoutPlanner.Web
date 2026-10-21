@@ -302,75 +302,17 @@
 
 @if (_showEditor)
 {
-    <div class="modal-overlay" @onclick="CloseEditor">
-        <section class="modal-window form-modal"
-                 role="dialog"
-                 aria-modal="true"
-                 aria-labelledby="exercise-editor-title"
-                 @onclick:stopPropagation="true">
-            <div class="modal-heading">
-                <div>
-                    <span>@(_editingId is null ? Text["WorkoutDetails_NewTemplateItem"] : Text["WorkoutDetails_TemplateParameters"])</span>
-                    <h2 id="exercise-editor-title">@(_editingId is null ? Text["WorkoutDetails_NewExercise"] : Text["WorkoutDetails_EditExercise"])</h2>
-                </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseEditor"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
-            </div>
-
-            <div class="modal-body">
-                @if (_editorErrors.Count > 0)
-                {
-                    <div class="edit-error" role="alert">@string.Join(" ", _editorErrors)</div>
-                }
-
-                <div class="form-field" data-tour="editor-exercise">
-                    <label for="definition">@Text["WorkoutDetails_LibraryExercise"]</label>
-                    <SystemChoiceField id="definition"
-                                       class="form-control"
-                                       Title="@Text["WorkoutDetails_LibraryExercise"]"
-                                       Options="DefinitionOptions"
-                                       Value="@(_draft.DefinitionId?.ToString() ?? string.Empty)"
-                                       ValueChanged="SetDefinition"
-                                       Picker="PickDefinitionAsync"
-                                       Placeholder="@Text["WorkoutDetails_NotSelected"]"
-                                       AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
-                </div>
-
-                <div class="form-field" data-tour="editor-sets">
-                    <label for="sets-count">@Text["WorkoutDetails_SetsCount"]</label>
-                    <input id="sets-count"
-                           class="form-control"
-                           type="number"
-                           min="1"
-                           max="20"
-                           value="@_draft.SetsCount"
-                           @onchange="ChangeSetsCount" />
-                </div>
-
-                <div class="set-editor-list">
-                    @foreach (var set in _draft.Sets)
-                    {
-                        <fieldset data-tour="editor-set-@set.SetNumber">
-                            <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
-                            <label data-tour="editor-weight-@set.SetNumber">
-                                <span>@Text["WorkoutDetails_WeightKg"]</span>
-                                <input class="form-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
-                            </label>
-                            <label data-tour="editor-reps-@set.SetNumber">
-                                <span>@Text["WorkoutDetails_Reps"]</span>
-                                <input class="form-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
-                            </label>
-                        </fieldset>
-                    }
-                </div>
-            </div>
-
-            <div class="modal-actions modal-footer">
-                <button class="primary-button" type="button" data-tour="editor-save" disabled="@_busy" @onclick="SaveAsync">
-                    @(_busy ? Text["Common_Saving"] : Text["Common_Save"])
-                </button>
-            </div>
-        </section>
-    </div>
+    <ExerciseEditorDialog IsCreating="@(_editingId is null)"
+                          Busy="_busy"
+                          Errors="_editorErrors"
+                          Options="DefinitionOptions"
+                          SelectedValue="@(_draft.DefinitionId?.ToString() ?? string.Empty)"
+                          SelectedValueChanged="SetDefinition"
+                          Picker="PickDefinitionAsync"
+                          Sets="_draft.Sets"
+                          SetsCountChanged="ChangeSetsCount"
+                          OnSave="SaveAsync"
+                          OnClose="CloseEditor" />
 }
 
 @if (_photoExercise is not null)
@@ -1057,7 +999,7 @@
         public void Resize(int count) { while (Sets.Count < count) Sets.Add(new(Sets.Count + 1, 8, 0, false, false)); while (Sets.Count > count) Sets.RemoveAt(Sets.Count - 1); for (var i = 0; i < Sets.Count; i++) Sets[i].SetNumber = i + 1; }
     }
 
-    private sealed class SetDraft(int setNumber, int repetitions, double weight, bool completed, bool isWarmup)
+    private sealed class SetDraft(int setNumber, int repetitions, double weight, bool completed, bool isWarmup) : IEditableExerciseSet
     {
         public int SetNumber { get; set; } = setNumber; public int Repetitions { get; set; } = repetitions; public double Weight { get; set; } = weight; public bool Completed { get; set; } = completed; public bool IsWarmup { get; set; } = isWarmup;
     }

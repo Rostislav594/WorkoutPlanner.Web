@@ -1,0 +1,175 @@
+/* Основа окна — как у остальных окон приложения: снизу листом на узком
+   экране, по центру на широком (общие правила body .modal-overlay/.modal-window
+   в app.css дополняют эти). */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    overflow: hidden;
+    padding: max(16px, env(safe-area-inset-top)) 0 0;
+    /* Подложка светлее обычной и без своего размытия: окно — стекло, на почти
+       чёрном его не видно, а фон размылся бы дважды. */
+    background: rgba(0, 0, 0, .28);
+    overscroll-behavior: contain;
+}
+
+.modal-window {
+    box-sizing: border-box;
+    width: 100%;
+    max-height: calc(100dvh - max(16px, env(safe-area-inset-top)) - max(16px, env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    padding: 18px 16px;
+    /* Матовое полупрозрачное стекло, как окна графика, истории и библиотеки. */
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
+    color: var(--color-text);
+    box-shadow:
+        var(--shadow-modal),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+    overscroll-behavior: contain;
+    scroll-padding-block: 16px 24px;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
+.editor-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.editor-heading h2 {
+    min-width: 0;
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.editor-close {
+    flex: 0 0 auto;
+}
+
+.editor-error {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(248, 81, 73, .4);
+    border-radius: var(--radius-sm);
+    background: rgba(248, 81, 73, .1);
+    color: var(--color-danger-soft);
+}
+
+.editor-field {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.editor-control {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font: inherit;
+    font-size: 16px;
+    scroll-margin-block: 16px;
+}
+
+.editor-control:focus {
+    border-color: var(--color-accent);
+}
+
+/* Стрелка выбора упражнения — белая, как крестик. */
+.editor-field ::deep .system-choice-field__icon {
+    color: #fff;
+}
+
+.editor-set-list {
+    display: grid;
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.editor-set-list fieldset {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid var(--glass-border, var(--color-border));
+    border-radius: var(--radius-sm);
+    background: var(--glass-inset, var(--color-bg-elevated));
+}
+
+.editor-set-list legend {
+    padding: 0 5px;
+    color: var(--color-accent);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.editor-set-list label {
+    min-width: 0;
+    display: grid;
+    gap: 5px;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.editor-actions {
+    display: grid;
+    margin-top: 18px;
+}
+
+.editor-actions > * {
+    width: 100%;
+}
+
+@media (max-width: 599px) {
+    .modal-overlay {
+        align-items: center;
+        padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .modal-window {
+        border-radius: var(--radius-lg);
+    }
+}
+
+@media (max-width: 360px) {
+    .editor-set-list fieldset {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 600px) {
+    .modal-overlay {
+        align-items: center;
+        padding: 20px;
+    }
+
+    .modal-window {
+        width: min(520px, calc(100vw - 40px));
+        max-height: min(88dvh, 760px);
+        padding: var(--space-6);
+        border-radius: var(--radius-lg);
+    }
+}

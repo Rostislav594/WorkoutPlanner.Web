@@ -1,0 +1,90 @@
+@inject IAppText Text
+
+@* Окно упражнения — одно на свободную тренировку и шаблоны: выбор упражнения
+   из библиотеки, число подходов, вес и повторения каждого подхода.
+   Данные и сохранение остаются у страницы. data-tour нужны обучению. *@
+<div class="modal-overlay exercise-editor-overlay" @onclick="OnClose">
+    <section class="modal-window exercise-editor"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="exercise-editor-dialog-title"
+             @onclick:stopPropagation="true">
+        <div class="editor-heading">
+            <h2 id="exercise-editor-dialog-title">@(IsCreating ? Text["WorkoutDetails_NewExercise"] : Text["Today_ExerciseParameters"])</h2>
+            <button class="quick-action-close editor-close"
+                    type="button"
+                    aria-label="@Text["Today_CloseEditor"]"
+                    disabled="@Busy"
+                    @onclick="OnClose">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        @if (Errors.Count > 0)
+        {
+            <div class="editor-error" role="alert">@string.Join(" ", Errors)</div>
+        }
+
+        <label class="editor-field" data-tour="editor-exercise">
+            <span>@Text["Common_Exercise"]</span>
+            <SystemChoiceField Title="@Text["Today_PickExercise"]"
+                               Options="Options"
+                               Value="@SelectedValue"
+                               ValueChanged="SelectedValueChanged"
+                               Picker="Picker"
+                               Placeholder="@Text["Today_PickExercise"]"
+                               AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
+        </label>
+
+        <label class="editor-field" data-tour="editor-sets">
+            <span>@Text["WorkoutDetails_SetsCount"]</span>
+            <input class="editor-control"
+                   type="number"
+                   min="1"
+                   max="20"
+                   value="@Sets.Count"
+                   @onchange="SetsCountChanged" />
+        </label>
+
+        <div class="editor-set-list">
+            @foreach (var set in Sets)
+            {
+                <fieldset data-tour="@($"editor-set-{set.SetNumber}")">
+                    <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
+                    <label data-tour="@($"editor-weight-{set.SetNumber}")">
+                        <span>@Text["WorkoutDetails_WeightKg"]</span>
+                        <input class="editor-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
+                    </label>
+                    <label data-tour="@($"editor-reps-{set.SetNumber}")">
+                        <span>@Text["WorkoutDetails_Reps"]</span>
+                        <input class="editor-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
+                    </label>
+                </fieldset>
+            }
+        </div>
+
+        <div class="editor-actions">
+            <button class="edit-workout-button" data-tour="editor-save" type="button" disabled="@Busy" @onclick="OnSave">
+                @(Busy ? Text["Common_Saving"] : IsCreating ? Text["WorkoutDetails_AddExercise"] : Text["Common_Save"])
+            </button>
+        </div>
+    </section>
+</div>
+
+@code {
+    /// <summary>Новое упражнение или правка уже добавленного.</summary>
+    [Parameter] public bool IsCreating { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public IReadOnlyList<string> Errors { get; set; } = [];
+
+    [Parameter, EditorRequired] public IReadOnlyList<SystemChoiceOption> Options { get; set; } = [];
+    [Parameter] public string SelectedValue { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> SelectedValueChanged { get; set; }
+    [Parameter] public Func<string, Task<string?>>? Picker { get; set; }
+
+    [Parameter, EditorRequired] public IReadOnlyList<IEditableExerciseSet> Sets { get; set; } = [];
+    [Parameter] public EventCallback<ChangeEventArgs> SetsCountChanged { get; set; }
+
+    [Parameter] public EventCallback OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

@@ -727,8 +727,7 @@
     margin-top: 0;
 }
 
-.form-field label,
-.set-editor-list label {
+.form-field label {
     color: var(--color-text-muted);
     font-size: 14px;
     font-weight: 650;
@@ -754,35 +753,6 @@
 .form-control option {
     background: var(--color-bg-elevated);
     color: var(--color-text);
-}
-
-.set-editor-list {
-    display: grid;
-    gap: 12px;
-    margin-top: 16px;
-}
-
-.set-editor-list fieldset {
-    min-width: 0;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    padding: 12px;
-    border: 1px solid var(--glass-border, var(--color-border));
-    border-radius: var(--radius-sm);
-    background: var(--glass-inset, var(--color-bg-elevated));
-}
-
-.set-editor-list legend {
-    padding: 0 5px;
-    color: var(--color-accent);
-    font-weight: 750;
-}
-
-.set-editor-list label {
-    min-width: 0;
-    display: grid;
-    gap: 6px;
 }
 
 .edit-error {
@@ -899,10 +869,6 @@
 
     .photo-open-button .material-symbols-rounded {
         display: none;
-    }
-
-    .set-editor-list fieldset {
-        grid-template-columns: 1fr;
     }
 }
 

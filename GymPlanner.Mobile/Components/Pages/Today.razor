@@ -589,75 +589,16 @@
 
 @if (_showFreeExerciseEditor && _freeEditorDraft is not null)
 {
-    <div class="modal-overlay free-editor-overlay" @onclick="CloseFreeExerciseEditor">
-        <section class="modal-window free-exercise-editor"
-                 role="dialog"
-                 aria-modal="true"
-                 aria-labelledby="free-exercise-editor-title"
-                 @onclick:stopPropagation="true">
-            <div class="editor-heading">
-                <div>
-                    <h2 id="free-exercise-editor-title">@(_isCreatingFreeExercise ? Text["WorkoutDetails_NewExercise"] : Text["Today_ExerciseParameters"])</h2>
-                </div>
-                <button class="quick-action-close editor-close"
-                        type="button"
-                        aria-label="@Text["Today_CloseEditor"]"
-                        @onclick="CloseFreeExerciseEditor">
-                    <span class="material-symbols-rounded" aria-hidden="true">close</span>
-                </button>
-            </div>
-
-            @if (_freeEditorErrors.Count > 0)
-            {
-                <div class="editor-error" role="alert">@string.Join(" ", _freeEditorErrors)</div>
-            }
-
-            <label class="editor-field" data-tour="editor-exercise">
-                <span>@Text["Common_Exercise"]</span>
-                <SystemChoiceField class="editor-control"
-                                   Title="@Text["Today_PickExercise"]"
-                                   Options="ExerciseDefinitionOptions"
-                                   Value="@(_freeEditorDraft.ExerciseDefinitionId?.ToString() ?? string.Empty)"
-                                   ValueChanged="SetFreeExerciseDefinition"
-                                   Picker="PickFreeExerciseAsync"
-                                   Placeholder="@Text["Today_PickExercise"]"
-                                   AriaLabel="@Text["WorkoutDetails_SelectLibraryExercise"]" />
-            </label>
-
-            <label class="editor-field" data-tour="editor-sets">
-                <span>@Text["WorkoutDetails_SetsCount"]</span>
-                <input class="editor-control"
-                       type="number"
-                       min="1"
-                       max="20"
-                       value="@_freeEditorDraft.Sets.Count"
-                       @onchange="ChangeFreeSetsCount" />
-            </label>
-
-            <div class="free-set-editor-list">
-                @foreach (var set in _freeEditorDraft.Sets)
-                {
-                    <fieldset data-tour="@($"editor-set-{set.SetNumber}")">
-                        <legend>@Text.Format("Common_SetNumber", set.SetNumber)</legend>
-                        <label data-tour="@($"editor-weight-{set.SetNumber}")">
-                            <span>@Text["WorkoutDetails_WeightKg"]</span>
-                            <input class="editor-control" type="number" min="0" max="2000" step="0.5" @bind="set.Weight" />
-                        </label>
-                        <label data-tour="@($"editor-reps-{set.SetNumber}")">
-                            <span>@Text["WorkoutDetails_Reps"]</span>
-                            <input class="editor-control" type="number" min="1" max="1000" @bind="set.Repetitions" />
-                        </label>
-                    </fieldset>
-                }
-            </div>
-
-            <div class="editor-actions">
-                <button class="edit-workout-button" data-tour="editor-save" type="button" @onclick="SaveFreeExerciseEdit">
-                    @(_isCreatingFreeExercise ? Text["WorkoutDetails_AddExercise"] : Text["Common_Save"])
-                </button>
-            </div>
-        </section>
-    </div>
+    <ExerciseEditorDialog IsCreating="_isCreatingFreeExercise"
+                          Errors="_freeEditorErrors"
+                          Options="ExerciseDefinitionOptions"
+                          SelectedValue="@(_freeEditorDraft.ExerciseDefinitionId?.ToString() ?? string.Empty)"
+                          SelectedValueChanged="SetFreeExerciseDefinition"
+                          Picker="PickFreeExerciseAsync"
+                          Sets="_freeEditorDraft.Sets"
+                          SetsCountChanged="ChangeFreeSetsCount"
+                          OnSave="SaveFreeExerciseEdit"
+                          OnClose="CloseFreeExerciseEditor" />
 }
 
 @if (_showFreeTemplatePrompt)
@@ -2773,7 +2714,7 @@
         }
     }
 
-    private sealed class SetDraft
+    private sealed class SetDraft : IEditableExerciseSet
     {
         public int SetNumber { get; set; }
         public int Repetitions { get; set; }
