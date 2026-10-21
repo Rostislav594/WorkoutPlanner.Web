@@ -10,7 +10,7 @@ public sealed class ScreenOrientationService : IScreenOrientationService
 {
     public void LockLandscape() => Apply(landscape: true);
 
-    public void RestoreAutomaticOrientation() => Apply(landscape: false);
+    public void LockPortrait() => Apply(landscape: false);
 
     private static void Apply(bool landscape)
     {
@@ -22,7 +22,7 @@ public sealed class ScreenOrientationService : IScreenOrientationService
             {
                 activity.RequestedOrientation = landscape
                     ? ScreenOrientation.SensorLandscape
-                    : ScreenOrientation.Unspecified;
+                    : ScreenOrientation.Portrait;
             }
         });
 #endif

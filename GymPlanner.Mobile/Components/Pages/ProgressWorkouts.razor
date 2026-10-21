@@ -295,7 +295,7 @@
             return;
 
         _selectedPlan = null;
-        OrientationService.RestoreAutomaticOrientation();
+        OrientationService.LockPortrait();
         _selectedProgress = null;
         _progressErrors.Clear();
         CloseHint();
@@ -387,7 +387,7 @@
         if (_selectedProgress is null)
             return;
 
-        OrientationService.RestoreAutomaticOrientation();
+        OrientationService.LockPortrait();
         var workout = Uri.EscapeDataString(_selectedProgress.WorkoutName);
         var date = Uri.EscapeDataString(point.Date.ToString("O", CultureInfo.InvariantCulture));
         Navigation.NavigateTo($"/history?workout={workout}&date={date}");
@@ -395,7 +395,7 @@
 
     public void Dispose()
     {
-        OrientationService.RestoreAutomaticOrientation();
+        OrientationService.LockPortrait();
         CloseHint();
         _disposeCts.Cancel();
         _disposeCts.Dispose();

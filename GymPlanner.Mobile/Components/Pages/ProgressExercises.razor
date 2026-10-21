@@ -305,7 +305,7 @@
             return;
 
         _selectedExercise = null;
-        OrientationService.RestoreAutomaticOrientation();
+        OrientationService.LockPortrait();
         if (_exerciseToClear is null)
             _selectedPlan = null;
         _exerciseProgress = null;
@@ -400,7 +400,7 @@
 
     public void Dispose()
     {
-        OrientationService.RestoreAutomaticOrientation();
+        OrientationService.LockPortrait();
         CloseHint();
         _disposeCts.Cancel();
         _progressLoadCts?.Cancel();
