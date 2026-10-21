@@ -38,9 +38,14 @@
     transform-origin: top left;
     animation: inbox-menu-enter .24s cubic-bezier(.22, 1, .36, 1) both;
 }
-.inbox-menu__header { display: flex; align-items: start; justify-content: space-between; gap: 12px; padding: 4px 4px 12px; }
-.inbox-menu__header-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
-.inbox-menu__clear-hint { margin: 0; color: var(--color-text-muted); font-size: 12px; font-weight: 700; line-height: 1.35; }
+.inbox-menu__header { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 10px 4px; }
+.inbox-menu__header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; margin-left: auto; }
+.inbox-menu__hint { margin: 0; color: var(--color-text-muted); font-size: 12px; font-weight: 700; line-height: 1.35; }
+/* Архив — просто значок без коробки, как колокольчик в шапке. */
+.inbox-menu__archive { position: relative; width: 40px; height: 40px; min-height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--color-text-muted); text-decoration: none; }
+.inbox-menu__archive .material-symbols-rounded { font-size: 24px; }
+.inbox-menu__archive:hover, .inbox-menu__archive:focus-visible { background: transparent; color: var(--color-accent); }
+.inbox-menu__archive:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
 .inbox-menu__header > div > span, .inbox-message__meta, .inbox-message__date { color: var(--color-text-muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .inbox-menu__header h2 { margin: 3px 0 0; font-size: 20px; }
 .inbox-menu__mark-all { min-height: 36px; padding: 0 8px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-accent-hover); font: inherit; font-size: 12px; font-weight: 750; }
@@ -57,19 +62,6 @@
 .inbox-menu__state { flex: 1 0 auto; min-height: 116px; display: grid; place-items: center; gap: 8px; padding: 16px; color: var(--color-text-muted); text-align: center; }
 .inbox-menu__state--error { color: var(--color-danger-soft); }
 .inbox-menu__state button { min-height: 36px; padding: 0 10px; }
-.inbox-clear-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: rgba(0, 0, 0, .68); }
-.inbox-clear-dialog { width: min(100%, 360px); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 24px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-xl); background: var(--glass-surface-strong, var(--color-surface-raised)); -webkit-backdrop-filter: var(--glass-blur-strong, none); backdrop-filter: var(--glass-blur-strong, none); box-shadow: var(--shadow-card); color: var(--color-text); text-align: center; }
-.inbox-clear-dialog__icon { display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--color-danger-surface); color: var(--color-danger-soft); font-size: 26px; }
-.inbox-clear-dialog h2 { margin: 16px 0 0; font-size: 22px; line-height: 1.25; }
-.inbox-clear-dialog p { margin: 10px 0 0; color: var(--color-text-muted); line-height: 1.5; }
-.inbox-clear-dialog .inbox-clear-dialog__error { color: var(--color-danger-soft); }
-.inbox-clear-dialog__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
-.inbox-clear-dialog__actions button { min-height: 48px; padding: 0 16px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); font: inherit; font-weight: 750; }
-.inbox-clear-dialog__cancel { background: var(--color-surface); color: var(--color-text); }
-.inbox-clear-dialog__confirm { border-color: var(--color-danger-action) !important; background: var(--color-danger-action); color: #fff; }
-.inbox-clear-dialog__actions button:disabled { opacity: .55; }
-.inbox-clear-dialog__cancel:hover, .inbox-clear-dialog__cancel:focus-visible { border-color: var(--color-accent); background: var(--color-surface-hover); }
-.inbox-clear-dialog__confirm:hover:not(:disabled), .inbox-clear-dialog__confirm:focus-visible:not(:disabled) { background: var(--color-danger); }
 @keyframes inbox-menu-enter {
     from { opacity: 0; transform: translateY(-8px) scale(.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }

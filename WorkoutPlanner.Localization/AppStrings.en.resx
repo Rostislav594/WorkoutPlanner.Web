@@ -289,14 +289,23 @@
   <data name="Inbox_Center" xml:space="preserve">
     <value>Notification centre</value>
   </data>
-  <data name="Inbox_ClearHint" xml:space="preserve">
-    <value>Hold to clear the history</value>
-  </data>
   <data name="Inbox_MarkAllRead" xml:space="preserve">
     <value>Mark all as read</value>
   </data>
   <data name="Inbox_Empty" xml:space="preserve">
     <value>No new messages</value>
+  </data>
+  <data name="Inbox_Archive" xml:space="preserve">
+    <value>Message archive</value>
+  </data>
+  <data name="Inbox_ArchiveTitle" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="Inbox_ArchiveBack" xml:space="preserve">
+    <value>Back to messages</value>
+  </data>
+  <data name="Inbox_ArchiveEmpty" xml:space="preserve">
+    <value>The archive is empty. Messages older than a month are moved here.</value>
   </data>
   <data name="Inbox_UnreadDot" xml:space="preserve">
     <value>Unread</value>
@@ -304,26 +313,11 @@
   <data name="Inbox_DeleteMessage" xml:space="preserve">
     <value>Delete the message</value>
   </data>
-  <data name="Inbox_ClearTitle" xml:space="preserve">
-    <value>Clear the notification history?</value>
-  </data>
-  <data name="Inbox_ClearDescription" xml:space="preserve">
-    <value>All messages will be deleted permanently.</value>
-  </data>
-  <data name="Inbox_Clear" xml:space="preserve">
-    <value>Clear</value>
-  </data>
-  <data name="Inbox_Clearing" xml:space="preserve">
-    <value>Deleting…</value>
-  </data>
   <data name="Inbox_LoadFailed" xml:space="preserve">
     <value>Could not load the notifications.</value>
   </data>
   <data name="Inbox_DeleteFailed" xml:space="preserve">
     <value>Could not delete the message.</value>
-  </data>
-  <data name="Inbox_ClearFailed" xml:space="preserve">
-    <value>Could not clear the history.</value>
   </data>
   <data name="Inbox_UnreadCount_One" xml:space="preserve">
     <value>{0} unread notification</value>

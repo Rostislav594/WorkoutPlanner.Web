@@ -1,0 +1,122 @@
+@page "/notifications/archive"
+@attribute [Authorize]
+@inject IInboxApiClient InboxApi
+@inject InboxNotificationState InboxState
+@inject NavigationManager Navigation
+@inject IAppText Text
+
+<PageTitle>@Text["Inbox_Archive"]</PageTitle>
+
+<section class="archive-page" aria-labelledby="inbox-archive-title">
+    <div class="page-heading">
+        <a class="back-button" href="/" aria-label="@Text["Inbox_ArchiveBack"]">
+            <span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>
+        </a>
+        <h1 id="inbox-archive-title">@Text["Inbox_ArchiveTitle"]</h1>
+    </div>
+
+    @if (_isLoading)
+    {
+        <p class="archive-state" role="status">@Text["Common_Loading"]</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div class="archive-state archive-state--error" role="alert">
+            <span>@_error</span>
+            <button class="secondary-button" type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
+        </div>
+    }
+    else if (_messages.Count == 0)
+    {
+        <div class="archive-state">
+            <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+            <span>@Text["Inbox_ArchiveEmpty"]</span>
+        </div>
+    }
+    else
+    {
+        <div class="archive-list" role="list">
+            @foreach (var message in _messages)
+            {
+                <div class="archive-item @(message.ReadAtUtc is null ? "archive-item--unread" : null)" role="listitem">
+                    <button class="archive-item__open" type="button" @onclick="() => OpenMessageAsync(message)">
+                        <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
+                        <span class="archive-item__text">
+                            <span class="archive-item__type">@Text[InboxMessageTypes.KeyFor(message.Type)]</span>
+                            <span class="archive-item__date">@FormatDate(message.CreatedAtUtc)</span>
+                        </span>
+                        @if (message.ReadAtUtc is null)
+                        {
+                            <span class="archive-item__dot" aria-label="@Text["Inbox_UnreadDot"]"></span>
+                        }
+                    </button>
+                    <button class="archive-item__delete" type="button" disabled="@_isDeleting" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onclick="() => DeleteMessageAsync(message)">
+                        <span class="material-symbols-rounded" aria-hidden="true">delete</span>
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private List<InboxMessageResponse> _messages = [];
+    private bool _isLoading = true;
+    private bool _isDeleting;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        _error = null;
+        var result = await InboxApi.GetMessagesAsync();
+        if (result.Value is null)
+            _error = result.Errors.FirstOrDefault() ?? Text["Inbox_LoadFailed"];
+        else
+        {
+            _messages = result.Value.Messages.Where(InboxArchivePolicy.IsArchived).ToList();
+            InboxState.SetUnreadCount(result.Value.UnreadCount);
+        }
+        _isLoading = false;
+    }
+
+    private async Task OpenMessageAsync(InboxMessageResponse message)
+    {
+        if (message.ReadAtUtc is null)
+        {
+            var result = message.IsPublication
+                ? await InboxApi.MarkPublicationReadAsync(message.Id)
+                : await InboxApi.MarkReadAsync(message.Id);
+            if (result.Value is not null)
+                InboxState.SetUnreadCount(result.Value.UnreadCount);
+        }
+
+        // Из сообщения крестик вернёт обратно в архив, а не на главную.
+        var kind = message.IsPublication ? "publication" : "message";
+        Navigation.NavigateTo($"/notifications/{kind}/{message.Id}?from=archive");
+    }
+
+    private async Task DeleteMessageAsync(InboxMessageResponse message)
+    {
+        if (_isDeleting)
+            return;
+
+        _isDeleting = true;
+        var result = message.IsPublication
+            ? await InboxApi.DeletePublicationAsync(message.Id)
+            : await InboxApi.DeleteMessageAsync(message.Id);
+        if (result.Value is null)
+            _error = result.Errors.FirstOrDefault() ?? Text["Inbox_DeleteFailed"];
+        else
+        {
+            _messages.RemoveAll(x => x.Id == message.Id && x.IsPublication == message.IsPublication);
+            InboxState.SetUnreadCount(result.Value.UnreadCount);
+        }
+        _isDeleting = false;
+    }
+
+    private static string GetIcon(string type) => type switch { "SupportReply" => "support_agent", "News" => "campaign", "Update" => "new_releases", _ => "info" };
+    private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
+}

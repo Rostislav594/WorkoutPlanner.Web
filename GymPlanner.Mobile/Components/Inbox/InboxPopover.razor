@@ -9,7 +9,7 @@
     <button class="inbox-trigger @(InboxState.UnreadCount > 0 ? "inbox-trigger--unread" : null)"
             type="button"
             aria-label="@Text["Inbox_Open"]"
-            aria-expanded="@_isOpen"
+            aria-expanded="@(_isOpen ? "true" : "false")"
             @onclick="ToggleAsync">
         <span class="material-symbols-rounded" aria-hidden="true">notifications</span>
         @if (InboxState.UnreadCount > 0)
@@ -24,18 +24,20 @@
     {
         <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
         <section class="inbox-menu" aria-label="@Text["Inbox_Center"]" @onkeydown="OnKeyDown"
-                 @onclick:stopPropagation="true"
-                 @onpointerdown="BeginClearHistoryHold"
-                 @onpointerup="CancelClearHistoryHold"
-                 @onpointercancel="CancelClearHistoryHold"
-                 @onpointerleave="CancelClearHistoryHold">
+                 @onclick:stopPropagation="true">
             <header class="inbox-menu__header">
-                <p class="inbox-menu__clear-hint">@(IsOffline ? Text["Offline_InboxReadOnly"] : Text["Inbox_ClearHint"])</p>
+                @if (IsOffline)
+                {
+                    <p class="inbox-menu__hint">@Text["Offline_InboxReadOnly"]</p>
+                }
                 <div class="inbox-menu__header-actions">
-                    @if (_messages.Any(x => x.ReadAtUtc is null))
+                    @if (RecentMessages.Any(x => x.ReadAtUtc is null))
                     {
                         <button class="inbox-menu__mark-all" type="button" disabled="@IsOffline" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
                     }
+                    <a class="inbox-menu__archive" href="@InboxArchivePolicy.ArchiveRoute" aria-label="@Text["Inbox_Archive"]" title="@Text["Inbox_Archive"]">
+                        <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                    </a>
                 </div>
             </header>
 
@@ -50,7 +52,7 @@
                     <button type="button" @onclick="LoadAsync">@Text["Common_Retry"]</button>
                 </div>
             }
-            else if (_messages.Count == 0)
+            else if (RecentMessages.Count == 0)
             {
                 <div class="inbox-menu__state">
                     <span class="material-symbols-rounded" aria-hidden="true">notifications_none</span>
@@ -60,7 +62,7 @@
             else
             {
                 <div class="inbox-menu__list" role="list">
-                    @foreach (var message in _messages)
+                    @foreach (var message in RecentMessages)
                     {
                         <div class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)" role="listitem">
                             <button class="inbox-menu__item-open" type="button" @onclick="() => OpenMessageAsync(message)">
@@ -71,7 +73,7 @@
                                     <span class="inbox-menu__dot" aria-label="@Text["Inbox_UnreadDot"]"></span>
                                 }
                             </button>
-                            <button class="inbox-menu__delete" type="button" disabled="@IsOffline" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onpointerdown:stopPropagation="true" @onclick="() => DeleteMessageAsync(message)">
+                            <button class="inbox-menu__delete" type="button" disabled="@IsOffline" aria-label="@Text["Inbox_DeleteMessage"]" title="@Text["Inbox_DeleteMessage"]" @onclick="() => DeleteMessageAsync(message)">
                                 <span class="material-symbols-rounded" aria-hidden="true">delete</span>
                             </button>
                         </div>
@@ -80,32 +82,6 @@
             }
         </section>
     }
-
-@if (_showClearHistoryConfirmation)
-{
-    <div class="inbox-clear-overlay" @onclick="CancelClearHistory">
-        <section class="inbox-clear-dialog"
-                 role="dialog"
-                 aria-modal="true"
-                 aria-labelledby="inbox-clear-title"
-                 aria-describedby="inbox-clear-description"
-                 @onclick:stopPropagation="true">
-            <span class="material-symbols-rounded inbox-clear-dialog__icon" aria-hidden="true">delete_sweep</span>
-            <h2 id="inbox-clear-title">@Text["Inbox_ClearTitle"]</h2>
-            <p id="inbox-clear-description">@Text["Inbox_ClearDescription"]</p>
-            @if (!string.IsNullOrWhiteSpace(_clearHistoryError))
-            {
-                <p class="inbox-clear-dialog__error" role="alert">@_clearHistoryError</p>
-            }
-            <div class="inbox-clear-dialog__actions">
-                <button class="inbox-clear-dialog__cancel" type="button" disabled="@_isClearingHistory" @onclick="CancelClearHistory">@Text["Common_Cancel"]</button>
-                <button class="inbox-clear-dialog__confirm" type="button" disabled="@(_isClearingHistory || IsOffline)" @onclick="DeleteAllAsync">
-                    @(_isClearingHistory ? Text["Inbox_Clearing"] : Text["Inbox_Clear"])
-                </button>
-            </div>
-        </section>
-    </div>
-}
 </SectionContent>
 
 @code {
@@ -116,10 +92,10 @@
     private bool _isOpen;
     private bool _isLoading;
     private string? _error;
-    private CancellationTokenSource? _clearHistoryHoldCts;
-    private bool _showClearHistoryConfirmation;
-    private bool _isClearingHistory;
-    private string? _clearHistoryError;
+
+    // Сообщения старше месяца в окне не показываются: они на странице архива
+    // за значком в правом верхнем углу.
+    private List<InboxMessageResponse> RecentMessages => _messages.Where(x => !InboxArchivePolicy.IsArchived(x)).ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -180,38 +156,6 @@
         InboxState.SetUnreadCount(result.Value.UnreadCount);
     }
 
-    private async Task BeginClearHistoryHold()
-    {
-        if (_messages.Count == 0 || _showClearHistoryConfirmation)
-            return;
-
-        CancelClearHistoryHold();
-        _clearHistoryHoldCts = new CancellationTokenSource();
-        try
-        {
-            await Task.Delay(550, _clearHistoryHoldCts.Token);
-            _clearHistoryError = null;
-            _showClearHistoryConfirmation = true;
-        }
-        catch (OperationCanceledException) { }
-    }
-
-    private void CancelClearHistory()
-    {
-        if (_isClearingHistory)
-            return;
-
-        _showClearHistoryConfirmation = false;
-        _clearHistoryError = null;
-    }
-
-    private void CancelClearHistoryHold()
-    {
-        _clearHistoryHoldCts?.Cancel();
-        _clearHistoryHoldCts?.Dispose();
-        _clearHistoryHoldCts = null;
-    }
-
     private async Task DeleteMessageAsync(InboxMessageResponse message)
     {
         var result = message.IsPublication
@@ -226,32 +170,9 @@
         InboxState.SetUnreadCount(result.Value.UnreadCount);
     }
 
-    private async Task DeleteAllAsync()
-    {
-        if (_isClearingHistory)
-            return;
-
-        _isClearingHistory = true;
-        _clearHistoryError = null;
-        var result = await InboxApi.DeleteAllAsync();
-        if (result.Value is null)
-        {
-            _clearHistoryError = result.Errors.FirstOrDefault() ?? Text["Inbox_ClearFailed"];
-            _isClearingHistory = false;
-            return;
-        }
-        _messages.Clear();
-        InboxState.SetUnreadCount(result.Value.UnreadCount);
-        _showClearHistoryConfirmation = false;
-        _isClearingHistory = false;
-    }
-
     private void Close()
     {
-        CancelClearHistoryHold();
         _isOpen = false;
-        _showClearHistoryConfirmation = false;
-        _clearHistoryError = null;
     }
 
     private void OnKeyDown(KeyboardEventArgs args)
@@ -278,7 +199,6 @@
 
     public void Dispose()
     {
-        CancelClearHistoryHold();
         InboxState.Changed -= OnInboxChanged;
         Navigation.LocationChanged -= OnLocationChanged;
     }

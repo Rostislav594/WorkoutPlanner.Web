@@ -298,14 +298,23 @@
   <data name="Inbox_Center" xml:space="preserve">
     <value>Центр уведомлений</value>
   </data>
-  <data name="Inbox_ClearHint" xml:space="preserve">
-    <value>Удерживайте, чтобы очистить историю</value>
-  </data>
   <data name="Inbox_MarkAllRead" xml:space="preserve">
     <value>Прочитать все</value>
   </data>
   <data name="Inbox_Empty" xml:space="preserve">
     <value>Новых сообщений нет</value>
+  </data>
+  <data name="Inbox_Archive" xml:space="preserve">
+    <value>Архив сообщений</value>
+  </data>
+  <data name="Inbox_ArchiveTitle" xml:space="preserve">
+    <value>Архив</value>
+  </data>
+  <data name="Inbox_ArchiveBack" xml:space="preserve">
+    <value>Назад к сообщениям</value>
+  </data>
+  <data name="Inbox_ArchiveEmpty" xml:space="preserve">
+    <value>В архиве пока пусто. Сюда попадают сообщения старше месяца.</value>
   </data>
   <data name="Inbox_UnreadDot" xml:space="preserve">
     <value>Не прочитано</value>
@@ -313,26 +322,11 @@
   <data name="Inbox_DeleteMessage" xml:space="preserve">
     <value>Удалить сообщение</value>
   </data>
-  <data name="Inbox_ClearTitle" xml:space="preserve">
-    <value>Очистить историю уведомлений?</value>
-  </data>
-  <data name="Inbox_ClearDescription" xml:space="preserve">
-    <value>Все сообщения будут удалены без возможности восстановления.</value>
-  </data>
-  <data name="Inbox_Clear" xml:space="preserve">
-    <value>Очистить</value>
-  </data>
-  <data name="Inbox_Clearing" xml:space="preserve">
-    <value>Удаляем…</value>
-  </data>
   <data name="Inbox_LoadFailed" xml:space="preserve">
     <value>Не удалось загрузить уведомления.</value>
   </data>
   <data name="Inbox_DeleteFailed" xml:space="preserve">
     <value>Не удалось удалить сообщение.</value>
-  </data>
-  <data name="Inbox_ClearFailed" xml:space="preserve">
-    <value>Не удалось удалить историю.</value>
   </data>
   <data name="Inbox_UnreadCount_One" xml:space="preserve">
     <value>{0} непрочитанное уведомление</value>

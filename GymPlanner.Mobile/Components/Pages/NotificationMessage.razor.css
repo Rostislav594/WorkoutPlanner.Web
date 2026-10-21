@@ -67,6 +67,81 @@
 .notification-page__body { max-width: 68ch; margin: 24px 0 0; color: var(--color-text); font-size: clamp(16px, 2.5vw, 18px); line-height: 1.65; overflow-wrap: anywhere; white-space: pre-wrap; }
 .notification-page__image { display: block; width: auto; max-width: 100%; height: auto; margin: 24px auto 0; border-radius: var(--radius-lg); object-fit: contain; }
 
+/* Уведомление с иллюстрацией: картинка на весь экран поверх шапки и нижней
+   панели. Сама она вписана целиком, свободные края закрывает её размытая
+   копия — так экран заполнен на телефоне любых пропорций. */
+.notification-poster {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    overflow: hidden;
+    background: #000;
+}
+
+.notification-poster__backdrop {
+    position: absolute;
+    inset: -48px;
+    width: calc(100% + 96px);
+    height: calc(100% + 96px);
+    object-fit: cover;
+    filter: blur(28px) brightness(.5);
+    transform: scale(1.1);
+}
+
+.notification-poster__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Крестик без коробки: только белый знак с мягкой тенью, чтобы он читался
+   и на светлой картинке. Поле нажатия остаётся 48×48. */
+.notification-poster__close {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top));
+    right: calc(8px + env(safe-area-inset-right));
+    width: 48px;
+    height: 48px;
+    min-height: 48px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    box-shadow: none;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* На картинке крестик может попасть на светлое место — мягкая тень. */
+.notification-poster__close .material-symbols-rounded {
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .7));
+}
+
+.notification-poster__close:hover,
+.notification-poster__close:focus-visible,
+.notification-poster__close:active {
+    background: transparent;
+    color: var(--color-accent);
+}
+
+.notification-poster__close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
 @media (max-width: 420px) {
     .notification-page { padding-inline: 12px; }
     .notification-page__content { padding: 20px 16px; border-radius: var(--radius-lg); }

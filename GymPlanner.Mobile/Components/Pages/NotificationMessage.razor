@@ -18,6 +18,22 @@ else if (_message is null)
         <button class="secondary-button" type="button" @onclick="GoBack">@Text["Common_Back"]</button>
     </section>
 }
+else if (!string.IsNullOrWhiteSpace(_message.ImagePath))
+{
+    @* Уведомление с иллюстрацией — сама иллюстрация на весь экран телефона.
+       Она вписывается целиком, чтобы ничего не обрезалось на экранах других
+       пропорций, а свободные края заполняет та же картинка, размытая и
+       притемнённая. Заголовок и текст остаются для экранного диктора. *@
+    <article class="notification-poster" aria-labelledby="inbox-message-title">
+        <img class="notification-poster__backdrop" src="@_message.ImagePath" alt="" aria-hidden="true" />
+        <img class="notification-poster__image" src="@_message.ImagePath" alt="@Text.Format("Notification_ImageAlt", _message.Title)" />
+        <h1 id="inbox-message-title" class="visually-hidden">@_message.Title</h1>
+        <p class="visually-hidden">@_message.Body</p>
+        <button class="notification-poster__close" type="button" aria-label="@Text["Notification_Close"]" @onclick="GoBack">
+            <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+    </article>
+}
 else
 {
     <article class="notification-page">
@@ -30,10 +46,6 @@ else
         <section class="notification-page__content" aria-labelledby="inbox-message-title">
             <h1 id="inbox-message-title">@_message.Title</h1>
             <p class="notification-page__date">@FormatDate(_message.CreatedAtUtc)</p>
-            @if (!string.IsNullOrWhiteSpace(_message.ImagePath))
-            {
-                <img class="notification-page__image" src="@_message.ImagePath" alt="@Text.Format("Notification_ImageAlt", _message.Title)" />
-            }
             @if (!string.IsNullOrWhiteSpace(_message.SupportTicketNumber))
             {
                 <p class="notification-page__ticket">@Text.Format("Notification_Ticket", _message.SupportTicketNumber)</p>
@@ -46,6 +58,8 @@ else
 @code {
     [Parameter] public string Kind { get; set; } = "message";
     [Parameter] public long Id { get; set; }
+    // Сообщение открыто из архива: крестик возвращает туда, а не на главную.
+    [Parameter, SupplyParameterFromQuery(Name = "from")] public string? From { get; set; }
     private InboxMessageResponse? _message;
     private bool _loading = true;
 
@@ -82,6 +96,7 @@ else
         _loading = false;
     }
 
-    private void GoBack() => Navigation.NavigateTo("/");
+    private void GoBack() => Navigation.NavigateTo(
+        string.Equals(From, "archive", StringComparison.OrdinalIgnoreCase) ? InboxArchivePolicy.ArchiveRoute : "/");
     private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
 }
