@@ -393,37 +393,13 @@
 
 @if (_showSupersetDialog && _plan is not null)
 {
-    <div class="modal-overlay" @onclick="CloseSupersetDialog">
-        <section class="modal-window superset-window" role="dialog" aria-modal="true" aria-labelledby="template-superset-title" @onclick:stopPropagation="true">
-            <div class="modal-heading">
-                <div>
-                    <span>@Text["WorkoutDetails_TemplateEyebrow"]</span>
-                    <h2 id="template-superset-title">@Text["WorkoutDetails_CreateSuperset"]</h2>
-                </div>
-                <button class="icon-close-button" type="button" aria-label="@Text["Common_Close"]" disabled="@_busy" @onclick="CloseSupersetDialog"><span class="material-symbols-rounded" aria-hidden="true">close</span></button>
-            </div>
-            <div class="modal-body">
-                <p class="superset-hint">@Text["WorkoutDetails_SupersetHint"]</p>
-                <div class="superset-options">
-                    @foreach (var exercise in _plan.Exercises)
-                    {
-                        var unavailable = exercise.SupersetGroupId is not null;
-                        <button class="superset-option @(_supersetSelection.Contains(exercise.Id) ? "selected" : null)"
-                                type="button"
-                                data-tour="superset-option-@exercise.Id"
-                                disabled="@unavailable"
-                                aria-pressed="@_supersetSelection.Contains(exercise.Id)"
-                                @onclick="() => ToggleSupersetExercise(exercise.Id)">@exercise.Name</button>
-                    }
-                </div>
-            </div>
-            <div class="modal-actions modal-footer">
-                <button class="primary-button" type="button" data-tour="superset-confirm" disabled="@(_busy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">
-                    @(_busy ? Text["Common_Saving"] : Text["Common_Create"])
-                </button>
-            </div>
-        </section>
-    </div>
+    <SupersetPickerDialog Options="@(_plan.Exercises.Select(x => new SupersetPickerDialog.SupersetPickerOption(x.Id, x.Name, x.SupersetGroupId is not null)).ToList())"
+                          Selection="_supersetSelection"
+                          Hint="@Text["WorkoutDetails_SupersetHint"]"
+                          Busy="_busy"
+                          OnToggle="ToggleSupersetExercise"
+                          OnCreate="CreateSupersetAsync"
+                          OnClose="CloseSupersetDialog" />
 }
 
 @if (_supersetActionGroup is { } supersetActionGroup)

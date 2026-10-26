@@ -305,42 +305,6 @@
     overflow-wrap: anywhere;
 }
 
-.superset-hint {
-    margin: 0 0 12px;
-    color: var(--color-text-muted);
-}
-
-.superset-options {
-    display: grid;
-    gap: 8px;
-}
-
-.superset-option {
-    width: 100%;
-    min-height: 48px;
-    padding: 10px 14px;
-    border: 1px solid var(--glass-border, var(--color-border));
-    border-radius: var(--radius-sm);
-    background: var(--glass-inset, var(--color-bg-elevated));
-    color: var(--color-text);
-    font: inherit;
-    font-weight: 700;
-    text-align: left;
-}
-
-.superset-option:hover,
-.superset-option:focus-visible,
-.superset-option.selected {
-    border-color: var(--color-accent);
-    background: rgba(63, 185, 80, .14);
-    color: var(--color-accent-hover);
-}
-
-.superset-option:disabled {
-    cursor: not-allowed;
-    opacity: .42;
-}
-
 .modal-action-button:disabled {
     cursor: not-allowed;
     opacity: .55;

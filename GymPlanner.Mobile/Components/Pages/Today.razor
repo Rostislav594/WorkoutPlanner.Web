@@ -766,28 +766,13 @@
 
 @if (_showSupersetDialog)
 {
-    <div class="modal-overlay" @onclick="CloseSupersetDialog">
-        <section class="modal-window superset-window" role="dialog" aria-modal="true" aria-labelledby="superset-title" @onclick:stopPropagation="true">
-            <h2 id="superset-title">@Text["WorkoutDetails_CreateSuperset"]</h2>
-            <p>@Text["Today_PickTwoExercises"]</p>
-            <div class="superset-options">
-                @foreach (var exercise in _exercises)
-                {
-                    var unavailable = exercise.SupersetGroupId is not null;
-                    <button class="superset-option @(_supersetSelection.Contains(exercise.Id) ? "selected" : null)"
-                            data-tour="@($"superset-option-{exercise.Id}")"
-                            type="button"
-                            disabled="@unavailable"
-                            aria-pressed="@_supersetSelection.Contains(exercise.Id)"
-                            @onclick="() => ToggleSupersetExercise(exercise.Id)">@exercise.Name</button>
-                }
-            </div>
-            <div class="superset-actions">
-                <button class="finish-button" data-tour="superset-confirm" type="button" disabled="@(_isBusy || _supersetSelection.Count != 2)" @onclick="CreateSupersetAsync">@Text["Common_Create"]</button>
-                <button class="secondary-button" type="button" disabled="@_isBusy" @onclick="CloseSupersetDialog">@Text["Common_Cancel"]</button>
-            </div>
-        </section>
-    </div>
+    <SupersetPickerDialog Options="@(_exercises.Select(x => new SupersetPickerDialog.SupersetPickerOption(x.Id, x.Name, x.SupersetGroupId is not null)).ToList())"
+                          Selection="_supersetSelection"
+                          Hint="@Text["Today_PickTwoExercises"]"
+                          Busy="_isBusy"
+                          OnToggle="ToggleSupersetExercise"
+                          OnCreate="CreateSupersetAsync"
+                          OnClose="CloseSupersetDialog" />
 }
 
 @if (_supersetActionGroup is { } supersetActionGroup)

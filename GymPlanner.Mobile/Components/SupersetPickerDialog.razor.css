@@ -1,0 +1,147 @@
+/* Раскладка окна. Стекло, подложку и кромку дают общие glass-overlay и
+   glass-dialog из app.css; по центру на любом экране — как окно упражнения. */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+        max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    overscroll-behavior: contain;
+}
+
+.modal-window {
+    box-sizing: border-box;
+    width: min(100%, 520px);
+    max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    overflow-y: auto;
+    padding: 18px 16px;
+    border: 1px solid;
+    border-radius: var(--radius-lg);
+    color: var(--color-text);
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
+.picker-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.picker-heading h2 {
+    min-width: 0;
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.picker-close {
+    flex: 0 0 auto;
+}
+
+.picker-hint {
+    margin: 4px 0 14px;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+}
+
+.picker-options {
+    display: grid;
+    gap: 8px;
+}
+
+/* Строка — как капсула раздела в библиотеке упражнений: скруглённый квадрат
+   со светлой рамкой. Выбранная — сплошная оранжевая с тёмным текстом и
+   свечением; отметка справа, чтобы выбор читался не только цветом. */
+.picker-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px 10px 14px;
+    border: 2px solid rgba(255, 255, 255, .14);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, .04);
+    color: var(--color-text);
+    font-weight: 800;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background-color var(--transition-ui), border-color var(--transition-ui), color var(--transition-ui), box-shadow var(--transition-ui);
+}
+
+.picker-option-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.picker-option-mark {
+    flex: 0 0 auto;
+    color: var(--color-text-muted);
+    font-size: 22px;
+}
+
+@media (hover: hover) {
+    .picker-option:not(.selected):hover:not(:disabled) {
+        border-color: rgba(255, 255, 255, .24);
+        background: var(--color-surface-hover);
+    }
+}
+
+.picker-option:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.picker-option:active:not(:disabled) {
+    background: var(--color-surface-hover);
+}
+
+.picker-option.selected {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: #17110c;
+    box-shadow: 0 8px 20px rgba(255, 122, 26, .22);
+}
+
+.picker-option.selected:active:not(:disabled) {
+    border-color: var(--color-accent-hover);
+    background: var(--color-accent-hover);
+}
+
+.picker-option.selected .picker-option-mark {
+    color: #17110c;
+}
+
+.picker-option:disabled {
+    cursor: not-allowed;
+}
+
+.picker-actions {
+    display: grid;
+    margin-top: 18px;
+}
+
+.picker-actions > * {
+    width: 100%;
+}
+
+@media (min-width: 600px) {
+    .modal-window {
+        padding: var(--space-6);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .picker-option {
+        transition: none;
+    }
+}

@@ -1,0 +1,66 @@
+@inject IAppText Text
+
+@* Окно выбора двух упражнений для суперсета — одно на «Сегодня», свободную
+   тренировку и шаблоны. Матовое стекло, как у окна упражнения. Выбор и
+   создание остаются у страницы. data-tour нужны обучению. *@
+<div class="modal-overlay glass-overlay superset-picker-overlay" @onclick="OnClose">
+    <section class="modal-window glass-dialog superset-picker"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="superset-picker-title"
+             aria-describedby="superset-picker-hint"
+             @onclick:stopPropagation="true">
+        <div class="picker-heading">
+            <h2 id="superset-picker-title">@Text["WorkoutDetails_CreateSuperset"]</h2>
+            <button class="quick-action-close picker-close"
+                    type="button"
+                    aria-label="@Text["Common_Close"]"
+                    disabled="@Busy"
+                    @onclick="OnClose">
+                <span class="material-symbols-rounded" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        <p id="superset-picker-hint" class="picker-hint">@Hint</p>
+
+        <div class="picker-options" role="group" aria-labelledby="superset-picker-title">
+            @foreach (var option in Options)
+            {
+                var selected = Selection.Contains(option.Id);
+                <button class="superset-option picker-option @(selected ? "selected" : null)"
+                        data-tour="@($"superset-option-{option.Id}")"
+                        type="button"
+                        disabled="@(option.InSuperset || Busy)"
+                        aria-pressed="@selected"
+                        @onclick="() => OnToggle.InvokeAsync(option.Id)">
+                    <span class="picker-option-name">@option.Name</span>
+                    <span class="picker-option-mark material-symbols-rounded" aria-hidden="true">@(option.InSuperset ? "link" : selected ? "check_circle" : "radio_button_unchecked")</span>
+                </button>
+            }
+        </div>
+
+        <div class="picker-actions">
+            <button class="edit-workout-button"
+                    data-tour="superset-confirm"
+                    type="button"
+                    disabled="@(Busy || Selection.Count != 2)"
+                    @onclick="OnCreate">
+                @(Busy ? Text["Common_Saving"] : Text["Common_Create"])
+            </button>
+        </div>
+    </section>
+</div>
+
+@code {
+    /// <summary>Строка окна: упражнение и признак того, что оно уже в суперсете.</summary>
+    public sealed record SupersetPickerOption(int Id, string Name, bool InSuperset);
+
+    [Parameter, EditorRequired] public IReadOnlyList<SupersetPickerOption> Options { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyCollection<int> Selection { get; set; } = [];
+    [Parameter, EditorRequired] public string Hint { get; set; } = string.Empty;
+    [Parameter] public bool Busy { get; set; }
+
+    [Parameter] public EventCallback<int> OnToggle { get; set; }
+    [Parameter] public EventCallback OnCreate { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}
