@@ -38,10 +38,10 @@
             {
                 @* Для тренировки из календаря показываем название шаблона, а не «Свободная тренировка». *@
                 var planName = _isFreeWorkout ? null : _workout?.TrainingPlan.WorkoutName;
-                <div class="workout-progress-indicator" data-tour="plan-name" style="--workout-progress: @ProgressPercent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)%"
+                <div class="workout-progress-indicator" data-tour="plan-name"
                      aria-label="@(planName is null ? Text.Format("Today_FreeProgressAria", ProgressPercent.ToString("0")) : Text.Format("Today_PlanProgressAria", planName, ProgressPercent.ToString("0")))">
                     <div class="workout-progress-indicator__content">
-                        <span class="material-symbols-rounded" aria-hidden="true">@(planName is null ? "bolt" : "fitness_center")</span>
+                        <span class="material-symbols-rounded" aria-hidden="true">@(planName is null ? "bolt" : "calendar_month")</span>
                         <span class="workout-progress-indicator__label">@(planName ?? Text["Today_FreeWorkout"])</span>
                     </div>
                 </div>
