@@ -15,5 +15,6 @@ public interface ISupportApiClient
         string message,
         PickedPhoto? screenshot,
         SupportDeviceContext deviceContext,
+        string kind = SupportTicketKinds.Problem,
         CancellationToken cancellationToken = default);
 }

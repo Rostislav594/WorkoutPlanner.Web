@@ -6,7 +6,7 @@
 @inject ILogger<AdminNavigationLinks> Logger
 
 @* Пункты меню админки. Компонент интерактивный: раз в 20 секунд спрашивает,
-   есть ли непросмотренное, и показывает число новых у «Пользователей» и «Поддержки». *@
+   есть ли непросмотренное, и показывает число новых у «Пользователей», «Поддержки» и «Идей». *@
 
 <NavLink href="/admin" Match="NavLinkMatch.All">
     <span class="material-symbols-rounded" aria-hidden="true">dashboard</span>
@@ -29,6 +29,16 @@
     {
         <span class="admin-navigation__badge">
             <span class="admin-navigation__badge-hint">@Text["Admin_Attention_AwaitingHint"]</span>@_snapshot.SupportTicketsAwaitingReply
+        </span>
+    }
+</NavLink>
+<NavLink href="/admin/ideas">
+    <span class="material-symbols-rounded" aria-hidden="true">lightbulb</span>
+    <span class="admin-navigation__label">@Text["Admin_Nav_Ideas"]</span>
+    @if (_snapshot?.IdeasAwaitingReply > 0)
+    {
+        <span class="admin-navigation__badge">
+            <span class="admin-navigation__badge-hint">@Text["Admin_Attention_AwaitingHint"]</span>@_snapshot.IdeasAwaitingReply
         </span>
     }
 </NavLink>

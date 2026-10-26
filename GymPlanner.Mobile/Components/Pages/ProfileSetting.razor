@@ -2,7 +2,6 @@
 @attribute [Authorize]
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.Extensions.Logging
-@using GymPlanner.Mobile.ExternalLinks
 @using GymPlanner.Mobile.Localization
 @using GymPlanner.Mobile.Notifications
 @using WorkoutPlanner.Api.Contracts
@@ -11,7 +10,6 @@
 @inject IWatchManagementApiClient WatchClient
 @inject ISupportApiClient SupportClient
 @inject IMobilePhotoPicker PhotoPicker
-@inject IExternalLinkOpener LinkOpener
 @inject IAppLanguageService Language
 @inject IAppText Text
 @inject MobileAuthenticationService Authentication
@@ -164,7 +162,7 @@
                                     <span>@FormatWatchMetadata(device)</span>
                                     <small>@FormatLastSeen(device.LastSeenAtUtc)</small>
                                 </div>
-                                <button class="watch-disconnect-button" type="button"
+                                <button class="watch-disconnect-button danger-button" type="button"
                                         disabled="@(_isBusy || IsOffline)"
                                         @onclick="() => ConfirmWatchRevocation(device)">
                                     @Text["Watch_Disconnect"]
@@ -175,7 +173,7 @@
 
                     @if (ActiveWatchDevices.Count() > 1)
                     {
-                        <button class="watch-disconnect-all" type="button"
+                        <button class="watch-disconnect-all danger-button" type="button"
                                 disabled="@(_isBusy || IsOffline)" @onclick="ConfirmAllWatchRevocations">
                             @Text["Watch_DisconnectAll"]
                         </button>
@@ -253,7 +251,7 @@
                                 <span>@Text.Format("Sessions_Created", SessionDate(session.CreatedAtUtc))</span>
                                 @if (session.LastRefreshedAtUtc is { } refreshed) { <span>@Text.Format("Sessions_Refreshed", SessionDate(refreshed))</span> }
                             </div>
-                            <button class="watch-disconnect-button" disabled="@(_isBusy || IsOffline)" @onclick="() => _pendingSession = session">@Text["Sessions_End"]</button>
+                            <button class="watch-disconnect-button danger-button" disabled="@(_isBusy || IsOffline)" @onclick="() => _pendingSession = session">@Text["Sessions_End"]</button>
                             @if (_pendingSession?.Id == session.Id)
                             {
                                 <div class="session-confirmation">
@@ -281,16 +279,25 @@
     else if (Section == "suggest-idea")
     {
         <article class="setting-card idea-card">
-            <a class="idea-link" href="@InstagramUrl" target="_blank" rel="noopener noreferrer" @onclick="OpenInstagramAsync" @onclick:preventDefault="true">
-                <span class="idea-link-icon material-symbols-rounded" aria-hidden="true">photo_camera</span>
-                <span class="idea-link-text"><span class="idea-link-title">Instagram</span><span class="idea-link-handle">@@@InstagramHandle</span></span>
-                <span class="idea-link-open material-symbols-rounded" aria-hidden="true">open_in_new</span>
-            </a>
             <p class="idea-description">@Text["Profile_SuggestIdea_Body"]</p>
-            @if (_instagramError is not null)
+            <label class="support-field">
+                @Text["Profile_SuggestIdea_Label"]
+                <textarea maxlength="2000" placeholder="@Text["Profile_SuggestIdea_Placeholder"]" disabled="@_isBusy"
+                          @bind="_ideaMessage" @bind:event="oninput" @bind:after="() => _ideaSent = false"></textarea>
+            </label>
+            <p class="setting-description">@Text["ProfileSetting_SupportHint"]</p>
+            @if (_ideaError is not null)
             {
-                <p class="idea-error" role="alert">@_instagramError</p>
+                <p class="idea-error" role="alert">@_ideaError</p>
             }
+            @if (_ideaSent)
+            {
+                <p class="watch-success" role="status">@Text["Profile_SuggestIdea_Sent"]</p>
+            }
+            <button class="setting-primary-action" type="button"
+                    disabled="@(_isBusy || IsOffline || _ideaMessage.Trim().Length < 10)" @onclick="SubmitIdeaAsync">
+                @(_isBusy ? Text["Profile_Sending"] : Text["Profile_Send"])
+            </button>
         </article>
     }
     else if (Section == "language")
@@ -496,10 +503,31 @@
         }
         finally { _isBusy = false; }
     }
-    private const string InstagramHandle = "gymplanner1";
-    private const string InstagramUrl = $"https://www.instagram.com/{InstagramHandle}/";
-    private string? _instagramError;
-    private async Task OpenInstagramAsync() { _instagramError = null; if (!await LinkOpener.OpenAsync(InstagramUrl)) _instagramError = Text.Format("ProfileSetting_InstagramFailed", InstagramUrl); }
+    private string _ideaMessage = string.Empty;
+    private string? _ideaError;
+    private bool _ideaSent;
+
+    // Ошибку показываем под полем, а не вместо формы: написанная идея не должна пропасть.
+    private async Task SubmitIdeaAsync()
+    {
+        if (_isBusy) return;
+        _isBusy = true;
+        _ideaError = null;
+        _ideaSent = false;
+        try
+        {
+            var result = await SupportClient.CreateAsync(_ideaMessage.Trim(), null, GetDeviceContext(), SupportTicketKinds.Idea);
+            if (!result.Succeeded)
+            {
+                _ideaError = string.Join(" ", result.Errors);
+                return;
+            }
+
+            _ideaMessage = string.Empty;
+            _ideaSent = true;
+        }
+        finally { _isBusy = false; }
+    }
     private async Task LoadWatchDevicesAsync()
     {
         await RunWatchActionAsync(async () =>

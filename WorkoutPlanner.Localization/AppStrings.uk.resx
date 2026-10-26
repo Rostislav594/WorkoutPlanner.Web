@@ -62,10 +62,7 @@
     <value>Запропонувати ідею</value>
   </data>
   <data name="Profile_SuggestIdea_Body" xml:space="preserve">
-    <value>Чекаю на ваші пропозиції та рекомендації! Переходьте за посиланням на Instagram-сторінку і пишіть у приватні повідомлення — буду радий покращувати GPlanner разом з вами!</value>
-  </data>
-  <data name="Profile_SuggestIdea_OpenFailed" xml:space="preserve">
-    <value>Не вдалося відкрити Instagram. Відкрийте посилання вручну: {0}</value>
+    <value>Чекаю на ваші пропозиції та рекомендації! Опишіть ідею — я прочитаю кожну й відповім. Буду радий покращувати GPlanner разом з вами!</value>
   </data>
   <data name="Profile_Language_Title" xml:space="preserve">
     <value>Мова</value>
@@ -902,7 +899,7 @@
     <value>Пристрої</value>
   </data>
   <data name="ProfileItem_Watch" xml:space="preserve">
-    <value>Смарт-годинник Wear OS</value>
+    <value>Смарт-годинник</value>
   </data>
   <data name="ProfileSection_Application" xml:space="preserve">
     <value>Застосунок</value>
@@ -1125,9 +1122,6 @@
   </data>
   <data name="ProfileSetting_DeleteIrreversible" xml:space="preserve">
     <value>Цю дію не можна скасувати.</value>
-  </data>
-  <data name="ProfileSetting_InstagramFailed" xml:space="preserve">
-    <value>Не вдалося відкрити Instagram. Відкрийте посилання вручну: {0}</value>
   </data>
   <data name="Common_Continue" xml:space="preserve">
     <value>Продовжити</value>
@@ -3379,5 +3373,38 @@
   </data>
   <data name="Admin_Audit_TabAll" xml:space="preserve">
     <value>Усі</value>
+  </data>
+  <data name="Server_Inbox_IdeaReplyTitle" xml:space="preserve">
+    <value>Відповідь на вашу ідею</value>
+  </data>
+  <data name="Admin_Nav_Ideas" xml:space="preserve">
+    <value>Ідеї</value>
+  </data>
+  <data name="Admin_Idea_PageTitle" xml:space="preserve">
+    <value>Ідея</value>
+  </data>
+  <data name="Admin_Ideas_SearchPlaceholder" xml:space="preserve">
+    <value>Пошук ідей</value>
+  </data>
+  <data name="Admin_Ideas_Loading" xml:space="preserve">
+    <value>Завантажуємо ідеї</value>
+  </data>
+  <data name="Admin_Ideas_NotFound" xml:space="preserve">
+    <value>Ідей не знайдено</value>
+  </data>
+  <data name="Admin_Ideas_NotFoundHint" xml:space="preserve">
+    <value>Тут з’являться ідеї, які користувачі надішлють із застосунку.</value>
+  </data>
+  <data name="Admin_Ideas_ListUnavailable" xml:space="preserve">
+    <value>Список ідей тимчасово недоступний.</value>
+  </data>
+  <data name="Profile_SuggestIdea_Label" xml:space="preserve">
+    <value>Ваша ідея</value>
+  </data>
+  <data name="Profile_SuggestIdea_Placeholder" xml:space="preserve">
+    <value>Наприклад: хочу, щоб…</value>
+  </data>
+  <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
+    <value>Дякую! Ідею надіслано — відповідь прийде в сповіщення застосунку.</value>
   </data>
 </root>

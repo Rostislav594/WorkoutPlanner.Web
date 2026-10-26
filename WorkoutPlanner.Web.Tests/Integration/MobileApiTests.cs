@@ -872,6 +872,18 @@ public sealed class MobileApiTests
             .SingleAsync();
         Assert.NotNull(screenshotPath);
         Assert.StartsWith(
+        Assert.Equal(SupportTicketKind.Problem, ticket.Kind);
+
+        // «Предложить идею» шлёт то же обращение с kind=idea.
+        using var ideaContent = CreateSupportContent(
+            "Please add a dark theme to the workout calendar.");
+        ideaContent.Add(new StringContent(SupportTicketKinds.Idea), "kind");
+        using var ideaResponse = await client.PostAsync(
+            "/api/v1/support/tickets",
+            ideaContent);
+        Assert.Equal(HttpStatusCode.Created, ideaResponse.StatusCode);
+        var idea = await db.SupportTickets.SingleAsync(x => x.Id != ticket.Id);
+        Assert.Equal(SupportTicketKind.Idea, idea.Kind);
             "/SupportScreenshots/",
             screenshotPath,
             StringComparison.Ordinal);

@@ -1,3 +1,5 @@
+using WorkoutPlanner.Web.Models;
+
 namespace WorkoutPlanner.Web.Application.Contracts;
 
 public sealed record SupportTicketSubmission(
@@ -6,7 +8,8 @@ public sealed record SupportTicketSubmission(
     string? AppVersion,
     string? Platform,
     string? OsVersion,
-    string? DeviceModel);
+    string? DeviceModel,
+    SupportTicketKind Kind = SupportTicketKind.Problem);
 
 public enum SupportTicketCreationFailure
 {
@@ -43,7 +46,8 @@ public sealed record SupportTicketNotification(
     string? Platform,
     string? OsVersion,
     string? DeviceModel,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    SupportTicketKind Kind = SupportTicketKind.Problem);
 
 public sealed record SupportNotificationResult(
     bool Succeeded,

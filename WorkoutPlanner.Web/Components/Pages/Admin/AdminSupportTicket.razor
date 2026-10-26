@@ -1,4 +1,5 @@
 ﻿@page "/admin/support/{TicketId:long}"
+@page "/admin/ideas/{TicketId:long}"
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
@@ -8,10 +9,10 @@
 @inject ILogger<AdminSupportTicket> Logger
 @inject IAppText Text
 
-<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_SupportTicket_PageTitle"])</PageTitle>
+<PageTitle>@Text.Format("Admin_PageTitle", Text[IsIdea ? "Admin_Idea_PageTitle" : "Admin_SupportTicket_PageTitle"])</PageTitle>
 
 <div class="admin-page">
-    <a class="admin-back-link" href="/admin/support"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>@Text["Admin_Nav_Support"]</a>
+    <a class="admin-back-link" href="@(IsIdea ? "/admin/ideas" : "/admin/support")"><span class="material-symbols-rounded" aria-hidden="true">arrow_back</span>@Text[IsIdea ? "Admin_Nav_Ideas" : "Admin_Nav_Support"]</a>
     <AdminPageHeader Title="@(_ticket?.TicketNumber ?? Text["Admin_Ticket_Fallback"])" />
     @if (_isLoading) { <section class="admin-state" role="status"><h2>@Text["Admin_Ticket_Loading"]</h2></section> }
     else if (_ticket is null) { <section class="admin-state" role="alert"><h2>@Text["Admin_Ticket_NotFound"]</h2><p>@_error</p></section> }
@@ -30,7 +31,7 @@
                 <div class="support-reply">
                     <label for="support-reply">@Text["Admin_Ticket_ReplyLabel"]</label>
                     <div class="support-templates" role="group" aria-label="@Text["Admin_Ticket_Templates"]">
-                        @foreach (var template in Templates)
+                        @foreach (var template in IsIdea ? IdeaTemplates : Templates)
                         {
                             <button class="support-template" type="button" disabled="@_isSaving" @onclick="() => InsertTemplate(template)">@Text[template]</button>
                         }
@@ -63,6 +64,10 @@
         "Admin_Ticket_Template_Fixed",
         "Admin_Ticket_Template_Idea"
     ];
+
+    // На идею отвечают благодарностью: шаблоны про ошибки ей не подходят.
+    private static readonly string[] IdeaTemplates = ["Admin_Ticket_Template_Idea"];
+    private bool IsIdea => _ticket?.Kind == SupportTicketKind.Idea;
 
     // Шаблон вставляется в ответ, а не заменяет уже написанное.
     private void InsertTemplate(string template)

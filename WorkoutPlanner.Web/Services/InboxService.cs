@@ -4,6 +4,7 @@ using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
 using WorkoutPlanner.Web.Data;
 using WorkoutPlanner.Web.Models;
+using WorkoutPlanner.Web.Services.Admin;
 using WorkoutPlanner.Web.Services.Auth;
 using WorkoutPlanner.Web.Services.Localization;
 
@@ -257,7 +258,7 @@ public sealed class InboxService(
             UserId = ticket.UserId,
             SupportTicketId = ticket.Id,
             Type = InboxMessageType.SupportReply,
-            Title = ServerTexts.Current["Server_Inbox_SupportReplyTitle"],
+            Title = ServerTexts.Current[AdminSupportService.SupportReplyTitleKey(ticket.Kind)],
             Preview = CreatePreview(text),
             Body = text,
             CreatedAtUtc = reply.CreatedAtUtc,

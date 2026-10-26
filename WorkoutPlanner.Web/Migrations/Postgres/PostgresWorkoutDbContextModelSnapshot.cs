@@ -899,6 +899,11 @@ namespace WorkoutPlanner.Web.Migrations.Postgres
                         .HasColumnType("character varying(2000)");
 
                     b.Property<string>("OsVersion")
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 

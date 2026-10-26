@@ -75,6 +75,7 @@ public sealed class SupportTicketService(
             {
                 UserId = userId,
                 Message = message,
+                Kind = submission.Kind,
                 ScreenshotPath = screenshotPath,
                 AppVersion = NormalizeContext(submission.AppVersion, 40),
                 Platform = NormalizeContext(submission.Platform, 40),
@@ -106,9 +107,10 @@ public sealed class SupportTicketService(
         }
 
         logger.LogInformation(
-            "Created support ticket {TicketId} ({TicketNumber}).",
+            "Created support ticket {TicketId} ({TicketNumber}, {Kind}).",
             ticket.Id,
-            ticket.TicketNumber);
+            ticket.TicketNumber,
+            ticket.Kind);
 
         SupportNotificationResult delivery;
         try
@@ -126,7 +128,8 @@ public sealed class SupportTicketService(
                     ticket.Platform,
                     ticket.OsVersion,
                     ticket.DeviceModel,
-                    ticket.CreatedAtUtc),
+                    ticket.CreatedAtUtc,
+                    ticket.Kind),
                 cancellationToken);
         }
         catch (Exception exception)

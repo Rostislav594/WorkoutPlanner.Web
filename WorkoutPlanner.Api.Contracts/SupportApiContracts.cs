@@ -1,5 +1,12 @@
 namespace WorkoutPlanner.Api.Contracts;
 
+/// <summary>Значения поля <c>kind</c> при создании обращения.</summary>
+public static class SupportTicketKinds
+{
+    public const string Problem = "problem";
+    public const string Idea = "idea";
+}
+
 public sealed record SupportTicketResponse(
     string TicketNumber,
     DateTime CreatedAtUtc);

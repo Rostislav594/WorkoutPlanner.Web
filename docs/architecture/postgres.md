@@ -38,6 +38,14 @@ dotnet ef migrations add ИмяМиграции --context PostgresWorkoutDbConte
 Database__Provider=Sqlite ConnectionStrings__WorkoutDatabase="Data Source=:memory:" dotnet ef migrations add ИмяМиграции --context WorkoutDbContext
 ```
 
+Имена миграций в двух наборах должны различаться (EF не даёт двум классам
+одного имени в сборке): для PostgreSQL добавляйте суффикс `Postgres`, например
+`AddSupportTicketKindPostgres`. На 2026-10-23 команда для `WorkoutDbContext`
+всё равно выбирала `PostgresWorkoutDbContext` (даже с переменными окружения),
+поэтому SQLite-миграцию `AddSupportTicketKind` пришлось написать вручную:
+файл миграции, `.Designer.cs` (копия снимка с атрибутом `[Migration]`) и правка
+`WorkoutDbContextModelSnapshot.cs`.
+
 Если `dotnet ef` положит снимок модели PostgreSQL в `WorkoutPlanner/Web/Migrations/Postgres`
 (путь по пространству имён), перенесите его в `Migrations/Postgres`.
 

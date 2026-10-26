@@ -862,6 +862,11 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OsVersion")
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
                         .HasMaxLength(80)
                         .HasColumnType("TEXT");
 

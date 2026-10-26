@@ -62,10 +62,7 @@
     <value>Suggest an idea</value>
   </data>
   <data name="Profile_SuggestIdea_Body" xml:space="preserve">
-    <value>I am waiting for your suggestions and ideas! Follow the link to the Instagram page and send me a direct message — I would love to improve GPlanner together with you!</value>
-  </data>
-  <data name="Profile_SuggestIdea_OpenFailed" xml:space="preserve">
-    <value>Could not open Instagram. Open the link manually: {0}</value>
+    <value>I am waiting for your suggestions and ideas! Describe your idea — I read every one and will reply. I would love to improve GPlanner together with you!</value>
   </data>
   <data name="Profile_Language_Title" xml:space="preserve">
     <value>Language</value>
@@ -902,7 +899,7 @@
     <value>Devices</value>
   </data>
   <data name="ProfileItem_Watch" xml:space="preserve">
-    <value>Wear OS smartwatch</value>
+    <value>Smartwatch</value>
   </data>
   <data name="ProfileSection_Application" xml:space="preserve">
     <value>Application</value>
@@ -1125,9 +1122,6 @@
   </data>
   <data name="ProfileSetting_DeleteIrreversible" xml:space="preserve">
     <value>This cannot be undone.</value>
-  </data>
-  <data name="ProfileSetting_InstagramFailed" xml:space="preserve">
-    <value>Could not open Instagram. Open the link manually: {0}</value>
   </data>
   <data name="Common_Continue" xml:space="preserve">
     <value>Continue</value>
@@ -3379,5 +3373,38 @@
   </data>
   <data name="Admin_Audit_TabAll" xml:space="preserve">
     <value>All</value>
+  </data>
+  <data name="Server_Inbox_IdeaReplyTitle" xml:space="preserve">
+    <value>Reply to your idea</value>
+  </data>
+  <data name="Admin_Nav_Ideas" xml:space="preserve">
+    <value>Ideas</value>
+  </data>
+  <data name="Admin_Idea_PageTitle" xml:space="preserve">
+    <value>Idea</value>
+  </data>
+  <data name="Admin_Ideas_SearchPlaceholder" xml:space="preserve">
+    <value>Search ideas</value>
+  </data>
+  <data name="Admin_Ideas_Loading" xml:space="preserve">
+    <value>Loading the ideas</value>
+  </data>
+  <data name="Admin_Ideas_NotFound" xml:space="preserve">
+    <value>No ideas found</value>
+  </data>
+  <data name="Admin_Ideas_NotFoundHint" xml:space="preserve">
+    <value>Ideas that users send from the app will appear here.</value>
+  </data>
+  <data name="Admin_Ideas_ListUnavailable" xml:space="preserve">
+    <value>The idea list is temporarily unavailable.</value>
+  </data>
+  <data name="Profile_SuggestIdea_Label" xml:space="preserve">
+    <value>Your idea</value>
+  </data>
+  <data name="Profile_SuggestIdea_Placeholder" xml:space="preserve">
+    <value>For example: I would like…</value>
+  </data>
+  <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
+    <value>Thank you! Your idea has been sent — the reply will arrive in the app notifications.</value>
   </data>
 </root>

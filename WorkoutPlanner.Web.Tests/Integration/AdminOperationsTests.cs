@@ -363,6 +363,53 @@ public sealed class AdminOperationsTests
             () => attention.MarkViewedAsync(AdminSection.Support));
     }
 
+    [Fact]
+    public async Task Ideas_AreListedApartFromSupport_AndAnsweredWithIdeaTitle()
+    {
+        await using var app = await TestApplication.CreateAsync();
+        var admin = await app.CreateUserAsync("ideas-admin");
+        var user = await app.CreateUserAsync("ideas-user");
+        await GrantAdminRoleAsync(app, admin);
+        app.AuthenticationStateProvider.SetUser(admin.Id, ApplicationRoles.Admin);
+
+        var now = DateTime.UtcNow;
+        long ideaId;
+        await using (var seedScope = app.CreateScope())
+        {
+            var db = seedScope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var problem = NewTicket(user.Id, "GP-IDEA-000001", now.AddMinutes(-10));
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = problem, SenderType = SupportMessageSenderType.User, Message = "Ошибка", CreatedAtUtc = now.AddMinutes(-10) });
+            var idea = NewTicket(user.Id, "GP-IDEA-000002", now.AddMinutes(-5));
+            idea.Kind = SupportTicketKind.Idea;
+            db.SupportMessages.Add(new SupportMessage { SupportTicket = idea, SenderType = SupportMessageSenderType.User, Message = "Идея", CreatedAtUtc = now.AddMinutes(-5) });
+            await db.SaveChangesAsync();
+            ideaId = idea.Id;
+        }
+
+        await using var scope = app.CreateScope();
+        var attention = scope.ServiceProvider.GetRequiredService<IAdminAttentionService>();
+        var dashboard = scope.ServiceProvider.GetRequiredService<IAdminDashboardService>();
+        var support = scope.ServiceProvider.GetRequiredService<IAdminSupportService>();
+
+        Assert.Equal(new AdminAttentionSnapshot(0, 1, 1), await attention.GetAsync());
+        Assert.Equal(1, (await dashboard.GetAsync()).NewSupportTickets);
+        Assert.Equal(
+            ["GP-IDEA-000001"],
+            (await support.GetPageAsync(new AdminSupportListQuery(null, null))).Items.Select(x => x.TicketNumber));
+        Assert.Equal(
+            ["GP-IDEA-000002"],
+            (await support.GetPageAsync(new AdminSupportListQuery(null, null, Kind: SupportTicketKind.Idea))).Items.Select(x => x.TicketNumber));
+        Assert.Equal(SupportTicketKind.Idea, (await support.GetAsync(ideaId))!.Kind);
+
+        Assert.True(await support.ReplyAsync(ideaId, new AdminSupportReply("Спасибо за идею!")));
+        Assert.Equal(new AdminAttentionSnapshot(0, 1, 0), await attention.GetAsync());
+        var verifyDb = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+        var inboxMessage = await verifyDb.InboxMessages.AsNoTracking().SingleAsync(x => x.SupportTicketId == ideaId);
+        Assert.Equal(
+            WorkoutPlanner.Web.Services.Localization.ServerTexts.Current["Server_Inbox_IdeaReplyTitle"],
+            inboxMessage.Title);
+    }
+
     private static SupportTicket NewTicket(string userId, string ticketNumber, DateTime createdAtUtc) => new()
     {
         UserId = userId,

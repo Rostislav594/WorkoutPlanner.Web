@@ -1,30 +1,32 @@
 ﻿@page "/admin/support"
+@page "/admin/ideas"
 @rendermode InteractiveServer
 @using WorkoutPlanner.Web.Application.Abstractions
 @using WorkoutPlanner.Web.Application.Contracts
 @using WorkoutPlanner.Web.Models
 @inject IAdminSupportService Support
+@inject NavigationManager Navigation
 @inject IAppText Text
 
-<PageTitle>@Text.Format("Admin_PageTitle", Text["Admin_Nav_Support"])</PageTitle>
+<PageTitle>@Text.Format("Admin_PageTitle", Text[IsIdeas ? "Admin_Nav_Ideas" : "Admin_Nav_Support"])</PageTitle>
 
 <div class="admin-page">
-    <AdminPageHeader Title="@Text["Admin_Nav_Support"]" />
+    <AdminPageHeader Title="@Text[IsIdeas ? "Admin_Nav_Ideas" : "Admin_Nav_Support"]" />
     <div class="admin-toolbar" role="search">
-        <div class="admin-field"><label for="support-search">@Text["Admin_Support_SearchLabel"]</label><input id="support-search" class="admin-input" @bind="_search" @bind:event="oninput" placeholder="@Text["Admin_Support_SearchPlaceholder"]" /></div>
+        <div class="admin-field"><label for="support-search">@Text["Admin_Support_SearchLabel"]</label><input id="support-search" class="admin-input" @bind="_search" @bind:event="oninput" placeholder="@Text[IsIdeas ? "Admin_Ideas_SearchPlaceholder" : "Admin_Support_SearchPlaceholder"]" /></div>
         <div class="admin-field admin-field--compact"><label for="support-status">@Text["Admin_Column_Status"]</label><select id="support-status" class="admin-input" @bind="_status"><option value="">@Text["Admin_Support_AllStatuses"]</option>@foreach (var status in Enum.GetValues<SupportTicketStatus>()) { <option value="@status">@StatusLabel(Text, status)</option> }</select></div>
         <button class="admin-button admin-button--primary" type="button" @onclick="SearchAsync" disabled="@_isLoading"><span class="material-symbols-rounded" aria-hidden="true">search</span>@Text["Admin_Apply"]</button>
     </div>
 
-    @if (_isLoading) { <section class="admin-state" role="status"><h2>@Text["Admin_Support_Loading"]</h2></section> }
+    @if (_isLoading) { <section class="admin-state" role="status"><h2>@Text[IsIdeas ? "Admin_Ideas_Loading" : "Admin_Support_Loading"]</h2></section> }
     else if (_error is not null) { <section class="admin-state" role="alert"><h2>@Text["Admin_Support_Unavailable"]</h2><p>@_error</p><button class="admin-button admin-button--secondary" @onclick="LoadAsync">@Text["Common_Retry"]</button></section> }
-    else if (_result is null || _result.Items.Count == 0) { <section class="admin-state"><h2>@Text["Admin_Support_NotFound"]</h2><p>@Text["Admin_Support_NotFoundHint"]</p></section> }
+    else if (_result is null || _result.Items.Count == 0) { <section class="admin-state"><h2>@Text[IsIdeas ? "Admin_Ideas_NotFound" : "Admin_Support_NotFound"]</h2><p>@Text[IsIdeas ? "Admin_Ideas_NotFoundHint" : "Admin_Support_NotFoundHint"]</p></section> }
     else
     {
-        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>@Text["Admin_Column_Ticket"]</th><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Created"]</th><th>@Text["Admin_Column_Updated"]</th><th>@Text["Admin_Column_Status"]</th><th>@Text["Admin_Column_Screenshot"]</th></tr></thead><tbody>
+        <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>@Text["Admin_Column_Ticket"]</th><th>@Text["Admin_Column_User"]</th><th>@Text["Admin_Column_Created"]</th><th>@Text["Admin_Column_Updated"]</th><th>@Text["Admin_Column_Status"]</th>@if (!IsIdeas) { <th>@Text["Admin_Column_Screenshot"]</th> }</tr></thead><tbody>
             @foreach (var ticket in _result.Items)
             {
-                <tr class="@(ticket.IsNew ? "support-row--new" : null)"><td><a href="@($"/admin/support/{ticket.Id}")"><span class="admin-table__primary">@ticket.TicketNumber@if (ticket.IsNew) { <span class="support-new-badge">@Text["Admin_Support_NewBadge"]</span> }</span><span class="admin-table__secondary">@ticket.Preview</span></a></td><td><a href="@($"/admin/users/{Uri.EscapeDataString(ticket.UserId)}")" title="@Text["Admin_Ticket_OpenUser"]"><span class="admin-table__primary">@ticket.DisplayName</span><span class="admin-table__secondary">@ticket.Email</span></a></td><td>@FormatDate(ticket.CreatedAtUtc)</td><td>@FormatDate(ticket.UpdatedAtUtc)</td><td><span class="admin-status @StatusClass(ticket.Status)">@StatusLabel(Text, ticket.Status)</span></td><td>@(ticket.HasScreenshot ? Text["Admin_Yes"] : "—")</td></tr>
+                <tr class="@(ticket.IsNew ? "support-row--new" : null)"><td><a href="@($"{BasePath}/{ticket.Id}")"><span class="admin-table__primary">@ticket.TicketNumber@if (ticket.IsNew) { <span class="support-new-badge">@Text["Admin_Support_NewBadge"]</span> }</span><span class="admin-table__secondary">@ticket.Preview</span></a></td><td><a href="@($"/admin/users/{Uri.EscapeDataString(ticket.UserId)}")" title="@Text["Admin_Ticket_OpenUser"]"><span class="admin-table__primary">@ticket.DisplayName</span><span class="admin-table__secondary">@ticket.Email</span></a></td><td>@FormatDate(ticket.CreatedAtUtc)</td><td>@FormatDate(ticket.UpdatedAtUtc)</td><td><span class="admin-status @StatusClass(ticket.Status)">@StatusLabel(Text, ticket.Status)</span></td>@if (!IsIdeas) { <td>@(ticket.HasScreenshot ? Text["Admin_Yes"] : "—")</td> }</tr>
             }
         </tbody></table></div>
         <div class="admin-pagination"><span>@Text.Format("Admin_TotalPage", _result.TotalCount, _result.Page, TotalPages)</span><div class="admin-pagination__buttons"><button class="admin-button admin-button--secondary" disabled="@(_page <= 1)" @onclick="PreviousAsync">@Text["Common_Back"]</button><button class="admin-button admin-button--secondary" disabled="@(_page >= TotalPages)" @onclick="NextAsync">@Text["Admin_Next"]</button></div></div>
@@ -35,12 +37,24 @@
     private const int PageSize = 25; private AdminPagedResult<AdminSupportListItem>? _result; private string _search = string.Empty; private string _status = string.Empty; private string? _error; private int _page = 1; private bool _isLoading = true;
     private int TotalPages => _result is null ? 1 : Math.Max(1, (int)Math.Ceiling(_result.TotalCount / (double)PageSize));
 
+    // Одна страница на два раздела: «Поддержка» — сообщения о проблемах, «Идеи» — предложения из приложения.
+    private SupportTicketKind _kind;
+    private bool IsIdeas => _kind == SupportTicketKind.Idea;
+    private string BasePath => IsIdeas ? "/admin/ideas" : "/admin/support";
+
     // Новым обращение остаётся, пока его не откроют; подсветка — пока на него не ответят.
-    protected override Task OnInitializedAsync() => LoadAsync();
+    // При переходе между разделами страница не пересоздаётся, поэтому раздел определяем здесь.
+    protected override Task OnParametersSetAsync()
+    {
+        var kind = Navigation.ToBaseRelativePath(Navigation.Uri).StartsWith("admin/ideas", StringComparison.OrdinalIgnoreCase) ? SupportTicketKind.Idea : SupportTicketKind.Problem;
+        if (_result is not null && kind == _kind) return Task.CompletedTask;
+        _kind = kind; _search = string.Empty; _status = string.Empty; _page = 1;
+        return LoadAsync();
+    }
     private async Task SearchAsync() { _page = 1; await LoadAsync(); }
     private async Task PreviousAsync() { if (_page > 1) { _page--; await LoadAsync(); } }
     private async Task NextAsync() { if (_page < TotalPages) { _page++; await LoadAsync(); } }
-    private async Task LoadAsync() { _isLoading = true; _error = null; try { SupportTicketStatus? parsed = Enum.TryParse<SupportTicketStatus>(_status, out var value) ? value : null; _result = await Support.GetPageAsync(new(_search, parsed, _page, PageSize)); } catch { _error = Text["Admin_Support_ListUnavailable"]; } finally { _isLoading = false; } }
+    private async Task LoadAsync() { _isLoading = true; _error = null; try { SupportTicketStatus? parsed = Enum.TryParse<SupportTicketStatus>(_status, out var value) ? value : null; _result = await Support.GetPageAsync(new(_search, parsed, _page, PageSize, _kind)); } catch { _error = Text[IsIdeas ? "Admin_Ideas_ListUnavailable" : "Admin_Support_ListUnavailable"]; } finally { _isLoading = false; } }
     private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
     internal static string StatusLabel(IAppText text, SupportTicketStatus status) => status switch { SupportTicketStatus.New => text["Admin_TicketStatus_New"], SupportTicketStatus.InProgress => text["Admin_TicketStatus_InProgress"], SupportTicketStatus.WaitingForUser => text["Admin_TicketStatus_WaitingForUser"], SupportTicketStatus.Resolved => text["Admin_TicketStatus_Resolved"], _ => text["Admin_TicketStatus_Closed"] };
     internal static string StatusClass(SupportTicketStatus status) => status switch { SupportTicketStatus.New => "admin-status--warning", SupportTicketStatus.InProgress => "admin-status--success", SupportTicketStatus.WaitingForUser => "admin-status--warning", SupportTicketStatus.Resolved => "admin-status--success", _ => string.Empty };

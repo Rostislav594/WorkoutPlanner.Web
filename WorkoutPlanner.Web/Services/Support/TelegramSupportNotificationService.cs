@@ -7,6 +7,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Models;
 
 namespace WorkoutPlanner.Web.Services.Support;
 
@@ -201,8 +202,9 @@ public sealed class TelegramSupportNotificationService :
 
     private static string BuildMessage(SupportTicketNotification ticket)
     {
+        var isIdea = ticket.Kind == SupportTicketKind.Idea;
         var builder = new StringBuilder()
-            .AppendLine("🆕 GPlanner — новое обращение")
+            .AppendLine(isIdea ? "💡 GPlanner — новая идея" : "🆕 GPlanner — новое обращение")
             .AppendLine($"🎫 {ticket.TicketNumber}")
             .AppendLine($"👤 {Fallback(ticket.DisplayName)}")
             .AppendLine($"📧 {Fallback(ticket.Email)}")
@@ -213,7 +215,7 @@ public sealed class TelegramSupportNotificationService :
             .AppendLine($"📲 {Fallback(ticket.DeviceModel)}")
             .AppendLine($"📦 GPlanner {Fallback(ticket.AppVersion)}")
             .AppendLine()
-            .AppendLine("Описание проблемы:")
+            .AppendLine(isIdea ? "Идея:" : "Описание проблемы:")
             .AppendLine(ticket.Message)
             .AppendLine()
             .Append($"🕐 {ticket.CreatedAtUtc:yyyy-MM-dd HH:mm:ss} UTC");

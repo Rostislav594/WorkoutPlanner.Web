@@ -328,6 +328,11 @@ public class WorkoutDbContext : IdentityDbContext<IdentityUser>
             .HasMaxLength(30);
 
         modelBuilder.Entity<SupportTicket>()
+            .Property(x => x.Kind)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
+        modelBuilder.Entity<SupportTicket>()
             .Property(x => x.TelegramDeliveryStatus)
             .HasConversion<string>()
             .HasMaxLength(20);

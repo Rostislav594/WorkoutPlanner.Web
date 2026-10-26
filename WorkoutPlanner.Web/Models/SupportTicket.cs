@@ -18,6 +18,9 @@ public sealed class SupportTicket
 
     public SupportTicketStatus Status { get; set; } = SupportTicketStatus.New;
 
+    /// <summary>Сообщение о проблеме или идея из «Предложить идею».</summary>
+    public SupportTicketKind Kind { get; set; } = SupportTicketKind.Problem;
+
     [MaxLength(160)]
     public string? ScreenshotPath { get; set; }
 
@@ -51,6 +54,12 @@ public sealed class SupportTicket
 
     public SupportDeliveryStatus TelegramDeliveryStatus { get; set; } =
         SupportDeliveryStatus.Pending;
+}
+
+public enum SupportTicketKind
+{
+    Problem,
+    Idea
 }
 
 public enum SupportTicketStatus

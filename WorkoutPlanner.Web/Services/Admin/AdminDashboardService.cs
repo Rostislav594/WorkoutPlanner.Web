@@ -20,11 +20,13 @@ public sealed class AdminDashboardService(
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var totalUsers = await db.Users.LongCountAsync(cancellationToken);
-        var openTickets = await db.SupportTickets.LongCountAsync(
+        // Карточки главной ведут в «Поддержку», поэтому идеи здесь не считаем.
+        var problems = db.SupportTickets.Where(x => x.Kind == SupportTicketKind.Problem);
+        var openTickets = await problems.LongCountAsync(
             x => x.Status != SupportTicketStatus.Resolved &&
                  x.Status != SupportTicketStatus.Closed,
             cancellationToken);
-        var newTickets = await db.SupportTickets.LongCountAsync(
+        var newTickets = await problems.LongCountAsync(
             SupportTicketQueries.IsNewForAdmin,
             cancellationToken);
 

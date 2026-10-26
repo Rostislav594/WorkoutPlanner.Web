@@ -78,7 +78,8 @@ public sealed record AdminSupportListQuery(
     string? Search,
     SupportTicketStatus? Status,
     int Page = 1,
-    int PageSize = 25);
+    int PageSize = 25,
+    SupportTicketKind Kind = SupportTicketKind.Problem);
 
 public sealed record AdminSupportListItem(
     long Id,
@@ -114,14 +115,16 @@ public sealed record AdminSupportTicketDetail(
     string? OsVersion,
     string? DeviceModel,
     bool HasScreenshot,
-    IReadOnlyList<AdminSupportMessageItem> Messages);
+    IReadOnlyList<AdminSupportMessageItem> Messages,
+    SupportTicketKind Kind = SupportTicketKind.Problem);
 
 public sealed record AdminSupportReply(string Message, SupportTicketStatus? Status = null);
 
 /// <summary>Сколько нового админ ещё не видел в разделах админки.</summary>
 public sealed record AdminAttentionSnapshot(
     int NewUsers,
-    int SupportTicketsAwaitingReply);
+    int SupportTicketsAwaitingReply,
+    int IdeasAwaitingReply = 0);
 
 /// <summary>Запись журнала действий админки с понятной подписью объекта.</summary>
 public sealed record AdminAuditItem(

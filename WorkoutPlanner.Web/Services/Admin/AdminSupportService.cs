@@ -28,7 +28,8 @@ public sealed class AdminSupportService(
         var search = query.Search?.Trim();
 
         await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
-        var tickets = db.SupportTickets.AsNoTracking();
+        var tickets = db.SupportTickets.AsNoTracking()
+            .Where(x => x.Kind == query.Kind);
         if (query.Status is not null)
             tickets = tickets.Where(x => x.Status == query.Status);
         if (!string.IsNullOrWhiteSpace(search))
@@ -143,7 +144,8 @@ public sealed class AdminSupportService(
             ticket.OsVersion,
             ticket.DeviceModel,
             !string.IsNullOrWhiteSpace(ticket.ScreenshotPath),
-            messages);
+            messages,
+            ticket.Kind);
     }
 
     public async Task<bool> ChangeStatusAsync(
@@ -204,7 +206,7 @@ public sealed class AdminSupportService(
             UserId = ticket.UserId,
             SupportTicketId = ticket.Id,
             Type = InboxMessageType.SupportReply,
-            Title = ServerTexts.Current["Server_Inbox_SupportReplyTitle"],
+            Title = ServerTexts.Current[SupportReplyTitleKey(ticket.Kind)],
             Preview = CreatePreview(message),
             Body = message,
             CreatedAtUtc = now
@@ -263,6 +265,12 @@ public sealed class AdminSupportService(
             return null;
         return await screenshots.OpenAsync(screenshotPath, cancellationToken);
     }
+
+    /// <summary>Заголовок ответа во «Входящих»: на идею и на проблему он разный.</summary>
+    internal static string SupportReplyTitleKey(SupportTicketKind kind) =>
+        kind == SupportTicketKind.Idea
+            ? "Server_Inbox_IdeaReplyTitle"
+            : "Server_Inbox_SupportReplyTitle";
 
     private static string CreatePreview(string message) =>
         message.Length <= 180 ? message : $"{message[..177]}…";

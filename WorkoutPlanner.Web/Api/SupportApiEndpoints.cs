@@ -4,6 +4,7 @@ using WorkoutPlanner.Api.Contracts;
 using WorkoutPlanner.Web.Api.Security;
 using WorkoutPlanner.Web.Application.Abstractions;
 using WorkoutPlanner.Web.Application.Contracts;
+using WorkoutPlanner.Web.Models;
 using WorkoutPlanner.Web.Services.Support;
 using WorkoutPlanner.Web.Services.Localization;
 using WorkoutPlanner.Localization;
@@ -97,7 +98,10 @@ public static class SupportApiEndpoints
                 form["appVersion"].ToString(),
                 form["platform"].ToString(),
                 form["osVersion"].ToString(),
-                form["deviceModel"].ToString()),
+                form["deviceModel"].ToString(),
+                form["kind"].ToString() == SupportTicketKinds.Idea
+                    ? SupportTicketKind.Idea
+                    : SupportTicketKind.Problem),
             cancellationToken);
         if (result.Succeeded)
         {

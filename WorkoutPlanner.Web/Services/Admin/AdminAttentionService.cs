@@ -39,13 +39,16 @@ public sealed class AdminAttentionService(
             x => x.RegisteredAtUtc != null && x.RegisteredAtUtc > usersSince,
             cancellationToken);
 
-        // Поддержка подсвечивается, пока есть обращения без ответа, —
+        // Поддержка и идеи подсвечиваются, пока есть обращения без ответа, —
         // одного захода в раздел для этого мало.
-        var awaitingReply = await db.SupportTickets.CountAsync(
-            SupportTicketQueries.AwaitsReply,
-            cancellationToken);
+        var awaitingReply = await db.SupportTickets
+            .Where(x => x.Kind == SupportTicketKind.Problem)
+            .CountAsync(SupportTicketQueries.AwaitsReply, cancellationToken);
+        var ideasAwaitingReply = await db.SupportTickets
+            .Where(x => x.Kind == SupportTicketKind.Idea)
+            .CountAsync(SupportTicketQueries.AwaitsReply, cancellationToken);
 
-        return new AdminAttentionSnapshot(newUsers, awaitingReply);
+        return new AdminAttentionSnapshot(newUsers, awaitingReply, ideasAwaitingReply);
     }
 
     public async Task MarkTicketViewedAsync(

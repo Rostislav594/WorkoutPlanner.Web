@@ -62,11 +62,7 @@
     <value>Предложить идею</value>
   </data>
   <data name="Profile_SuggestIdea_Body" xml:space="preserve">
-    <value>Жду ваши предложения и рекомендации! Переходите по ссылке на Instagram-страницу и пишите в личные сообщения — буду рад улучшать GPlanner вместе с вами!</value>
-  </data>
-  <data name="Profile_SuggestIdea_OpenFailed" xml:space="preserve">
-    <value>Не удалось открыть Instagram. Откройте ссылку вручную: {0}</value>
-    <comment>{0} — URL страницы Instagram.</comment>
+    <value>Жду ваши предложения и рекомендации! Опишите идею — я прочитаю каждую и отвечу. Буду рад улучшать GPlanner вместе с вами!</value>
   </data>
   <data name="Profile_Language_Title" xml:space="preserve">
     <value>Язык</value>
@@ -916,7 +912,7 @@
     <value>Устройства</value>
   </data>
   <data name="ProfileItem_Watch" xml:space="preserve">
-    <value>Смарт-часы Wear OS</value>
+    <value>Смарт-часы</value>
   </data>
   <data name="ProfileSection_Application" xml:space="preserve">
     <value>Приложение</value>
@@ -1139,9 +1135,6 @@
   </data>
   <data name="ProfileSetting_DeleteIrreversible" xml:space="preserve">
     <value>Это действие нельзя отменить.</value>
-  </data>
-  <data name="ProfileSetting_InstagramFailed" xml:space="preserve">
-    <value>Не удалось открыть Instagram. Откройте ссылку вручную: {0}</value>
   </data>
   <data name="Common_Continue" xml:space="preserve">
     <value>Продолжить</value>
@@ -3410,5 +3403,38 @@
   </data>
   <data name="Admin_Audit_TabAll" xml:space="preserve">
     <value>Все</value>
+  </data>
+  <data name="Server_Inbox_IdeaReplyTitle" xml:space="preserve">
+    <value>Ответ на вашу идею</value>
+  </data>
+  <data name="Admin_Nav_Ideas" xml:space="preserve">
+    <value>Идеи</value>
+  </data>
+  <data name="Admin_Idea_PageTitle" xml:space="preserve">
+    <value>Идея</value>
+  </data>
+  <data name="Admin_Ideas_SearchPlaceholder" xml:space="preserve">
+    <value>Поиск идей</value>
+  </data>
+  <data name="Admin_Ideas_Loading" xml:space="preserve">
+    <value>Загружаем идеи</value>
+  </data>
+  <data name="Admin_Ideas_NotFound" xml:space="preserve">
+    <value>Идей не найдено</value>
+  </data>
+  <data name="Admin_Ideas_NotFoundHint" xml:space="preserve">
+    <value>Здесь появятся идеи, которые пользователи отправят из приложения.</value>
+  </data>
+  <data name="Admin_Ideas_ListUnavailable" xml:space="preserve">
+    <value>Список идей временно недоступен.</value>
+  </data>
+  <data name="Profile_SuggestIdea_Label" xml:space="preserve">
+    <value>Ваша идея</value>
+  </data>
+  <data name="Profile_SuggestIdea_Placeholder" xml:space="preserve">
+    <value>Например: хочу, чтобы…</value>
+  </data>
+  <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
+    <value>Спасибо! Идея отправлена — ответ придёт в уведомления приложения.</value>
   </data>
 </root>

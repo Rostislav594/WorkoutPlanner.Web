@@ -15,12 +15,14 @@ public sealed class SupportApiClient(HttpClient client) : ISupportApiClient
         string message,
         PickedPhoto? screenshot,
         SupportDeviceContext deviceContext,
+        string kind = SupportTicketKinds.Problem,
         CancellationToken cancellationToken = default)
     {
         try
         {
             using var multipart = new MultipartFormDataContent();
             multipart.Add(new StringContent(message), "message");
+            multipart.Add(new StringContent(kind), "kind");
             AddOptional(multipart, "appVersion", deviceContext.AppVersion);
             AddOptional(multipart, "platform", deviceContext.Platform);
             AddOptional(multipart, "osVersion", deviceContext.OsVersion);
