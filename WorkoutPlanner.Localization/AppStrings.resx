@@ -3437,4 +3437,7 @@
   <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
     <value>Спасибо! Идея отправлена — ответ придёт в уведомления приложения.</value>
   </data>
+  <data name="Inbox_ArchiveFailed" xml:space="preserve">
+    <value>Не удалось перенести сообщение в архив.</value>
+  </data>
 </root>

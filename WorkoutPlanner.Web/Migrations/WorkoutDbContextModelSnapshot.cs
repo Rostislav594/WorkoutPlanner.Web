@@ -500,6 +500,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(8000)
@@ -610,6 +613,9 @@ namespace WorkoutPlanner.Web.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("DeletedAtUtc")

@@ -6,7 +6,7 @@ namespace GymPlanner.Mobile.OfflineMode;
 
 /// <summary>
 /// Входящие без связи доступны только для чтения: список и открытые письма
-/// берутся из копии, а отметки и удаление требуют сервера.
+/// берутся из копии, а отметки, архив и удаление требуют сервера.
 /// </summary>
 public sealed class OfflineInboxApiClient(InboxApiClient inner, OfflineRuntime runtime) : IInboxApiClient
 {
@@ -39,6 +39,12 @@ public sealed class OfflineInboxApiClient(InboxApiClient inner, OfflineRuntime r
 
     public Task<ApiResult<InboxUnreadCountResponse>> DeleteAllAsync(CancellationToken cancellationToken = default) =>
         SaveCountAsync(inner.DeleteAllAsync, cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> ArchiveMessageAsync(long messageId, CancellationToken cancellationToken = default) =>
+        SaveCountAsync(token => inner.ArchiveMessageAsync(messageId, token), cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> ArchivePublicationAsync(long publicationId, CancellationToken cancellationToken = default) =>
+        SaveCountAsync(token => inner.ArchivePublicationAsync(publicationId, token), cancellationToken);
 
     public Task<ApiResult<InboxUnreadCountResponse>> MarkAllReadAsync(CancellationToken cancellationToken = default) =>
         SaveCountAsync(inner.MarkAllReadAsync, cancellationToken);

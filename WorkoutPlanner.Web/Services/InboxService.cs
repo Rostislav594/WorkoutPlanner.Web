@@ -53,7 +53,10 @@ public sealed class InboxService(
                 x.Body,
                 x.CreatedAtUtc,
                 x.ReadAtUtc,
-                x.SupportTicket == null ? null : x.SupportTicket.TicketNumber))
+                x.SupportTicket == null ? null : x.SupportTicket.TicketNumber,
+                false,
+                null,
+                x.ArchivedAtUtc != null))
             .ToListAsync(cancellationToken);
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var publications = await PublishedForUser(db, userId, now).AsNoTracking()
@@ -62,7 +65,8 @@ public sealed class InboxService(
                 x.Id, x.Type, x.Title, x.Preview, x.Body, x.PublishedAtUtc,
                 x.Reads.Where(read => read.UserId == userId && read.DeletedAtUtc == null)
                     .Select(read => (DateTime?)read.ReadAtUtc).SingleOrDefault(),
-                null, true, x.ImagePath))
+                null, true, x.ImagePath,
+                x.Reads.Any(read => read.UserId == userId && read.ArchivedAtUtc != null)))
             .ToListAsync(cancellationToken);
         var messages = personalMessages.Concat(publications)
             .OrderByDescending(x => x.CreatedAtUtc).ToList();
@@ -183,6 +187,49 @@ public sealed class InboxService(
         else if (state.DeletedAtUtc is null)
         {
             state.DeletedAtUtc = now;
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchiveMessageAsync(long messageId, CancellationToken cancellationToken = default)
+    {
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var message = await db.InboxMessages.SingleOrDefaultAsync(
+            x => x.Id == messageId && x.UserId == userId && x.DeletedAtUtc == null,
+            cancellationToken);
+        if (message is null) return false;
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        message.ArchivedAtUtc ??= now;
+        message.ReadAtUtc ??= now;
+        await db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> ArchivePublicationAsync(long publicationId, CancellationToken cancellationToken = default)
+    {
+        var userId = await currentUser.GetRequiredUserIdAsync();
+        await using var db = await dbFactory.CreateDbContextAsync(cancellationToken);
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+        if (!await PublishedForUser(db, userId, now).AnyAsync(x => x.Id == publicationId, cancellationToken)) return false;
+        var state = await db.InboxPublicationReads.SingleOrDefaultAsync(
+            x => x.PublicationId == publicationId && x.UserId == userId, cancellationToken);
+        if (state is null)
+        {
+            db.InboxPublicationReads.Add(new InboxPublicationRead
+            {
+                PublicationId = publicationId, UserId = userId, ReadAtUtc = now, ArchivedAtUtc = now
+            });
+        }
+        else if (state.DeletedAtUtc is not null)
+        {
+            return false;
+        }
+        else
+        {
+            state.ReadAtUtc ??= now;
+            state.ArchivedAtUtc ??= now;
         }
         await db.SaveChangesAsync(cancellationToken);
         return true;

@@ -26,4 +26,6 @@ public sealed class InboxPublicationRead
     [Required] public string UserId { get; set; } = string.Empty;
     public DateTime? ReadAtUtc { get; set; }
     public DateTime? DeletedAtUtc { get; set; }
+    /// <summary>Пользователь сам перенёс публикацию в архив, не дожидаясь месяца.</summary>
+    public DateTime? ArchivedAtUtc { get; set; }
 }

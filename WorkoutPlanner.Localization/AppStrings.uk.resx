@@ -3407,4 +3407,7 @@
   <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
     <value>Дякую! Ідею надіслано — відповідь прийде в сповіщення застосунку.</value>
   </data>
+  <data name="Inbox_ArchiveFailed" xml:space="preserve">
+    <value>Не вдалося перенести повідомлення в архів.</value>
+  </data>
 </root>

@@ -40,6 +40,12 @@ public sealed class InboxApiClient(HttpClient client) : IInboxApiClient
     public Task<ApiResult<InboxUnreadCountResponse>> DeleteAllAsync(CancellationToken cancellationToken = default) =>
         DeleteAsync("api/v1/inbox/messages", cancellationToken);
 
+    public Task<ApiResult<InboxUnreadCountResponse>> ArchiveMessageAsync(long messageId, CancellationToken cancellationToken = default) =>
+        PostAsync($"api/v1/inbox/messages/{messageId}/archive", cancellationToken);
+
+    public Task<ApiResult<InboxUnreadCountResponse>> ArchivePublicationAsync(long publicationId, CancellationToken cancellationToken = default) =>
+        PostAsync($"api/v1/inbox/publications/{publicationId}/archive", cancellationToken);
+
     public Task<ApiResult<InboxUnreadCountResponse>> MarkAllReadAsync(
         CancellationToken cancellationToken = default) =>
         PostAsync("api/v1/inbox/messages/read-all", cancellationToken);

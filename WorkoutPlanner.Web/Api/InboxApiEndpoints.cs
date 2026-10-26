@@ -29,6 +29,10 @@ public static class InboxApiEndpoints
             .Produces<InboxUnreadCountResponse>().Produces(StatusCodes.Status404NotFound);
         inbox.MapDelete("/publications/{publicationId:long}", DeletePublicationAsync)
             .Produces<InboxUnreadCountResponse>().Produces(StatusCodes.Status404NotFound);
+        inbox.MapPost("/messages/{messageId:long}/archive", ArchiveMessageAsync)
+            .Produces<InboxUnreadCountResponse>().Produces(StatusCodes.Status404NotFound);
+        inbox.MapPost("/publications/{publicationId:long}/archive", ArchivePublicationAsync)
+            .Produces<InboxUnreadCountResponse>().Produces(StatusCodes.Status404NotFound);
         inbox.MapDelete("/messages", DeleteAllAsync)
             .Produces<InboxUnreadCountResponse>();
         inbox.MapPost("/messages/read-all", MarkAllReadAsync)
@@ -56,7 +60,8 @@ public static class InboxApiEndpoints
                 x.IsPublication,
                 x.ImagePath is null
                     ? null
-                    : $"{context.Request.Scheme}://{context.Request.Host}{x.ImagePath}"))
+                    : $"{context.Request.Scheme}://{context.Request.Host}{x.ImagePath}",
+                x.IsArchived))
                 .ToArray(),
             page.UnreadCount));
     }
@@ -127,6 +132,18 @@ public static class InboxApiEndpoints
     private static async Task<IResult> DeletePublicationAsync(long publicationId, IInboxService inbox, CancellationToken cancellationToken)
     {
         if (!await inbox.DeletePublicationAsync(publicationId, cancellationToken)) return Results.NotFound();
+        return Results.Ok(new InboxUnreadCountResponse(await inbox.GetUnreadCountAsync(cancellationToken)));
+    }
+
+    private static async Task<IResult> ArchiveMessageAsync(long messageId, IInboxService inbox, CancellationToken cancellationToken)
+    {
+        if (!await inbox.ArchiveMessageAsync(messageId, cancellationToken)) return Results.NotFound();
+        return Results.Ok(new InboxUnreadCountResponse(await inbox.GetUnreadCountAsync(cancellationToken)));
+    }
+
+    private static async Task<IResult> ArchivePublicationAsync(long publicationId, IInboxService inbox, CancellationToken cancellationToken)
+    {
+        if (!await inbox.ArchivePublicationAsync(publicationId, cancellationToken)) return Results.NotFound();
         return Results.Ok(new InboxUnreadCountResponse(await inbox.GetUnreadCountAsync(cancellationToken)));
     }
 

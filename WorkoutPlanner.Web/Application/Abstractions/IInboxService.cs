@@ -24,6 +24,11 @@ public interface IInboxService
 
     Task<bool> DeletePublicationAsync(long publicationId, CancellationToken cancellationToken = default);
 
+    /// <summary>Переносит сообщение в архив вручную; непрочитанное заодно становится прочитанным.</summary>
+    Task<bool> ArchiveMessageAsync(long messageId, CancellationToken cancellationToken = default);
+
+    Task<bool> ArchivePublicationAsync(long publicationId, CancellationToken cancellationToken = default);
+
     Task DeleteAllAsync(CancellationToken cancellationToken = default);
 
     Task MarkAllReadAsync(CancellationToken cancellationToken = default);

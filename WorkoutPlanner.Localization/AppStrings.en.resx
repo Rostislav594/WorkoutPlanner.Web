@@ -3407,4 +3407,7 @@
   <data name="Profile_SuggestIdea_Sent" xml:space="preserve">
     <value>Thank you! Your idea has been sent — the reply will arrive in the app notifications.</value>
   </data>
+  <data name="Inbox_ArchiveFailed" xml:space="preserve">
+    <value>Could not move the message to the archive.</value>
+  </data>
 </root>

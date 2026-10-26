@@ -24,6 +24,60 @@ namespace WorkoutPlanner.Web.Tests.Integration;
 public sealed class MobileApiTests
 {
     [Fact]
+    public async Task InboxMessages_CanBeMovedToArchiveByHand()
+    {
+        using var factory = new GymPlannerApiFactory();
+        using var client = CreateClient(factory);
+        using var registration = await client.PostAsJsonAsync("/api/v1/auth/register",
+            new MobileRegisterRequest("archive-inbox@example.test", "password1"));
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+        SetBearer(client, (await LoginAsync(client, "archive-inbox@example.test", "password1", "Test phone")).AccessToken);
+
+        long messageId, publicationId;
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+            var userId = await db.Users.Where(x => x.Email == "archive-inbox@example.test").Select(x => x.Id).SingleAsync();
+            var message = new InboxMessage
+            {
+                UserId = userId, Type = InboxMessageType.System, Title = "Свежее", Body = "Текст", CreatedAtUtc = DateTime.UtcNow
+            };
+            var publication = new InboxPublication
+            {
+                Type = InboxMessageType.News, Title = "Новость", Body = "Текст",
+                CreatedAtUtc = DateTime.UtcNow, PublishedAtUtc = DateTime.UtcNow
+            };
+            db.InboxMessages.Add(message);
+            db.InboxPublications.Add(publication);
+            await db.SaveChangesAsync();
+            messageId = message.Id;
+            publicationId = publication.Id;
+        }
+
+        var before = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.Equal(2, before!.UnreadCount);
+        Assert.All(before.Messages, x => Assert.False(x.IsArchived));
+
+        using var archiveMessage = await client.PostAsync($"/api/v1/inbox/messages/{messageId}/archive", null);
+        Assert.Equal(HttpStatusCode.OK, archiveMessage.StatusCode);
+        Assert.Equal(1, (await archiveMessage.Content.ReadFromJsonAsync<InboxUnreadCountResponse>())!.UnreadCount);
+        using var archivePublication = await client.PostAsync($"/api/v1/inbox/publications/{publicationId}/archive", null);
+        Assert.Equal(HttpStatusCode.OK, archivePublication.StatusCode);
+        Assert.Equal(0, (await archivePublication.Content.ReadFromJsonAsync<InboxUnreadCountResponse>())!.UnreadCount);
+        using var missing = await client.PostAsync("/api/v1/inbox/messages/999999/archive", null);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+
+        // Сообщения остаются у пользователя: они просто помечены архивными и прочитанными.
+        var after = await client.GetFromJsonAsync<InboxMessagesResponse>("/api/v1/inbox/messages");
+        Assert.Equal(2, after!.Messages.Count);
+        Assert.All(after.Messages, x =>
+        {
+            Assert.True(x.IsArchived);
+            Assert.NotNull(x.ReadAtUtc);
+        });
+    }
+
+    [Fact]
     public async Task NewlyRegisteredAccount_DoesNotReceiveExistingPublications()
     {
         using var factory = new GymPlannerApiFactory();

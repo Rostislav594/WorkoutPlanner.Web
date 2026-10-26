@@ -32,6 +32,9 @@ public sealed class InboxMessage
 
     public DateTime? DeletedAtUtc { get; set; }
 
+    /// <summary>Пользователь сам перенёс сообщение в архив, не дожидаясь месяца.</summary>
+    public DateTime? ArchivedAtUtc { get; set; }
+
     public long? TelegramMessageId { get; set; }
 }
 

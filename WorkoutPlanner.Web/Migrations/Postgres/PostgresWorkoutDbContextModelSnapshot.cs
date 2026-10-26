@@ -525,6 +525,9 @@ namespace WorkoutPlanner.Web.Migrations.Postgres
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(8000)
@@ -638,6 +641,9 @@ namespace WorkoutPlanner.Web.Migrations.Postgres
 
                     b.Property<string>("UserId")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("timestamp without time zone");

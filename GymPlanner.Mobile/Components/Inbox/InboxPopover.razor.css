@@ -41,9 +41,16 @@
 .inbox-menu__header { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 0 10px 4px; }
 .inbox-menu__header-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px; margin-left: auto; }
 .inbox-menu__hint { margin: 0; color: var(--color-text-muted); font-size: 12px; font-weight: 700; line-height: 1.35; }
+/* Архив — внизу окна по центру: при коротком списке подвал прижат к низу.
+   Сюда же перетаскивают сообщения, поэтому коробка крупная. */
+.inbox-menu__footer { display: flex; justify-content: center; margin-top: auto; padding: 8px 0 0; }
 /* Архив — просто значок без коробки, как колокольчик в шапке. */
-.inbox-menu__archive { position: relative; width: 40px; height: 40px; min-height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--color-text-muted); text-decoration: none; }
-.inbox-menu__archive .material-symbols-rounded { font-size: 24px; }
+.inbox-menu__archive { position: relative; width: 56px; height: 56px; min-height: 56px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--color-text-muted); text-decoration: none; transition: color .16s ease, transform .16s ease, filter .16s ease; }
+.inbox-menu__archive .material-symbols-rounded { font-size: 34px; }
+/* Карточка в руке: коробка подсвечивается, под пальцем — растёт и заполняется. */
+.inbox-menu__archive--ready { color: var(--color-accent); filter: drop-shadow(0 0 6px rgba(255, 122, 26, .45)); }
+.inbox-menu__archive--target { transform: scale(1.18); filter: drop-shadow(0 0 12px rgba(255, 122, 26, .75)); }
+.inbox-menu__archive--target .material-symbols-rounded { font-variation-settings: 'FILL' 1; }
 .inbox-menu__archive:hover, .inbox-menu__archive:focus-visible { background: transparent; color: var(--color-accent); }
 .inbox-menu__archive:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
 .inbox-menu__header > div > span, .inbox-message__meta, .inbox-message__date { color: var(--color-text-muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
@@ -54,6 +61,12 @@
 .inbox-menu__item { width: 100%; min-height: 58px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--glass-border, var(--color-border)); border-radius: var(--radius-md); background: var(--glass-inset, var(--color-bg-elevated)); box-shadow: 0 5px 14px rgba(0, 0, 0, .2); color: var(--color-text-muted); font: inherit; font-size: 14px; font-weight: 750; text-align: left; }
 .inbox-menu__item-open { width: 100%; min-height: 50px; display: grid; grid-template-columns: 32px 1fr 8px; align-items: center; gap: 10px; padding: 7px; border: 0; border-radius: var(--radius-sm); background: transparent; color: inherit; font: inherit; font-size: 14px; font-weight: 750; text-align: left; }
 .inbox-menu__item-open > .material-symbols-rounded { color: var(--color-accent-hover); font-size: 21px; }
+/* Долгое нажатие поднимает карточку, а не выделяет текст и не открывает меню WebView. */
+.inbox-menu__item { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.inbox-menu__item--lifted { opacity: .3; }
+/* Копия карточки под пальцем (лежит в body поверх окна). */
+.inbox-menu__item--ghost { position: fixed; z-index: 1000; margin: 0; pointer-events: none; border-color: var(--color-accent); background: var(--glass-inset-hover, var(--color-surface-hover)); color: var(--color-text); box-shadow: 0 14px 30px rgba(0, 0, 0, .5); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transform: scale(1.03); transition: opacity .16s ease; }
+.inbox-menu__item--ghost-over { opacity: .75; }
 .inbox-menu__item:hover, .inbox-menu__item:focus-within { border-color: var(--color-accent); background: var(--glass-inset-hover, var(--color-surface-hover)); color: var(--color-text); }
 .inbox-menu__item--unread { border-color: color-mix(in srgb, var(--color-accent) 42%, var(--color-border)); color: var(--color-text); }
 .inbox-menu__delete { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-muted); }
@@ -68,7 +81,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .inbox-menu { animation: none; }
-    .inbox-trigger, .inbox-menu__item { transition: none; }
+    .inbox-trigger, .inbox-menu__item, .inbox-menu__archive { transition: none; }
 }
 
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {

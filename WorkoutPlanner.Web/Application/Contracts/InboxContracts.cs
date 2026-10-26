@@ -12,7 +12,8 @@ public sealed record InboxMessageItem(
     DateTime? ReadAtUtc,
     string? SupportTicketNumber,
     bool IsPublication = false,
-    string? ImagePath = null);
+    string? ImagePath = null,
+    bool IsArchived = false);
 
 public sealed record InboxPage(
     IReadOnlyList<InboxMessageItem> Messages,

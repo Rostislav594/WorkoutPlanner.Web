@@ -1,9 +1,10 @@
-@implements IDisposable
+@implements IAsyncDisposable
 @using Microsoft.AspNetCore.Components.Sections
 @inject IInboxApiClient InboxApi
 @inject InboxNotificationState InboxState
 @inject NavigationManager Navigation
 @inject IAppText Text
+@inject IJSRuntime JS
 
 <div class="inbox-popover" @onkeydown="OnKeyDown">
     <button class="inbox-trigger @(InboxState.UnreadCount > 0 ? "inbox-trigger--unread" : null)"
@@ -24,22 +25,22 @@
     {
         <div class="inbox-scrim" aria-hidden="true" @onclick="Close"></div>
         <section class="inbox-menu" aria-label="@Text["Inbox_Center"]" @onkeydown="OnKeyDown"
-                 @onclick:stopPropagation="true">
-            <header class="inbox-menu__header">
-                @if (IsOffline)
-                {
-                    <p class="inbox-menu__hint">@Text["Offline_InboxReadOnly"]</p>
-                }
-                <div class="inbox-menu__header-actions">
-                    @if (RecentMessages.Any(x => x.ReadAtUtc is null))
+                 @onclick:stopPropagation="true" @ref="_menu" data-archive-disabled="@(IsOffline ? "" : null)">
+            @if (IsOffline || HasUnread)
+            {
+                <header class="inbox-menu__header">
+                    @if (IsOffline)
                     {
-                        <button class="inbox-menu__mark-all" type="button" disabled="@IsOffline" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
+                        <p class="inbox-menu__hint">@Text["Offline_InboxReadOnly"]</p>
                     }
-                    <a class="inbox-menu__archive" href="@InboxArchivePolicy.ArchiveRoute" aria-label="@Text["Inbox_Archive"]" title="@Text["Inbox_Archive"]">
-                        <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
-                    </a>
-                </div>
-            </header>
+                    @if (HasUnread)
+                    {
+                        <div class="inbox-menu__header-actions">
+                            <button class="inbox-menu__mark-all" type="button" disabled="@IsOffline" @onclick="MarkAllReadAsync">@Text["Inbox_MarkAllRead"]</button>
+                        </div>
+                    }
+                </header>
+            }
 
             @if (_isLoading)
             {
@@ -64,7 +65,8 @@
                 <div class="inbox-menu__list" role="list">
                     @foreach (var message in RecentMessages)
                     {
-                        <div class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)" role="listitem">
+                        <div class="inbox-menu__item @(message.ReadAtUtc is null ? "inbox-menu__item--unread" : null)" role="listitem"
+                             data-inbox-id="@message.Id" data-inbox-publication="@(message.IsPublication ? "true" : "false")">
                             <button class="inbox-menu__item-open" type="button" @onclick="() => OpenMessageAsync(message)">
                                 <span class="material-symbols-rounded" aria-hidden="true">@GetIcon(message.Type)</span>
                                 <span>@Text[InboxMessageTypes.KeyFor(message.Type)]</span>
@@ -80,6 +82,12 @@
                     }
                 </div>
             }
+
+            <footer class="inbox-menu__footer">
+                <a class="inbox-menu__archive" href="@InboxArchivePolicy.ArchiveRoute" aria-label="@Text["Inbox_Archive"]" title="@Text["Inbox_Archive"]">
+                    <span class="material-symbols-rounded" aria-hidden="true">inventory_2</span>
+                </a>
+            </footer>
         </section>
     }
 </SectionContent>
@@ -90,12 +98,17 @@
     public bool IsOffline { get; set; }
     private List<InboxMessageResponse> _messages = [];
     private bool _isOpen;
+    private ElementReference _menu;
+    private IJSObjectReference? _dragModule;
+    private DotNetObjectReference<InboxPopover>? _self;
+    private bool _dragAttached;
     private bool _isLoading;
     private string? _error;
 
-    // Сообщения старше месяца в окне не показываются: они на странице архива
-    // за значком в правом верхнем углу.
+    // Сообщения старше месяца и перетащенные в архив вручную в окне не показываются:
+    // они на странице архива за коробкой внизу окна.
     private List<InboxMessageResponse> RecentMessages => _messages.Where(x => !InboxArchivePolicy.IsArchived(x)).ToList();
+    private bool HasUnread => RecentMessages.Any(x => x.ReadAtUtc is null);
 
     protected override async Task OnInitializedAsync()
     {
@@ -175,6 +188,60 @@
         _isOpen = false;
     }
 
+    // Перетаскивание в архив живёт в JS: долгое нажатие, призрак карточки и попадание
+    // в коробку Blazor сам не отследит. Подключаем к каждому новому окну.
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_isOpen == _dragAttached)
+            return;
+
+        _dragAttached = _isOpen;
+        try
+        {
+            if (_isOpen)
+            {
+                _dragModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/inboxArchiveDrag.js");
+                _self ??= DotNetObjectReference.Create(this);
+                await _dragModule.InvokeVoidAsync("attach", _menu, _self);
+            }
+            else if (_dragModule is not null)
+            {
+                await _dragModule.InvokeVoidAsync("detach");
+            }
+        }
+        catch (JSException exception)
+        {
+            // Без перетаскивания окно работает как раньше, архив всё равно наполняется по сроку.
+            System.Diagnostics.Debug.WriteLine($"Inbox archive drag failed: {exception.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task<bool> ArchiveDroppedAsync(long id, bool isPublication)
+    {
+        var message = _messages.FirstOrDefault(x => x.Id == id && x.IsPublication == isPublication);
+        if (message is null || IsOffline)
+            return false;
+
+        var result = isPublication
+            ? await InboxApi.ArchivePublicationAsync(id)
+            : await InboxApi.ArchiveMessageAsync(id);
+        if (result.Value is null)
+        {
+            _error = result.Errors.FirstOrDefault() ?? Text["Inbox_ArchiveFailed"];
+            StateHasChanged();
+            return false;
+        }
+
+        var now = DateTime.UtcNow;
+        _messages = _messages
+            .Select(x => x.Id == id && x.IsPublication == isPublication ? x with { IsArchived = true, ReadAtUtc = x.ReadAtUtc ?? now } : x)
+            .ToList();
+        InboxState.SetUnreadCount(result.Value.UnreadCount);
+        StateHasChanged();
+        return true;
+    }
+
     private void OnKeyDown(KeyboardEventArgs args)
     {
         if (args.Key == "Escape")
@@ -197,9 +264,22 @@
     private static string GetIcon(string type) => type switch { "SupportReply" => "support_agent", "News" => "campaign", "Update" => "new_releases", _ => "info" };
     private static string FormatDate(DateTime value) => value.ToLocalTime().ToString("dd.MM.yyyy, HH:mm");
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         InboxState.Changed -= OnInboxChanged;
         Navigation.LocationChanged -= OnLocationChanged;
+        if (_dragModule is not null)
+        {
+            try
+            {
+                await _dragModule.InvokeVoidAsync("detach");
+                await _dragModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // WebView уже закрыт вместе со страницей.
+            }
+        }
+        _self?.Dispose();
     }
 }
