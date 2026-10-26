@@ -818,6 +818,18 @@ public sealed class MobileApiTests
         Assert.Equal(message.Trim(), initialMessage.Message);
         Assert.Equal(1, notification.CallCount);
         Assert.Equal(ticket.TicketNumber, notification.LastTicketNumber);
+        Assert.Equal(SupportTicketKind.Problem, ticket.Kind);
+
+        // «Предложить идею» шлёт то же обращение с kind=idea.
+        using var ideaContent = CreateSupportContent(
+            "Please add a dark theme to the workout calendar.");
+        ideaContent.Add(new StringContent(SupportTicketKinds.Idea), "kind");
+        using var ideaResponse = await client.PostAsync(
+            "/api/v1/support/tickets",
+            ideaContent);
+        Assert.Equal(HttpStatusCode.Created, ideaResponse.StatusCode);
+        var idea = await db.SupportTickets.SingleAsync(x => x.Id != ticket.Id);
+        Assert.Equal(SupportTicketKind.Idea, idea.Kind);
     }
 
     [Fact]
@@ -872,18 +884,6 @@ public sealed class MobileApiTests
             .SingleAsync();
         Assert.NotNull(screenshotPath);
         Assert.StartsWith(
-        Assert.Equal(SupportTicketKind.Problem, ticket.Kind);
-
-        // «Предложить идею» шлёт то же обращение с kind=idea.
-        using var ideaContent = CreateSupportContent(
-            "Please add a dark theme to the workout calendar.");
-        ideaContent.Add(new StringContent(SupportTicketKinds.Idea), "kind");
-        using var ideaResponse = await client.PostAsync(
-            "/api/v1/support/tickets",
-            ideaContent);
-        Assert.Equal(HttpStatusCode.Created, ideaResponse.StatusCode);
-        var idea = await db.SupportTickets.SingleAsync(x => x.Id != ticket.Id);
-        Assert.Equal(SupportTicketKind.Idea, idea.Kind);
             "/SupportScreenshots/",
             screenshotPath,
             StringComparison.Ordinal);
