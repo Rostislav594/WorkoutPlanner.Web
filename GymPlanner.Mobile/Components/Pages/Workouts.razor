@@ -71,8 +71,8 @@
 
 @if (MenuPlan is not null)
 {
-    <div class="modal-overlay top-layer" @onclick="CloseMenu">
-        <section class="modal-window workout-template-actions-modal"
+    <div class="modal-overlay top-layer glass-overlay" @onclick="CloseMenu">
+        <section class="modal-window workout-template-actions-modal glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="workout-template-actions-title"
@@ -97,8 +97,8 @@
 
 @if (_isCreateOpen || _editingId is not null)
 {
-    <div class="modal-overlay" @onclick="ClosePlanDialog">
-        <section class="modal-window"
+    <div class="modal-overlay glass-overlay" @onclick="ClosePlanDialog">
+        <section class="modal-window glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="plan-dialog-title"
@@ -169,8 +169,8 @@
 
 @if (_deleteTarget is not null)
 {
-    <div class="modal-overlay" @onclick="CloseDeleteDialog">
-        <section class="modal-window"
+    <div class="modal-overlay glass-overlay" @onclick="CloseDeleteDialog">
+        <section class="modal-window glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="delete-dialog-title"

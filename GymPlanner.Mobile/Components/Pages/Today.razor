@@ -46,13 +46,6 @@
                     </div>
                 </div>
             }
-            @if (SupersetCandidates.Count >= 2)
-            {
-                <button class="secondary-button superset-button" data-tour="superset-create" type="button" aria-haspopup="dialog" disabled="@_isBusy" @onclick="OpenSupersetDialog">
-                    <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                    @Text["WorkoutDetails_CreateSuperset"]
-                </button>
-            }
         </div>
     </header>
 
@@ -370,32 +363,47 @@
                     <span class="material-symbols-rounded" aria-hidden="true">add</span>
                     @Text["WorkoutDetails_AddExercise"]
                 </button>
+                @if (SupersetCandidates.Count >= 2)
+                {
+                    @CreateSupersetButton(null)
+                }
             </div>
         }
 
-        @if (HasFinishableExercise)
+        @* Кнопка суперсета в тренировке по шаблону — в ряду с «Завершить»;
+           в свободной она стоит рядом с «Добавить упражнение». *@
+        @if (HasFinishableExercise || ShowsSupersetBesideFinish)
         {
-            <button class="finish-button finish-button--hold"
-                    data-tour="finish"
-                    type="button"
-                    disabled="@_isBusy"
-                    aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text.Format("Today_HoldToFinishAria", FinishHoldDuration.TotalSeconds))"
-                    @onpointerdown="BeginFinishHoldAsync"
-                    @onpointerup="CancelFinishHold"
-                    @onpointercancel="CancelFinishHold"
-                    @onpointerleave="CancelFinishHold"
-                    @onkeydown="HandleFinishKeyDown"
-                    @onkeyup="HandleFinishKeyUp"
-                    @oncontextmenu:preventDefault="true">
-                <span class="finish-button-label">@(_isBusy ? Text["Today_SavingWorkout"] : Text["Today_FinishWorkout"])</span>
-                @if (!_isBusy)
+            <div class="finish-row">
+                @if (HasFinishableExercise)
                 {
-                    <span class="finish-button-hold-hint" aria-hidden="true">
-                        <span class="material-symbols-rounded" aria-hidden="true">touch_app</span>
-                        <span>@Text.Format("Today_FinishHoldDuration", FinishHoldDuration.TotalSeconds)</span>
-                    </span>
+                    <button class="finish-button finish-button--hold"
+                            data-tour="finish"
+                            type="button"
+                            disabled="@_isBusy"
+                            aria-label="@(_isBusy ? Text["Today_SavingWorkoutAria"] : Text.Format("Today_HoldToFinishAria", FinishHoldDuration.TotalSeconds))"
+                            @onpointerdown="BeginFinishHoldAsync"
+                            @onpointerup="CancelFinishHold"
+                            @onpointercancel="CancelFinishHold"
+                            @onpointerleave="CancelFinishHold"
+                            @onkeydown="HandleFinishKeyDown"
+                            @onkeyup="HandleFinishKeyUp"
+                            @oncontextmenu:preventDefault="true">
+                        <span class="finish-button-label">@(_isBusy ? Text["Today_SavingWorkout"] : Text["Today_FinishWorkout"])</span>
+                        @if (!_isBusy)
+                        {
+                            <span class="finish-button-hold-hint" aria-hidden="true">
+                                <span class="material-symbols-rounded" aria-hidden="true">touch_app</span>
+                                <span>@Text.Format("Today_FinishHoldDuration", FinishHoldDuration.TotalSeconds)</span>
+                            </span>
+                        }
+                    </button>
                 }
-            </button>
+                @if (ShowsSupersetBesideFinish)
+                {
+                    @CreateSupersetButton(null)
+                }
+            </div>
         }
     }
 </section>
@@ -536,11 +544,11 @@
 
 @if (EditActionExercise is { } editActionExercise && (_workout is not null || _isFreeWorkout))
 {
-    <div class="modal-overlay quick-action-overlay"
+    <div class="modal-overlay quick-action-overlay glass-overlay"
          tabindex="-1"
          @onkeydown="HandleEditActionKeyDown"
          @onclick="CloseEditWorkoutAction">
-        <section class="modal-window edit-workout-modal"
+        <section class="modal-window edit-workout-modal glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="edit-workout-action-title"
@@ -603,8 +611,8 @@
 
 @if (_showFreeTemplatePrompt)
 {
-    <div class="modal-overlay quick-action-overlay" @onclick="CloseFreeTemplatePrompt">
-        <section class="modal-window free-template-prompt"
+    <div class="modal-overlay quick-action-overlay glass-overlay" @onclick="CloseFreeTemplatePrompt">
+        <section class="modal-window free-template-prompt glass-dialog"
                  data-tour="template-prompt"
                  role="dialog"
                  aria-modal="true"
@@ -630,8 +638,8 @@
 
 @if (_showTemplateNamePrompt)
 {
-    <div class="modal-overlay quick-action-overlay" @onclick="CloseTemplateNamePrompt">
-        <section class="modal-window template-name-prompt"
+    <div class="modal-overlay quick-action-overlay glass-overlay" @onclick="CloseTemplateNamePrompt">
+        <section class="modal-window template-name-prompt glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="template-name-title"
@@ -661,7 +669,10 @@
 
 @if (_completedHistory is not null)
 {
-    <div class="modal-overlay" @onclick="CloseCompletion">
+    @* Тренировка уже сохранена, а окно — последний шанс выбрать, что поменять
+       в следующий раз. Поэтому случайное касание мимо окна его не закрывает:
+       только кнопка «Готово». *@
+    <div class="modal-overlay">
         <section class="modal-window workout-completed-window"
                  data-tour="completion"
                  role="dialog"
@@ -777,8 +788,8 @@
 
 @if (_supersetActionGroup is { } supersetActionGroup)
 {
-    <div class="modal-overlay" @onclick="() => CloseSupersetActions()">
-        <section class="modal-window superset-action-modal"
+    <div class="modal-overlay glass-overlay" @onclick="() => CloseSupersetActions()">
+        <section class="modal-window superset-action-modal glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="superset-action-title"
@@ -2199,6 +2210,16 @@
             _isBusy = false;
         }
     }
+
+    private bool ShowsSupersetBesideFinish => !_isFreeWorkout && SupersetCandidates.Count >= 2;
+
+    // Только значок: подпись осталась для экранного диктора и подсказки.
+    private RenderFragment CreateSupersetButton(string? extraClass) =>
+        @<button class="create-superset-button @extraClass" data-tour="superset-create" type="button" aria-haspopup="dialog"
+                 aria-label="@Text["WorkoutDetails_CreateSuperset"]" title="@Text["WorkoutDetails_CreateSuperset"]"
+                 disabled="@_isBusy" @onclick="OpenSupersetDialog">
+            <span class="material-symbols-rounded" aria-hidden="true">link</span>
+        </button>;
 
     private void OpenSupersetDialog()
     {

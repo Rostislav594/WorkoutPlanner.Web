@@ -966,28 +966,8 @@
     }
 }
 
-/* Окно тренировки — прозрачное матовое стекло, как окно графика прогресса.
-   Подложка светлее обычной и без своего размытия, иначе стекло на чёрном
-   не читается и фон размывается дважды. */
-.modal-overlay.history-overlay {
-    background: rgba(0, 0, 0, .28);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-}
-
-.history-overlay .modal-window.history-dialog {
-    border: 1px solid rgba(255, 255, 255, .16);
-    background:
-        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
-        rgba(16, 17, 19, .34);
-    -webkit-backdrop-filter: blur(22px) saturate(120%);
-    backdrop-filter: blur(22px) saturate(120%);
-    box-shadow:
-        var(--shadow-modal),
-        inset 0 1px 0 rgba(255, 255, 255, .12);
-}
-
-/* Стеклом сделано только само окно. Упражнения в нём лежат без своих
+/* Окно тренировки — прозрачное матовое стекло (общие классы glass-overlay и
+   glass-dialog из app.css). Стеклом сделано только само окно. Упражнения в нём лежат без своих
    коробок, прямо на стекле, и отделены друг от друга тонкой перегородкой.
    Подходы остаются плотными плашками, как были. */
 .history-overlay .history-exercises {

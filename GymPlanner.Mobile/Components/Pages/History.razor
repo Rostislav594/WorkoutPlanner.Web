@@ -170,8 +170,8 @@
 
 @if (_selected is not null)
 {
-    <div class="modal-overlay history-overlay" @onclick="CloseHistory">
-        <section class="modal-window history-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title" @onclick:stopPropagation="true">
+    <div class="modal-overlay history-overlay glass-overlay" @onclick="CloseHistory">
+        <section class="modal-window history-dialog glass-dialog" role="dialog" aria-modal="true" aria-labelledby="history-title" @onclick:stopPropagation="true">
             <header class="dialog-header">
                 <div>
                     <h2 id="history-title">@_selected.WorkoutName</h2>

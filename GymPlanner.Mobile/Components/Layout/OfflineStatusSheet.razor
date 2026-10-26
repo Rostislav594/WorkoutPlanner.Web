@@ -25,8 +25,8 @@
 
 @if (Status.IsSheetOpen)
 {
-    <div class="offline-overlay" @onclick="Status.CloseSheet">
-        <section class="offline-sheet" role="dialog" aria-modal="true" aria-labelledby="offline-sheet-title"
+    <div class="offline-overlay glass-overlay" @onclick="Status.CloseSheet">
+        <section class="offline-sheet glass-dialog" role="dialog" aria-modal="true" aria-labelledby="offline-sheet-title"
                  @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
             <div class="offline-sheet__title @(Status.IsOffline ? null : "offline-sheet__title--problem")">
                 <span class="material-symbols-rounded" aria-hidden="true">@(Status.IsOffline ? "cloud_off" : "sync_problem")</span>

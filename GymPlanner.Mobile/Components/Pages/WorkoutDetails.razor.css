@@ -55,28 +55,19 @@
     overflow-wrap: anywhere;
 }
 
-.title-line {
-    width: 58px;
-    height: 4px;
-    margin: 14px auto 0;
-    border-radius: 999px;
-    background: var(--color-success);
-}
-
+/* «Добавить упражнение» и квадратная кнопка суперсета — в один ряд. */
 .workout-toolbar {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
+    align-items: stretch;
     gap: 10px;
     margin-bottom: 18px;
 }
 
-.create-superset-button {
-    gap: 7px;
-}
-
-.create-superset-button .material-symbols-rounded {
-    font-size: 20px;
+.workout-toolbar .compact-create-button {
+    min-width: 0;
+    padding-inline: 14px !important;
 }
 
 .primary-button,
@@ -1021,3 +1012,40 @@
         transition: none;
     }
 }
+
+/* Матовое полупрозрачное стекло, как у окон приложения. Шапка шаблона:
+   зелёная кромка сверху подсвечивает стекло. */
+.workout-title-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-top: 3px solid var(--color-success);
+    background:
+        radial-gradient(70% 55% at 50% 0%, rgba(63, 185, 80, .2), transparent 72%),
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    -webkit-backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(22px) saturate(120%);
+    box-shadow:
+        var(--shadow-card),
+        0 -6px 22px rgba(63, 185, 80, .14),
+        inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+
+/* Подходы и место для фото — тоже стекло, тоньше и светлее карточки. */
+.exercise-set-row,
+.exercise-photo-button {
+    border: 1px solid rgba(255, 255, 255, .14);
+    background:
+        linear-gradient(145deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .012) 50%, rgba(255, 255, 255, .025)),
+        rgba(16, 17, 19, .28);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    backdrop-filter: blur(16px) saturate(120%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1);
+}
+
+.exercise-photo-button:hover,
+.exercise-photo-button:focus-visible {
+    border-color: var(--color-accent);
+}
+

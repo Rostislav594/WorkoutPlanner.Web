@@ -21,7 +21,6 @@
     <header class="workout-header">
         <div class="workout-title-card">
             <h1>@(_plan?.WorkoutName ?? Text["WorkoutDetails_DefaultTitle"])</h1>
-            <div class="title-line"></div>
         </div>
     </header>
 
@@ -56,9 +55,11 @@
             </button>
             @if (SupersetCandidates.Count >= 2)
             {
-                <button class="secondary-button create-superset-button" type="button" data-tour="superset-create" aria-haspopup="dialog" disabled="@_busy" @onclick="OpenSupersetDialog">
+                @* Только значок: подпись осталась для экранного диктора и подсказки. *@
+                <button class="create-superset-button" type="button" data-tour="superset-create" aria-haspopup="dialog"
+                        aria-label="@Text["WorkoutDetails_CreateSuperset"]" title="@Text["WorkoutDetails_CreateSuperset"]"
+                        disabled="@_busy" @onclick="OpenSupersetDialog">
                     <span class="material-symbols-rounded" aria-hidden="true">link</span>
-                    @Text["WorkoutDetails_CreateSuperset"]
                 </button>
             }
         </div>
@@ -255,8 +256,8 @@
 
 @if (_actionExercise is not null)
 {
-    <div class="modal-overlay" @onclick="CloseActions">
-        <section class="modal-window action-modal"
+    <div class="modal-overlay glass-overlay" @onclick="CloseActions">
+        <section class="modal-window action-modal glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="exercise-actions-title"
@@ -404,8 +405,8 @@
 
 @if (_supersetActionGroup is { } supersetActionGroup)
 {
-    <div class="modal-overlay" @onclick="() => CloseSupersetActions()">
-        <section class="modal-window action-modal"
+    <div class="modal-overlay glass-overlay" @onclick="() => CloseSupersetActions()">
+        <section class="modal-window action-modal glass-dialog"
                  role="dialog"
                  aria-modal="true"
                  aria-labelledby="template-superset-action-title"

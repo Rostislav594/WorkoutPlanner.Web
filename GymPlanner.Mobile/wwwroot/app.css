@@ -69,6 +69,20 @@
     --glass-border: rgba(255, 255, 255, .09);
     --glass-blur: blur(8px);
     --glass-blur-strong: blur(18px);
+    /* Матовое окно — тот же рецепт, что у окон графика, истории и редактора
+       упражнения: почти прозрачное, сильно размытое, со светлой кромкой. */
+    --glass-dialog-scrim: rgba(0, 0, 0, .28);
+    --glass-dialog-surface:
+        linear-gradient(145deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .015) 45%, rgba(255, 255, 255, .03)),
+        rgba(16, 17, 19, .34);
+    --glass-dialog-border: rgba(255, 255, 255, .16);
+    --glass-dialog-divider: rgba(255, 255, 255, .1);
+    --glass-dialog-blur: blur(22px) saturate(120%);
+    --glass-dialog-shadow: var(--shadow-modal), inset 0 1px 0 rgba(255, 255, 255, .12);
+    /* Обычная кнопка на матовом окне — светлая плёнка вместо серой плашки. */
+    --glass-button: rgba(255, 255, 255, .07);
+    --glass-button-hover: rgba(255, 255, 255, .12);
+    --glass-button-pressed: rgba(255, 255, 255, .17);
     /* Суперсет: рамки приглушены, цвет упражнений остаётся в названиях. */
     --superset-frame: color-mix(in srgb, var(--color-accent) 42%, transparent);
     --superset-set-border: color-mix(in srgb, currentColor 34%, transparent);
@@ -355,6 +369,59 @@ button.compact-create-button:active:not(:disabled) {
         0 0 0 1px rgba(79, 196, 107, .16),
         0 5px 16px rgba(63, 185, 80, .18),
         inset 0 0 24px rgba(63, 185, 80, .12);
+}
+
+/* «Создать суперсет» — квадратная пара к «Добавить упражнение» на «Сегодня»
+   и в шаблоне: та же форма, рамка и
+   мягкое свечение снизу, но оранжевая, как всё, что связано с суперсетами,
+   и чуть тише по свету, чтобы главной оставалась зелёная. */
+button.create-superset-button {
+    flex: 0 0 auto;
+    width: 52px;
+    min-width: 52px;
+    min-height: 52px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    border: 2px solid var(--color-accent) !important;
+    border-radius: var(--radius-md) !important;
+    background:
+        radial-gradient(ellipse at 50% 115%, rgba(255, 122, 26, .16) 0%, rgba(255, 122, 26, .05) 40%, transparent 72%),
+        rgba(15, 15, 16, .72) !important;
+    box-shadow: none !important;
+    color: var(--color-accent-hover) !important;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 750;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color .18s ease, box-shadow .18s ease;
+}
+
+button.create-superset-button .material-symbols-rounded {
+    flex: 0 0 auto;
+    color: inherit;
+    font-size: 26px;
+    line-height: 1;
+}
+
+button.create-superset-button:hover:not(:disabled),
+button.create-superset-button:focus-visible:not(:disabled),
+button.create-superset-button:active:not(:disabled) {
+    background:
+        radial-gradient(ellipse at 50% 112%, rgba(255, 122, 26, .26) 0%, rgba(255, 122, 26, .09) 44%, transparent 76%),
+        rgba(15, 15, 16, .82) !important;
+    box-shadow:
+        0 0 0 1px rgba(255, 122, 26, .16),
+        0 8px 22px rgba(255, 122, 26, .16),
+        inset 0 0 20px rgba(255, 122, 26, .08) !important;
+}
+
+button.create-superset-button:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -647,6 +714,22 @@ button.card-menu-button[aria-expanded="true"] {
     box-shadow: none !important;
 }
 
+/* Значковые кнопки действий — просто значок без подложки и рамки, как
+   стрелка «Назад»; поле нажатия остаётся во всю кнопку. */
+button:is(.month-button, .watch-refresh-button),
+button:is(.month-button, .watch-refresh-button):hover:not(:disabled),
+button:is(.month-button, .watch-refresh-button):active:not(:disabled),
+button:is(.month-button, .watch-refresh-button):focus-visible {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+button:is(.month-button, .watch-refresh-button):hover:not(:disabled),
+button:is(.month-button, .watch-refresh-button):focus-visible {
+    color: var(--color-accent) !important;
+}
+
 button:active:not(:disabled),
 a:is(.primary-button, .secondary-button, .danger-button, .primary-action, .secondary-action, .danger-action, .history-start-button, .guide-button-primary, .guide-button-secondary, .primary, .secondary, .profile-button, .back-button, .calendar-link, .back-link):active {
     filter: brightness(.9);
@@ -795,6 +878,96 @@ body .modal-window {
     max-height: calc(100dvh - max(32px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
     border-bottom: var(--border-subtle);
     border-radius: var(--radius-lg);
+}
+
+/* Меню действий и небольшие окна подтверждения — матовое стекло. Подложка
+   светлее обычной и без своего размытия, иначе стекло на чёрном не читается
+   и фон размывается дважды. Шапка и подвал лежат прямо на стекле окна. */
+body .glass-overlay {
+    background: var(--glass-dialog-scrim) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+
+body .glass-dialog {
+    border-color: var(--glass-dialog-border) !important;
+    background: var(--glass-dialog-surface) !important;
+    -webkit-backdrop-filter: var(--glass-dialog-blur) !important;
+    backdrop-filter: var(--glass-dialog-blur) !important;
+    box-shadow: var(--glass-dialog-shadow) !important;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+    body .glass-dialog {
+        background: var(--glass-surface-strong) !important;
+    }
+}
+
+body .glass-dialog :is(.modal-heading, .modal-footer) {
+    border-color: var(--glass-dialog-divider);
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+/* Обычные кнопки в этих окнах — стеклянные. Красные и зелёные остаются
+   своими, чтобы опасное и главное действие узнавались сразу. */
+:is(.glass-dialog, .watch-confirmation, .session-confirmation) button:is(
+    .secondary-button,
+    .secondary-action,
+    .setting-secondary-action,
+    .offline-sheet__secondary,
+    .modal-action-button:not(.danger-action)
+) {
+    border: 1px solid var(--glass-dialog-border) !important;
+    background: var(--glass-button) !important;
+    color: var(--color-text) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
+}
+
+@media (hover: hover) {
+    :is(.glass-dialog, .watch-confirmation, .session-confirmation) button:is(
+        .secondary-button,
+        .secondary-action,
+        .setting-secondary-action,
+        .offline-sheet__secondary,
+        .modal-action-button:not(.danger-action)
+    ):hover:not(:disabled) {
+        border-color: var(--color-accent) !important;
+        background: var(--glass-button-hover) !important;
+    }
+}
+
+:is(.glass-dialog, .watch-confirmation, .session-confirmation) button:is(
+    .secondary-button,
+    .secondary-action,
+    .setting-secondary-action,
+    .offline-sheet__secondary,
+    .modal-action-button:not(.danger-action)
+):focus-visible:not(:disabled) {
+    border-color: var(--color-accent) !important;
+    background: var(--glass-button-hover) !important;
+}
+
+:is(.glass-dialog, .watch-confirmation, .session-confirmation) button:is(
+    .secondary-button,
+    .secondary-action,
+    .setting-secondary-action,
+    .offline-sheet__secondary,
+    .modal-action-button:not(.danger-action)
+):active:not(:disabled) {
+    background: var(--glass-button-pressed) !important;
+}
+
+:is(.glass-dialog, .watch-confirmation, .session-confirmation) button:is(
+    .secondary-button,
+    .secondary-action,
+    .setting-secondary-action,
+    .offline-sheet__secondary,
+    .modal-action-button:not(.danger-action)
+):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
